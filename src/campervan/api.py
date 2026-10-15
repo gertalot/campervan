@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from campervan.coordinator import Coordinator, ModelStatus, WorkerFactory
@@ -110,4 +111,11 @@ def build_app(settings: Settings, worker_factory: WorkerFactory = start_worker) 
 
 
 def create_app() -> FastAPI:
-    return build_app(load_settings())
+    settings = load_settings()
+    app = build_app(settings)
+    if not settings.development:
+        web = Path(__file__).resolve().parent / "web"
+        if not (web / "index.html").is_file():
+            raise RuntimeError("Built frontend missing. Run make build first, or use make dev-api for development.")
+        app.mount("/", StaticFiles(directory=web, html=True), name="frontend")
+    return app

@@ -2,12 +2,13 @@
 
 Design a campervan interior with parametric Python models and inspect it in a local, interactive 3D viewer.
 The application uses build123d for geometry and a browser interface for dimensions and configurations.
+This is a personal, local-only hobby project.
 
 ## Prerequisites
 
 - Python 3.13.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/).
-- Node.js 24 LTS and npm, for developing and building the web interface.
+- Node.js 22.12+ and npm, for developing and building the web interface.
 - `make`.
 
 ## Set up
@@ -47,9 +48,15 @@ make chrome
 
 Open **http://127.0.0.1:5173**.
 
-Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes rebuilds the model
-and updates the viewer. Backend changes reload the API; frontend changes trigger Vite updates or a page reload.
-Failed CAD builds display an error and leave the last successful model visible.
+The page automatically regenerates the model on opening. Change **Cube size** and click **Apply** to regenerate it.
+Use **Regenerate** to retry after an error.
+
+Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
+model with the selected parameters. Backend changes reload the API, reset parameters to defaults and automatically
+regenerate. Frontend changes trigger Vite updates or a page reload. Parameters are kept in memory only.
+Failed regeneration displays an error and leaves the last successful model visible.
+
+Press Ctrl-C in each terminal to stop.
 
 ## Chrome and DevTools MCP
 
@@ -69,64 +76,41 @@ It uses `npx` to install and run `chrome-devtools-mcp@1.10.1` without a global n
 Trust this project in Codex and restart the Codex session after adding the configuration so it loads the project override.
 Start Chrome with `make chrome` before using the MCP's browser tools.
 
-## Test
+## Check and test
 
 ```sh
 make check       # Formatting, lint and type checks
-make test        # Python, geometry and API tests
-make test-ui     # Frontend tests
+make test        # Minimal Python and frontend smoke tests
 ```
 
-These checks do not require running services. To run only the Python unit tests:
+These commands do not require running services. Apply Python formatting with `make format`.
+The main validation is inspecting the model in the viewer and trying the changes you're working on.
+Automated tests provide a small sanity check of the plumbing and cube geometry.
 
-```sh
-uv run --locked pytest tests/unit/
-```
-
-Apply Python formatting with `make format`.
-
-## Build
+## Build and run without hot reload
 
 ```sh
 make build
 ```
 
-This builds the web interface and packages it with the Python application. The wheel and source distribution appear
-in `dist/`. Building the application does not start services or generate the campervan geometry.
-
-## Run in production mode
-
-Build, check and install the application into a separate `.venv-prod` environment:
+This compiles the web interface and packages the Python application into `dist/`. It does not generate CAD geometry.
+To run the built interface locally, start these commands in separate terminals:
 
 ```sh
-make install-prod
-```
-
-Then start the viewer and application in separate terminals:
-
-```sh
-# Terminal 1
-.venv-prod/bin/python -m ocp_viewer --host 127.0.0.1 --port 3939
+make viewer
 ```
 
 ```sh
-# Terminal 2
-.venv-prod/bin/campervan serve --host 127.0.0.1 --port 8000 --data-dir ./var-production
+make serve
 ```
 
-Open **http://127.0.0.1:8000**.
-
-Production mode serves the built web interface without development servers or source watchers. Parameter changes still
-rebuild the model. To apply source changes, stop the services, rerun `make install-prod`, and start them again.
-Your saved configurations and generated files live in `var-production/`, outside the installation.
-
-Press Ctrl-C in each terminal to stop. Use the `.venv-prod/bin/` commands above for production; `uv run` uses the
-development environment.
+Open **http://127.0.0.1:8000**. Vite is not needed in this mode. Parameter changes still regenerate the model.
+After changing source code, stop the application, run `make build` again and restart it with `make serve`.
 
 ## Troubleshooting
 
-- **Blank viewer:** check that the viewer terminal is running and open http://127.0.0.1:3939 directly.
-- **Build failed:** read the error in the application and backend terminal, correct the model, then run `make model`.
+- **Blank viewer:** check that the viewer terminal is running and open http://127.0.0.1:3939/viewer directly.
+- **Regeneration failed:** read the error in the application and backend terminal, correct the model, then click **Regenerate**.
 - **Port already in use:** stop the previous instance you started before launching another.
 - **Dependency or interpreter error:** check that Python 3.13 is available, then rerun `make setup`.
 

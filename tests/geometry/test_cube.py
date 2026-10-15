@@ -4,8 +4,8 @@ from campervan.cad.cube import make_cube
 from campervan.parameters import Parameters
 
 
-@pytest.mark.parametrize("size", [100.0, 150.0])
-def test_cube_is_one_named_valid_centered_solid(size: float) -> None:
+def test_cube_is_one_named_valid_centered_solid() -> None:
+    size = 150.0
     cube = make_cube(Parameters(size_mm=size))
     assert cube.label == "Cube"
     assert cube.is_valid
