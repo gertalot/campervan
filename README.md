@@ -116,7 +116,10 @@ After changing source code, stop the application, run `make build` again and res
 
 ## Troubleshooting
 
-- **Blank viewer:** check that the viewer terminal is running and open http://127.0.0.1:3939/viewer directly.
+- **OCP logo instead of the model:** keep only one app/viewer tab open. OCP sends updates to one active browser connection.
+  Close duplicate viewer tabs, reload your app page, then click **Regenerate** if needed. DevTools should inspect that
+  same tab, not open another viewer.
+- **Blank viewer:** inspect the viewer terminal or `logs/viewer.log`, then reload the app page.
 - **Regeneration failed:** read the error in the application and backend terminal, correct the model, then click **Regenerate**.
 - **Port already in use:** stop the previous instance you started before launching another.
 - **Dependency or interpreter error:** check that Python 3.13 is available, then rerun `make setup`.

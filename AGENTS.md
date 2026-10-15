@@ -50,8 +50,11 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 
 - Use Chrome DevTools MCP only. Start by listing pages and select the Campervan app by its URL
   (`http://127.0.0.1:5173` for development, `http://127.0.0.1:8000` for the built app). Leave unrelated tabs alone.
-- If needed, open the running app in a new tab in the connected Chrome. Never start its servers to enable inspection.
-  `make chrome` launches the project's debugging browser on port 9223; ask Gert to run it if browser access is missing.
+- Inspect Gert's existing app tab. **Do not open a second app or OCP viewer tab:** the installed OCP server sends geometry
+  to one active browser connection, and another tab can take it over, leaving Gert looking at the splash screen.
+- If Gert's tab is absent from the page list, report that MCP is connected to the wrong browser and get that connection
+  corrected. Do not substitute another tab or claim it proves Gert's viewer works. `make chrome` launches the project
+  debugging browser on port 9223; never start browsers or application services yourself.
 - Use a DOM snapshot to locate controls, a screenshot to inspect layout/model framing, and the console/network tools
   to inspect actual failures. The OCP viewer is the iframe at `http://127.0.0.1:3939/viewer`; inspect that frame too.
 - Try the relevant control and inspect the visible result. API publication status alone does not prove the model rendered.
