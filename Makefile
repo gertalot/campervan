@@ -1,4 +1,4 @@
-.PHONY: setup check test test-ui format
+.PHONY: setup check test test-ui format chrome
 
 setup:
 	uv sync --locked
@@ -18,3 +18,6 @@ test-ui:
 
 format:
 	uv run --locked ruff format .
+
+chrome:
+	bash scripts/launch-chrome.sh

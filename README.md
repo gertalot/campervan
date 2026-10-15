@@ -40,19 +40,34 @@ make dev-api
 make dev-ui
 ```
 
+```sh
+# Terminal 4: Chrome DevTools
+make chrome
+```
+
 Open **http://127.0.0.1:5173**.
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes rebuilds the model
 and updates the viewer. Backend changes reload the API; frontend changes trigger Vite updates or a page reload.
 Failed CAD builds display an error and leave the last successful model visible.
 
-To request a model rebuild yourself while the application is running:
+## Chrome and DevTools MCP
+
+Launch a separate Chrome instance for this project:
 
 ```sh
-make model
+make chrome
 ```
 
-Press Ctrl-C in each terminal to stop its service.
+Chrome exposes remote debugging at `http://127.0.0.1:9223` and stores its profile in
+`~/.config/chrome-devtools-campervan`. It can run alongside Qrtr's Chrome on port `9222` with its own profile.
+The command runs in the foreground; open the application URL in this Chrome instance once your services are running.
+If Chrome is installed in a nonstandard location, use `CHROME_BIN=/path/to/chrome make chrome`.
+
+The project-local `.codex/config.toml` configures Chrome DevTools MCP to connect to port `9223`.
+It uses `npx` to install and run `chrome-devtools-mcp@1.10.1` without a global npm installation.
+Trust this project in Codex and restart the Codex session after adding the configuration so it loads the project override.
+Start Chrome with `make chrome` before using the MCP's browser tools.
 
 ## Test
 
