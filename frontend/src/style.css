@@ -1,0 +1,38 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #21312e;
+  background: #f4f6f3;
+  font-synthesis: none;
+  line-height: 1.5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1600px; margin: auto; padding: 24px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0; }
+p { margin: 0; }
+.eyebrow { color: #526b64; font-size: 13px; margin-bottom: 4px; }
+.hint { color: #526b64; font-size: 13px; }
+.controls, form { display: flex; align-items: center; gap: 12px; }
+.controls { background: white; border: 1px solid #d7e0da; border-radius: 10px; padding: 16px; }
+form { flex: 1; }
+label { display: block; font-weight: 600; margin-bottom: 4px; }
+.input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+input { width: 180px; padding: 8px 10px; border: 1px solid #94a79f; border-radius: 5px; font: inherit; }
+button { padding: 10px 18px; border: 1px solid #235c4b; border-radius: 5px; background: #235c4b; color: white;
+  font: inherit; cursor: pointer; }
+button:hover { background: #194735; }
+button.secondary { background: white; color: #235c4b; }
+button.secondary:hover { background: #edf4ef; }
+button:focus-visible, input:focus-visible { outline: 3px solid #85baed; outline-offset: 2px; }
+.feedback { padding: 14px 2px; min-height: 52px; }
+#error { color: #9c2d24; margin-top: 4px; overflow-wrap: anywhere; }
+iframe { display: block; width: 100%; height: max(480px, calc(100dvh - 290px)); border: 1px solid #b8c8bf;
+  border-radius: 8px; background: white; }
+@media (max-width: 600px) {
+  main { padding: 16px; }
+  header, .controls { align-items: flex-start; flex-direction: column; gap: 14px; }
+  form { width: 100%; justify-content: space-between; }
+  input { width: 145px; }
+  iframe { height: 65dvh; min-height: 400px; }
+}
