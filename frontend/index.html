@@ -9,21 +9,29 @@
   <body>
     <header><h1>Campervan CAD</h1></header>
     <main>
-      <aside aria-label="Model parameters">
-        <h2>Vehicle reference</h2>
-        <p class="dimension-hint">Provisional dimensions · mm</p>
+      <aside id="sidebar" aria-label="Model parameters">
+        <div id="live-controls" aria-label="Live controls"></div>
+        <fieldset id="visibility">
+          <legend>Visibility</legend>
+          <label><input type="checkbox" name="vehicle" checked /> Vehicle</label>
+          <label><input type="checkbox" name="slats" checked /> Slats</label>
+        </fieldset>
+        <h2>Model parameters</h2>
+        <p class="dimension-hint">Dimensions · mm</p>
         <form id="parameters" novalidate>
-          <div id="fields"></div>
           <div class="actions">
             <button type="submit">Apply</button>
             <button id="regenerate" type="button">Regenerate</button>
           </div>
+          <div id="fields"></div>
         </form>
         <div class="feedback" aria-live="polite" aria-atomic="true">
           <p id="status" role="status">Connecting…</p>
           <p id="error" hidden></p>
         </div>
       </aside>
+      <div id="sidebar-resizer" role="separator" tabindex="0" aria-label="Sidebar width"
+        aria-orientation="vertical" aria-controls="sidebar"></div>
       <iframe id="viewer" title="Interactive CAD viewer" allow="fullscreen"></iframe>
     </main>
     <script type="module" src="/src/main.ts"></script>

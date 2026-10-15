@@ -15,7 +15,7 @@ def test_vehicle_references_have_named_parts_and_follow_dimensions():
         assert [group.label for group in references.children] == ["Floor outline", "Wheel arches", "Rear corners"]
         assert [part.label for part in arches.children] == ["Left wheel arch", "Right wheel arch"]
         assert [part.label for part in corners.children] == ["Left rear corner", "Right rear corner"]
-        assert len(model.leaves) == 5 and all(part.is_valid for part in model.leaves)
+        assert len(references.leaves) == 5 and all(part.is_valid for part in references.leaves)
         size = floor.bounding_box().size
         assert (size.X, size.Y, size.Z) == pytest.approx((p.cargo_width_mm, p.cargo_length_mm, 0))
         left, right = arches.children

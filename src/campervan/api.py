@@ -28,6 +28,10 @@ class MutationResponse(BaseModel):
     requested_revision: int
 
 
+class BedPosition(BaseModel):
+    bed_extension_percent: float = Field(ge=0, le=100, allow_inf_nan=False)
+
+
 def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -79,6 +83,11 @@ def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) ->
     async def regenerate(coordinator: CurrentCoordinator) -> MutationResponse:
         revision = await coordinator.accept()
         return MutationResponse(session_id=coordinator.session_id, requested_revision=revision)
+
+    @app.patch("/api/v1/model/position", response_model=BedPosition)
+    async def set_position(position: BedPosition, coordinator: CurrentCoordinator) -> BedPosition:
+        coordinator.set_bed_position(position.bed_extension_percent)
+        return position
 
     @app.get("/api/v1/model/status", response_model=ModelStatus)
     async def model_status(coordinator: CurrentCoordinator) -> ModelStatus:

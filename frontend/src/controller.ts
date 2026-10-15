@@ -6,6 +6,7 @@ export interface View {
   setViewerUrl(url: string): void;
   setStatus(status: ModelStatus): void;
   setError(message: string | null): void;
+  setBedPosition(percent: number): void;
 }
 export interface Clock {
   setTimeout(callback: () => void, delay: number): unknown;
@@ -20,9 +21,13 @@ export function createController(api: Api, view: View, clock: Clock) {
   let metadata: Record<string, FieldMetadata> | null = null;
   let current: ModelStatus | null = null;
   let inputError: string | null = null;
+  let bedPosition = 0;
 
   function show(status: ModelStatus) {
     if (current && status.requested_revision < current.requested_revision) return;
+    if (status.published_revision !== null && status.published_revision !== current?.published_revision) {
+      view.setBedPosition(bedPosition);
+    }
     current = status;
     view.setStatus(status);
     view.setError(status.error ? `Regeneration failed: ${status.error.message}` : inputError);
@@ -44,7 +49,7 @@ export function createController(api: Api, view: View, clock: Clock) {
         // The next poll reloads parameters before displaying this session's revisions.
         session = null;
       } else {
-        show({ ...accepted, published_revision: current?.published_revision ?? null,
+      show({ ...accepted, published_revision: current?.published_revision ?? null, model_paths: current?.model_paths ?? [],
           state: 'regenerating', error: null });
       }
       schedule();
@@ -66,6 +71,7 @@ export function createController(api: Api, view: View, clock: Clock) {
         current = null;
         inputError = null;
         view.setMetadata(metadata);
+        bedPosition = data.parameters.bed_extension_percent ?? 0;
         view.setParameters(data.parameters, true);
         status = await api.getStatus();
         if (!running || status.session_id !== session) return;
@@ -105,6 +111,14 @@ export function createController(api: Api, view: View, clock: Clock) {
       await request(() => api.putParameters(parameters));
     },
     async regenerate() { await request(() => api.regenerate()); },
+    previewPosition(percent: number) {
+      bedPosition = percent;
+      view.setBedPosition(percent);
+    },
+    async savePosition(percent: number) {
+      try { await api.setPosition(percent); }
+      catch (error) { showError(error); }
+    },
     stop() { running = false; clock.clearTimeout(timer); },
   };
 }

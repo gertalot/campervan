@@ -1,5 +1,7 @@
 import * as api from './api';
 import { createController } from './controller';
+import { setupSidebarResize } from './sidebar';
+import { setupVisibility } from './visibility';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -9,26 +11,48 @@ function element<T extends HTMLElement>(id: string): T {
 }
 const form = element<HTMLFormElement>('parameters');
 const fields = element('fields');
+const liveControls = element('live-controls');
 const inputs = new Map<string, HTMLInputElement>();
 const iframe = element<HTMLIFrameElement>('viewer');
+const updateVisibility = setupVisibility(element('visibility'), iframe);
 const status = element('status');
 const error = element('error');
 let dirty = false;
+setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
 const controller = createController(api, {
   setMetadata(metadata) {
     fields.replaceChildren();
+    liveControls.replaceChildren();
     inputs.clear();
-    const groups = new Map<string, HTMLFieldSetElement>();
+    const groups = new Map<string, HTMLDetailsElement>();
     for (const [name, field] of Object.entries(metadata)) {
-      let group = groups.get(field.group);
-      if (!group) {
-        group = document.createElement('fieldset');
-        const legend = document.createElement('legend');
-        legend.textContent = field.group;
-        group.append(legend);
-        fields.append(group);
-        groups.set(field.group, group);
+      let parent: HTMLElement = field.control === 'position' ? liveControls : fields;
+      const groupPath = field.control === 'position' ? [] : field.group;
+      for (let depth = 0; depth < groupPath.length; depth++) {
+        const title = groupPath[depth];
+        const path = JSON.stringify(groupPath.slice(0, depth + 1));
+        let group = groups.get(path);
+        if (!group) {
+          group = document.createElement('details');
+          group.dataset.group = path;
+          const storageKey = `campervan.parameter-group.${path}.collapsed`;
+          const oldTitles: Record<string, string> = {
+            'Vehicle references': 'Vehicle', 'Fixed frame': 'Plywood',
+            'Internal drawer-support frame': 'Drawer support', 'Sliding assembly': 'Bed', 'Angle brackets': 'Bed brackets',
+          };
+          const previousKey = `campervan.parameter-group.${oldTitles[title] ?? title}.collapsed`;
+          group.open = (localStorage.getItem(storageKey) ?? localStorage.getItem(previousKey)) !== 'true';
+          group.addEventListener('toggle', event => {
+            localStorage.setItem(storageKey, String(!(event.currentTarget as HTMLDetailsElement).open));
+          });
+          const heading = document.createElement('summary');
+          heading.textContent = title;
+          group.append(heading);
+          parent.append(group);
+          groups.set(path, group);
+        }
+        parent = group;
       }
       const row = document.createElement('div');
       row.className = 'parameter-row';
@@ -38,8 +62,8 @@ const controller = createController(api, {
       const input = document.createElement('input');
       input.id = name;
       input.name = name;
-      input.type = 'number';
-      input.step = 'any';
+      input.type = field.control === 'position' ? 'range' : 'number';
+      input.step = field.control === 'position' ? '0.1' : 'any';
       input.autocomplete = 'off';
       input.placeholder = String(field.default);
       const bounds: string[] = [];
@@ -55,14 +79,26 @@ const controller = createController(api, {
         bounds.length ? `${bounds.join(', ')} ${field.unit}.` : ''].filter(Boolean).join(' ');
       label.title = `${field.title}. ${tooltip}`;
       input.title = label.title;
-      row.append(label, input);
-      group.append(row);
+      if (field.control === 'position') {
+        row.classList.add('position-row');
+        const value = document.createElement('output');
+        value.htmlFor = name;
+        value.id = `${name}-value`;
+        row.append(label, value, input);
+        input.addEventListener('input', () => controller.previewPosition(input.valueAsNumber));
+        input.addEventListener('change', () => { void controller.savePosition(input.valueAsNumber); });
+      } else row.append(label, input);
+      parent.append(row);
       inputs.set(name, input);
     }
   },
   setParameters(parameters, reset) {
     if (reset || !dirty) {
-      for (const [name, input] of inputs) input.value = String(parameters[name]);
+      for (const [name, input] of inputs) {
+        input.value = String(parameters[name]);
+        const output = document.getElementById(`${name}-value`);
+        if (output) output.textContent = input.value;
+      }
       dirty = false;
     }
   },
@@ -70,7 +106,15 @@ const controller = createController(api, {
     // The node lives for the page lifetime. Status and errors never rerender it.
     if (iframe.getAttribute('src') !== url) iframe.src = url;
   },
+  setBedPosition(percent) {
+    const input = inputs.get('bed_extension_percent');
+    if (input) input.value = String(percent);
+    const output = document.getElementById('bed_extension_percent-value');
+    if (output) output.textContent = String(percent);
+    iframe.contentWindow?.postMessage({ type: 'set_relative_time', value: percent / 100 }, new URL(iframe.src).origin);
+  },
   setStatus(model) {
+    updateVisibility(model);
     const labels = {
       idle: 'Ready',
       regenerating: 'Regenerating…',
@@ -88,7 +132,9 @@ const controller = createController(api, {
   clearTimeout: handle => window.clearTimeout(handle as number),
 });
 
-form.addEventListener('input', () => { dirty = true; });
+form.addEventListener('input', event => {
+  if ((event.target as HTMLInputElement).type !== 'range') dirty = true;
+});
 form.addEventListener('submit', event => {
   event.preventDefault();
   void controller.apply(Object.fromEntries([...inputs].map(([name, input]) => [name, input.value])));

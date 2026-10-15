@@ -48,12 +48,24 @@ make chrome
 
 Open **http://127.0.0.1:5173**.
 
-The page automatically regenerates the model on opening. Edit vehicle dimensions in the sidebar and click **Apply**.
+The page automatically regenerates the model on opening. Edit dimensions in the sidebar and click **Apply**.
+Sidebar groups follow the model's assembly hierarchy. Click a heading to collapse it; the browser remembers that choice.
+Drag the sidebar's right edge to resize it; the browser remembers its width too.
 Use **Regenerate** to retry after an error.
 Regeneration refits the model with space around it.
 
 Vehicle references include the floor outline, rounded wheel arches and rear-corner surfaces, grouped in the viewer tree.
 Their dimensions are provisional Onshape values, ready to replace with measurements from the van.
+The long bench contains separate fixed plywood frames, a cab-end skin and a rear header. Its dimensions and construction
+thicknesses are editable in the sidebar. Platform height includes the allowance for slats above the frame.
+Live controls sit at the top of the sidebar, outside the collapsible dimension groups.
+The **Vehicle** and **Slats** visibility checkboxes show or hide those categories immediately, without regeneration.
+Slats includes both fixed and moving slats. Visibility preferences are saved in the browser and reapplied after regeneration.
+Drag **Bed extension (%)** for immediate movement: 0 is the retracted seat
+and 100 is the extended bed. No Apply or regeneration is needed. Releasing the slider saves its position in the API;
+dimension changes and CAD source edits regenerate geometry and retain that position. Intermediate values position
+the sliding assembly partway through its travel. Slats, guide ledges, the tie strip and
+reinforcing angles are separate parts in the viewer tree. Brackets are provisional hardware envelopes.
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
 model with the selected parameters. Backend changes reload the API, reset parameters to defaults and automatically

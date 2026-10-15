@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Literal
 from uuid import uuid4
 
@@ -11,7 +11,7 @@ from campervan.parameters import Parameters, default_parameters
 from campervan.settings import Settings
 from campervan.worker import regenerate_model
 
-Regenerate = Callable[[Parameters, Settings], Awaitable[None]]
+Regenerate = Callable[[Parameters, Settings], Awaitable[list[str]]]
 logger = logging.getLogger(__name__)
 
 
@@ -27,6 +27,7 @@ class ModelStatus:
     published_revision: int | None = None
     state: Literal["idle", "regenerating", "ready", "failed"] = "idle"
     error: ModelError | None = None
+    model_paths: list[str] = field(default_factory=list)
 
 
 class Coordinator:
@@ -50,13 +51,17 @@ class Coordinator:
     def status(self) -> ModelStatus:
         return self._status
 
+    def set_bed_position(self, percent: float) -> None:
+        """Retain the displayed pose for subsequent builds without regenerating geometry."""
+        self.parameters = self.parameters.model_copy(update={"bed_extension_percent": percent})
+
     async def _run(self) -> None:
         while True:
             revision = self._status.requested_revision
             error = None
             try:
-                await self._regenerate(self.parameters, self._settings)
-                self._status = replace(self._status, published_revision=revision)
+                paths = await self._regenerate(self.parameters, self._settings)
+                self._status = replace(self._status, published_revision=revision, model_paths=paths)
             except Exception as failure:
                 logger.error("Regeneration failed: %s", failure)
                 error = ModelError(message=str(failure))

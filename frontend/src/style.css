@@ -12,25 +12,46 @@ html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { display: grid; grid-template-rows: 32px minmax(0, 1fr); height: 100dvh; }
 header { display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #34373e; background: #22252a; }
 h1 { margin: 0; font-size: 12px; font-weight: 600; }
-main { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 0; }
+main { display: grid; grid-template-columns: var(--sidebar-width, 280px) 5px minmax(0, 1fr); min-height: 0; }
 aside { display: flex; flex-direction: column; min-height: 0; padding: 12px 10px 8px;
   border-right: 1px solid #34373e; overflow-y: auto; }
 h2 { margin: 0 0 4px; font-size: 11px; font-weight: 500; color: #929aa6; }
 .dimension-hint { margin-bottom: 14px; font-size: 10px; color: #929aa6; }
 p { margin: 0; }
-fieldset { min-width: 0; margin: 0 0 14px; padding: 0; border: 0; }
-legend { margin-bottom: 6px; padding: 0; font-size: 11px; font-weight: 600; color: #b6bec9; }
+#live-controls { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #34373e; }
+#live-controls:empty { display: none; }
+#visibility { margin: 0 0 12px; padding: 0 0 10px; border: 0; border-bottom: 1px solid #34373e; }
+#visibility legend { margin-bottom: 5px; padding: 0; font-size: 11px; color: #929aa6; }
+#visibility label { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; cursor: pointer; }
+#visibility input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
+#fields details { min-width: 0; margin-bottom: 10px; padding-left: 14px; }
+#fields details > .parameter-row { margin-left: 14px; }
+#fields .parameter-row + details { margin-top: 8px; }
+#fields summary { position: relative; list-style: none; padding: 3px 0; font-size: 11px; font-weight: 600; color: #b6bec9;
+  cursor: pointer; user-select: none; }
+#fields summary::-webkit-details-marker { display: none; }
+#fields summary::before { content: '▸'; position: absolute; left: -14px; width: 12px; text-align: center; }
+#fields details[open] > summary::before { content: '▾'; }
+#fields details[open] > summary { margin-bottom: 6px; }
+#fields summary:hover { color: #e3e7ed; }
 .parameter-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px; align-items: center;
   gap: 6px; margin-bottom: 5px; }
 label { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border: 1px solid #454a54;
   border-radius: 3px; background: #15171a; color: #e3e7ed; font: inherit; font-size: 11px; }
-.actions { display: flex; gap: 6px; margin-top: 8px; }
+.position-row output { text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
+.position-row input { grid-column: 1 / -1; height: 18px; margin: 0; padding: 0; border: 0; accent-color: #8bb7e8; }
+.actions { display: flex; gap: 6px; position: sticky; top: 0; z-index: 1;
+  margin-bottom: 10px; padding: 6px 0; background: #1b1d21; }
 button { height: 25px; padding: 2px 9px; border: 1px solid #454a54; border-radius: 3px;
   background: #2c3037; color: #d5d9df; font: inherit; font-size: 11px; cursor: pointer; }
 button[type="submit"] { border-color: #476484; background: #30465f; }
 button:hover { background: #3a424d; }
-button:focus-visible, input:focus-visible { outline: 1px solid #8bb7e8; outline-offset: 2px; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 1px solid #8bb7e8; outline-offset: 2px; }
 .feedback { margin-top: auto; padding-top: 16px; font-size: 11px; color: #929aa6; overflow-wrap: anywhere; }
 #error { margin-top: 6px; color: #f09a91; }
 iframe { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; border: 0; background: #202225; }
+#sidebar-resizer { cursor: col-resize; touch-action: none; background: #292d33; }
+#sidebar-resizer:hover, #sidebar-resizer:focus-visible { background: #8bb7e8; outline: none; }
+.resizing-sidebar, .resizing-sidebar * { cursor: col-resize !important; user-select: none; }
+.resizing-sidebar iframe { pointer-events: none; }
