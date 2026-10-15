@@ -17,19 +17,20 @@ def test_api_smoke():
         async with app.router.lifespan_context(app):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://test") as client:
                 initial = (await client.get("/api/v1/parameters")).json()
-                assert initial["parameters"] == {"size_mm": 100}
+                assert initial["parameters"]["cargo_width_mm"] == 1500
+                changed = initial["parameters"] | {"cargo_width_mm": 1600}
                 assert initial["session_id"]
                 assert (await client.get("/api/v1/model/status")).json()["state"] == "idle"
 
-                applied = await client.put("/api/v1/parameters", json={"size_mm": 150})
+                applied = await client.put("/api/v1/parameters", json=changed)
                 assert applied.status_code == 202
                 await asyncio.sleep(0)
                 assert (await client.get("/api/v1/model/status")).json()["published_revision"] == 1
-                assert (await client.get("/api/v1/parameters")).json()["parameters"] == {"size_mm": 150}
+                assert (await client.get("/api/v1/parameters")).json()["parameters"] == changed
 
-                invalid = await client.put("/api/v1/parameters", json={"size_mm": 0})
+                invalid = await client.put("/api/v1/parameters", json=changed | {"arch_radius_mm": 300})
                 assert invalid.status_code == 422
-                assert (await client.get("/api/v1/parameters")).json()["parameters"] == {"size_mm": 150}
+                assert (await client.get("/api/v1/parameters")).json()["parameters"] == changed
                 assert (await client.get("/api/v1/model/status")).json()["requested_revision"] == 1
 
                 regenerated = await client.post("/api/v1/model/regenerate")

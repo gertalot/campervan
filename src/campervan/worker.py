@@ -32,9 +32,9 @@ async def regenerate_model(parameters: Parameters, settings: Settings) -> None:
 
 
 if __name__ == "__main__":
-    from campervan.cad.cube import make_cube
-    from campervan.viewer import publish_cube
+    from campervan.cad.model import build_campervan
+    from campervan.viewer import publish_model
 
     parameters = Parameters.model_validate_json(sys.argv[1])
     settings = Settings(**json.loads(sys.argv[2]))
-    publish_cube(make_cube(parameters), settings)
+    publish_model(build_campervan(parameters), settings)

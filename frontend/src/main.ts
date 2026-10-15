@@ -8,7 +8,8 @@ function element<T extends HTMLElement>(id: string): T {
   return found as T;
 }
 const form = element<HTMLFormElement>('parameters');
-const input = element<HTMLInputElement>('size');
+const fields = element('fields');
+const inputs = new Map<string, HTMLInputElement>();
 const iframe = element<HTMLIFrameElement>('viewer');
 const status = element('status');
 const error = element('error');
@@ -16,26 +17,52 @@ let dirty = false;
 
 const controller = createController(api, {
   setMetadata(metadata) {
-    element('size-label').textContent = metadata.title;
-    element('unit').textContent = metadata.unit;
-    input.placeholder = String(metadata.default);
-    const bounds: string[] = [];
-    if (metadata.exclusiveMinimum !== undefined) bounds.push(`greater than ${metadata.exclusiveMinimum}`);
-    else if (metadata.minimum !== undefined) bounds.push(`at least ${metadata.minimum}`);
-    if (metadata.exclusiveMaximum !== undefined) bounds.push(`less than ${metadata.exclusiveMaximum}`);
-    else if (metadata.maximum !== undefined) bounds.push(`at most ${metadata.maximum}`);
-    element('bounds').textContent = `${bounds.join(', ')} ${metadata.unit}. Default: ${metadata.default} ${metadata.unit}.`;
-    input.title = element('bounds').textContent ?? '';
-    const minimum = metadata.minimum ?? metadata.exclusiveMinimum;
-    const maximum = metadata.maximum ?? metadata.exclusiveMaximum;
-    if (minimum !== undefined) input.min = String(minimum);
-    else input.removeAttribute('min');
-    if (maximum !== undefined) input.max = String(maximum);
-    else input.removeAttribute('max');
+    fields.replaceChildren();
+    inputs.clear();
+    const groups = new Map<string, HTMLFieldSetElement>();
+    for (const [name, field] of Object.entries(metadata)) {
+      let group = groups.get(field.group);
+      if (!group) {
+        group = document.createElement('fieldset');
+        const legend = document.createElement('legend');
+        legend.textContent = field.group;
+        group.append(legend);
+        fields.append(group);
+        groups.set(field.group, group);
+      }
+      const row = document.createElement('div');
+      row.className = 'parameter-row';
+      const label = document.createElement('label');
+      label.htmlFor = name;
+      label.textContent = field.title;
+      const input = document.createElement('input');
+      input.id = name;
+      input.name = name;
+      input.type = 'number';
+      input.step = 'any';
+      input.autocomplete = 'off';
+      input.placeholder = String(field.default);
+      const bounds: string[] = [];
+      if (field.exclusiveMinimum !== undefined) bounds.push(`greater than ${field.exclusiveMinimum}`);
+      else if (field.minimum !== undefined) bounds.push(`at least ${field.minimum}`);
+      if (field.exclusiveMaximum !== undefined) bounds.push(`less than ${field.exclusiveMaximum}`);
+      else if (field.maximum !== undefined) bounds.push(`at most ${field.maximum}`);
+      const minimum = field.minimum ?? field.exclusiveMinimum;
+      const maximum = field.maximum ?? field.exclusiveMaximum;
+      if (minimum !== undefined) input.min = String(minimum);
+      if (maximum !== undefined) input.max = String(maximum);
+      const tooltip = [field.description, `Default: ${field.default} ${field.unit}.`,
+        bounds.length ? `${bounds.join(', ')} ${field.unit}.` : ''].filter(Boolean).join(' ');
+      label.title = `${field.title}. ${tooltip}`;
+      input.title = label.title;
+      row.append(label, input);
+      group.append(row);
+      inputs.set(name, input);
+    }
   },
   setParameters(parameters, reset) {
     if (reset || !dirty) {
-      input.value = String(parameters.size_mm);
+      for (const [name, input] of inputs) input.value = String(parameters[name]);
       dirty = false;
     }
   },
@@ -61,10 +88,10 @@ const controller = createController(api, {
   clearTimeout: handle => window.clearTimeout(handle as number),
 });
 
-input.addEventListener('input', () => { dirty = true; });
+form.addEventListener('input', () => { dirty = true; });
 form.addEventListener('submit', event => {
   event.preventDefault();
-  void controller.apply(input.value);
+  void controller.apply(Object.fromEntries([...inputs].map(([name, input]) => [name, input.value])));
 });
 element('regenerate').addEventListener('click', () => { void controller.regenerate(); });
 window.addEventListener('pagehide', () => controller.stop());

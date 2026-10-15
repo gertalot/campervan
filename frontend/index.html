@@ -10,16 +10,10 @@
     <header><h1>Campervan CAD</h1></header>
     <main>
       <aside aria-label="Model parameters">
-        <h2>Parameters</h2>
+        <h2>Vehicle reference</h2>
+        <p class="dimension-hint">Provisional dimensions · mm</p>
         <form id="parameters" novalidate>
-          <div class="parameter-row">
-            <label id="size-label" for="size">Size</label>
-            <div class="input-row">
-              <input id="size" name="size_mm" type="number" step="any" aria-describedby="bounds" autocomplete="off" />
-              <span id="unit"></span>
-            </div>
-          </div>
-          <p id="bounds" class="visually-hidden">Connecting to the API…</p>
+          <div id="fields"></div>
           <div class="actions">
             <button type="submit">Apply</button>
             <button id="regenerate" type="button">Regenerate</button>

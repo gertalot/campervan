@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from campervan.settings import Settings
 
 if TYPE_CHECKING:
-    from build123d import Part
+    from build123d import Compound
 
 
-def publish_cube(cube: Part, settings: Settings) -> None:
+def publish_model(model: Compound, settings: Settings) -> None:
     import ocp_viewer  # type: ignore[import-untyped]
 
     ocp_viewer.set_port(settings.viewer_port, settings.viewer_host)
-    ocp_viewer.show(cube, names=["Cube"], reset_camera=ocp_viewer.Camera.RESET, zoom=0.65, theme="dark")
+    ocp_viewer.show(model, reset_camera=ocp_viewer.Camera.RESET, zoom=0.65, theme="dark")

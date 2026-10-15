@@ -98,9 +98,8 @@ The nominal rear-left floor corner is `(0, 0, 0)`. The simplified cargo rectangl
 **All dimensions in this document are millimetres.** FeatureScript uses explicit unitful values, including some
 centimetre expressions. Convert them once into the Python model's chosen millimetre convention.
 
-The target architecture currently suggests X longitudinal and Y transverse. Resolve this difference explicitly before
-porting placements. Preserving the current axes initially makes comparisons easier. If changing axes, define and test
-one transform, including handedness, hinge directions and drawer motion; a bare X/Y swap changes handedness.
+The build123d model and target architecture preserve these axes. Keep placements, hinge directions and drawer motion
+consistent with this convention; a bare X/Y swap would change handedness.
 
 ### Baseline parameters
 

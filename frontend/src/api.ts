@@ -1,8 +1,10 @@
-export interface Parameters { size_mm: number }
-export interface SizeMetadata {
+export type Parameters = Record<string, number>;
+export interface FieldMetadata {
   title: string;
   default: number;
   unit: string;
+  group: string;
+  description?: string;
   minimum?: number;
   exclusiveMinimum?: number;
   maximum?: number;
@@ -11,7 +13,7 @@ export interface SizeMetadata {
 export interface ParameterResponse {
   session_id: string;
   parameters: Parameters;
-  schema: { properties: { size_mm: SizeMetadata } };
+  schema: { properties: Record<string, FieldMetadata> };
   viewer_url: string;
 }
 export interface MutationResponse { session_id: string; requested_revision: number }

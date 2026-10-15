@@ -48,9 +48,12 @@ make chrome
 
 Open **http://127.0.0.1:5173**.
 
-The page automatically regenerates the model on opening. Change **Cube size** and click **Apply** to regenerate it.
+The page automatically regenerates the model on opening. Edit vehicle dimensions in the sidebar and click **Apply**.
 Use **Regenerate** to retry after an error.
 Regeneration refits the model with space around it.
+
+Vehicle references include the floor outline, rounded wheel arches and rear-corner surfaces, grouped in the viewer tree.
+Their dimensions are provisional Onshape values, ready to replace with measurements from the van.
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
 model with the selected parameters. Backend changes reload the API, reset parameters to defaults and automatically
@@ -89,7 +92,7 @@ make test        # Minimal Python and frontend smoke tests
 
 These commands do not require running services. Apply Python formatting with `make format`.
 The main validation is inspecting the model in the viewer and trying the changes you're working on.
-Automated tests provide a small sanity check of the plumbing and cube geometry.
+Automated tests provide a small sanity check of the plumbing and reference geometry.
 
 ## Build and run without hot reload
 
@@ -122,5 +125,5 @@ After changing source code, stop the application, run `make build` again and res
 
 - [Existing campervan design](docs/what-we-built-in-onshape.md)
 - [Application architecture](docs/ARCHTECTURE.md)
-- [Scaffolding proposal](docs/scaffolding-proposal.md)
+- [CAD model conventions](docs/cad-model.md)
 - [Current FeatureScript](docs/fs/nv200-interior.fs)

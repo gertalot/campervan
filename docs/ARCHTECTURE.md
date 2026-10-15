@@ -166,13 +166,13 @@ Use millimetres as the standard modelling unit.
 
 Use a consistent global coordinate system.
 
-Suggested convention:
+Model convention (preserved from the Onshape model):
 
-- X: Vehicle longitudinal direction
-- Y: Vehicle transverse direction
+- X: Across the vehicle, from the long-bench wall toward the cabinet wall
+- Y: Along the vehicle, from the rear doors toward the cab
 - Z: Vertical direction
 
-Define the coordinate origin explicitly.
+The nominal rear-left floor corner is `(0, 0, 0)`.
 
 Prefer meaningful dimensions and reference positions rather than unexplained numeric constants.
 

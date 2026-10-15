@@ -9,6 +9,7 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 - [Existing campervan design](docs/what-we-built-in-onshape.md): the NV200 interior, geometry, parameters and design intent
   to carry over from Onshape. The current FeatureScript sources are in `docs/fs/`.
 - [README](README.md): setup and the commands to develop, build and run the application.
+- [CAD model conventions](docs/cad-model.md): native assembly structure, coordinates and geometry source mapping.
 - Follow Gert's latest decisions and this file when older design or Flow documents prescribe heavier machinery.
 
 ## Validation

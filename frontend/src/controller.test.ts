@@ -4,10 +4,12 @@ import type { Api, ModelStatus, ParameterResponse } from './api';
 
 function setup() {
   const parameters: ParameterResponse = {
-    session_id: 'first', parameters: { size_mm: 100 }, viewer_url: 'http://127.0.0.1:3939/viewer',
-    schema: { properties: { size_mm: {
-      title: 'Cube size', default: 100, exclusiveMinimum: 0, maximum: 1000, unit: 'mm',
-    } } },
+    session_id: 'first', parameters: { cargo_width_mm: 1500, cargo_length_mm: 1860 },
+    viewer_url: 'http://127.0.0.1:3939/viewer',
+    schema: { properties: {
+      cargo_width_mm: { title: 'Cargo width', default: 1500, exclusiveMinimum: 0, unit: 'mm', group: 'Vehicle' },
+      cargo_length_mm: { title: 'Cargo length', default: 1860, exclusiveMinimum: 0, unit: 'mm', group: 'Vehicle' },
+    } },
   };
   const status: ModelStatus = {
     session_id: 'first', requested_revision: 0, published_revision: null, state: 'idle', error: null,
@@ -34,17 +36,17 @@ it('initializes the viewer and requests regeneration', async () => {
   const { api, view, controller, parameters } = setup();
   await controller.start();
   expect(view.setViewerUrl).toHaveBeenCalledWith(parameters.viewer_url);
-  expect(view.setParameters).toHaveBeenCalledWith({ size_mm: 100 }, true);
+  expect(view.setParameters).toHaveBeenCalledWith(parameters.parameters, true);
   expect(api.regenerate).toHaveBeenCalledTimes(1);
   controller.stop();
 });
 
-it('Apply submits a numeric size without an extra regeneration request', async () => {
+it('Apply submits numeric dimensions without an extra regeneration request', async () => {
   const { api, controller } = setup();
   await controller.start();
   api.regenerate.mockClear();
-  await controller.apply('150');
-  expect(api.putParameters).toHaveBeenCalledExactlyOnceWith({ size_mm: 150 });
+  await controller.apply({ cargo_width_mm: '1520', cargo_length_mm: '1900' });
+  expect(api.putParameters).toHaveBeenCalledExactlyOnceWith({ cargo_width_mm: 1520, cargo_length_mm: 1900 });
   expect(api.regenerate).not.toHaveBeenCalled();
   controller.stop();
 });
@@ -56,7 +58,7 @@ it('refreshes parameters and regenerates once after an API session restart', asy
   api.getStatus.mockResolvedValue({ ...status, session_id: 'second' });
   api.regenerate.mockResolvedValue({ session_id: 'second', requested_revision: 1 });
   await vi.advanceTimersByTimeAsync(500);
-  expect(view.setParameters).toHaveBeenLastCalledWith({ size_mm: 100 }, true);
+  expect(view.setParameters).toHaveBeenLastCalledWith(parameters.parameters, true);
   expect(view.setStatus).toHaveBeenLastCalledWith(expect.objectContaining({ session_id: 'second' }));
   await vi.advanceTimersByTimeAsync(1000);
   expect(api.regenerate).toHaveBeenCalledTimes(2);

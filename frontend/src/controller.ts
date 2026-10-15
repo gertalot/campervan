@@ -1,7 +1,7 @@
-import type { Api, ModelStatus, MutationResponse, Parameters, SizeMetadata } from './api';
+import type { Api, FieldMetadata, ModelStatus, MutationResponse, Parameters } from './api';
 
 export interface View {
-  setMetadata(metadata: SizeMetadata): void;
+  setMetadata(metadata: Record<string, FieldMetadata>): void;
   setParameters(parameters: Parameters, reset: boolean): void;
   setViewerUrl(url: string): void;
   setStatus(status: ModelStatus): void;
@@ -17,7 +17,7 @@ export function createController(api: Api, view: View, clock: Clock) {
   let polling = false;
   let timer: unknown;
   let session: string | null = null;
-  let metadata: SizeMetadata | null = null;
+  let metadata: Record<string, FieldMetadata> | null = null;
   let current: ModelStatus | null = null;
   let inputError: string | null = null;
 
@@ -62,7 +62,7 @@ export function createController(api: Api, view: View, clock: Clock) {
         if (!running) return;
         if (!metadata) view.setViewerUrl(data.viewer_url);
         session = data.session_id;
-        metadata = data.schema.properties.size_mm;
+        metadata = data.schema.properties;
         current = null;
         inputError = null;
         view.setMetadata(metadata);
@@ -84,20 +84,25 @@ export function createController(api: Api, view: View, clock: Clock) {
       running = true;
       await poll();
     },
-    async apply(raw: string) {
+    async apply(raw: Record<string, string>) {
       if (!metadata) { view.setError('Parameters are unavailable.'); return; }
-      const value = Number(raw);
-      const invalid = !raw.trim() || !Number.isFinite(value)
-        || (metadata.minimum !== undefined && value < metadata.minimum)
-        || (metadata.exclusiveMinimum !== undefined && value <= metadata.exclusiveMinimum)
-        || (metadata.maximum !== undefined && value > metadata.maximum)
-        || (metadata.exclusiveMaximum !== undefined && value >= metadata.exclusiveMaximum);
-      if (invalid) {
-        inputError = `${metadata.title}: enter a number within the displayed bounds.`;
-        view.setError(inputError);
-        return;
+      const parameters: Parameters = {};
+      for (const [name, field] of Object.entries(metadata)) {
+        const text = raw[name] ?? '';
+        const value = Number(text);
+        const invalid = !text.trim() || !Number.isFinite(value)
+          || (field.minimum !== undefined && value < field.minimum)
+          || (field.exclusiveMinimum !== undefined && value <= field.exclusiveMinimum)
+          || (field.maximum !== undefined && value > field.maximum)
+          || (field.exclusiveMaximum !== undefined && value >= field.exclusiveMaximum);
+        if (invalid) {
+          inputError = `${field.title}: enter a number within the displayed bounds.`;
+          view.setError(inputError);
+          return;
+        }
+        parameters[name] = value;
       }
-      await request(() => api.putParameters({ size_mm: value }));
+      await request(() => api.putParameters(parameters));
     },
     async regenerate() { await request(() => api.regenerate()); },
     stop() { running = false; clock.clearTimeout(timer); },
