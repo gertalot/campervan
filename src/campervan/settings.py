@@ -14,7 +14,6 @@ class Settings:
     ui_host: str = "127.0.0.1"
     ui_port: int = 5173
     development: bool = False
-    publication_timeout_s: float = 30.0
 
     @property
     def viewer_url(self) -> str:

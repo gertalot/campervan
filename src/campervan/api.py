@@ -1,23 +1,19 @@
 """Versioned parameter and model routes, with lifespan-owned regeneration."""
 
 import asyncio
-import math
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from campervan.coordinator import Coordinator, ModelStatus, WorkerFactory
+from campervan.coordinator import Coordinator, ModelStatus, Regenerate
 from campervan.parameters import Parameters, parameter_schema
 from campervan.settings import Settings, load_settings
-from campervan.worker import start_worker
+from campervan.worker import regenerate_model
 
 
 class ParameterResponse(BaseModel):
@@ -32,25 +28,10 @@ class MutationResponse(BaseModel):
     requested_revision: int
 
 
-def _validation_json(value: object) -> object:
-    """Normalize error inputs before applying FastAPI's standard JSON encoder."""
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    if isinstance(value, float) and not math.isfinite(value):
-        return str(value)
-    if isinstance(value, dict):
-        return {key: _validation_json(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_validation_json(item) for item in value]
-    if isinstance(value, Exception):
-        return str(value)
-    return value
-
-
-def build_app(settings: Settings, worker_factory: WorkerFactory = start_worker) -> FastAPI:
+def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        coordinator = Coordinator(settings, worker_factory)
+        coordinator = Coordinator(settings, regenerator)
         app.state.coordinator = coordinator
         stop = asyncio.Event()
         watcher = None
@@ -73,10 +54,6 @@ def build_app(settings: Settings, worker_factory: WorkerFactory = start_worker) 
                 await coordinator.close()
 
     app = FastAPI(lifespan=lifespan)
-
-    @app.exception_handler(RequestValidationError)
-    async def validation_error(request: Request, error: RequestValidationError) -> JSONResponse:
-        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(_validation_json(error.errors()))})
 
     def get_coordinator(request: Request) -> Coordinator:
         coordinator: Coordinator = request.app.state.coordinator

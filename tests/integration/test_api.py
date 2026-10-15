@@ -8,23 +8,12 @@ from campervan.api import build_app
 from campervan.settings import Settings
 
 
-class ImmediateWorker:
-    async def wait_generated(self):
-        pass
-
-    async def publish(self):
-        pass
-
-    async def close(self):
-        pass
-
-
 def test_api_smoke():
-    async def worker_factory(parameters, settings):
-        return ImmediateWorker()
+    async def regenerate(parameters, settings):
+        pass
 
     async def scenario():
-        app = build_app(Settings(), worker_factory)
+        app = build_app(Settings(), regenerate)
         async with app.router.lifespan_context(app):
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://test") as client:
                 initial = (await client.get("/api/v1/parameters")).json()

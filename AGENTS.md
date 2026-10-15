@@ -18,6 +18,8 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 
 - Implement the smallest coherent solution. Avoid production infrastructure, deployment workflows and speculative
   abstractions. Existing Flow documents are background; these instructions supersede their heavier test requirements.
+- Use library defaults and direct calls. Do not add custom readiness gates, retries, timeouts or defensive lifecycle
+  protocols without a demonstrated need. Gert can see whether the viewer is working; display real errors plainly.
 - Use Python 3.13 through the project's uv environment (`uv run --locked ...`). Use the existing Make commands.
 - Keep README instructions practical: how to set up, develop, check, build and run locally.
 - Never start services yourself. Ask Gert to start them. Use only Chrome DevTools MCP for browser work.

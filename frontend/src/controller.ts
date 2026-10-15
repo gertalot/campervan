@@ -1,4 +1,3 @@
-import { ApiError } from './api';
 import type { Api, ModelStatus, MutationResponse, Parameters, SizeMetadata } from './api';
 
 export interface View {
@@ -15,155 +14,78 @@ export interface Clock {
 
 export function createController(api: Api, view: View, clock: Clock) {
   let running = false;
-  let generation = 0;
+  let polling = false;
   let timer: unknown;
-  let pollingGeneration: number | null = null;
-  let initialization: Promise<void> | null = null;
-  let initializingSession: string | null = null;
   let session: string | null = null;
   let metadata: SizeMetadata | null = null;
   let current: ModelStatus | null = null;
-  let unavailable = false;
-  let viewerInitialized = false;
-  let requestError: string | null = null;
-  const sessions = new Set<string>();
-  const initializedSessions = new Set<string>();
-  const valid = (token: number) => running && token === generation;
+  let inputError: string | null = null;
 
-  function renderStatus(next: ModelStatus) {
-    // Only compare revisions after the session has been established by metadata.
-    if (current && next.requested_revision < current.requested_revision) return;
-    current = next;
-    view.setStatus(next);
-    const error = next.error;
-    view.setError(error
-      ? `${error.stage === 'publication' ? 'Publication' : 'Generation'} failed: ${error.message}`
-      : requestError);
+  function show(status: ModelStatus) {
+    if (current && status.requested_revision < current.requested_revision) return;
+    current = status;
+    view.setStatus(status);
+    view.setError(status.error ? `Regeneration failed: ${status.error.message}` : inputError);
   }
-
-  function fail(error: unknown) {
-    requestError = error instanceof Error ? error.message : 'Request failed';
-    if (!(error instanceof ApiError) || error.status >= 500) {
-      unavailable = true;
-      requestError = `API unavailable: ${requestError}. Retrying connection…`;
-    }
-    view.setError(requestError);
-  }
-
-  function schedule() {
+  function schedule(delay = current?.state === 'regenerating' ? 500 : 2000) {
     clock.clearTimeout(timer);
-    if (!running || initialization || pollingGeneration === generation) return;
-    timer = clock.setTimeout(() => { void poll(); },
-      !unavailable && current?.state === 'regenerating' ? 500 : 2000);
+    if (running && !polling) timer = clock.setTimeout(() => { void poll(); }, delay);
   }
-
-  async function accept(response: MutationResponse, token: number) {
-    if (!valid(token)) return;
-    if (response.session_id !== session) {
-      if (!sessions.has(response.session_id)) await beginInitialization(response.session_id);
-      return;
-    }
-    requestError = null;
-    renderStatus({
-      ...response, published_revision: current?.published_revision ?? null, state: 'regenerating', error: null,
-    });
+  function showError(error: unknown) {
+    view.setError(error instanceof Error ? error.message : String(error));
   }
-
-  async function initialize(token: number) {
-    // A restart between these two GETs needs a fresh matching pair before acting.
-    while (valid(token)) {
-      const data = await api.getParameters();
-      if (!valid(token)) return;
-      if (data.session_id !== session && sessions.has(data.session_id)) return;
-      const changed = session !== data.session_id;
-      session = data.session_id;
-      sessions.add(session);
-      if (changed) current = null;
-      metadata = data.schema.properties.size_mm;
-      view.setMetadata(metadata);
-      view.setParameters(data.parameters, changed);
-      if (!viewerInitialized) {
-        view.setViewerUrl(data.viewer_url);
-        viewerInitialized = true;
-      }
-      const state = await api.getStatus();
-      if (!valid(token)) return;
-      if (state.session_id !== session) {
-        if (sessions.has(state.session_id)) return;
-        continue;
-      }
-      unavailable = false;
-      requestError = null;
-      renderStatus(state);
-      if (!initializedSessions.has(session)) {
-        // Record the attempt before POST: failure must not cause an idle-poll POST loop.
-        initializedSessions.add(session);
-        if (current?.state !== 'regenerating') {
-          const accepted = await api.regenerate();
-          if (!valid(token)) return;
-          if (accepted.session_id !== session) {
-            if (sessions.has(accepted.session_id)) return;
-            continue;
-          }
-          await accept(accepted, token);
-        }
-      }
-      return;
-    }
-  }
-
-  function beginInitialization(targetSession: string | null = null): Promise<void> {
-    if (initialization && (!targetSession || targetSession === initializingSession)) return initialization;
-    clock.clearTimeout(timer);
-    const token = ++generation;
-    initializingSession = targetSession;
-    const operation = initialize(token).catch(error => {
-      if (valid(token)) fail(error);
-    }).finally(() => {
-      if (valid(token)) {
-        initialization = null;
-        initializingSession = null;
-        schedule();
-      }
-    });
-    initialization = operation;
-    return operation;
-  }
-
-  async function poll() {
-    const token = generation;
-    if (!valid(token)) return;
-    if (unavailable) { await beginInitialization(); return; }
-    pollingGeneration = token;
-    try {
-      const state = await api.getStatus();
-      if (!valid(token)) return;
-      if (state.session_id === session) renderStatus(state);
-      else if (!sessions.has(state.session_id)) await beginInitialization(state.session_id);
-    } catch (error) {
-      if (valid(token)) fail(error);
-    } finally {
-      if (pollingGeneration === token) pollingGeneration = null;
-      if (valid(token)) schedule();
-    }
-  }
-
-  async function mutate(operation: () => Promise<MutationResponse>) {
+  async function request(operation: () => Promise<MutationResponse>) {
     if (!running) return;
-    const token = generation;
-    try { await accept(await operation(), token); }
-    catch (error) { if (valid(token)) fail(error); }
-    finally { if (valid(token)) schedule(); }
+    try {
+      const accepted = await operation();
+      if (!running) return;
+      inputError = null;
+      if (accepted.session_id !== session) {
+        // The next poll reloads parameters before displaying this session's revisions.
+        session = null;
+      } else {
+        show({ ...accepted, published_revision: current?.published_revision ?? null,
+          state: 'regenerating', error: null });
+      }
+      schedule();
+    } catch (error) { showError(error); schedule(2000); }
   }
-
+  async function poll() {
+    if (!running || polling) return;
+    polling = true;
+    let failed = false;
+    try {
+      let status = await api.getStatus();
+      if (!running) return;
+      if (status.session_id !== session) {
+        const data = await api.getParameters();
+        if (!running) return;
+        if (!metadata) view.setViewerUrl(data.viewer_url);
+        session = data.session_id;
+        metadata = data.schema.properties.size_mm;
+        current = null;
+        inputError = null;
+        view.setMetadata(metadata);
+        view.setParameters(data.parameters, true);
+        status = await api.getStatus();
+        if (!running || status.session_id !== session) return;
+        show(status);
+        if (status.state !== 'regenerating') await request(() => api.regenerate());
+      } else show(status);
+    } catch (error) { failed = true; showError(error); }
+    finally {
+      polling = false;
+      schedule(failed ? 2000 : undefined);
+    }
+  }
   return {
     async start() {
-      if (running) { await initialization; return; }
+      if (running) return;
       running = true;
-      await beginInitialization();
+      await poll();
     },
     async apply(raw: string) {
-      if (!metadata) { view.setError('Parameters are unavailable. Reconnect before applying an edit.'); return; }
+      if (!metadata) { view.setError('Parameters are unavailable.'); return; }
       const value = Number(raw);
       const invalid = !raw.trim() || !Number.isFinite(value)
         || (metadata.minimum !== undefined && value < metadata.minimum)
@@ -171,20 +93,13 @@ export function createController(api: Api, view: View, clock: Clock) {
         || (metadata.maximum !== undefined && value > metadata.maximum)
         || (metadata.exclusiveMaximum !== undefined && value >= metadata.exclusiveMaximum);
       if (invalid) {
-        requestError = `${metadata.title}: enter a finite number within the displayed bounds.`;
-        view.setError(requestError);
+        inputError = `${metadata.title}: enter a number within the displayed bounds.`;
+        view.setError(inputError);
         return;
       }
-      await mutate(() => api.putParameters({ size_mm: value }));
+      await request(() => api.putParameters({ size_mm: value }));
     },
-    async regenerate() {
-      await mutate(() => api.regenerate());
-    },
-    stop() {
-      running = false;
-      generation++;
-      initialization = null;
-      clock.clearTimeout(timer);
-    },
+    async regenerate() { await request(() => api.regenerate()); },
+    stop() { running = false; clock.clearTimeout(timer); },
   };
 }

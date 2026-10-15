@@ -18,7 +18,7 @@ export interface MutationResponse { session_id: string; requested_revision: numb
 export interface ModelStatus extends MutationResponse {
   published_revision: number | null;
   state: 'idle' | 'regenerating' | 'ready' | 'failed';
-  error: { stage: 'generation' | 'publication'; message: string } | null;
+  error: { message: string } | null;
 }
 export interface Api {
   getParameters(): Promise<ParameterResponse>;

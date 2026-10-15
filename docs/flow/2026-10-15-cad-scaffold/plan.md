@@ -17,6 +17,12 @@ Vite/TypeScript, pytest/HTTPX, Ruff/mypy, Vitest, npm and Make.
 
 ## User scope correction — 2026-10-15
 
+The user also explicitly removed defensive runtime machinery after the viewer readiness gate blocked a working viewer.
+Regeneration now runs CAD and OCP `show()` directly in a fresh Python subprocess. Runs are serial; edits during a run
+replace the parameters for the next run. There is no readiness polling, publication authorization handshake, custom
+publication timeout, cancellation framework or frontend session-history protocol. FastAPI handles validation errors.
+These decisions supersede the older runtime implementation details in Tasks 2–4 and the original spec.
+
 This is a low-stakes, single-user, local hobby project that will never be deployed. Root `AGENTS.md` and the user's
 latest instructions supersede the original test matrices and production acceptance requirements below.
 
