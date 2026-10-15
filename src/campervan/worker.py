@@ -129,11 +129,15 @@ class Worker:
         """Terminate/reap once and finish outstanding receives, including on cancellation."""
         if self._close_task is None:
             self._close_task = asyncio.create_task(self._close())
-        try:
-            await asyncio.shield(self._close_task)
-        except asyncio.CancelledError:
-            await asyncio.shield(self._close_task)
-            raise
+        cancellation = None
+        while not self._close_task.done():
+            try:
+                await asyncio.shield(self._close_task)
+            except asyncio.CancelledError as error:
+                cancellation = error
+        self._close_task.result()
+        if cancellation is not None:
+            raise cancellation
 
 
 async def start_worker(parameters: Parameters, settings: Settings) -> Worker:

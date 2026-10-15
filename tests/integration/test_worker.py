@@ -169,3 +169,57 @@ def test_parent_eof_abandons_held_shape_without_publication(monkeypatch):
         assert_closed(worker)
 
     asyncio.run(run())
+
+
+def test_close_retains_ownership_through_repeated_cancellation():
+    import multiprocessing
+    import threading
+
+    class ProcessAwaitingReap:
+        def __init__(self):
+            self.join_entered = threading.Event()
+            self.allow_reap = threading.Event()
+            self.alive = True
+            self.exitcode = None
+
+        def is_alive(self):
+            return self.alive
+
+        def terminate(self):
+            pass
+
+        def join(self, timeout=None):
+            self.join_entered.set()
+            if self.allow_reap.wait(timeout):
+                self.alive = False
+                self.exitcode = 0
+
+        def kill(self):
+            self.allow_reap.set()
+
+    async def run():
+        process = ProcessAwaitingReap()
+        parent, child = multiprocessing.get_context("spawn").Pipe()
+        child.close()
+        worker = modules().Worker(process, parent, Settings())
+        close = asyncio.create_task(worker.close())
+        try:
+            assert await asyncio.to_thread(process.join_entered.wait, 2)
+            for _ in range(3):
+                close.cancel()
+                # Let the cancellation reach close's current shield await.
+                await asyncio.sleep(0)
+                assert not close.done(), "close abandoned cleanup while the child was still alive"
+                assert process.is_alive()
+                assert not parent.closed
+            process.allow_reap.set()
+            with pytest.raises(asyncio.CancelledError):
+                await close
+            assert_closed(worker)
+        finally:
+            process.allow_reap.set()
+            await asyncio.gather(close, return_exceptions=True)
+            if worker._close_task is not None:
+                await worker._close_task
+
+    asyncio.run(run())
