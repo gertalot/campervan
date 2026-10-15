@@ -21,3 +21,14 @@ format:
 
 chrome:
 	bash scripts/launch-chrome.sh
+
+.PHONY: viewer dev-api dev-ui
+
+viewer:
+	uv run --locked campervan viewer
+
+dev-api:
+	uv run --locked campervan dev-api
+
+dev-ui:
+	uv run --locked campervan dev-ui
