@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1170" viewBox="0 0 1200 1170" role="img" aria-labelledby="title desc">
+  <title id="title">Proposed mattress layout and cutting plan</title>
+  <desc id="desc">All dimensions in centimetres. A 110 by 186 bed consists of a rear cushion 110 by 58,
+    a long seat cushion 128 by 60, and two infill cushions each 128 by 25. The latter three pieces
+    fit into the existing 140 by 128 mattress section without rotating or shortening its 128 cm length.
+    The rear cushion fits into the existing 140 by 58 section. Daytime backrest positions are not specified.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#435264"/>
+    </marker>
+    <pattern id="waste" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#eef0f3"/>
+      <path d="M-2 2L2-2 M0 10L10 0 M8 12L12 8" stroke="#ccd2d9" stroke-width="1"/>
+    </pattern>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #243449; }
+      .heading { font-size: 24px; font-weight: 700; }
+      .label { font-size: 17px; font-weight: 700; }
+      .note { font-size: 17px; }
+      .small { font-size: 15px; }
+      .piece { stroke: #354456; stroke-width: 2; }
+      .dim { fill: none; stroke: #435264; stroke-width: 1.4; marker-start: url(#arrow); marker-end: url(#arrow); }
+      .ext { stroke: #9ca7b4; stroke-width: 1; }
+      .blue { fill: #b9dafa; }
+      .orange { fill: #ffdbac; }
+      .green { fill: #bfe5ca; }
+      .purple { fill: #ddd0f2; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1170" fill="#ffffff"/>
+  <text x="48" y="48" font-size="30" font-weight="700">Proposed mattress sections</text>
+  <text x="48" y="80" class="note">All dimensions in cm · Proposed foam sizes · Bed footprint only, not the whole cargo bay</text>
+
+  <text x="48" y="128" class="heading">1. L-shaped seats — top view</text>
+  <text x="640" y="128" class="heading">2. Night mode — same four cushions</text>
+
+  <!-- Both top views use 1.8 pixels per centimetre. Rear of van is at the top. -->
+  <text x="199" y="156" class="small" text-anchor="middle">REAR OF VAN</text>
+  <rect x="100" y="170" width="198" height="104.4" class="piece orange"/>
+  <text x="199" y="213" class="label" text-anchor="middle">D · Rear seat</text>
+  <text x="199" y="240" class="label" text-anchor="middle">110 × 58</text>
+  <rect x="100" y="274.4" width="108" height="230.4" class="piece blue"/>
+  <g transform="translate(154 389.6) rotate(-90)">
+    <text y="-9" class="label" text-anchor="middle">A · Long seat</text>
+    <text y="18" class="label" text-anchor="middle">128 × 60</text>
+  </g>
+  <rect x="208" y="274.4" width="90" height="230.4" fill="#f6f7f9" stroke="#a7b2bf" stroke-dasharray="6 5"/>
+  <g transform="translate(253 389.6) rotate(-90)">
+    <text y="-9" class="label" text-anchor="middle">Opening</text>
+    <text y="18" class="label" text-anchor="middle">128 × 50</text>
+  </g>
+  <line x1="100" y1="513" x2="100" y2="537" class="ext"/>
+  <line x1="298" y1="513" x2="298" y2="537" class="ext"/>
+  <line x1="100" y1="529" x2="298" y2="529" class="dim"/>
+  <text x="199" y="553" class="label" text-anchor="middle">110 overall</text>
+  <text x="333" y="205" class="note">A + D form the L-shaped seats.</text>
+  <text x="333" y="245" class="note">B + C fill the opening at night.</text>
+  <text x="333" y="285" class="note">Their daytime backrest positions</text>
+  <text x="333" y="309" class="note">are not shown or settled here.</text>
+  <text x="100" y="583" class="small">Seat lengths: 128 + 58 = 186</text>
+
+  <text x="809" y="156" class="small" text-anchor="middle">REAR OF VAN</text>
+  <rect x="710" y="170" width="198" height="104.4" class="piece orange"/>
+  <text x="809" y="213" class="label" text-anchor="middle">D · 110 × 58</text>
+  <rect x="710" y="274.4" width="108" height="230.4" class="piece blue"/>
+  <rect x="818" y="274.4" width="45" height="230.4" class="piece green"/>
+  <rect x="863" y="274.4" width="45" height="230.4" class="piece purple"/>
+  <text transform="translate(764 389.6) rotate(-90)" class="label" text-anchor="middle">A · 128 × 60</text>
+  <text transform="translate(840.5 389.6) rotate(-90)" class="label" text-anchor="middle">B · 128 × 25</text>
+  <text transform="translate(885.5 389.6) rotate(-90)" class="label" text-anchor="middle">C · 128 × 25</text>
+  <line x1="710" y1="513" x2="710" y2="537" class="ext"/>
+  <line x1="908" y1="513" x2="908" y2="537" class="ext"/>
+  <line x1="710" y1="529" x2="908" y2="529" class="dim"/>
+  <text x="809" y="553" class="label" text-anchor="middle">110 overall</text>
+  <line x1="918" y1="170" x2="960" y2="170" class="ext"/>
+  <line x1="918" y1="504.8" x2="960" y2="504.8" class="ext"/>
+  <line x1="950" y1="170" x2="950" y2="504.8" class="dim"/>
+  <text transform="translate(978 337.4) rotate(-90)" class="label" text-anchor="middle">186 overall</text>
+  <text x="710" y="583" class="small">Width: 60 + 25 + 25 = 110</text>
+
+  <line x1="48" y1="617" x2="1152" y2="617" stroke="#d7dde4"/>
+  <text x="48" y="660" class="heading">3. Cut A, B and C from the larger section</text>
+  <text x="48" y="689" class="note">Source: 140 × 128 · Cut widths of 60 + 25 + 25 cm</text>
+
+  <!-- Cutting views use 2.5 pixels per centimetre. All pieces keep the source length. -->
+  <rect x="100" y="740" width="350" height="320" fill="url(#waste)" stroke="#354456" stroke-width="2"/>
+  <rect x="100" y="740" width="150" height="320" class="piece blue"/>
+  <text x="175" y="885" class="label" text-anchor="middle">A · Long seat</text>
+  <text x="175" y="914" class="label" text-anchor="middle">128 × 60</text>
+  <rect x="250" y="740" width="62.5" height="320" class="piece green"/>
+  <text transform="translate(281.25 900) rotate(-90)" class="label" text-anchor="middle">B · 128 × 25</text>
+  <rect x="312.5" y="740" width="62.5" height="320" class="piece purple"/>
+  <text transform="translate(343.75 900) rotate(-90)" class="label" text-anchor="middle">C · 128 × 25</text>
+  <text transform="translate(412.5 900) rotate(-90)" class="label" text-anchor="middle">Offcut 128 × 30</text>
+  <line x1="100" y1="730" x2="100" y2="711" class="ext"/>
+  <line x1="450" y1="730" x2="450" y2="711" class="ext"/>
+  <line x1="100" y1="718" x2="450" y2="718" class="dim"/>
+  <text x="275" y="710" class="label" text-anchor="middle">140</text>
+  <line x1="90" y1="740" x2="61" y2="740" class="ext"/>
+  <line x1="90" y1="1060" x2="61" y2="1060" class="ext"/>
+  <line x1="70" y1="740" x2="70" y2="1060" class="dim"/>
+  <text transform="translate(57 900) rotate(-90)" class="label" text-anchor="middle">128</text>
+
+  <text x="640" y="660" class="heading">4. Cut D from the smaller section</text>
+  <text x="640" y="689" class="note">Existing section: 140 × 58</text>
+  <rect x="710" y="740" width="350" height="145" fill="url(#waste)" stroke="#354456" stroke-width="2"/>
+  <rect x="710" y="740" width="275" height="145" class="piece orange"/>
+  <text x="847.5" y="800" class="label" text-anchor="middle">D · Rear seat</text>
+  <text x="847.5" y="829" class="label" text-anchor="middle">110 × 58</text>
+  <text x="1022.5" y="802" class="small" text-anchor="middle">Offcut</text>
+  <text x="1022.5" y="827" class="small" text-anchor="middle">30 × 58</text>
+  <line x1="710" y1="730" x2="710" y2="711" class="ext"/>
+  <line x1="1060" y1="730" x2="1060" y2="711" class="ext"/>
+  <line x1="710" y1="718" x2="1060" y2="718" class="dim"/>
+  <text x="885" y="710" class="label" text-anchor="middle">140</text>
+  <line x1="700" y1="740" x2="671" y2="740" class="ext"/>
+  <line x1="700" y1="885" x2="671" y2="885" class="ext"/>
+  <line x1="680" y1="740" x2="680" y2="885" class="dim"/>
+  <text transform="translate(667 810) rotate(-90)" class="label" text-anchor="middle">58</text>
+
+  <rect x="640" y="925" width="512" height="130" rx="10" fill="#f4f6f8"/>
+  <text x="660" y="956" class="label">Four pieces complete the rectangle.</text>
+  <text x="660" y="986" class="note">No additional small infill is needed at night.</text>
+  <text x="660" y="1014" class="note">If C is split into 58 + 70 cm backrests,</text>
+  <text x="660" y="1040" class="note">both pieces must return to C's strip at night.</text>
+
+  <text x="48" y="1104" class="note">Same colours identify the same foam pieces in every view. Offcuts are hatched.</text>
+  <text x="48" y="1135" class="small">Rectangular geometry only; rounded body corners, covers and actual foam measurements need checking before cutting.</text>
+</svg>

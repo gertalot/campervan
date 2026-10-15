@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="1030" viewBox="0 0 1150 1030" role="img" aria-labelledby="title desc">
+<title id="title">Daytime layout with corner pillow and no extra cushion</title>
+<desc id="desc">150 by 186 centimetre cargo bay. Long seat A is 128 by 60 with upright backrest B.
+Rear seat D is 110 by 58 with C1, 100 by 25, across the rear, and C2, 28 by 25, adjoining B along the side.
+A pillow provides support in the rounded rear corner. No E cushion is used. C1 and C2 form the C infill at night.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#44566a"/></marker>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#26374b}.heading{font-size:23px;font-weight:700}.label{font-size:19px;font-weight:700}.body{font-size:18px}.small{font-size:16px}.dim{fill:none;stroke:#44566a;stroke-width:1.5;marker-start:url(#arrow);marker-end:url(#arrow)}.ext{stroke:#a0acb9;stroke-width:1}.piece{stroke:#3d4f63;stroke-width:2}</style></defs>
+<rect width="1150" height="1030" fill="white"/>
+<text x="48" y="47" font-size="30" font-weight="700">Daytime option: corner pillow, no extra cushion</text>
+<text x="48" y="80" class="body">Top view · All dimensions in cm · Backrests are 25 high and 10 thick</text>
+<text x="325" y="147" class="label" text-anchor="middle">REAR DOORS</text>
+<!-- Top view scale: 3 pixels per cm. -->
+<path d="M130 170 H550 V728 H100 V200 A30 30 0 0 1 130 170 Z" fill="#fafbfc" stroke="#26374b" stroke-width="3"/>
+<rect x="430" y="170" width="120" height="558" fill="#edf0f4" stroke="#8d9aab" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text transform="translate(485 449) rotate(-90)" class="body" text-anchor="middle">40 cm reserved for side cabinetry</text>
+<path d="M130 170 H430 V344 H100 V200 A30 30 0 0 1 130 170 Z" fill="#ffdbac" class="piece"/>
+<rect x="130" y="170" width="300" height="30" fill="#ddd0f2" class="piece"/>
+<text x="280" y="191" class="small" text-anchor="middle">C₁ · Rear backrest: 100 long</text>
+<rect x="100" y="260" width="30" height="84" fill="#ddd0f2" class="piece"/>
+<text transform="translate(120 302) rotate(-90)" font-size="14" text-anchor="middle">C₂ · 28</text>
+<path d="M130 170 V260 H100 V200 A30 30 0 0 1 130 170 Z" fill="#f3b6cb" stroke="#926779" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text transform="translate(120 223) rotate(-90)" font-size="14" text-anchor="middle">Pillow</text>
+<text x="280" y="245" class="label" text-anchor="middle">D · Seat cushion: 110 × 58</text>
+<text x="280" y="278" class="body" text-anchor="middle">Corner support from a pillow</text>
+<text x="280" y="310" class="small" text-anchor="middle">C₂ adjoins B along the side</text>
+<rect x="100" y="344" width="180" height="384" fill="#b9dafa" class="piece"/>
+<rect x="100" y="344" width="30" height="384" fill="#bfe5ca" class="piece"/>
+<text transform="translate(120 536) rotate(-90)" class="small" text-anchor="middle">B · Longitudinal backrest: 128 long</text>
+<text transform="translate(196 536) rotate(-90)" class="label" text-anchor="middle">A · Usable seat: 128 × 50</text>
+<rect x="280" y="344" width="150" height="384" fill="white" stroke="#a3b0bf" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text transform="translate(350 536) rotate(-90)" class="label" text-anchor="middle">Open floor: 128 × 50</text>
+<line x1="100" y1="162" x2="100" y2="108" class="ext"/><line x1="550" y1="162" x2="550" y2="108" class="ext"/>
+<line x1="100" y1="117" x2="550" y2="117" class="dim"/><text x="325" y="107" class="label" text-anchor="middle">150 cargo width</text>
+<line x1="90" y1="170" x2="55" y2="170" class="ext"/><line x1="90" y1="728" x2="55" y2="728" class="ext"/>
+<line x1="65" y1="170" x2="65" y2="728" class="dim"/><text transform="translate(48 449) rotate(-90)" class="label" text-anchor="middle">186 cargo length</text>
+<line x1="100" y1="738" x2="100" y2="775" class="ext"/><line x1="280" y1="738" x2="280" y2="775" class="ext"/>
+<line x1="100" y1="763" x2="280" y2="763" class="dim"/><text x="190" y="790" class="small" text-anchor="middle">60 seat cushion depth</text>
+<line x1="280" y1="763" x2="430" y2="763" class="dim"/><text x="355" y="790" class="small" text-anchor="middle">50 floor width</text>
+<line x1="430" y1="763" x2="550" y2="763" class="dim"/><text x="490" y="790" class="small" text-anchor="middle">40 cabinet zone</text>
+<text x="610" y="187" class="heading">Backrest pieces — length × height</text>
+<rect x="610" y="215" width="20" height="20" fill="#bfe5ca" stroke="#3d4f63"/><text x="643" y="232" class="body">B: 128 × 25 · For the long seat</text>
+<rect x="610" y="262" width="20" height="20" fill="#ddd0f2" stroke="#3d4f63"/><text x="643" y="279" class="body">C₁: 100 × 25 · Across the rear</text>
+<rect x="610" y="309" width="20" height="20" fill="#ddd0f2" stroke="#3d4f63"/><text x="643" y="326" class="body">C₂: 28 × 25 · Directly adjoining B</text>
+<rect x="610" y="356" width="20" height="20" fill="#f3b6cb" stroke="#3d4f63"/><text x="643" y="373" class="body">Pillow: rounded-corner support</text>
+<text x="610" y="418" class="body">C₁ + C₂ = original 128 × 25 piece C.</text>
+<text x="610" y="450" class="body">C₂ runs from 30 to 58 cm along D's side.</text>
+<text x="610" y="482" class="body">The pillow occupies the rear corner (schematic).</text>
+<rect x="610" y="527" width="490" height="163" rx="10" fill="#f3f5f8"/>
+<text x="630" y="561" class="heading">Night mode</text>
+<text x="630" y="595" class="body">B lies flat as one 128 × 25 strip.</text>
+<text x="630" y="626" class="body">C₁ + C₂ form the other 128 × 25 strip.</text>
+<text x="630" y="660" class="label">Pillow moves onto the bed at night.</text>
+<text x="610" y="735" class="body">Night footprint: nominal 110 × 186, with a curved corner.</text>
+<line x1="48" y1="839" x2="1102" y2="839" stroke="#d7dde5"/>
+<text x="48" y="880" class="body">B remains the long backrest; C₂ adjoins it. A pillow fills the remaining rear-corner area.</text>
+<text x="48" y="912" class="body">No E cushion is needed. C₁ + C₂ still make the full 128 × 25 cm nighttime infill.</text>
+<text x="48" y="947" class="small">Pillow shape is illustrative, not a prescribed size. Duvet storage and final cabinet details remain open.</text>
+</svg>

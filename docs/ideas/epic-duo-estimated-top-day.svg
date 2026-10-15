@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1000" viewBox="0 0 1160 1000"><title>EPIC Duo approximate daytime top view</title><defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#79556f"/></marker></defs><rect width="1160" height="1000" fill="white"/><g font-family="Arial,Helvetica,sans-serif" fill="#26384b">
+<text x="40" y="45" font-size="25" text-anchor="start" font-weight="700">EPIC Duo · approximate daytime top view</text>
+<text x="40" y="77" font-size="18" text-anchor="start" >Both photos interpreted together · cm · ≈ means estimated</text>
+<text x="284" y="170" font-size="19" text-anchor="middle" font-weight="700">REAR / TAILGATE</text>
+<text x="284" y="130" font-size="16" text-anchor="middle" >145 · EPIC published interior width</text>
+<line x1="110" y1="141" x2="458" y2="141" stroke="#52677c" marker-start="url(#arrow)" marker-end="url(#arrow)"/><line x1="72" y1="190" x2="72" y2="694" stroke="#52677c" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text transform="translate(52 442) rotate(-90)" font-size="16" text-anchor="middle">210 · EPIC published interior length</text><g transform="translate(110 190) scale(2.4)"><rect width="145" height="210" rx="4" fill="#f5f7fa" stroke="#33475c"/><rect x="5" y="0" width="25" height="100" fill="#dfccb0" stroke="#8c7150"/><rect x="75" y="0" width="65" height="165" fill="#bed9f0" stroke="#527799"/><rect x="35" y="165" width="105" height="45" fill="#b1cde6" stroke="#527799"/><rect x="40" y="120" width="45" height="30" fill="#eee1bf" stroke="#8c7150" stroke-dasharray="3 2"/><rect x="40" y="168" width="35" height="42" rx="4" fill="none" stroke="#a34285" stroke-dasharray="3 2"/><rect x="2" y="168" width="35" height="42" rx="4" fill="#f4dce9" stroke="#a34285"/><ellipse cx="19.5" cy="184" rx="10" ry="12" fill="white" stroke="#a34285" stroke-width=".7"/><path d="M19.5 167V155M57.5 198H21" stroke="#a34285" fill="none" marker-end="url(#arrow)"/><path d="M0 140.7V210M145 140.7V210" stroke="white" stroke-width="3"/><path d="M-3 140.7V210M148 140.7V210" stroke="#7794aa" stroke-dasharray="3 2"/></g>
+<text transform="translate(153 310) rotate(-90)" font-size="16" font-weight="700" text-anchor="middle">CABINETRY ≈25 × 100</text><text transform="translate(366 389) rotate(-90)" font-size="19" font-weight="700" text-anchor="middle">LONG BENCH ≈165 × 65</text>
+<text x="236" y="359" font-size="19" text-anchor="middle" font-weight="700">≈45 aisle</text>
+<text x="236" y="387" font-size="16" text-anchor="middle" >(40–50 likely)</text>
+<text x="260" y="497" font-size="16" text-anchor="middle" >Pivot table</text>
+<text x="260" y="522" font-size="16" text-anchor="middle" >≈45 × 30*</text>
+<text x="326" y="609" font-size="16" text-anchor="middle" font-weight="700">FRONT RETURN</text>
+<text x="356" y="640" font-size="16" text-anchor="middle" font-weight="700">≈105 × 45</text>
+<text x="133" y="728" font-size="16" text-anchor="middle" >Passenger side</text>
+<text x="419" y="728" font-size="16" text-anchor="middle" >Driver side</text>
+<rect x="132" y="760" width="120" height="65" rx="12" fill="#e7ebef" stroke="#81909f"/><rect x="316" y="760" width="120" height="65" rx="12" fill="#e7ebef" stroke="#81909f"/>
+<text x="192" y="800" font-size="16" text-anchor="middle" >Passenger seat</text>
+<text x="376" y="800" font-size="16" text-anchor="middle" >Driver seat</text>
+<text x="284" y="858" font-size="16" text-anchor="middle" font-weight="700">CAB · outside the 210 cm rectangle</text>
+<text x="525" y="158" font-size="23" text-anchor="start" font-weight="700">Published reference dimensions</text>
+<text x="525" y="198" font-size="18" text-anchor="start" >EPIC: rear interior 145 W × 210 L × 140 H.</text>
+<text x="525" y="235" font-size="18" text-anchor="start" >Nissan brochure: maximum cargo</text>
+<text x="525" y="265" font-size="18" text-anchor="start" >150 W × 204 L × 135.8 H.</text>
+<text x="525" y="302" font-size="18" text-anchor="start" >Rear opening: 126.2 W × 122.8 H.</text>
+<text x="525" y="416" font-size="18" text-anchor="start" >Long bench: ≈165 L × 65 W.</text>
+<text x="525" y="487" font-size="18" text-anchor="start" >Front return: ≈105 across × 45 deep.</text>
+<text x="525" y="558" font-size="18" text-anchor="start" >Left cabinetry: ≈25 deep × 100 long.</text>
+<text x="525" y="630" font-size="18" text-anchor="start" >Front return extends ≈40 cm left of the long bench.</text>
+<text x="525" y="791" font-size="18" text-anchor="start" >Dotted: stowed under the front return.</text>
+<text x="525" y="824" font-size="18" text-anchor="start" >Pink: illustrative slide-out position.</text>
+<text x="525" y="857" font-size="18" text-anchor="start" >Slides sideways; user faces rear (upwards).</text>
+<text x="525" y="337" font-size="15" text-anchor="start" >Brochure references are not measurements of this van.</text>
+<text x="525" y="362" font-size="15" text-anchor="start" >EPIC’s published figures are rounded.</text>
+<text x="525" y="384" font-size="23" text-anchor="start" font-weight="700">Photo estimates · not measured</text>
+<text x="525" y="449" font-size="16" text-anchor="start" >Range: 155–175 long, 60–70 wide.</text>
+<text x="525" y="520" font-size="16" text-anchor="start" >Range: 100–115 across, 40–50 deep.</text>
+<text x="525" y="591" font-size="16" text-anchor="start" >Range: 20–30 deep, 80–120 long.</text>
+<text x="525" y="663" font-size="16" text-anchor="start" >165 + 45 = 210 total; bench rectangles meet.</text>
+<text x="525" y="745" font-size="23" text-anchor="start" font-weight="700">Toilet interpretation</text>
+<text x="525" y="890" font-size="15" text-anchor="start" >35 × 42 toilet symbol: illustrative; model unidentified.</text>
+<text x="40" y="935" font-size="15" text-anchor="start" >Approximate reconstruction, not EPIC’s construction drawing or proof of night clearance. Trim / wheel arches simplified.</text>
+<text x="40" y="961" font-size="15" text-anchor="start" >Widths are better constrained than lengths. *Table size and toilet travel are schematic.</text>
+<text x="40" y="987" font-size="15" text-anchor="start" >EPIC’s 210 cm envelope is shown; this has not been shortened to your 186 cm space.</text>
+</g></svg>

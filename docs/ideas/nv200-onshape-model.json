@@ -1,0 +1,634 @@
+{
+  "title": "NV200 layout",
+  "createdDateNZ": "2026-10-14",
+  "documentId": "535730a6c26cda879ebea159",
+  "workspaceId": "31ddbbf51dc8fc8f86781813",
+  "workspaceName": "create_geometry_NV200Interior_ad7e80f4",
+  "partStudioId": "d73ad7d18ebfd2716526b356",
+  "featureStudioId": "b6c82dad7a7f885b6da68972",
+  "featureId": "FBU15A6yW4sSiVQ_0",
+  "featureName": "NV200Interior",
+  "featureScriptVersion": 3095,
+  "url": "https://cad.onshape.com/documents/535730a6c26cda879ebea159/w/31ddbbf51dc8fc8f86781813/e/d73ad7d18ebfd2716526b356",
+  "source": "nv200-interior.fs",
+  "validationHarness": "nv200-drawer-validation.fs",
+  "editInstructions": "Double-click NV200Interior. Construction group controls wall7, frame18, band/post60 and radius25 mm. Platform height now means top of slats (400 mm baseline), replacing the old bedHeight/foam-top input. Existing footprint, foam, cabinet and visibility values are retained. Enter explicit units. Wheel arches group controls provisional rear offset, length, height, clear width, post clearance and reference visibility. The rear wall-side end support widens automatically to the arch offset minus clearance. Cabinet now shares plywood/frame settings; Cabinet length retains saved outer length. Obsolete inner length is ignored. Cabinet frame height preserves cabinetHeight.",
+  "configurationMechanism": "Daytime drives both sliding benches and cushions. Show slats controls both benches’ slats, cross-bench lid and plate stops. Show cushions remains independent. Rear drawer extension has its own checkbox.",
+  "savedLayout": "Daytime",
+  "unitsForValuesBelow": "centimeters",
+  "drivingDimensions": {
+    "cargoWidth": 150,
+    "cargoLength": 186,
+    "bedWidth": 107,
+    "seatWidthA": 60,
+    "seatLengthA": 128,
+    "bedSurfaceHeight": 50,
+    "foamThickness": 10,
+    "cabinetOuterLength": 119,
+    "cabinetHeight": 130,
+    "platformHeight": 40
+  },
+  "derivedDimensions": {
+    "baseHeight": "platformHeight = 40",
+    "backrestHeightAndInfillWidth": "(bedWidth - benchWidth) / 2 = 23.5 cm",
+    "dDepthAndC2Length": "cargoLength - seatLengthA = 58",
+    "c1Length": "cabBackrestLength = 75 cm",
+    "cabinetDepth": "cargoWidth - bedWidth = 43",
+    "dayAisle": "bedWidth - benchWidth - frameThickness = 45.2 cm",
+    "innerForeAftGap": "seatLengthA - cabinetOuterLength = 9",
+    "outerForeAftGap": "seatLengthA - cabinetOuterLength = 9",
+    "frontEdgeWithoutBackrest": "0; cab-facing backrest overhang15mm at baseline"
+  },
+  "unplacedReferenceDimensions": {
+    "assumedToiletFootprint": [
+      37,
+      42
+    ],
+    "provisionalUseZone": [
+      40,
+      70
+    ]
+  },
+  "verification": {
+    "conceptNoticeRemoval": "Removed only the reportFeatureInfo concept notice. Saved without reported compilation errors; exact source readback verified. No geometry or parameter changes.",
+    "productionFeature": "Compiled and evaluated successfully with no notices",
+    "scenariosPassed": [
+      "day55",
+      "night55",
+      "day65",
+      "night65",
+      "nightWider117",
+      "dayLongerA130",
+      "dayThickerFoam12"
+    ],
+    "checks": [
+      "8 separate solid parts per scenario",
+      "Exact part bounds and volumes",
+      "One cabinet solid",
+      "Cabinet footprint vertices and height",
+      "Cabinet volume",
+      "Full nighttime bed volume",
+      "Default aisle and fore-aft clearances",
+      "7 incompatible dimension inputs rejected"
+    ],
+    "sourceReadback": "Saved Feature Studio source exactly matched tested production source",
+    "independentSourceReview": "No actionable findings",
+    "savedModelViews": "Initial footprint-only model views inspected. Updated cabinet tested by kernel bounds and volume; updated saved Part Studio not visually inspected.",
+    "browserInspection": "Not performed: in-app browser permission was denied",
+    "previewOrientation": "Onshape generated Top preview places +Y upward, so rear Y=0 appears at bottom; exact requested model coordinates are retained",
+    "cabinetHeightUpdate": "Source saved and read back exactly; 1300 mm default and 1200 mm edit tested in both layouts; full regression harness passed.",
+    "cushionControlUpdate": {
+      "savedSource": "Saved with no reported compilation errors and read back exactly.",
+      "checks": "Direct Onshape evaluator passed 7 geometry regression scenarios, 6 cushion on/off/missing-input scenarios across Day and Night, and 7 invalid-input cases. Cushion tests also retained edited 600 mm bed surface and 1200 mm cabinet dimensions.",
+      "testAdaptation": "Temporary-workspace test_feature failed before compilation: Workspace starting point is not a child of the specified parent. Used test_featurescript instead, adapting module-level functions to local functions and enum values to strings; production geometry and checks were unchanged.",
+      "scope": "Cushion control only. Stored dimensional inputs were not replaced. Proposed sliding/slatted bed mechanisms have not yet been modelled."
+    },
+    "benchConstruction": {
+      "date": "2026-10-14",
+      "savedSourceMatches": true,
+      "checks": "Onshape evaluator passed five scenarios: day/no cushions, night/with cushions, raised platform, changed material/member/radius/length parameters, and new inputs absent (default migration). Verified part counts, exact opening/frame volumes, frame bounds, cross footprint bounds and derived opening dimensions. Overlapping-wall inputs rejected as expected.",
+      "sourceReview": "Independent review completed; overlap guard added and old backrest names replaced with descriptive reference names.",
+      "limits": "Stored Part Studio inputs and rendered saved Part Studio not inspected. Validation used production code adapted to an evaluation lambda. Original cushion arrangement retained as named layout references; sliding structures are not present.",
+      "floorOpening": "Cross-bench outer-wall bottom strip removed. Five geometry scenarios and invalid-input rejection passed, including exact open-bottom skin/frame volumes; long hatch volume checks retained."
+    },
+    "wheelArchUpdate": {
+      "savedSourceMatches": true,
+      "geometryScenarios": 7,
+      "invalidCases": 5,
+      "checks": "Frame volume, removed skin, support positions, reference bounds, visibility and default migration passed. Exact radius retained; arch/corner interference rejected.",
+      "limits": "Provisional drawing inputs. Saved Part Studio not visually inspected. Right arch envelope lies inside undetailed cabinet envelope."
+    },
+    "wheelArchRounding": {
+      "savedSourceMatches": true,
+      "checks": "Seven geometry scenarios passed including exact volumes for both rounded arches, unchanged bounds, edited radius, missing-input default migration. Invalid rounding radius rejected.",
+      "limits": "No visual inspection of saved Part Studio. Base footprint and support clearance unchanged."
+    },
+    "doorReferences": {
+      "savedSourceMatches": true,
+      "harness": "nv200-door-validation.fs",
+      "checks": "Five Onshape geometry scenarios passed with no notices: defaults, hidden, independent left/right visibility, altered sizes/offsets, changed cargo length/night layout, and missing-input default migration. Exact outline bounds and four edges checked; no new solids.",
+      "limits": "Saved Part Studio not visually inspected; dimensions and offsets unmeasured on user vehicle."
+    },
+    "rearCorner": {
+      "savedSourceMatches": true,
+      "harness": "nv200-corner-validation.fs",
+      "checks": "Five scenarios passed. Frame bounds and volumes, rebuilt post widths, reference areas, unchanged arch position/length, derived clearance, visibility and missing-input defaults checked. Arch collision rejected.",
+      "limits": "Approximate body corner; stored Part Studio not visually inspected. Cabinet envelope not trimmed."
+    },
+    "cabinetCarcass": {
+      "savedSourceMatches": true,
+      "scenarios": 5,
+      "checks": "Exact mirrored bounds, volumes and openings, separate part counts, unchanged bench bounds, current height and length values preserved, legacy inner length ignored. Too-short cabinet rejected.",
+      "review": "Independent review completed; cabinet-specific error parameter IDs fixed.",
+      "limits": "Saved Part Studio not visually inspected. No load certification; top/shelves/doors/joints not modelled."
+    },
+    "accessSkinRemoval": {
+      "savedSourceMatches": true,
+      "scenarios": 3,
+      "checks": "Three aisle skins absent, retained frame volumes/planes unchanged, solid end skins and closed cross-bench skin retained, opening-height variable updated. No evaluator notices.",
+      "limits": "Saved Part Studio not visually inspected."
+    },
+    "widthRecovery": {
+      "savedSourceMatches": true,
+      "scenarios": 3,
+      "checks": "Moved aisle frames to nominal boundaries; retained frame volumes and thicknesses. End skins and frames regenerated to meet them. No access skins recreated. Original aisle and unchanged arch clearances verified.",
+      "limits": "Saved Part Studio not visually inspected."
+    },
+    "combinedCabinetSupport": {
+      "savedSourceMatches": true,
+      "scenarios": 3,
+      "checks": "Corrected to two adjacent member widths (120mm default). Exact volume, support start/end and width checked; unchanged arch and long bench supports; invalid length rejected.",
+      "limits": "Saved Part Studio not visually inspected."
+    },
+    "longitudinalSlats": {
+      "savedSourceMatches": true,
+      "geometryScenarios": 6,
+      "intermediatePositions": 3,
+      "invalidCases": 5,
+      "checks": "Part counts; exact frame and strip bounds; copied frame volume; slat gaps and height; ledge contact; no moving/fixed solid interference; altered dimensions; old-feature defaults; cushion toggle.",
+      "limits": "Production adapted to transient evaluation lambda. Stored Part Studio inputs and saved rendering not inspected. Nominal touching contacts; fasteners, latches and load verification remain unresolved.",
+      "review": "Independent source review completed; unsupported rear-slat guard added and regression verified."
+    },
+    "rearDrawer": {
+      "dateNZ": "2026-10-15",
+      "geometryScenarios": 9,
+      "drawerTravelPositions": 5,
+      "bedTravelPositions": 4,
+      "invalidCases": 8,
+      "checks": "Exact tray and mount-frame bounds; inset bottom; removed rear skin; day/night and drawer open/closed collisions; edited width/height/thickness/length; legacy input default migration; narrowed cushions.",
+      "review": "Independent source review completed. Fixed rear jamb/slide interference found by motion test; added slide travel overlap and rear-post/header contact guards.",
+      "savedSourceMatches": true,
+      "limits": "Tested via transient Onshape evaluator using adapted production source. Saved Part Studio display and stored parameter values have not been inspected. Release lever, mounting holes, joints and vehicle anchoring remain undetailed.",
+      "widthDefaultFix": "Reproduced reported foam-fit failure with saved benchWidth60mm. Replaced defective field with longBenchWidth explicit millimetre UI default600; old60mm input ignored. Seven geometry scenarios, nine movement positions and eight rejection cases passed. Saved source readback matched. Live UI not inspected.",
+      "flushRearUpdate": "Rear face Y0 verified; tray1250, clear inside1226; fixed slide position/length and cab-facing drawer end preserved. Seven geometry scenarios, nine motion positions and eight invalid-input rejections passed.",
+      "alignmentUpdate": {
+        "headerY": [
+          0,
+          18
+        ],
+        "liveRegenerationGuard": "Compare actual rear-facing planes of drawer, header, raised internal post, fixed aisle post and moving support; select support faces at header height.",
+        "regressionEvidence": "Original header7mm defect rejected. Five displaced-body faults rejected and restored geometry passes. Separate raised-post-only7mm fault detected despite lowerframeY0.",
+        "testBuilder": "node validate-nv200.mjs uses current production source plus nv200-drawer-checks.fs; checks600mm UI/runtime defaults.",
+        "savedViewVerified": false,
+        "limitation": "Cannot confirm visible Part Studio instance references current Feature Studio source with available tools."
+      }
+    },
+    "cushions": {
+      "scenarios": 10,
+      "checks": "Six individual cushion volumes, exact day/night placements, no double backrest, complete nighttime rectangle, 530+750 split, overhangs, edited dimensions and split, visibility and missing-field defaults. Three invalid split lengths rejected.",
+      "savedViewVerified": false
+    }
+  },
+  "unresolved": [
+    "Cabinet top, shelves, doors, bottom, joints and anchoring",
+    "Cross-bench nighttime extension structure",
+    "Toilet height, placement, orientation, stowage, deployment, mounting, fit and certification",
+    "Actual wheel-arch measurements (current envelopes provisional), body curvature, door positions and vehicle clearances",
+    "Cross-bench slats and extension; longitudinal joints/latches; hatch doors/hardware and cushion retention",
+    "Drawer slide screw/bolt pattern, glued joint details, vehicle anchors, actual release lever and rear-door clearance; load assumptions require build verification."
+  ],
+  "userCorrectedSavedParameters": "Existing inputs preserved except approved bench width. longBenchWidth uses explicit600mm UI/runtime defaults and supersedes seatWidth and the faulty saved benchWidth60mm.",
+  "construction": {
+    "units": "millimetres",
+    "wallThickness": 7,
+    "frameThickness": 18,
+    "memberWidth": 60,
+    "insideRadius": 25,
+    "slatThickness": 18,
+    "platformHeight": 400,
+    "panelHeight": 382,
+    "crossExtension": 235,
+    "crossBenchFixedWidth": 835,
+    "longHatchOpenings": [
+      550,
+      222
+    ],
+    "parts": "Separate plywood carcasses, longitudinal slats, five drawer panels and six slide envelope stages; six cushion parts when shown.",
+    "notes": "Fixed long aisle frame now has a 100 mm lower slide mounting band. Moving bed frame remains open-bottom. Long rear skin removed; rear header joins raised internal slide-frame post and existing aisle post.",
+    "crossBenchToiletOpening": {
+      "width": 460,
+      "maximumHeight": 322,
+      "upperCornerRadius": 25,
+      "openToFloor": true
+    },
+    "wheelArch": {
+      "units": "millimetres",
+      "provisional": true,
+      "rearOffset": 216,
+      "length": 750,
+      "height": 280,
+      "gapBetweenArches": 1220,
+      "clearance": 50,
+      "derivedIntrusion": 140,
+      "rearSupport": [
+        120,
+        180
+      ],
+      "intermediatePost": [
+        1016,
+        1076
+      ],
+      "frontPost": [
+        1220,
+        1280
+      ],
+      "wallFacingSkin": false,
+      "frameX": [
+        7,
+        25
+      ],
+      "roundingRadius": 200,
+      "shape": "Rounded upper ends in side profile, extruded across intrusion; approximate, not measured",
+      "actualRearClearance": 36
+    },
+    "rearCorner": {
+      "units": "millimetres",
+      "bodyRadius": 100,
+      "allowance": 20,
+      "setback": 120,
+      "postWidth": 60,
+      "referenceType": "Concave quarter-cylinder surfaces at both rear corners; bench and cabinet mirror the setback.",
+      "benchTreatment": "Wall-side frame still starts Y120. Drawer internal frame X150–168 has a raised rear post Y0–60. Header X168–582; rearmost slat starts X150."
+    },
+    "cabinet": {
+      "units": "millimetres",
+      "nominalWidth": 430,
+      "length": 1190,
+      "height": "Preserved saved cabinetHeight; source default1300, latest screenshot400.",
+      "wallThickness": "Shared7",
+      "frameThickness": "Shared18",
+      "memberWidth": "Shared60",
+      "aisleOpeningWidth": 505,
+      "aisleOpeningHeight": "cabinetHeight - 60",
+      "parts": 6,
+      "wallSkin": false,
+      "rearCornerSetback": 120,
+      "rearPost": [
+        120,
+        180
+      ],
+      "rearArchGap": 36,
+      "postAfterArch": [
+        1070,
+        1130
+      ],
+      "frontPost": [
+        1130,
+        1190
+      ],
+      "topShelvesDoors": "Not modelled",
+      "aisleSkin": false,
+      "combinedFrontSupport": {
+        "start": 1070,
+        "end": 1190,
+        "width": 120,
+        "formula": "2 * memberWidth; uprights adjacent, not overlapping"
+      },
+      "frontArchGap": 104
+    },
+    "aisleFrameX": {
+      "units": "millimetres",
+      "longBench": [
+        582,
+        600
+      ],
+      "crossBench": [
+        817,
+        835
+      ],
+      "cabinet": [
+        1070,
+        1088
+      ]
+    },
+    "recoveredInternalWidth": 7
+  },
+  "doorReferences": {
+    "units": "millimetres",
+    "source": "https://www.nissan-cdn.net/content/dam/Nissan/gb/brochures/Vehicles/Nissan_NV200_VAN_UK.pdf",
+    "rear": {
+      "width": 1262,
+      "height": 1228,
+      "centred": true,
+      "y": 0,
+      "sill": 0
+    },
+    "side": {
+      "width": 693,
+      "height": 1171,
+      "frontGapToCargoEnd": 0,
+      "sill": 0
+    },
+    "controls": [
+      "showDoors",
+      "showLeftDoor",
+      "showRightDoor"
+    ],
+    "representation": "Construction-line rectangular sketches, not solids. Opening sizes published; all positions provisional. No door leaves, swing or slide travel modelled."
+  },
+  "longitudinalSlats": {
+    "units": "millimetres",
+    "fixedWidth": 600,
+    "closedWidth": 618,
+    "openWidth": 1070,
+    "travel": 452,
+    "fixedSlats": 8,
+    "movingSlats": 7,
+    "slatWidth": 80,
+    "slatThickness": 18,
+    "sideGap": 5,
+    "fixedSlatClearGap": 90,
+    "stripWidth": 40,
+    "stripThickness": 18,
+    "stripClosedX": [
+      90,
+      130
+    ],
+    "stripOpenX": [
+      542,
+      582
+    ],
+    "stripY": [
+      122,
+      1253
+    ],
+    "stripZ": [
+      364,
+      382
+    ],
+    "ledgeWidth": 25,
+    "ledgeThickness": 18,
+    "ledgeTop": 364,
+    "rearLedgeY": [
+      120,
+      145
+    ],
+    "frontLedgeY": [
+      1230,
+      1255
+    ],
+    "stripEndClearance": 2,
+    "rearFixedSlatLength": 450,
+    "otherFixedSlatLength": 593,
+    "movingSlatLength": 528
+  },
+  "rearDrawer": {
+    "units": "millimetres",
+    "outside": [
+      376,
+      1250,
+      290
+    ],
+    "inside": [
+      352,
+      1226,
+      278
+    ],
+    "plywood": 12,
+    "bottom": "Inset between all walls, underside flush. Glue/epoxy and screws; fastening detail unresolved.",
+    "sideLowerBand": 90,
+    "endUprightWidth": 60,
+    "cornerRadius": 25,
+    "floorClearance": 10,
+    "closedBounds": {
+      "x": [
+        187,
+        563
+      ],
+      "y": [
+        0,
+        1250
+      ],
+      "z": [
+        10,
+        300
+      ]
+    },
+    "slide": {
+      "length": 1200,
+      "travel": 1215,
+      "height": 53,
+      "sideClearance": 19,
+      "representation": "Three simplified equal-thickness telescoping zones per side. Clearance envelopes only; no hole pattern or release lever geometry.",
+      "source": "https://instantpanel.co.nz/product/drawer-slides-1200mm-x-53mm-with-lock-heavy-duty-runners.html"
+    },
+    "internalMountFrame": {
+      "thickness": 18,
+      "x": [
+        150,
+        168
+      ],
+      "y": [
+        0,
+        1255
+      ],
+      "height": 300,
+      "raisedRearPostHeight": 382,
+      "raisedRearPostLength": 60,
+      "bottomBand": 100,
+      "upperBandAndPosts": 60
+    },
+    "rearOpening": {
+      "width": 414,
+      "height": 322
+    },
+    "nominalContainer": [
+      330,
+      460,
+      267
+    ],
+    "containerClearance": {
+      "width": 22,
+      "underRearHeader": 33
+    },
+    "workingLoadAssumptionKg": 40,
+    "hardwareRatedLoadKg": 61,
+    "slideRearSetback": 50,
+    "rearFaceY": 0,
+    "lengthFormula": "Slide closed length + slide rear setback; drawer front/cab end remains Y1250 at baseline.",
+    "trayRemainingInsideAtMaxTravel": 35
+  },
+  "cushions": {
+    "units": "millimetres",
+    "longSeat": [
+      600,
+      1280,
+      100
+    ],
+    "longWallBackrest": [
+      1280,
+      235,
+      100
+    ],
+    "rearEndBackrest": [
+      530,
+      235,
+      100
+    ],
+    "cabFacingBackrest": [
+      750,
+      235,
+      100
+    ],
+    "crossSeat": [
+      835,
+      580,
+      100
+    ],
+    "shortWallBackrest": [
+      580,
+      235,
+      100
+    ],
+    "day": "Single-depth wall backrests. Rear backrest X100–630,Y0–100; cab-facing X100–850,Y1760–1860. All Z500–735.",
+    "night": "Long wall backrest X0–235; blue long seat X235–835; split aisle infills X835–1070, rear Y0–530 and cab Y530–1280. Cross extension X835–1070,Y1280–1860. All Z400–500.",
+    "splitFormula": "Rear backrest length = long bench length - cabBackrestLength; cabBackrestLength default750mm.",
+    "crossExtensionFormula": "Shared backrest height = (bedWidth-longBenchWidth)/2."
+  },
+  "slidingBedBrackets": {
+    "units": "millimetres",
+    "quantity": 3,
+    "product": "Carinya B21611",
+    "arm": 50,
+    "width": 40,
+    "thickness": 2,
+    "centersY": [
+      130,
+      640,
+      1150
+    ],
+    "provisionalBendRadius": 3,
+    "provisionalScrewHeadProjection": 3,
+    "runningClearance": 1,
+    "notchWidth": 42,
+    "pocketDepth": 6,
+    "facePocketHeight": 51,
+    "holes": "Not modelled; hole positions and fasteners unresolved",
+    "validation": "Eight geometry cases plus continuous swept hardware envelopes and invalid short-travel rejection passed; both cutout-removal mutations failed as expected"
+  },
+  "crossBenchSlidingSlats": {
+    "units": "mm",
+    "fixedWidth": 835,
+    "closedOuterWidth": 853,
+    "extendedOuterWidth": 1070,
+    "travel": 217,
+    "depth": 580,
+    "deckThickness": 12,
+    "deckUnderside": 370,
+    "deckTop": 382,
+    "slatSurface": 400,
+    "slatCount": 7,
+    "movingSlatCount": 3,
+    "endSlatWidth": 75,
+    "otherSlatWidth": 80,
+    "gap": 5,
+    "movingFrameThickness": 18,
+    "angleBracketCount": 3,
+    "bracketDeckReliefDepth": 6,
+    "plateStops": {
+      "count": 2,
+      "lengthAcrossSlats": 100,
+      "widthAlongTravel": 22,
+      "thicknessProvisional": 2,
+      "recessDepth": 4,
+      "mountPocketDepth": 3.5,
+      "runningClearance": 0.5,
+      "headProjectionProvisional": 1,
+      "headDeckClearance": 0.5,
+      "recessLength": 239,
+      "attachmentLength": 50,
+      "fixedEngagement": 45,
+      "centerClosedX": 547.5,
+      "centerExtendedX": 764.5,
+      "verticalCapture": false,
+      "product": "https://www.bunnings.co.nz/zenith-mending-plate-100x22mm-4pk-zp_p0821317",
+      "holePattern": "Not modeled; actual hardware unmeasured"
+    },
+    "partitionAndAccess": "Aisle-side toilet compartment and wall-side storage separated by7mm solid panel plus18mm rectangular perimeter frame with centre cut away and two top-corner beam recesses.",
+    "validationHarness": "nv200-cross-slat-validation.fs",
+    "validationGenerator": "validate-nv200-cross-slats.mjs",
+    "movingSlatLength": 376,
+    "movingSlatClosedStart": 477,
+    "movingSlatExtendedStart": 694,
+    "extendedSlatOverlap": 159,
+    "extendedDeckBearingLength": 141,
+    "overlapRule": "Match the longitudinal slats at full extension; derive from current long-bench dimensions.",
+    "nightCushionOrder": {
+      "wallSide": "Short backrest, X0–235 mm",
+      "aisleSide": "Large cross seat, X235–1070 mm",
+      "daytime": "Unchanged"
+    },
+    "visibility": "Shared showSlats; obsolete showCrossSlats ignored. Frames, angle brackets and drawer remain visible.",
+    "storage": {
+      "clearWidth": 327,
+      "clearDepth": 530,
+      "underLidHeight": 370,
+      "dividerToiletFaceX": 377,
+      "dividerSkinX": [
+        370,
+        377
+      ],
+      "dividerFrameX": [
+        352,
+        370
+      ],
+      "dividerFrameTop": 370,
+      "lid": {
+        "width": 358,
+        "depth": 576,
+        "thickness": 12,
+        "boundsX": [
+          2,
+          360
+        ],
+        "boundsY": [
+          1282,
+          1858
+        ],
+        "gap": 2,
+        "fingerHoleDiameter": 25,
+        "fingerHoleCenter": [
+          188.5,
+          1570
+        ],
+        "slatSections": 4,
+        "seamCenterX": 361,
+        "supportBearingAtSeam": 8,
+        "removal": "Lift lid and attached slats after removing obstructing cushions; no hinges or catches modeled.",
+        "openControl": {
+          "parameter": "openStorageLid",
+          "label": "Open storage lid",
+          "default": false,
+          "openAngleDegrees": 70,
+          "axis": "Across the van (X), at the cab-side lid top edge",
+          "axisY": 1858,
+          "axisZ": 400,
+          "hardware": "Unmodelled; preview pivot only",
+          "visibility": "Show slats controls the entire lid and attached slats. Show cushions remains independent."
+        }
+      },
+      "fixedDeckStart": 362,
+      "toiletBayDepth": 440,
+      "toiletDepthAssumption": 420,
+      "toiletWidthAssumption": 370,
+      "toiletBayAllowance": 20,
+      "toiletOpeningHeaderHeight": 310,
+      "toiletLimit": "Toilet height and pull-out tray/slides not modeled or verified.",
+      "dividerFrameType": "Closed rectangular frame with rounded centre opening",
+      "dividerOuterSize": [
+        566,
+        370
+      ],
+      "dividerOpeningSize": [
+        446,
+        250
+      ],
+      "dividerOpeningRadius": 25,
+      "dividerMemberWidth": 60,
+      "dividerTopCornerRecess": [
+        18,
+        60
+      ]
+    }
+  }
+}
