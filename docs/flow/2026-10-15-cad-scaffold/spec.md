@@ -70,6 +70,10 @@ The dependency-resolution and native-import checks are implementation evidence, 
 
 ## Application boundary and runtime [U2, U3, U4]
 
+The intended everyday use is local development on loopback addresses. Keep the viewer connection direct: the iframe
+loads OCP Viewer on port 3939, and its browser client connects directly to OCP's WebSocket server. Vite proxies only
+`/api` to FastAPI. Do not add an OCP HTTP/WebSocket reverse proxy or hosted-deployment infrastructure.
+
 Three user-started services participate in development:
 
 | Service | Default address | Responsibility |

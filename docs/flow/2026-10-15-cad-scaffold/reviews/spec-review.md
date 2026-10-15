@@ -38,6 +38,11 @@ model source. For this cube, accepted size changes automatically schedule regene
 a fresh subprocess and retain the API's accepted parameters. Restarting the API process for API-code changes is a separate
 recovery case. This clarification does not add campervan configuration/visibility controls to the cube scope.
 
+## Viewer connection clarification
+
+After discussing a same-origin OCP reverse proxy, the user chose simplicity for a localhost development setup. Keep
+direct iframe and WebSocket connections to OCP Viewer; Vite proxies only the application API. No viewer proxy is needed.
+
 ## Verification limits
 
 Reviewers inspected the spec, relevant repository documentation and tool evidence. The review established no dependency
