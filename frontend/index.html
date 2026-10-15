@@ -4,29 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Campervan CAD</title>
+    <link rel="icon" href="data:," />
   </head>
   <body>
+    <header><h1>Campervan CAD</h1></header>
     <main>
-      <header>
-        <div><p class="eyebrow">Campervan CAD</p><h1>Cube</h1></div>
-        <p class="hint">Rotate and zoom in the viewer to explore the model.</p>
-      </header>
-      <section class="controls" aria-label="Model parameters">
+      <aside aria-label="Model parameters">
+        <h2>Parameters</h2>
         <form id="parameters" novalidate>
-          <div class="field">
+          <div class="parameter-row">
             <label id="size-label" for="size">Size</label>
-            <div class="input-row"><input id="size" name="size_mm" type="number" step="any"
-              aria-describedby="bounds" autocomplete="off" /><span id="unit"></span></div>
-            <p id="bounds" class="hint">Connecting to the API…</p>
+            <div class="input-row">
+              <input id="size" name="size_mm" type="number" step="any" aria-describedby="bounds" autocomplete="off" />
+              <span id="unit"></span>
+            </div>
           </div>
-          <button type="submit">Apply</button>
+          <p id="bounds" class="visually-hidden">Connecting to the API…</p>
+          <div class="actions">
+            <button type="submit">Apply</button>
+            <button id="regenerate" type="button">Regenerate</button>
+          </div>
         </form>
-        <button id="regenerate" class="secondary" type="button">Regenerate</button>
-      </section>
-      <div class="feedback" aria-live="polite" aria-atomic="true">
-        <p id="status" role="status">Connecting…</p>
-        <p id="error" hidden></p>
-      </div>
+        <div class="feedback" aria-live="polite" aria-atomic="true">
+          <p id="status" role="status">Connecting…</p>
+          <p id="error" hidden></p>
+        </div>
+      </aside>
       <iframe id="viewer" title="Interactive CAD viewer" allow="fullscreen"></iframe>
     </main>
     <script type="module" src="/src/main.ts"></script>

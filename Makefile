@@ -25,7 +25,8 @@ build:
 	uv build
 
 serve:
-	uv run --locked campervan serve
+	mkdir -p logs
+	bash -o pipefail -c 'PYTHONUNBUFFERED=1 uv run --locked campervan serve 2>&1 | tee logs/api.log'
 
 chrome:
 	bash scripts/launch-chrome.sh
@@ -33,10 +34,13 @@ chrome:
 .PHONY: viewer dev-api dev-ui
 
 viewer:
-	uv run --locked campervan viewer
+	mkdir -p logs
+	bash -o pipefail -c 'PYTHONUNBUFFERED=1 uv run --locked campervan viewer 2>&1 | tee logs/viewer.log'
 
 dev-api:
-	uv run --locked campervan dev-api
+	mkdir -p logs
+	bash -o pipefail -c 'PYTHONUNBUFFERED=1 uv run --locked campervan dev-api 2>&1 | tee logs/api.log'
 
 dev-ui:
-	uv run --locked campervan dev-ui
+	mkdir -p logs
+	bash -o pipefail -c 'uv run --locked campervan dev-ui 2>&1 | tee logs/ui.log'

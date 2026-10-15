@@ -14,4 +14,4 @@ def publish_cube(cube: Part, settings: Settings) -> None:
     import ocp_viewer  # type: ignore[import-untyped]
 
     ocp_viewer.set_port(settings.viewer_port, settings.viewer_host)
-    ocp_viewer.show(cube, names=["Cube"], reset_camera=ocp_viewer.Camera.KEEP)
+    ocp_viewer.show(cube, names=["Cube"], reset_camera=ocp_viewer.Camera.RESET, zoom=0.65, theme="dark")

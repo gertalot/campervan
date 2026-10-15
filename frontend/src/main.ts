@@ -25,6 +25,7 @@ const controller = createController(api, {
     if (metadata.exclusiveMaximum !== undefined) bounds.push(`less than ${metadata.exclusiveMaximum}`);
     else if (metadata.maximum !== undefined) bounds.push(`at most ${metadata.maximum}`);
     element('bounds').textContent = `${bounds.join(', ')} ${metadata.unit}. Default: ${metadata.default} ${metadata.unit}.`;
+    input.title = element('bounds').textContent ?? '';
     const minimum = metadata.minimum ?? metadata.exclusiveMinimum;
     const maximum = metadata.maximum ?? metadata.exclusiveMaximum;
     if (minimum !== undefined) input.min = String(minimum);
@@ -43,15 +44,13 @@ const controller = createController(api, {
     if (iframe.getAttribute('src') !== url) iframe.src = url;
   },
   setStatus(model) {
-    const published = model.published_revision === null ? 'No model published yet.'
-      : `Displayed revision ${model.published_revision}.`;
     const labels = {
-      idle: 'Ready to regenerate.',
-      regenerating: `Regenerating revision ${model.requested_revision}…`,
-      ready: `Revision ${model.requested_revision} ready.`,
-      failed: `Revision ${model.requested_revision} failed.`,
+      idle: 'Ready',
+      regenerating: 'Regenerating…',
+      ready: 'Ready',
+      failed: 'Regeneration failed',
     };
-    status.textContent = `${labels[model.state]} ${published}`;
+    status.textContent = labels[model.state];
   },
   setError(message) {
     error.textContent = message;

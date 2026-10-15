@@ -50,6 +50,7 @@ Open **http://127.0.0.1:5173**.
 
 The page automatically regenerates the model on opening. Change **Cube size** and click **Apply** to regenerate it.
 Use **Regenerate** to retry after an error.
+Regeneration refits the model with space around it.
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
 model with the selected parameters. Backend changes reload the API, reset parameters to defaults and automatically
@@ -57,6 +58,9 @@ regenerate. Frontend changes trigger Vite updates or a page reload. Parameters a
 Failed regeneration displays an error and leaves the last successful model visible.
 
 Press Ctrl-C in each terminal to stop.
+
+Server output also goes to `logs/api.log`, `logs/ui.log` and `logs/viewer.log`. Each launch replaces its log.
+For example, inspect backend errors with `tail -n 80 logs/api.log`.
 
 ## Chrome and DevTools MCP
 
