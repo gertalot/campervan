@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -31,7 +32,9 @@ class MutationResponse(BaseModel):
 
 
 def _validation_json(value: object) -> object:
-    """Keep accepted JSON NaN/Infinity validation errors serializable as strict JSON."""
+    """Normalize error inputs before applying FastAPI's standard JSON encoder."""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
     if isinstance(value, float) and not math.isfinite(value):
         return str(value)
     if isinstance(value, dict):
@@ -72,7 +75,7 @@ def build_app(settings: Settings, worker_factory: WorkerFactory = start_worker) 
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError) -> JSONResponse:
-        return JSONResponse(status_code=422, content={"detail": _validation_json(error.errors())})
+        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(_validation_json(error.errors()))})
 
     def get_coordinator(request: Request) -> Coordinator:
         coordinator: Coordinator = request.app.state.coordinator

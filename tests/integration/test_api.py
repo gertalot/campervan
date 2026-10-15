@@ -137,3 +137,29 @@ def test_real_worker_publication_timeout_becomes_api_failure(monkeypatch):
                 assert workers[0]._connection.closed
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("payload,diagnostic", [(b"invalid input", "invalid input"), (b"\xff", "\ufffd")])
+def test_non_json_byte_input_returns_422_without_mutation(payload, diagnostic):
+    async def scenario():
+        factory = Factory()
+        app = build_app(Settings(), factory)
+        async with app.router.lifespan_context(app):
+            before = app.state.coordinator.status()
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app, raise_app_exceptions=False), base_url="http://test"
+            ) as client:
+                response = await client.put(
+                    "/api/v1/parameters", content=payload, headers={"content-type": "text/plain"}
+                )
+                assert response.status_code == 422
+                detail = response.json()["detail"][0]
+                assert detail["loc"] == ["body"]
+                assert detail["type"] == "model_attributes_type"
+                assert detail["msg"]
+                assert detail["input"] == diagnostic
+                assert app.state.coordinator.status() == before
+                assert app.state.coordinator.parameters.size_mm == 100
+                assert factory.workers.empty()
+
+    asyncio.run(scenario())
