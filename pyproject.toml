@@ -1,0 +1,47 @@
+[build-system]
+requires = ["uv_build==0.9.11"]
+build-backend = "uv_build"
+
+[project]
+name = "campervan-cad"
+version = "0.1.0"
+description = "Local parametric CAD application scaffold"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "build123d==0.13.0",
+    "ocp-viewer==1.2.0",
+    "fastapi>=0.115,<1",
+    "pydantic>=2,<3",
+    "uvicorn>=0.30,<1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "httpx>=0.28,<1",
+    "ruff>=0.14,<1",
+    "mypy>=1.18,<2",
+    "watchfiles>=1,<2",
+]
+
+[tool.uv]
+python-downloads = "never"
+python-preference = "only-system"
+
+[tool.uv.build-backend]
+module-name = "campervan"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["src/campervan"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
