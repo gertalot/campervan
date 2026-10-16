@@ -23,3 +23,17 @@ def frame_panel(
         cutter = fillet(cutter.edges().filter_by(Axis.Y), radius)
         result -= cutter.moved(Location((left, -1, bottom)))
     return result
+
+
+def slide_mount_frame(
+    length: float, thickness: float, height: float, member: float, band: float, radius: float
+) -> Part:
+    """Two openings above a continuous rail mounting band."""
+    bay = (length - 3 * member) / 2
+    return frame_panel(
+        length,
+        thickness,
+        height,
+        [(start, start + bay, band, height - member) for start in (member, 2 * member + bay)],
+        radius,
+    )

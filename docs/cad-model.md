@@ -12,6 +12,7 @@ Use native `Compound(label=..., children=...)` assemblies. Keep each physical pa
 for parts that belong or move together. Build reusable parts at a local origin and place them using `Location`.
 Keep labels consistent across regeneration. Add modules and groups as actual components arrive; do not prebuild a
 component framework or a second scene graph.
+Do not put `/` in assembly or part labels: OCP uses it to separate object-path levels, including visibility lookups.
 
 Parameter metadata uses a `group` array containing the assembly path, such as
 `["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]`. The sidebar nests collapsible sections along
@@ -28,39 +29,119 @@ Campervan
 │   ├── Wheel arches
 │   │   ├── Left wheel arch
 │   │   └── Right wheel arch
-│   └── Rear corners
-│       ├── Left rear corner
-│       └── Right rear corner
-└── Long bench
-    ├── Fixed frame
-    │   ├── Wall-side frame
-    │   ├── Aisle frame
-    │   ├── Cab-end frame
-    │   ├── Cab-end skin
-    │   ├── Internal drawer-support frame
-    │   └── Rear header
-    └── Sliding bed
-        ├── Fixed slats
-        ├── Guide ledges
-        └── Sliding assembly
-            ├── Moving slats
-            ├── Moving aisle frame
-            ├── Tie strip / extension stop
-            └── Angle brackets
+│   ├── Rear corners
+│   │   ├── Left rear corner
+│   │   └── Right rear corner
+│   ├── Side walls
+│   │   ├── Left wall
+│   │   └── Right wall
+│   ├── Roof
+│   │   ├── Bare roof
+│   │   ├── Roof bows
+│   │   │   ├── Rear bow
+│   │   │   ├── Middle bow
+│   │   │   └── Front bow
+│   │   └── Finished ceiling
+│   ├── Rear opening
+│   │   ├── Hatch surround
+│   │   └── Clear opening
+│   └── Body floor
+├── Long bench
+│   ├── Fixed frame
+│   │   ├── Wall-side frame
+│   │   ├── Aisle frame
+│   │   ├── Cab-end frame
+│   │   ├── Cab-end skin
+│   │   ├── Internal drawer-support frame
+│   │   ├── Rear header
+│   │   ├── Fixed slats
+│   │   └── Guide ledges
+│   ├── Sliding bed
+│   │   └── Sliding assembly
+│   │       ├── Moving slats
+│   │       ├── Moving aisle frame
+│   │       ├── Tie strip (extension stop)
+│   │       └── Angle brackets
+│   ├── Rear drawer
+│   │   ├── Tray (five plywood panels)
+│   │   └── Rails
+│   │       ├── Fixed (left and right)
+│   │       ├── Intermediate (left and right)
+│   │       └── Moving (left and right)
+│   └── Cushions
+│       ├── Long seat
+│       ├── Wall backrest
+│       └── Rear end backrest
+├── Cross bench
+│   ├── Fixed frame
+│   │   ├── Wall-side frame
+│   │   ├── Aisle frame
+│   │   ├── Rear frame
+│   │   ├── Rear skin
+│   │   ├── Cab-end frame
+│   │   ├── Cab-end skin
+│   │   ├── Toilet-storage divider
+│   │   │   ├── Frame
+│   │   │   └── Separating panel
+│   │   ├── Fixed deck
+│   │   └── Fixed slats
+│   ├── Sliding assembly
+│   │   ├── Moving slats
+│   │   ├── Moving aisle frame
+│   │   ├── Angle brackets
+│   │   └── Extension stops (rear and cab-end plates)
+│   ├── Storage lid
+│   │   ├── Plywood lid
+│   │   └── Lid slats (three separate parts)
+│   └── Cushions
+│       ├── Cross seat
+│       ├── Wall backrest
+│       └── Cab-facing backrest
+└── Cabinet
+    ├── Aisle frame
+    ├── Rear frame
+    ├── Rear skin
+    ├── Cab-end frame
+    └── Cab-end skin
 ```
 
-These references use the provisional values in [the Onshape handover](what-we-built-in-onshape.md), backed by
-`docs/fs/nv200-interior.fs`. They are not an accurate shell or manufactured parts:
+The [Japanese 2017 NV200 body research](research/nv200/README.md) records the actual van variant, Nissan dimensions,
+source limitations and a measurement plan. `body.py` builds an adjustable interior envelope using native edges, faces
+and lofted shells. These are reference surfaces without invented material thickness, not fabrication-ready bodywork.
 
-- The floor is a 1500 × 1860 outline, without invented thickness.
-- `wheelArchReference` becomes a local box with only the two upper longitudinal-profile corners rounded. Each arch is
-  750 long and 280 high, with a 200 radius, starting 216 from the rear. Intrusion is `(cargo width - arch gap) / 2`,
-  giving 140 on each side and a 1220 clear gap at the defaults.
-- `rearCornerReference` becomes a quarter-circle extruded as a surface, with a 100 radius and 1228 reference height.
-  That height comes from the original rear opening height plus its zero sill. There is no wall thickness or door solid.
+- The existing 1500 × 1860 floor outline is the furniture layout. `body_length_mm` is independently 1900; changing it
+  does not resize the beds. `cargo_width_mm` is shared by the body and furniture, retaining the established X coordinates.
+- A transverse profile has upright lower walls, cubic Bézier shoulders and a shallow curved roof. Bare height is 1365.
+  Estimated controls are 1250 width at the shoulders, taper starting at 750 above the floor and 75 roof crown rise.
+  The section is constant along the main cargo area: longitudinal roof variation and panel recesses are not measured.
+- Five rear sections follow a 100-radius plan turn. Their walls, roof and floor narrow together into the rear face,
+  replacing the independent constant-height quarter cylinders. Rear corner allowance still drives furniture setback.
+- The rear aperture is 1255 wide and 1230 high, with an estimated 1150 upper width and 120 top-corner extent. Its sill
+  shares Z = 0 pending measurement. The opening is cut from the rear surround. Profiles that place the aperture outside
+  the body fail regeneration with a plain geometry error.
+- Both side walls have real 668 × 1169 aperture cuts. Initial positions leave 60 to the front boundary and a 30-high
+  sill, with estimated 60-radius corners. Left/right front offsets are independent. Paired sliding doors are an
+  assumption to confirm against the van; the two wall groups can be hidden independently.
+- Three roof-bow envelopes follow the bare roof above and a shallow circular arc below. Estimated centres are
+  Y = 400, 950 and 1500, with 80 fore–aft width. Underside crown rise is 15 across the roof shoulder span;
+  centre depth is 90, leaving about 30 at the shoulders with the default bare roof. Positions, width, depth and
+  crown are adjustable under Roof → Roof bows. These are solid clearance envelopes, not detailed steel stampings.
+- Finished ceiling is a solid 3mm plywood sheet, bent across the van with its top directly against the bow undersides.
+  Concentric circular profiles give constant thickness normal to the curve. The sheet follows the same profile along
+  the cargo length and is trimmed to the body, including the rear corners. Headers and edge trim are not modelled.
+  Use the Roof group eyes to inspect the bows and plywood independently.
+- Wheel houses retain the Onshape footprint: 750 long, 280 high, 200 longitudinal end radius and 216 rear offset.
+  A separate estimated 20-radius crown-edge fillet rounds their transverse edges. Intrusion remains
+  `(cargo width - arch gap) / 2`, giving 140 on each side and a 1220 clear gap. Existing furniture clearances use these
+  same dimensions; the fillet only removes material within that envelope.
 
-`bench.py` ports the long-bench branch of `benchCarcass`, `wheelArchFrame`, `slideMountFrame`, `drawerRearFrame` and
-the fixed mounting frame with its raised rear post from `rearDrawer`. `panels.py` builds local plywood panels and
+Walls, roof and body floor are translucent. Existing assembly paths, motion and visibility handling remain unchanged.
+The cab boundary is open. Door leaves, seals, hardware, trim recesses and door motion need further dimensions.
+The cabinet follows these estimated wall and ceiling profiles. Measure the wall at cabinet-top height and the roof
+shoulders before using its contours as cutting dimensions.
+
+`bench.py` ports the long-bench branch of `benchCarcass`, `wheelArchFrame`, `slideMountFrame` and `drawerRearFrame`.
+The internal mounting frame and its raised rear post belong to the bed's Fixed frame. `panels.py` builds local panels and
 rounded opening cutters; X runs along each panel, Y through its thickness and Z upwards. Assembly placement uses
 `Location`, keeping each cut plywood piece a separate solid.
 
@@ -77,36 +158,163 @@ The slat top is 400. The 40 × 18 tie strip sits at X = 90–130, Y = 122–1253
 two fixed 25-wide ledges. Both ledges extend down to the adjoining frame top rails' underside:
 `frame top - member width`, or Z = 322. Their tops stay at Z = 364, giving a 42 vertical depth at the defaults.
 These deepened ledges supersede the original flat 18-thick Onshape strips.
+Fixed slats and guide ledges belong to Fixed frame, so its visibility toggle includes both.
+The moving aisle frame has a continuous bottom rail matching the fixed aisle frame's slide mounting band
+(100mm at defaults), with the same rounded openings.
+Slat thickness and stock width are shared by both benches and sit at the Long bench parameter level.
+The slats are reused 80mm stock: preserve their width instead of narrowing them to fit. The slat-gap parameter controls
+the long bench; cross-bench spacing is derived from its depth and the full stock width.
 Three provisional 50 × 50 × 40 × 2 steel angles have a 3 inside bend radius and sit at
 Y = 130, 640 and 1150. The fixed aisle frame has 42-wide reliefs: a 6-deep top notch and a face pocket 6 deep and 51 high.
 Screw holes and actual installed hardware dimensions are not modelled.
 
 `BedLayout` holds the derived spacing and travel shared by construction and relief cuts. `bed_extension_percent` moves
-the entire `Sliding assembly` with one parent `Location`: 0 is retracted and 100 extends by
+the entire `Sliding assembly` with one parent `Location`: 0 is retracted and 40 extends by
 `bed width - long bench width - frame thickness` (452 at defaults). Full extension reaches X = 1070, retains 159 slat
 overlap, and brings the tie strip against the fixed aisle frame at X = 582. Child locations stay relative to the moving
 group; use `global_location` when checking individual children in world coordinates.
+`bed_motion.py` supplies the shared stages and frame offsets for CAD and viewer keyframes: the frames extend over
+0–40%, cushions reposition over 40–80%, and backrests lower over 80–100%. Frames stay extended through both cushion stages.
 
-Dimensions rebuild geometry. Bed position also exists as a live viewer control: `viewer.py` publishes an OCP translation
-track for the sliding assembly after each `show`. Its offsets account for the pose used when building the model.
-The sidebar sends `set_relative_time` directly to the existing viewer iframe on slider input, and saves the selected
-percentage through `PATCH /api/v1/model/position` on release. That endpoint updates the retained parameters without
-creating a regeneration revision. After a new geometry publication, the browser reapplies its selected percentage.
-The Python model still applies the same position when constructed for geometry checks or future exports.
-This uses OCP's animation timeline for the single bed motion; independent mechanisms will need separate controls as
-they are added. The sidebar is the application position control; OCP's own animation playback is a viewer preview.
+`drawer.py` adds the five-part 12mm plywood tray: 376 × 1250 × 290mm, X = 187–563, Y = 0–1250, Z = 10–300.
+Its bottom fits inside the walls, flush underneath. The open sides retain a 90mm lower band and 60mm end uprights.
+The rear face is flush with Y = 0. The tray travels 1215mm toward negative Y. Each 19mm rail gap contains three
+simplified 1200 × 53mm envelopes; intermediate stages move half the tray distance. Rear drawer contains the tray and
+rails. Its stationary internal support belongs to the bed's Fixed frame alongside the aisle frame and rear header,
+so hiding or omitting the drawer leaves the bed supports in place.
 
-Category visibility is also viewer state. The worker returns OCP's published model paths through the model status;
-the frontend matches Vehicle and Slats paths and sends a batched `ui` message with `config.states` to the iframe.
-Slats covers both fixed and moving slats. Browser localStorage retains each checkbox, and each new publication reapplies
-those choices. These controls do not regenerate geometry or change CAD parameters.
+`cross_bench.py` ports the cross-bench branch of `benchCarcass`, `crossBenchPartition` and the fixed deck from
+`crossBenchSlats`. Width is `(bed width + long bench width) / 2`; depth is `cargo length - seat length`.
+The 835 × 580 baseline sits at Y = 1280–1860. The frame top is Z = 370, with a 12mm deck up to Z = 382.
+Frame thickness, skin thickness, member width and opening radius use the same parameters as the long bench.
+The aisle frame has a single open-bottom opening; both ends have separate solid skins. The wall-side frame has no skin.
 
-The drawer tray/slides and cross bench belong to subsequent component increments.
+The 440mm toilet bay preserves the old assumed 420mm footprint plus 20mm allowance as one clear-bay parameter.
+It places the divider frame at X = 352–370 and its separating skin at X = 370–377. The frame keeps a bottom rail
+around its 446 × 250, R25 opening. Both layers have 18 × 60 top-corner recesses around the end beams.
+The fixed deck starts at X = 362, reserving half the 2mm storage-lid seam over the divider frame.
+`cross_bed.py` builds three fixed slats, four moving slats and the moving aisle frame with three angle brackets.
+Both end slats move, continuing the alternating pattern across the junction with the long bench. The cross bench fits
+the largest odd number of full-width slats that leaves positive gaps, distributed evenly with no end margins.
+At the baseline, seven 80mm slats leave six gaps of 3⅓mm across the 580mm depth. The extended junction gap is 90mm.
+This supersedes the Onshape arrangement with fixed, narrowed end slats. Moving slats are 376mm long and travel 217mm,
+retaining 159mm overlap at full
+extension. The frame and deck have relief pockets around the brackets. Both beds use `bed_extension_percent`, so
+one slider extends the long bed by 452mm and the cross bed by 217mm at the defaults, ending together at X = 1070.
+
+The 358 × 576 × 12 plywood storage lid carries three wall-side slat sections aligned with the fixed toilet-side rows.
+These strips retain their full 80mm width. The 25mm finger hole sits in a gap between them.
+Its group origin is the cab-side hinge at Y = 1858, Z = 400. Children use coordinates relative to that hinge.
+`cross_lid_open_percent` rotates the group from 0 to −70 degrees about X, lifting the rear edge toward the cab.
+The lid moves independently of the beds and drawer. Hinge hardware and toilet hardware are not modelled.
+
+`cabinet.py` adapts the right-hand branch of `benchCarcass` and `wheelArchFrame` to the body envelope. Its nominal
+footprint is X = 1070–1500, Y = 0–1190, narrowed at the rear corners. Length has its own Cabinet control; depth follows
+the space between bed and wall. The fixed-height setting is replaced by `cabinet_ceiling_gap_mm`, default 3. Height
+of the skins follows the plywood underside, curving gently down toward the wall.
+A zero gap brings the skins to the modelled ceiling. Platform height affects the lower shelf rail, not cabinet height.
+
+`body.interior_limits` constructs native fitting volumes from the same sections as the visible body and ceiling.
+Door apertures are omitted from those construction volumes; the cabinet follows the closed interior envelope.
+The ceiling limit uses the plywood's inner circular profile, offset inward by the cabinet fitting gap.
+Only the skins are scribed against
+the wall, rear-corner and ceiling curves. The support frames have straight stepped profiles, using the same
+`frame_panel` primitive, member width and rounded opening radius as the benches.
+
+Each end frame is one continuous 18mm sheet with three enclosed openings. The lower two are wide; the upper one is
+narrower. A member-width bottom rail closes the lowest opening. The lower shelf rail aligns with the bed support's
+top rail at `platform_height_mm - slat_thickness_mm`. The inside corner of the outer step uses the shared radius too.
+`cabinet_frame_step_height_mm` sets the top of the upper shelf rail and the outer frame step, default 750.
+All three frames have a flat top below the lowest edge of the ceiling clearance profile. End-frame widths are
+derived from the available space at their step and top heights, checking both faces of the stock and rounding inward
+to whole millimetres. They are not clipped into wall curves. The skins extend above the frames to follow the roof crown.
+
+The aisle frame has two columns of three enclosed bays. All shelf rails align with the end frames:
+Z = 0–60, 322–382 and 690–750 at defaults. These support three future shelves; the space below the bed-height shelf
+is obstructed by the extended bed.
+The wall-facing side is open, without a longitudinal support frame.
+End frames butt against the aisle frame at X = 1088.
+Frame thickness, skin thickness, member width and opening radius reuse the shared dimensions under Long bench.
+Each of the five plywood pieces is a native Part. Skin edges may need bevels where the body varies through their
+thickness; the frames remain flat stock. There is no wall-facing skin. Top, shelves, doors and bottom are not included.
+
+`cushions.py` ports the six foam blocks and their day/night placements from `nv200-interior.fs`.
+Seats are 600 × 1280 and 835 × 580; the four backrests are 235 wide by 1280, 530, 750 and 580 long.
+All six use the shared 100mm foam thickness. They belong to their daytime bench's Cushions group.
+Both Cushions groups have a fixed +7mm X offset for wall clearance, retained throughout the animation.
+Each cushion is a centred native box in its own located Compound, so its live rotation uses the same origin as CAD.
+Bed extension 0 gives upright backrests above the seats; 100 tiles the 1070 × 1860 bed at Z = 400–500.
+The orange and purple wall backrests fold toward the wall without changing their day/night positions.
+All cushions remain in their daytime positions until the bed frames finish extending at 40%.
+All four backrests finish turning and moving horizontally at 80%. During the turn their lowest corner
+stays above the blue seats, with a small handling clearance; the remaining travel lowers them vertically into place.
+The blue seats finish sliding at 80% too, clearing the wall-side infill spaces before the backrests descend.
+Python generates pose samples used by both CAD and the viewer, which interpolate the same centres and intrinsic XYZ
+angles. This is a hand-repositioning preview, not a physical mechanism or a general collision-free handling path.
+Cushions are moved by hand and are not attached to the storage lid.
+Hide them to inspect lid movement. Rear-corner foam fit and retention remain physical-layout questions.
+
+`cross_stops.py` ports `crossStopDimensions` and `crossBenchStops`. Two 100 × 22 × 2mm plate envelopes attach under
+the first and last moving slats. Each projects inward across the 3⅓mm gap, engaging 46⅔mm of the neighbouring fixed
+slat's underside guide pocket. The 239mm-long guide pockets combine 217mm travel and 22mm plate width, with exact
+closed end faces.
+The moving mounting pockets are 3.5mm deep; fixed guides are 4mm deep. Plates sit 1.5mm above the deck, reserving
+1mm for screw heads and 0.5mm running clearance. Thickness and screw allowances are provisional, and holes are not
+modelled. These stops limit horizontal travel; they do not capture the slats against lifting.
+Plate and pocket dimensions are under Cross bench → Sliding assembly → Extension stops.
+
+`frontend/src/viewer.ts` owns the viewer host. It embeds the installed OCP renderer through `createPage`, using the
+constructor hook to retain the viewer instance. FastAPI serves that package's JS/CSS at `/viewer-assets`; Vite proxies
+that route. The existing OCP server carries geometry and measurement messages over its WebSocket. There is one viewer
+connection and no iframe, splash, Tools/Info menu or animation playback bar. The toolbar retains projection, display,
+reset, fit and distance controls, with the XYZ orientation marker below. `view-cube.ts` replaces the seven direction
+buttons with a compact SVG ViewCube at the top right. Its face, edge and corner regions select all 26 directions;
+dragging orbits with Z upright. It projects the cube using the CAD camera quaternion and updates with the renderer.
+The main viewport uses the renderer's native `orbit` controls with `up: 'Z'` to prevent free trackball roll.
+Selection uses the existing camera location API, retaining the target, camera distance, projection and orthographic
+zoom. It uses the installed camera's own look-at calculation, with fixed plan orientations for top and bottom.
+Cube clicks interpolate camera quaternions along the shortest rotation at 360°/s using Three.js slerp. Camera distance
+and target remain fixed. Cube drags are immediate; pointer, wheel and keyboard input or new geometry cancel an active
+transition so it cannot overwrite subsequent camera changes.
+Geometry publication uses `Camera.KEEP`. The host records the actual camera position, quaternion, target, zoom and
+projection in `campervan.camera` localStorage on viewer notifications and page exit. Orthographic views also retain
+their visible world height. Before rendering new geometry, it supplies the live camera values, or the saved values
+after a page reload. After render and resize, it restores the exact camera location: perspective framing is encoded
+by camera position, while orthographic zoom is adjusted to preserve the saved world height against the new frustum.
+This removes the renderer's model-bounds-dependent camera rescaling. Initial zoom is 0.65 only without a live or saved
+camera. Notifications during rendering do not overwrite the saved view with intermediate camera state.
+
+Dimensions rebuild geometry. After `show`, `viewer.py` sends `campervan_motion` with each position parameter's assembly
+paths, axes, travel and published pose. The host retains each group's original translation or rotation and applies an
+absolute offset from that pose. Bed, drawer and lid sliders work without an animation timeline or regeneration.
+The bed slider also repositions cushions. Their tracks include position/angle keyframes from the same layout used
+by CAD, so regeneration at an intermediate position preserves the preview. Translation and
+rotation bases are stored separately for groups that use both.
+The Python model uses the same poses and travel for geometry checks and future exports. Releasing a slider saves only
+that position through `PATCH /api/v1/model/position`. Slider input also saves all positions to `campervan.positions`
+localStorage. On page load or API session change, the controller restores the positions to the UI and API before
+requesting regeneration. New geometry receives the latest selected positions.
+
+Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Slats, Cushions and Cabinet preferences
+live in browser localStorage and are reapplied when geometry arrives. Slats covers both beds' fixed and moving slats, the cross-bench
+fixed plywood deck, the complete storage lid including its attached slats, and the cross-bed plate stops.
+Cushions covers both benches' foam groups; their sidebar eyes also work independently.
+
+The cushion check compares the six daytime bounds with the source layout and checks flat bed coverage and no foam
+overlaps at either endpoint. Intermediate poses and physical cushion handling remain visual checks.
+It also samples all four backrests' turn and descent to check clearance above/beside the blue seats.
+
+The cross-bench smoke check covers part validity, baseline dimensions, the divider's open centre and beam recesses,
+and closed/open endpoint clearance of the sliding assembly and lid. It also checks that both extended beds align,
+and that the plate stops clear their mounting pockets but meet the guide ends when pushed beyond either travel limit.
 The fixed-frame smoke check covers valid single-solid pieces, dimensions and unintended volume intersections between
 the plywood pieces and with the left wheel arch, at the default and one adjusted bench size.
-The sliding-bed check samples 0%, 50% and 100% extension for interference with stationary parts and the wheel arch;
+The cabinet check covers five valid parts, containment within the body and ceiling limits, straight frame edges with
+the shared opening radius, ceiling-following skins, and clearance between parts and the right wheel arch.
+The sliding-bed check samples retracted, halfway and fully extended frames (slider 0%, 20%, 40%) for interference
+with stationary parts and the wheel arch;
 this is a small sanity check, not a continuous motion proof.
 
-Inspect changes in OCP. The small geometry smoke check covers named parts, valid geometry, dimensions, rounded-arch
-volume and corner surface area. Add direct intersection or clearance checks only as moving or adjacent components
+Inspect changes in OCP. The vehicle geometry check covers valid references, body/layout bounds, wheel-arch gap and
+actual door-aperture cuts. Add direct intersection or clearance checks only as moving or adjacent components
 make them useful.

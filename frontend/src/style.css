@@ -27,31 +27,60 @@ p { margin: 0; }
 #fields details { min-width: 0; margin-bottom: 10px; padding-left: 14px; }
 #fields details > .parameter-row { margin-left: 14px; }
 #fields .parameter-row + details { margin-top: 8px; }
-#fields summary { position: relative; list-style: none; padding: 3px 0; font-size: 11px; font-weight: 600; color: #b6bec9;
+#fields summary { position: relative; list-style: none; padding: 3px 24px 3px 0; font-size: 11px; font-weight: 600; color: #b6bec9;
   cursor: pointer; user-select: none; }
 #fields summary::-webkit-details-marker { display: none; }
 #fields summary::before { content: '▸'; position: absolute; left: -14px; width: 12px; text-align: center; }
 #fields details[open] > summary::before { content: '▾'; }
 #fields details[open] > summary { margin-bottom: 6px; }
 #fields summary:hover { color: #e3e7ed; }
+#fields .group-visibility { position: absolute; right: 0; top: 1px; width: 20px; height: 20px;
+  padding: 2px; border: 0; background: transparent; color: #b6bec9; }
+#fields .group-visibility:hover { background: #34373e; }
+.group-visibility svg { display: block; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.group-visibility .eye-slash { display: none; }
+.group-visibility[data-visibility="hidden"] { opacity: 0.45; }
+.group-visibility[data-visibility="hidden"] .eye-slash { display: block; }
+.group-visibility[data-visibility="mixed"] { opacity: 0.65; }
 .parameter-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px; align-items: center;
   gap: 6px; margin-bottom: 5px; }
-label { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border: 1px solid #454a54;
+aside label { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+aside input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border: 1px solid #454a54;
   border-radius: 3px; background: #15171a; color: #e3e7ed; font: inherit; font-size: 11px; }
 .position-row output { text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
 .position-row input { grid-column: 1 / -1; height: 18px; margin: 0; padding: 0; border: 0; accent-color: #8bb7e8; }
 .actions { display: flex; gap: 6px; position: sticky; top: 0; z-index: 1;
-  margin-bottom: 10px; padding: 6px 0; background: #1b1d21; }
-button { height: 25px; padding: 2px 9px; border: 1px solid #454a54; border-radius: 3px;
+  margin-bottom: 10px; padding: 6px; background: #1b1d21; }
+aside button { height: 25px; padding: 2px 9px; border: 1px solid #454a54; border-radius: 3px;
   background: #2c3037; color: #d5d9df; font: inherit; font-size: 11px; cursor: pointer; }
-button[type="submit"] { border-color: #476484; background: #30465f; }
-button:hover { background: #3a424d; }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 1px solid #8bb7e8; outline-offset: 2px; }
+aside button[type="submit"] { border-color: #476484; background: #30465f; }
+aside button:hover { background: #3a424d; }
+aside button:focus-visible, aside input:focus-visible, summary:focus-visible { outline: 1px solid #8bb7e8; outline-offset: 2px; }
 .feedback { margin-top: auto; padding-top: 16px; font-size: 11px; color: #929aa6; overflow-wrap: anywhere; }
 #error { margin-top: 6px; color: #f09a91; }
-iframe { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; border: 0; background: #202225; }
+#viewer { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; background: #202225; }
+#viewer .tcv_cad_viewer { margin: 0; }
+#viewer .tcv_cad_view { margin: 0; }
+#viewer .tcv_cad_navigation, #viewer .tcv_animation, #viewer .tcv_animation_control,
+#viewer .tcv_filter_menu, #viewer .tcv_tick_size { display: none !important; }
+#viewer .tcv_cad_toolbar { display: flex !important; height: 32px !important; min-height: 32px;
+  margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid #34373e; border-radius: 0; }
+#viewer .tcv_cad_toolbar > :not([data-campervan-control]) { display: none !important; }
+#viewer .tcv_cad_toolbar > [data-campervan-control] { display: inline-block !important; }
+#viewer .tcv_cad_toolbar > :has(.tcv_button_reset),
+#viewer .tcv_cad_toolbar > :has(.tcv_button_distance) {
+  margin-left: 6px; padding-left: 6px; border-left: 1px solid #737780;
+}
 #sidebar-resizer { cursor: col-resize; touch-action: none; background: #292d33; }
 #sidebar-resizer:hover, #sidebar-resizer:focus-visible { background: #8bb7e8; outline: none; }
 .resizing-sidebar, .resizing-sidebar * { cursor: col-resize !important; user-select: none; }
-.resizing-sidebar iframe { pointer-events: none; }
+.resizing-sidebar #viewer { pointer-events: none; }
+.view-cube { position: absolute; top: 38px; right: 8px; width: 112px; height: 112px; z-index: 5;
+  touch-action: none; user-select: none; cursor: grab; }
+.view-cube:active { cursor: grabbing; }
+.view-cube-face { stroke: #a4afbd; stroke-width: 1; stroke-linejoin: round; pointer-events: none; }
+.view-cube-target { fill: transparent; stroke: none; cursor: pointer; outline: none; }
+.view-cube-corner { fill: #829bb8; fill-opacity: 0.6; stroke: #b7c9dd; stroke-width: 0.8; stroke-linejoin: round; }
+.view-cube-target.is-highlighted, .view-cube-target:focus-visible { fill: #78b8f3; fill-opacity: 0.95;
+  stroke: #d1e8ff; stroke-width: 1; }
+.view-cube text { fill: #f0f3f7; font: 8px system-ui, sans-serif; font-weight: 600; pointer-events: none; }

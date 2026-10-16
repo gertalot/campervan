@@ -2,6 +2,7 @@ import * as api from './api';
 import { createController } from './controller';
 import { setupSidebarResize } from './sidebar';
 import { setupVisibility } from './visibility';
+import { createCadViewer } from './viewer';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -13,15 +14,19 @@ const form = element<HTMLFormElement>('parameters');
 const fields = element('fields');
 const liveControls = element('live-controls');
 const inputs = new Map<string, HTMLInputElement>();
-const iframe = element<HTMLIFrameElement>('viewer');
-const updateVisibility = setupVisibility(element('visibility'), iframe);
 const status = element('status');
 const error = element('error');
+const viewer = createCadViewer(element('viewer'), () => visibility.restore(), message => {
+  error.textContent = message;
+  error.hidden = false;
+});
+const visibility = setupVisibility(element('visibility'), viewer);
 let dirty = false;
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
 const controller = createController(api, {
   setMetadata(metadata) {
+    visibility.resetGroups();
     fields.replaceChildren();
     liveControls.replaceChildren();
     inputs.clear();
@@ -48,6 +53,7 @@ const controller = createController(api, {
           });
           const heading = document.createElement('summary');
           heading.textContent = title;
+          visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
           group.append(heading);
           parent.append(group);
           groups.set(path, group);
@@ -85,8 +91,8 @@ const controller = createController(api, {
         value.htmlFor = name;
         value.id = `${name}-value`;
         row.append(label, value, input);
-        input.addEventListener('input', () => controller.previewPosition(input.valueAsNumber));
-        input.addEventListener('change', () => { void controller.savePosition(input.valueAsNumber); });
+        input.addEventListener('input', () => controller.previewPosition(name, input.valueAsNumber));
+        input.addEventListener('change', () => { void controller.savePosition(name, input.valueAsNumber); });
       } else row.append(label, input);
       parent.append(row);
       inputs.set(name, input);
@@ -102,19 +108,15 @@ const controller = createController(api, {
       dirty = false;
     }
   },
-  setViewerUrl(url) {
-    // The node lives for the page lifetime. Status and errors never rerender it.
-    if (iframe.getAttribute('src') !== url) iframe.src = url;
-  },
-  setBedPosition(percent) {
-    const input = inputs.get('bed_extension_percent');
+  setViewerUrl: url => viewer.connect(url),
+  setPosition(name, percent) {
+    const input = inputs.get(name);
     if (input) input.value = String(percent);
-    const output = document.getElementById('bed_extension_percent-value');
+    const output = document.getElementById(`${name}-value`);
     if (output) output.textContent = String(percent);
-    iframe.contentWindow?.postMessage({ type: 'set_relative_time', value: percent / 100 }, new URL(iframe.src).origin);
+    viewer.setPosition(name, percent);
   },
   setStatus(model) {
-    updateVisibility(model);
     const labels = {
       idle: 'Ready',
       regenerating: 'Regenerating…',
@@ -130,7 +132,7 @@ const controller = createController(api, {
 }, {
   setTimeout: (callback, delay) => window.setTimeout(callback, delay),
   clearTimeout: handle => window.clearTimeout(handle as number),
-});
+}, window.localStorage);
 
 form.addEventListener('input', event => {
   if ((event.target as HTMLInputElement).type !== 'range') dirty = true;

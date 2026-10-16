@@ -5,7 +5,8 @@ from math import floor, sqrt
 
 from build123d import Color, Compound, Face, Location, Part, Polyline, ThreePointArc, Wire, extrude
 
-from campervan.cad.panels import frame_panel, panel
+from campervan.cad.bed_motion import bed_offset
+from campervan.cad.panels import panel, slide_mount_frame
 from campervan.parameters import Parameters
 
 
@@ -95,55 +96,44 @@ def angle_bracket(p: Parameters) -> Part:
     return extrude(profile, amount=p.bracket_width_mm, dir=(0, 1, 0))
 
 
-def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
+def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compound:
     height = p.platform_height_mm - p.slat_thickness_mm
-    thickness = p.frame_thickness_mm
-    closed_width = p.long_bench_width_mm + thickness
-    wall_inner = p.wall_thickness_mm + thickness
-    fixed_inner = p.long_bench_width_mm - thickness
-    fixed_slats: list[Part] = []
-    moving_slats: list[Part] = []
-    wood, moving_wood = Color(0.72, 0.52, 0.32), Color(0.87, 0.70, 0.43)
+    closed_width = p.long_bench_width_mm + p.frame_thickness_mm
+    slats: list[Part] = []
+    name = "Moving" if moving else "Fixed"
 
-    for i, y in enumerate(layout.slat_ys):
-        moving = i % 2 == 1
+    for i in range(1 if moving else 0, len(layout.slat_ys), 2):
+        y = layout.slat_ys[i]
         start = p.wall_thickness_mm
         if not moving and y < layout.rear_ledge_y:
             start = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm
         slat = panel(closed_width - start, p.slat_width_mm, p.slat_thickness_mm)
         slat.location = Location((start, y, height))
-        slat.label = f"{'Moving' if moving else 'Fixed'} slat {i + 1:02}"
-        slat.color = moving_wood if moving else wood
-        (moving_slats if moving else fixed_slats).append(slat)
+        slat.label = f"{name} slat {i + 1:02}"
+        slat.color = Color(0.87, 0.70, 0.43) if moving else Color(0.72, 0.52, 0.32)
+        slats.append(slat)
+    return Compound(label=f"{name} slats", children=slats)
 
-    bay = (p.seat_length_mm - 3 * p.member_width_mm) / 2
-    frame = frame_panel(
+
+def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
+    height = p.platform_height_mm - p.slat_thickness_mm
+    thickness = p.frame_thickness_mm
+    closed_width = p.long_bench_width_mm + thickness
+
+    frame = slide_mount_frame(
         p.seat_length_mm,
         thickness,
         height,
-        [
-            (x, x + bay, -2 * p.inside_radius_mm, height - p.member_width_mm)
-            for x in (p.member_width_mm, 2 * p.member_width_mm + bay)
-        ],
+        p.member_width_mm,
+        p.drawer_mount_band_mm,
         p.inside_radius_mm,
     )
     frame.location = Location((closed_width, 0, 0), (0, 0, 90))
     frame.label, frame.color = "Moving aisle frame", Color(0.88, 0.61, 0.25)
     strip = panel(p.sliding_strip_width_mm, layout.strip_front - layout.strip_rear, thickness)
     strip.location = Location((layout.strip_x, layout.strip_rear, height - thickness))
-    strip.label, strip.color = "Tie strip / extension stop", moving_wood
+    strip.label, strip.color = "Tie strip (extension stop)", Color(0.87, 0.70, 0.43)
 
-    ledges = []
-    # Both ledges reach the underside of the adjoining frame top rails.
-    bottom = height - p.member_width_mm
-    for name, y in (
-        ("Rear guide ledge", layout.rear_ledge_y),
-        ("Cab-end guide ledge", p.seat_length_mm - wall_inner - p.ledge_width_mm),
-    ):
-        ledge = panel(fixed_inner - wall_inner, p.ledge_width_mm, height - thickness - bottom)
-        ledge.location = Location((wall_inner, y, bottom))
-        ledge.label, ledge.color = name, wood
-        ledges.append(ledge)
     brackets = []
     for i, y in enumerate(layout.bracket_ys):
         bracket = angle_bracket(p)
@@ -154,18 +144,11 @@ def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
     moving_assembly = Compound(
         label="Sliding assembly",
         children=[
-            Compound(label="Moving slats", children=moving_slats),
+            build_bed_slats(p, layout, moving=True),
             frame,
             strip,
             Compound(label="Angle brackets", children=brackets),
         ],
     )
-    moving_assembly.location = Location((layout.travel * p.bed_extension_percent / 100, 0, 0))
-    return Compound(
-        label="Sliding bed",
-        children=[
-            Compound(label="Fixed slats", children=fixed_slats),
-            Compound(label="Guide ledges", children=ledges),
-            moving_assembly,
-        ],
-    )
+    moving_assembly.location = Location((bed_offset(layout.travel, p.bed_extension_percent), 0, 0))
+    return Compound(label="Sliding bed", children=[moving_assembly])

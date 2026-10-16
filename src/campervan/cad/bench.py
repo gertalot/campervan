@@ -4,8 +4,10 @@ from math import sqrt
 
 from build123d import Color, Compound, Location, Part
 
-from campervan.cad.panels import frame_panel, panel
-from campervan.cad.sliding_bed import build_sliding_bed, long_bed_layout, relieve_aisle_frame
+from campervan.cad.cushions import build_cushions
+from campervan.cad.drawer import build_rear_drawer
+from campervan.cad.panels import frame_panel, panel, slide_mount_frame
+from campervan.cad.sliding_bed import build_bed_slats, build_sliding_bed, long_bed_layout, relieve_aisle_frame
 from campervan.parameters import Parameters
 
 
@@ -21,7 +23,6 @@ def build_long_bench(p: Parameters) -> Compound:
     post_start = p.arch_rear_offset_mm + p.arch_length_mm + p.arch_clearance_mm
     post_end = post_start + member
     internal_x = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm
-    internal_length = length - total
 
     if rear_end >= p.arch_rear_offset_mm or post_end > length - member:
         raise ValueError("Wheel arch and rear corner leave insufficient room for the bench wall supports.")
@@ -34,6 +35,7 @@ def build_long_bench(p: Parameters) -> Compound:
             raise ValueError("Wheel arch intersects the rounded wall-frame opening corners.")
     if internal_x <= max(total, setback) or internal_x + thickness >= width - thickness:
         raise ValueError("Internal drawer support must clear the rear corner and leave a rear opening.")
+
     if p.drawer_frame_height_mm >= height - 2 * thickness or member >= setback:
         raise ValueError("Drawer support must leave room below the bed and behind the rear corner setback.")
 
@@ -45,23 +47,14 @@ def build_long_bench(p: Parameters) -> Compound:
         part.location = Location((x, y, z), (0, 0, rotation))
         parts.append(part)
 
-    def slide_frame(span: float, top: float) -> Part:
-        bay = (span - 3 * member) / 2
-        return frame_panel(
-            span,
-            thickness,
-            top,
-            [(start, start + bay, p.drawer_mount_band_mm, top - member) for start in (member, 2 * member + bay)],
-            radius,
-        )
-
     wall_openings = [
         (rear_end - setback, post_start - setback, -2 * radius, height - member),
         (post_end - setback, length - member - setback, -2 * radius, height - member),
     ]
     wall = frame_panel(length - setback, thickness, height, wall_openings, radius)
     place(wall, "Wall-side frame", total, setback, rotation=90)
-    place(relieve_aisle_frame(slide_frame(length, height), p, layout), "Aisle frame", width, 0, rotation=90)
+    aisle = slide_mount_frame(length, thickness, height, member, p.drawer_mount_band_mm, radius)
+    place(relieve_aisle_frame(aisle, p, layout), "Aisle frame", width, 0, rotation=90)
 
     end_width = width - total - thickness
     end_frame = frame_panel(
@@ -71,12 +64,15 @@ def build_long_bench(p: Parameters) -> Compound:
     place(panel(end_width, skin, height), "Cab-end skin", total, length - skin)
     parts[-1].color = Color(0.75, 0.66, 0.49)
 
-    # The raised rear post and mounting frame are one cut plywood piece in the source.
-    internal = slide_frame(internal_length, p.drawer_frame_height_mm)
-    internal += panel(member, thickness, height - p.drawer_frame_height_mm).moved(
+    # This stationary bed support stays in place when the drawer module is removed.
+    support = slide_mount_frame(
+        length - total, thickness, p.drawer_frame_height_mm, member, p.drawer_mount_band_mm, radius
+    )
+    support += panel(member, thickness, height - p.drawer_frame_height_mm).moved(
         Location((0, 0, p.drawer_frame_height_mm))
     )
-    place(internal, "Internal drawer-support frame", internal_x + thickness, 0, rotation=90)
+    place(support, "Internal drawer-support frame", internal_x + thickness, 0, rotation=90)
+
     place(
         panel(width - thickness - internal_x - thickness, thickness, member),
         "Rear header",
@@ -84,7 +80,22 @@ def build_long_bench(p: Parameters) -> Compound:
         0,
         height - member,
     )
+    ledges = []
+    # Stationary guides extend down to the underside of the frame's top rails.
+    bottom = height - member
+    for name, y in (
+        ("Rear guide ledge", layout.rear_ledge_y),
+        ("Cab-end guide ledge", length - total - p.ledge_width_mm),
+    ):
+        ledge = panel(width - thickness - total, p.ledge_width_mm, height - thickness - bottom)
+        ledge.location = Location((total, y, bottom))
+        ledge.label, ledge.color = name, Color(0.72, 0.52, 0.32)
+        ledges.append(ledge)
+    fixed_frame = Compound(
+        label="Fixed frame",
+        children=[*parts, build_bed_slats(p, layout, moving=False), Compound(label="Guide ledges", children=ledges)],
+    )
     return Compound(
         label="Long bench",
-        children=[Compound(label="Fixed frame", children=parts), build_sliding_bed(p, layout)],
+        children=[fixed_frame, build_sliding_bed(p, layout), build_rear_drawer(p), build_cushions(p, "Long bench")],
     )

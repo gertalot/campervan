@@ -55,7 +55,8 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 - If Gert's tab is absent from the page list, report that MCP is connected to the wrong browser and get that connection
   corrected. Do not substitute another tab or claim it proves Gert's viewer works. `make chrome` launches the project
   debugging browser on port 9223; never start browsers or application services yourself.
-- Use a DOM snapshot to locate controls, a screenshot to inspect layout/model framing, and the console/network tools
-  to inspect actual failures. The OCP viewer is the iframe at `http://127.0.0.1:3939/viewer`; inspect that frame too.
-- Try the relevant control and inspect the visible result. API publication status alone does not prove the model rendered.
-  Use small manual checks, not a browser test suite. Gert's visual feedback remains the main acceptance check.
+- Gert tests by clicking in the app. Do not run browser interaction checks or delegate review passes unless requested.
+- When asked to investigate the browser, use a DOM snapshot, screenshot or console/network inspection as needed.
+  The viewer lives directly in the app's `#viewer` element; there is no OCP iframe. It uses the OCP server WebSocket
+  at port 3939 and the installed renderer assets served through `/viewer-assets`.
+- API publication status alone does not prove the model rendered. Gert's visual feedback is the main acceptance check.

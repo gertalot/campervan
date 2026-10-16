@@ -11,7 +11,6 @@ from campervan.settings import Settings
 def test_api_smoke():
     async def regenerate(parameters, settings):
         generated.append(parameters)
-        return ["/Campervan/Vehicle references/Floor outline"]
 
     generated = []
 
@@ -45,6 +44,17 @@ def test_api_smoke():
                 assert (await client.get("/api/v1/parameters")).json()["parameters"]["bed_extension_percent"] == 75
                 assert (await client.get("/api/v1/model/status")).json()["requested_revision"] == 1
                 assert len(generated) == 1
+                await client.patch("/api/v1/model/position", json={"drawer_extension_percent": 40})
+                positions = (await client.get("/api/v1/parameters")).json()["parameters"]
+                assert positions["bed_extension_percent"] == 75 and positions["drawer_extension_percent"] == 40
+                lid = await client.patch("/api/v1/model/position", json={"cross_lid_open_percent": 80})
+                assert lid.status_code == 200
+                assert lid.json() == {
+                    "bed_extension_percent": 75,
+                    "drawer_extension_percent": 40,
+                    "cross_lid_open_percent": 80,
+                }
+                assert len(generated) == 1
                 assert (
                     await client.patch("/api/v1/model/position", json={"bed_extension_percent": 101})
                 ).status_code == 422
@@ -54,7 +64,8 @@ def test_api_smoke():
                 await asyncio.sleep(0)
                 final = (await client.get("/api/v1/model/status")).json()
                 assert final["state"] == "ready" and final["published_revision"] == 2
-                assert final["model_paths"] == ["/Campervan/Vehicle references/Floor outline"]
                 assert generated[-1].bed_extension_percent == 75
+                assert generated[-1].drawer_extension_percent == 40
+                assert generated[-1].cross_lid_open_percent == 80
 
     asyncio.run(scenario())

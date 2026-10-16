@@ -19,7 +19,6 @@ export interface ParameterResponse {
 }
 export interface MutationResponse { session_id: string; requested_revision: number }
 export interface ModelStatus extends MutationResponse {
-  model_paths: string[];
   published_revision: number | null;
   state: 'idle' | 'regenerating' | 'ready' | 'failed';
   error: { message: string } | null;
@@ -29,7 +28,7 @@ export interface Api {
   getStatus(): Promise<ModelStatus>;
   putParameters(parameters: Parameters): Promise<MutationResponse>;
   regenerate(): Promise<MutationResponse>;
-  setPosition(percent: number): Promise<{ bed_extension_percent: number }>;
+  setPosition(name: string, percent: number): Promise<Parameters>;
 }
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
@@ -57,6 +56,6 @@ export const getParameters = () => request<ParameterResponse>('parameters');
 export const getStatus = () => request<ModelStatus>('model/status');
 export const putParameters = (parameters: Parameters) => request<MutationResponse>('parameters', 'PUT', parameters);
 export const regenerate = () => request<MutationResponse>('model/regenerate', 'POST');
-export const setPosition = (percent: number) => request<{ bed_extension_percent: number }>(
-  'model/position', 'PATCH', { bed_extension_percent: percent },
+export const setPosition = (name: string, percent: number) => request<Parameters>(
+  'model/position', 'PATCH', { [name]: percent },
 );

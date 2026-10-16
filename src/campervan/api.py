@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Annotated
 
@@ -28,8 +29,10 @@ class MutationResponse(BaseModel):
     requested_revision: int
 
 
-class BedPosition(BaseModel):
-    bed_extension_percent: float = Field(ge=0, le=100, allow_inf_nan=False)
+class Positions(BaseModel):
+    bed_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    drawer_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cross_lid_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
 
 
 def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) -> FastAPI:
@@ -58,6 +61,10 @@ def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) ->
                 await coordinator.close()
 
     app = FastAPI(lifespan=lifespan)
+    package = find_spec("ocp_viewer")
+    assert package is not None and package.origin is not None
+    assets = Path(package.origin).parent / "server" / "static"
+    app.mount("/viewer-assets", StaticFiles(directory=assets), name="viewer-assets")
 
     def get_coordinator(request: Request) -> Coordinator:
         coordinator: Coordinator = request.app.state.coordinator
@@ -84,10 +91,14 @@ def build_app(settings: Settings, regenerator: Regenerate = regenerate_model) ->
         revision = await coordinator.accept()
         return MutationResponse(session_id=coordinator.session_id, requested_revision=revision)
 
-    @app.patch("/api/v1/model/position", response_model=BedPosition)
-    async def set_position(position: BedPosition, coordinator: CurrentCoordinator) -> BedPosition:
-        coordinator.set_bed_position(position.bed_extension_percent)
-        return position
+    @app.patch("/api/v1/model/position", response_model=Positions)
+    async def set_position(position: Positions, coordinator: CurrentCoordinator) -> Positions:
+        coordinator.set_positions(position.model_dump(exclude_unset=True))
+        return Positions(
+            bed_extension_percent=coordinator.parameters.bed_extension_percent,
+            drawer_extension_percent=coordinator.parameters.drawer_extension_percent,
+            cross_lid_open_percent=coordinator.parameters.cross_lid_open_percent,
+        )
 
     @app.get("/api/v1/model/status", response_model=ModelStatus)
     async def model_status(coordinator: CurrentCoordinator) -> ModelStatus:

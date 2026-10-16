@@ -3,17 +3,17 @@ import type { Api, FieldMetadata, ModelStatus, MutationResponse, Parameters } fr
 export interface View {
   setMetadata(metadata: Record<string, FieldMetadata>): void;
   setParameters(parameters: Parameters, reset: boolean): void;
-  setViewerUrl(url: string): void;
+  setViewerUrl(url: string): Promise<void> | void;
   setStatus(status: ModelStatus): void;
   setError(message: string | null): void;
-  setBedPosition(percent: number): void;
+  setPosition(name: string, percent: number): void;
 }
 export interface Clock {
   setTimeout(callback: () => void, delay: number): unknown;
   clearTimeout(handle: unknown): void;
 }
 
-export function createController(api: Api, view: View, clock: Clock) {
+export function createController(api: Api, view: View, clock: Clock, storage: Pick<Storage, 'getItem' | 'setItem'>) {
   let running = false;
   let polling = false;
   let timer: unknown;
@@ -21,12 +21,19 @@ export function createController(api: Api, view: View, clock: Clock) {
   let metadata: Record<string, FieldMetadata> | null = null;
   let current: ModelStatus | null = null;
   let inputError: string | null = null;
-  let bedPosition = 0;
+  const positionKey = 'campervan.positions';
+  let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
+
+  function setPosition(name: string, percent: number) {
+    positions[name] = percent;
+    storage.setItem(positionKey, JSON.stringify(positions));
+    view.setPosition(name, percent);
+  }
 
   function show(status: ModelStatus) {
     if (current && status.requested_revision < current.requested_revision) return;
     if (status.published_revision !== null && status.published_revision !== current?.published_revision) {
-      view.setBedPosition(bedPosition);
+      for (const [name, value] of Object.entries(positions)) view.setPosition(name, value);
     }
     current = status;
     view.setStatus(status);
@@ -49,7 +56,7 @@ export function createController(api: Api, view: View, clock: Clock) {
         // The next poll reloads parameters before displaying this session's revisions.
         session = null;
       } else {
-      show({ ...accepted, published_revision: current?.published_revision ?? null, model_paths: current?.model_paths ?? [],
+        show({ ...accepted, published_revision: current?.published_revision ?? null,
           state: 'regenerating', error: null });
       }
       schedule();
@@ -65,14 +72,21 @@ export function createController(api: Api, view: View, clock: Clock) {
       if (status.session_id !== session) {
         const data = await api.getParameters();
         if (!running) return;
-        if (!metadata) view.setViewerUrl(data.viewer_url);
-        session = data.session_id;
+        if (!metadata) await view.setViewerUrl(data.viewer_url);
         metadata = data.schema.properties;
         current = null;
         inputError = null;
         view.setMetadata(metadata);
-        bedPosition = data.parameters.bed_extension_percent ?? 0;
-        view.setParameters(data.parameters, true);
+        positions = Object.fromEntries(Object.entries(data.parameters)
+          .filter(([name]) => metadata![name]?.control === 'position')
+          .map(([name, value]) => [name, positions[name] ?? value]));
+        storage.setItem(positionKey, JSON.stringify(positions));
+        for (const [name, value] of Object.entries(positions)) view.setPosition(name, value);
+        view.setParameters({ ...data.parameters, ...positions }, true);
+        await Promise.all(Object.entries(positions)
+          .filter(([name, value]) => data.parameters[name] !== value)
+          .map(([name, value]) => api.setPosition(name, value)));
+        session = data.session_id;
         status = await api.getStatus();
         if (!running || status.session_id !== session) return;
         show(status);
@@ -111,12 +125,10 @@ export function createController(api: Api, view: View, clock: Clock) {
       await request(() => api.putParameters(parameters));
     },
     async regenerate() { await request(() => api.regenerate()); },
-    previewPosition(percent: number) {
-      bedPosition = percent;
-      view.setBedPosition(percent);
-    },
-    async savePosition(percent: number) {
-      try { await api.setPosition(percent); }
+    previewPosition: setPosition,
+    async savePosition(name: string, percent: number) {
+      setPosition(name, percent);
+      try { await api.setPosition(name, percent); }
       catch (error) { showError(error); }
     },
     stop() { running = false; clock.clearTimeout(timer); },
