@@ -2,6 +2,8 @@
 
 Research date: 2026-10-16. All dimensions are millimetres unless stated otherwise.
 
+Cab research: [older Japanese seat dimensions, seat variants and headliner evidence](cab.md).
+
 Follow-up: [likely curvature and reproducible pixel analysis](curvature.md) combines upper mounting dimensions,
 bare-body photographs and two rear-opening traces into provisional profiles and explains integration with the arches.
 
@@ -109,8 +111,9 @@ Rear pillars, roof and floor share the same narrowing sections. Wheel houses ret
 footprint and gain rounded transverse crown edges. The cabinet contours follow the estimated wall and finished
 ceiling, with an adjustable fitting gap; those contours must be checked against the van before cutting plywood.
 
-The paired sliding-door openings assume doors on both sides. No door leaf, hinge mechanism, sliding track, pressed
-panel detail or cockpit geometry is represented. Three adjustable bow envelopes have roof-following tops and a
+The paired sliding-door openings assume doors on both sides. No door leaf, hinge mechanism, sliding track or pressed
+panel detail is represented. [Cab references](cab.md) add an estimated floor, two simplified front seats and headliner;
+their dimensions need measuring. Three adjustable bow envelopes have roof-following tops and a
 shallower underside curve. A solid 3mm plywood sheet follows their undersides, matching Gert's described installation.
 Their positions, widths, depth and curvature are modelling estimates; see [roof-bow research](curvature.md#ceiling-cross-beams-roof-bows).
 

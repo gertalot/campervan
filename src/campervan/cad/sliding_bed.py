@@ -6,6 +6,7 @@ from math import floor, sqrt
 from build123d import Color, Compound, Face, Location, Part, Polyline, ThreePointArc, Wire, extrude
 
 from campervan.cad.bed_motion import bed_offset
+from campervan.cad.drawer import drawer_support_x
 from campervan.cad.panels import panel, slide_mount_frame
 from campervan.parameters import Parameters
 
@@ -25,7 +26,13 @@ def long_bed_layout(p: Parameters) -> BedLayout:
     wall_inner = p.wall_thickness_mm + p.frame_thickness_mm
     travel = p.bed_width_mm - p.long_bench_width_mm - p.frame_thickness_mm
     strip_x = p.long_bench_width_mm - p.frame_thickness_mm - p.sliding_strip_width_mm - travel
-    setback = max(wall_inner, p.rear_corner_radius_mm + p.rear_corner_allowance_mm)
+    # The rear guide also clears the internal drawer-support post, whose length
+    # is member_width. Moving the bed away from the door reduces the corner setback.
+    setback = max(
+        wall_inner,
+        p.member_width_mm,
+        p.rear_corner_radius_mm + p.rear_corner_allowance_mm - p.furniture_rear_gap_mm,
+    )
     rear, front = setback + p.strip_end_clearance_mm, p.seat_length_mm - wall_inner - p.strip_end_clearance_mm
     pitch = p.slat_width_mm + p.slat_side_gap_mm
     count = floor((p.seat_length_mm - p.slat_side_gap_mm) / pitch)
@@ -106,7 +113,7 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
         y = layout.slat_ys[i]
         start = p.wall_thickness_mm
         if not moving and y < layout.rear_ledge_y:
-            start = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm
+            start = drawer_support_x(p)
         slat = panel(closed_width - start, p.slat_width_mm, p.slat_thickness_mm)
         slat.location = Location((start, y, height))
         slat.label = f"{name} slat {i + 1:02}"

@@ -83,6 +83,16 @@ The bed slider also previews the six cushions moving from seats and upright back
 repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all six.
 Shared foam thickness is under **Long bench → Cushions**; cab-facing backrest length is under **Cross bench → Cushions**.
 Hide cushions when inspecting the storage lid; they do not lift with it.
+
+Expand **Mannequin** for a poseable human sized to 178cm with an 80cm inseam, 40cm thighs and 50cm floor-to-knee height.
+**Sit on bench** fits the initial seated pose. X/Y/Z, facing, hip/knee bend, back recline, back curvature, head tilt and
+arm angles have live sliders. Position is measured at the hip joint. Ankles compensate to keep the feet flat;
+changing leg angles adjusts hip height to retain floor contact. Changing hip height solves the leg angles instead.
+The seat cushion dents under the person; **Foam compression** is an estimate, adjustable in millimetres.
+**Show** toggles the person. Pose and visibility persist across reloads and regeneration.
+The seated preview is hidden while extending the bed. Other body proportions and foam deformation are estimates;
+the mannequin is a visual fit reference and is not part of CAD exports.
+
 The rear drawer has five 12mm plywood panels and simplified three-stage rails on each side. Its dimensions are under
 **Long bench → Rear drawer**. Rails and bed brackets are provisional hardware envelopes.
 The cross bench behind the cab contains its fixed frame, toilet-storage divider, deck, sliding slats and hinged storage
@@ -93,13 +103,23 @@ The two recessed cross-bed stops move with the slats. Their dimensions are under
 **Cross bench → Sliding assembly → Extension stops**.
 Both cross-bench end slats move, keeping a regular support gap at the long-bench junction. Slats retain their stock
 width; the cross bench distributes the remaining space evenly between them.
-The right-side **Cabinet** has an aisle frame and stepped end frames with the same rounded openings as the benches.
-Each end frame is one piece, narrowing above the upper shelf rail. All shelf rails align across the aisle and end
-frames: a bottom rail, a lower shelf rail matching the bed support, and an upper shelf rail. Only the 7mm skins follow
-the wall and ceiling curves. Adjust **Upper shelf rail height**, length and **Ceiling gap** under **Cabinet**.
-The ceiling gap defaults to 3mm, and zero brings the skins to the ceiling. Top, shelves, doors and bottom are not included.
+The right-side **Cabinet** has an aisle frame, stepped end frames and a central support frame, with the same rounded
+openings as the benches. Each bay has three 12mm plywood shelves resting on 19mm square ledges, below the rails at
+bed-support height, frame-step height and halfway through the upper opening. The van floor serves as the bottom.
+The centre frame clears the wheel arch. Ledge bottoms align with the cross-beam bottoms, leaving a 29mm retaining
+lip above the shelf surfaces with the default material sizes.
+Adjust **Upper shelf rail height**, length and **Ceiling gap** under **Cabinet**, and material sizes under **Shelves**
+and **Shelf ledges**. The 7mm end skins and shelf edges follow the wall profile.
+The ceiling gap defaults to 3mm;
+zero brings the skins to the ceiling. Openings have no doors, and there is no cabinet top panel.
 Under **Vehicle references → Roof**, adjust the estimated **Roof bows** and the **Finished ceiling** plywood thickness.
 The 3mm plywood follows the bows' shallow underside curve. Cabinet height and skin contours follow its underside.
+
+**Vehicle references → Cab** contains an estimated cab floor, driver/passenger seats and headliner. Adjust the floor
+length/width, shared seat sizes, individual seat positions/reclines and headliner profile in those groups. Cab and
+cargo floors are one level. The driver
+is on the right. Each group can be hidden independently. Cab dimensions are provisional; see the
+[cab research and measurement notes](docs/research/nv200/cab.md).
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
 model with the selected parameters. Backend changes reload the API, reset dimensions to defaults and automatically

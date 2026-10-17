@@ -6,9 +6,14 @@ from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
 
+def drawer_support_x(p: Parameters) -> float:
+    """Wall-side face of the internal support, in furniture construction coordinates."""
+    return (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm
+
+
 def build_rear_drawer(p: Parameters) -> Compound:
     ply = p.drawer_ply_mm
-    left = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm + p.frame_thickness_mm
+    left = drawer_support_x(p) + p.frame_thickness_mm
     left += p.slide_thickness_mm
     right = p.long_bench_width_mm - p.frame_thickness_mm - p.slide_thickness_mm
     width = right - left

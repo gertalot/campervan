@@ -14,11 +14,14 @@ Leave inaccessible measurements blank rather than estimating them silently.
 
 Use a tape, straightedge, square and masking tape. A plumb line helps transfer high points to the floor.
 Keep normal driving seat positions fixed while measuring. Note seat recline, floor covering and whether doors are shut.
+For the cab floor, seats and headliner, follow the [cab measurement sequence](cab.md#small-measurement-set-to-resolve-the-remaining-uncertainty)
+using these same datums.
 
 ## First visit: the measurements that resolve most uncertainty
 
 | Measurement | How to record it |
 | --- | --- |
+| Bed rear gap | Closed hatch inner surface to mattress rear edge; owner estimates 70–100 for the upright solar panel |
 | Usable length | Threshold to seat backs at floor, bed-top and cabinet-top heights; both sides |
 | Width | At floor, 400, 800 and 1200 above floor, at the stations below |
 | Finished ceiling | Height at centreline and 300 / 600 to each side, at each station |

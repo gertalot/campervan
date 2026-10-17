@@ -3,11 +3,11 @@
 from dataclasses import dataclass
 from math import ceil
 
-from build123d import Align, Color, Compound, Cylinder, Location, Part
+from build123d import Align, Color, Compound, Cylinder, Location
 
 from campervan.cad.bed_motion import bed_offset
 from campervan.cad.cross_stops import build_cross_stops, cross_stop_layout, cut_stop_pocket
-from campervan.cad.panels import frame_panel, panel
+from campervan.cad.panels import panel
 from campervan.cad.sliding_bed import angle_bracket, long_bed_layout
 from campervan.parameters import Parameters
 
@@ -19,7 +19,8 @@ class CrossBedLayout:
     moving_start: float
     slats: tuple[tuple[float, float], ...]
     slat_gap: float
-    bracket_ys: tuple[float, ...]
+    leg_x: float
+    fixed_end: float
     deck_start: float
     lid_end: float
 
@@ -39,34 +40,21 @@ def cross_bed_layout(p: Parameters) -> CrossBedLayout:
         raise ValueError("Cross bed needs room for seven or more slats and positive extension with retained overlap.")
     slat_gap = (length - count * p.slat_width_mm) / (count - 1)
     slats = tuple((p.seat_length_mm + i * (p.slat_width_mm + slat_gap), p.slat_width_mm) for i in range(count))
-    moving = slats[::2]
-    bracket_ys = tuple(moving[i][0] + moving[i][1] / 2 for i in (0, (len(moving) - 1) // 2, len(moving) - 1))
+    leg_x = closed_width - p.member_width_mm
+    fixed_end = leg_x - p.cross_leg_clearance_mm
     storage_face = width - 2 * p.frame_thickness_mm - p.wall_thickness_mm - p.cross_toilet_bay_depth_mm
     seam = storage_face + p.frame_thickness_mm / 2
     gap = p.cross_storage_lid_gap_mm
     if seam + gap / 2 > moving_start or seam - gap / 2 <= p.wall_thickness_mm:
         raise ValueError("Storage lid must fit beside the closed moving slats.")
-    return CrossBedLayout(width, travel, moving_start, slats, slat_gap, bracket_ys, seam + gap / 2, seam - gap / 2)
-
-
-def relieve_cross_support(part: Part, p: Parameters, layout: CrossBedLayout) -> Part:
-    """World-coordinate bracket pockets shared by the fixed aisle frame and deck."""
-    name, color = part.label, part.color
-    height = p.platform_height_mm - p.slat_thickness_mm
-    clearance = p.bracket_clearance_mm
-    depth = p.bracket_thickness_mm + max(p.bracket_head_allowance_mm, p.bracket_bend_radius_mm) + clearance
-    if p.cross_deck_thickness_mm <= depth:
-        raise ValueError("Cross deck must retain material underneath the bracket pockets.")
-    notch_width = p.bracket_width_mm + 2 * clearance
-    for y in layout.bracket_ys:
-        part -= panel(p.bracket_arm_mm + 2 * clearance, notch_width, depth + clearance).moved(
-            Location((layout.width - p.bracket_arm_mm - clearance, y - notch_width / 2, height - depth))
-        )
-        part -= panel(depth + clearance, notch_width, p.bracket_arm_mm + 2 * clearance).moved(
-            Location((layout.width - depth, y - notch_width / 2, height - p.bracket_arm_mm - clearance))
-        )
-    part.label, part.color = name, color
-    return part
+    leg_height = p.platform_height_mm - p.slat_thickness_mm - p.cross_bearer_height_mm
+    if fixed_end <= seam + gap / 2 or leg_height <= p.bracket_arm_mm:
+        raise ValueError("Cross-bed supports need space beside the divider and below the bearer for the leg brackets.")
+    if p.bracket_width_mm > p.member_width_mm or p.frame_thickness_mm + p.bracket_arm_mm > p.slat_width_mm:
+        raise ValueError("Cross-bed brackets must fit the leg faces and stay beneath the outer moving slats.")
+    return CrossBedLayout(
+        width, travel, moving_start, slats, slat_gap, leg_x, fixed_end, seam + gap / 2, seam - gap / 2
+    )
 
 
 def build_cross_slats(p: Parameters, layout: CrossBedLayout, *, moving: bool) -> Compound:
@@ -87,23 +75,34 @@ def build_cross_slats(p: Parameters, layout: CrossBedLayout, *, moving: bool) ->
 def build_cross_sliding_assembly(p: Parameters, layout: CrossBedLayout) -> Compound:
     length = p.cargo_length_mm - p.seat_length_mm
     height = p.platform_height_mm - p.slat_thickness_mm
-    member, radius = p.member_width_mm, p.inside_radius_mm
-    frame = frame_panel(
-        length, p.frame_thickness_mm, height, [(member, length - member, -2 * radius, height - member)], radius
-    )
-    frame.location = Location((layout.width + p.frame_thickness_mm, p.seat_length_mm, 0), (0, 0, 90))
-    frame.label, frame.color = "Moving aisle frame", Color(0.88, 0.61, 0.25)
+    member, thickness = p.member_width_mm, p.frame_thickness_mm
+    leg_height = height - p.cross_bearer_height_mm
+    bearer = panel(member, length, p.cross_bearer_height_mm)
+    bearer.location = Location((layout.leg_x, p.seat_length_mm, leg_height))
+    bearer.label, bearer.color = "Bearer", Color(0.88, 0.61, 0.25)
+    legs = []
+    for name, y in (("Rear leg", p.seat_length_mm), ("Cab-end leg", p.cargo_length_mm - thickness)):
+        leg = panel(member, thickness, leg_height)
+        leg.location = Location((layout.leg_x, y, 0))
+        leg.label, leg.color = name, Color(0.88, 0.61, 0.25)
+        legs.append(leg)
     brackets = []
-    for i, y in enumerate(layout.bracket_ys):
+    bracket_x = layout.leg_x + (member - p.bracket_width_mm) / 2
+    # Face the two brackets inward along the van, beneath the bearer and against each leg.
+    for name, x, y, rotation in (
+        ("Rear angle bracket", bracket_x, p.seat_length_mm + thickness, -90),
+        ("Cab-end angle bracket", bracket_x + p.bracket_width_mm, p.cargo_length_mm - thickness, 90),
+    ):
         bracket = angle_bracket(p)
-        bracket.location = Location((layout.width, y - p.bracket_width_mm / 2, height))
-        bracket.label, bracket.color = f"Angle bracket {i + 1}", Color(0.62, 0.66, 0.70)
+        bracket.location = Location((x, y, leg_height), (0, 0, rotation))
+        bracket.label, bracket.color = name, Color(0.62, 0.66, 0.70)
         brackets.append(bracket)
     assembly = Compound(
         label="Sliding assembly",
         children=[
             build_cross_slats(p, layout, moving=True),
-            frame,
+            bearer,
+            Compound(label="Legs", children=legs),
             Compound(label="Angle brackets", children=brackets),
             build_cross_stops(p, layout),
         ],

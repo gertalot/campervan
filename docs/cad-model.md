@@ -1,12 +1,27 @@
 # CAD model conventions
 
-Use millimetres, with the nominal rear-left floor corner at the origin. X runs across the van from the long-bench wall
-toward the cabinet wall, Y runs from the rear doors toward the cab, and Z points up. This preserves the FeatureScript
-coordinates and motion directions.
+Use millimetres, with X running from the vehicle's left/passenger side to its right/driver side, Y from the rear doors
+toward the cab, and Z upwards. The closed rear-door plane is nominal Y = 0; its offset from the floor threshold needs
+measuring. Vehicle coordinates and the right-hand-drive cab stay fixed.
 
-`src/campervan/cad/model.py` assembles the campervan. Component modules such as `vehicle.py` construct native build123d
-geometry. `src/campervan/parameters.py` owns editable dimensions, their constraints and sidebar metadata. Geometry code
-does not call FastAPI or the viewer.
+`src/campervan/cad/model.py` assembles the campervan. Component generators retain the original FeatureScript-oriented
+construction coordinates. At the assembly boundary, `mirror.py` reflects every furniture leaf and local placement,
+then `model.py` places the furniture using `x_world = cargo_width - x_local` and
+`y_world = y_local + furniture_rear_gap_mm`. The cabinet is on the left, the long bench on the right, and all cross-bench,
+drawer, bracket and cushion geometry is mirrored with them. The shared rear gap defaults to 85mm for the solar panel.
+
+The reflection preserves native named assemblies, colours and visibility paths. Local translations reflect in X;
+rotations retain their X angle and reverse their Y/Z angles. `viewer.py` applies the same conversion to every live
+motion track, including absolute cushion keyframes, so live poses and regenerated CAD agree. This is native CAD
+geometry, not a display-only reflection. The coordinate examples in the furniture construction sections below refer
+to the generators' original local coordinates, before this shared reflection and placement.
+
+The bench converts wheel-arch and rear-corner positions to furniture-local coordinates before constructing supports.
+The cabinet translates body/ceiling fitting volumes and wheel-arch cutouts into that coordinate system before scribing.
+The body fitting envelope and wheel houses are symmetric at the defaults; keep checking fit if vehicle measurements
+introduce side-to-side differences. A perfect furniture reflection does not imply an asymmetric vehicle is mirrored.
+`src/campervan/parameters.py` owns dimensions, constraints and sidebar metadata. Geometry code does not call the API
+or viewer.
 
 Use native `Compound(label=..., children=...)` assemblies. Keep each physical part separate and use named subassemblies
 for parts that belong or move together. Build reusable parts at a local origin and place them using `Location`.
@@ -45,7 +60,13 @@ Campervan
 │   ├── Rear opening
 │   │   ├── Hatch surround
 │   │   └── Clear opening
-│   └── Body floor
+│   ├── Body floor
+│   └── Cab
+│       ├── Floor
+│       ├── Seats
+│       │   ├── Driver seat
+│       │   └── Passenger seat
+│       └── Headliner
 ├── Long bench
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
@@ -75,11 +96,11 @@ Campervan
 ├── Cross bench
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
-│   │   ├── Aisle frame
 │   │   ├── Rear frame
 │   │   ├── Rear skin
 │   │   ├── Cab-end frame
 │   │   ├── Cab-end skin
+│   │   ├── Fixed bearer
 │   │   ├── Toilet-storage divider
 │   │   │   ├── Frame
 │   │   │   └── Separating panel
@@ -87,7 +108,8 @@ Campervan
 │   │   └── Fixed slats
 │   ├── Sliding assembly
 │   │   ├── Moving slats
-│   │   ├── Moving aisle frame
+│   │   ├── Bearer
+│   │   ├── Legs (rear and cab-end)
 │   │   ├── Angle brackets
 │   │   └── Extension stops (rear and cab-end plates)
 │   ├── Storage lid
@@ -101,15 +123,35 @@ Campervan
     ├── Aisle frame
     ├── Rear frame
     ├── Rear skin
+    ├── Middle frame
     ├── Cab-end frame
-    └── Cab-end skin
+    ├── Cab-end skin
+    ├── Shelf ledges
+    └── Shelves
 ```
 
 The [Japanese 2017 NV200 body research](research/nv200/README.md) records the actual van variant, Nissan dimensions,
 source limitations and a measurement plan. `body.py` builds an adjustable interior envelope using native edges, faces
 and lofted shells. These are reference surfaces without invented material thickness, not fabrication-ready bodywork.
 
-- The existing 1500 × 1860 floor outline is the furniture layout. `body_length_mm` is independently 1900; changing it
+`cab.py` extends those references forward from `body_length_mm`, leaving the furniture datum unchanged. Its floor
+shares the cargo floor's Z = 0 plane throughout, as confirmed by Gert, tapering to the front width. The headliner is a smooth
+loft with a broad centre and rounded side returns; its rear arc matches the cargo plywood underside. Its centreline
+is level by default; an optional front drop is concentrated toward the windscreen header. Front width, setback and
+transverse crown are adjustable.
+Both are reference surfaces, without invented panel thickness. Seat cushions are 475 × 455mm,
+with rear tops at 300mm and an adjustable 80mm rise toward the nose. Seats are local native assemblies with open side
+supports, shaped cushions and continuous reclining highbacks with integrated headrests, as confirmed by Gert.
+Positive X is the right-hand driver side; both seats face +Y. Default pivots sit 160mm forward of the cargo boundary,
+placing the backrests about 10mm from the extended mattress at its default height and 85mm rear gap, matching Gert's
+reported fit. The mattress spans Y = 85–1945. Changing the bed gap does not automatically reposition the cab seats.
+Positions and reclines adjust independently,
+while size and spacing controls are shared under Cab → Seats. These dimensional controls regenerate the geometry.
+Cab components use 32% opacity and the existing hierarchy visibility controls. No dashboard, steering wheel, door
+trim, seat mechanisms or detailed floor pressings are represented. See [cab estimates](research/nv200/cab.md) for
+source limitations, starting values and measurements needed before relying on seat clearances.
+
+- The 1500 × 1860 floor outline follows the bed placement, starting at Y = 85 by default. `body_length_mm` is independently 1900; changing it
   does not resize the beds. `cargo_width_mm` is shared by the body and furniture, retaining the established X coordinates.
 - A transverse profile has upright lower walls, cubic Bézier shoulders and a shallow curved roof. Bare height is 1365.
   Estimated controls are 1250 width at the shoulders, taper starting at 750 above the floor and 75 roof crown rise.
@@ -147,15 +189,21 @@ rounded opening cutters; X runs along each panel, Y through its thickness and Z 
 
 The long bench has a 600 × 1280 footprint. Its frame top is `platform height - slat thickness`, or 382 at the defaults.
 The aisle frame retains its 100-high slide mounting band. Wall-side openings reach the floor and clear the wheel arch;
-the rear support starts at 120, with a 36 rear arch gap. The cab end has separate 18-thick frame and 7-thick skin.
+the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has separate 18-thick frame and 7-thick skin.
 The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. The header spans
-X = 168–582, Y = 0–18, Z = 322–382, leaving the drawer exit open.
+X = 168–582, bed-local Y = 0–18, Z = 322–382, leaving the drawer exit open.
+At the bench junction, the long bench's cab-end frame/skin and the cross bench's rear frame/skin start at that same
+wall-side face, X = 150, instead of X = 25. This cuts each pair back by 125mm, opening the low storage channel beside
+the drawer into the cross-bench storage area. The rounded frame openings are rebuilt at the shorter width.
+`drawer.drawer_support_x` shares this alignment with the drawer placement; it follows wheel-arch width and drawer
+clearance. The cross bench's far cab-end frame/skin, deck and lid retain their wall-side extent.
 
 `sliding_bed.py` ports `longSlatDimensions`, the long-bench branch of `slidingSlatAssembly`, `slidingBracketDimensions`,
 `slideAngleBracket` and `slidingBenchBrackets`. Eight fixed and seven moving slats alternate on an 85 pitch. Ordinary
 slats are 611 long; the rear fixed slat is 468 long to clear the rear corner and bear on the internal drawer support.
-The slat top is 400. The 40 × 18 tie strip sits at X = 90–130, Y = 122–1253, Z = 364–382 when retracted, supported on
-two fixed 25-wide ledges. Both ledges extend down to the adjoining frame top rails' underside:
+The slat top is 400. The 40 × 18 tie strip sits at X = 90–130, bed-local Y = 62–1253, Z = 364–382 when retracted, supported on
+two fixed 25-wide ledges. The rear ledge clears both the body corner and the raised drawer-support post.
+Both ledges extend down to the adjoining frame top rails' underside:
 `frame top - member width`, or Z = 322. Their tops stay at Z = 364, giving a 42 vertical depth at the defaults.
 These deepened ledges supersede the original flat 18-thick Onshape strips.
 Fixed slats and guide ledges belong to Fixed frame, so its visibility toggle includes both.
@@ -187,19 +235,34 @@ so hiding or omitting the drawer leaves the bed supports in place.
 `crossBenchSlats`. Width is `(bed width + long bench width) / 2`; depth is `cargo length - seat length`.
 The 835 × 580 baseline sits at Y = 1280–1860. The frame top is Z = 370, with a 12mm deck up to Z = 382.
 Frame thickness, skin thickness, member width and opening radius use the same parameters as the long bench.
-The aisle frame has a single open-bottom opening; both ends have separate solid skins. The wall-side frame has no skin.
+There is no fixed aisle frame across the toilet exit. Both ends have separate solid skins; the wall-side frame has no
+skin. The end frames, skins and fixed deck finish at X = 791, leaving a 2mm nesting gap beside the retracted legs/bearer.
+A 60 × 566 × 18mm fixed bearer runs along that deck edge, parallel to the moving bearer. It sits in shallow rebates
+in the two end frames, between the end skins, with its top flush against the deck underside at Z = 370.
+Its underside at Z = 352 limits toilet extraction height before allowing for a tray and running clearance.
+Both end frames have continuous bottom rails for future drawer slides, using the long bench's
+`drawer_mount_band_mm` setting (100mm high at defaults). Their openings retain the shared rounded corners.
 
 The 440mm toilet bay preserves the old assumed 420mm footprint plus 20mm allowance as one clear-bay parameter.
 It places the divider frame at X = 352–370 and its separating skin at X = 370–377. The frame keeps a bottom rail
-around its 446 × 250, R25 opening. Both layers have 18 × 60 top-corner recesses around the end beams.
+around its 446 × 250, R25 opening. Both layers have 18 × 60 top-corner recesses around the end beams and
+18 × 100 bottom-corner notches around the drawer-slide mounting rails; notch heights follow their respective rails.
 The fixed deck starts at X = 362, reserving half the 2mm storage-lid seam over the divider frame.
-`cross_bed.py` builds three fixed slats, four moving slats and the moving aisle frame with three angle brackets.
+`cross_bed.py` builds three fixed slats and four moving slats. A flat 60 × 580 × 18mm bearer joins the moving slats,
+supported by two separate 60 × 18mm legs whose broad faces run across the van. The legs occupy only 18mm each along
+the toilet opening, leaving 544mm between them. Their tops meet the bearer underside at Z = 364. Two angle brackets
+face inward along the van, rotated ±90° from the long-bed brackets, and join the legs to the bearer underside.
+There is no middle bracket. The brackets project 2mm into the opening near its top on each side.
+Bearer thickness (`cross_bearer_height_mm`) is shared by the fixed and moving bearers; nesting gap
+(`cross_leg_clearance_mm`) has its own control;
+leg width/thickness reuse member width/frame thickness. Bed height remains the shared platform-height parameter.
+The toilet, its tray and fasteners remain unmodelled; this opening does not establish toilet fit or structural capacity.
 Both end slats move, continuing the alternating pattern across the junction with the long bench. The cross bench fits
 the largest odd number of full-width slats that leaves positive gaps, distributed evenly with no end margins.
 At the baseline, seven 80mm slats leave six gaps of 3⅓mm across the 580mm depth. The extended junction gap is 90mm.
 This supersedes the Onshape arrangement with fixed, narrowed end slats. Moving slats are 376mm long and travel 217mm,
 retaining 159mm overlap at full
-extension. The frame and deck have relief pockets around the brackets. Both beds use `bed_extension_percent`, so
+extension. The shortened deck clears the moving supports without bracket relief pockets. Both beds use `bed_extension_percent`, so
 one slider extends the long bed by 452mm and the cross bed by 217mm at the defaults, ending together at X = 1070.
 
 The 358 × 576 × 12 plywood storage lid carries three wall-side slat sections aligned with the fixed toilet-side rows.
@@ -209,34 +272,48 @@ Its group origin is the cab-side hinge at Y = 1858, Z = 400. Children use coordi
 The lid moves independently of the beds and drawer. Hinge hardware and toilet hardware are not modelled.
 
 `cabinet.py` adapts the right-hand branch of `benchCarcass` and `wheelArchFrame` to the body envelope. Its nominal
-footprint is X = 1070–1500, Y = 0–1190, narrowed at the rear corners. Length has its own Cabinet control; depth follows
-the space between bed and wall. The fixed-height setting is replaced by `cabinet_ceiling_gap_mm`, default 3. Height
+footprint is X = 1070–1500, Y = 0–1087, narrowed at the rear corners. With the 85mm rear gap, it spans vehicle
+Y = 85–1172, ending at the rear edge of the left sliding-door opening. Length has its own Cabinet control; changing it
+keeps the rear fixed and repositions the middle support halfway along the cabinet, resizing both shelf bays.
+Depth follows the space between bed and wall. The fixed-height setting is replaced by `cabinet_ceiling_gap_mm`, default 3. Height
 of the skins follows the plywood underside, curving gently down toward the wall.
 A zero gap brings the skins to the modelled ceiling. Platform height affects the lower shelf rail, not cabinet height.
 
 `body.interior_limits` constructs native fitting volumes from the same sections as the visible body and ceiling.
 Door apertures are omitted from those construction volumes; the cabinet follows the closed interior envelope.
 The ceiling limit uses the plywood's inner circular profile, offset inward by the cabinet fitting gap.
-Only the skins are scribed against
+The end skins and shelves are scribed against
 the wall, rear-corner and ceiling curves. The support frames have straight stepped profiles, using the same
 `frame_panel` primitive, member width and rounded opening radius as the benches.
 
-Each end frame is one continuous 18mm sheet with three enclosed openings. The lower two are wide; the upper one is
+Each end frame is one continuous 18mm sheet with four enclosed openings. The lower two are wide; the upper two are
 narrower. A member-width bottom rail closes the lowest opening. The lower shelf rail aligns with the bed support's
 top rail at `platform_height_mm - slat_thickness_mm`. The inside corner of the outer step uses the shared radius too.
 `cabinet_frame_step_height_mm` sets the top of the upper shelf rail and the outer frame step, default 750.
-All three frames have a flat top below the lowest edge of the ceiling clearance profile. End-frame widths are
+An additional rail splits the upper opening into two equal clear heights. All four frames have a flat top below
+the lowest edge of the ceiling clearance profile. Transverse-frame widths are
 derived from the available space at their step and top heights, checking both faces of the stock and rounding inward
 to whole millimetres. They are not clipped into wall curves. The skins extend above the frames to follow the roof crown.
 
-The aisle frame has two columns of three enclosed bays. All shelf rails align with the end frames:
-Z = 0–60, 322–382 and 690–750 at defaults. These support three future shelves; the space below the bed-height shelf
-is obstructed by the extended bed.
+The aisle frame has two columns of four enclosed bays. The central transverse frame aligns with its middle upright.
+Its lowest opening is narrower, retaining a full member-width upright on the aisle side of the wheel arch, with
+3mm clearance. The lower cross-beam has a straight underside extending toward the wall, with the shared rounded
+inside corner where it meets that upright; no wall-side stub hangs above the arch.
+All shelf rails align across the frames. The space below the
+bed-height shelf is obstructed by the extended bed.
 The wall-facing side is open, without a longitudinal support frame.
 End frames butt against the aisle frame at X = 1088.
 Frame thickness, skin thickness, member width and opening radius reuse the shared dimensions under Long bench.
-Each of the five plywood pieces is a native Part. Skin edges may need bevels where the body varies through their
-thickness; the frames remain flat stock. There is no wall-facing skin. Top, shelves, doors and bottom are not included.
+Each bay has three separate shelves using `cabinet_shelf_thickness_mm` (12mm); the van floor serves as its bottom,
+without bottom shelves or ledges. Ledge bottoms align with the cross-beam bottoms. Shelf surfaces sit below the
+cross-beam tops by member width minus ledge size minus shelf thickness (29mm at defaults), leaving a retaining lip
+and concealing small alignment differences. Square timber ledges (`cabinet_ledge_size_mm`,
+19mm) run along the end/centre frames and aisle cross-beams, underneath the shelves. Centre-frame ledges support
+both bays. Shelf thickness and ledge height must fit within the cross-beam height. The central frame has a
+rounded wheel-arch cut-out; shelves also clear the arch if adjusted heights bring them into its space.
+Shelves and ledges have their own assembly groups and sidebar visibility controls. Each physical piece is a native
+Part. Skin and shelf edges may need bevels where the body varies through their thickness; frames remain flat stock.
+There is no wall-facing skin, top panel or door. Shelf fasteners are not modelled.
 
 `cushions.py` ports the six foam blocks and their day/night placements from `nv200-interior.fs`.
 Seats are 600 × 1280 and 835 × 580; the four backrests are 235 wide by 1280, 530, 750 and 580 long.
@@ -305,11 +382,11 @@ overlaps at either endpoint. Intermediate poses and physical cushion handling re
 It also samples all four backrests' turn and descent to check clearance above/beside the blue seats.
 
 The cross-bench smoke check covers part validity, baseline dimensions, the divider's open centre and beam recesses,
-and closed/open endpoint clearance of the sliding assembly and lid. It also checks that both extended beds align,
+and retracted/halfway/extended clearance of the sliding assembly and lid. It also checks that both extended beds align,
 and that the plate stops clear their mounting pockets but meet the guide ends when pushed beyond either travel limit.
 The fixed-frame smoke check covers valid single-solid pieces, dimensions and unintended volume intersections between
 the plywood pieces and with the left wheel arch, at the default and one adjusted bench size.
-The cabinet check covers five valid parts, containment within the body and ceiling limits, straight frame edges with
+The cabinet check covers valid parts, six recessed shelf panels, containment within the body and ceiling limits, straight frame edges with
 the shared opening radius, ceiling-following skins, and clearance between parts and the right wheel arch.
 The sliding-bed check samples retracted, halfway and fully extended frames (slider 0%, 20%, 40%) for interference
 with stationary parts and the wheel arch;
@@ -318,3 +395,34 @@ this is a small sanity check, not a continuous motion proof.
 Inspect changes in OCP. The vehicle geometry check covers valid references, body/layout bounds, wheel-arch gap and
 actual door-aperture cuts. Add direct intersection or clearance checks only as moving or adjacent components
 make them useful.
+
+## Articulated mannequin
+
+The browser loads the CC0 human rig in `frontend/public/models/mannequin.glb`; provenance is alongside the asset.
+`frontend/src/mannequin.ts` adjusts mesh and skeleton to Gert's measurements: 1780mm height, 800mm inseam,
+500mm floor-to-knee pivot and 400mm knee-to-hip joint. It straightens the supplied pose, resizes at these measured
+landmarks and rebinds the skeleton. Other body proportions remain estimates. `frontend/src/spine-rig.ts` adds 13 runtime
+skinning joints along a continuous arc from the sacrum to the shoulders, replacing the asset's coarse trunk weights.
+The pelvis follows the bottom tangent; shoulders, arms, neck and head follow the top tangent. Non-trunk skin influences
+are retained, and the original GLB is unchanged.
+
+**Sit on bench** fits a seated pose to the displayed long-seat cushion, allows estimated foam compression and clears
+the calves past the bench edge. XYZ hip position, facing and joints remain adjustable with sliders. Ankle rotation
+maintains the flat-foot orientation independently of the calves. Joint edits retain the chosen angles and adjust hip
+height to put the soles on the floor; hip-height edits solve the legs instead. Recline sets the mean torso lean;
+curvature sets the total bend along the arc, starting at the sacrum. The arc deforms the mesh's existing anatomical
+shape. Leg and ankle posing compensates for pelvis rotation to retain floor contact. **Sit on bench** starts with
+20° recline and 35° curvature; saved manual poses remain unchanged.
+Gaze compensation is shared between neck and head, maintaining
+a downward laptop gaze without forcing the skull to counter-rotate against a backward-pointing neck.
+Manual poses can exceed furniture clearances or available foam compression; the sidebar reports the detected limits.
+
+`frontend/src/seat-cushion.ts` subdivides the displayed seat foam and dents its top beneath the posed skin, keeping the
+bottom fixed. Compression is a visual approximation, capped at 55% of foam thickness. Hiding the person restores the
+original geometry. This does not change the manufactured CAD cushion or simulate foam stiffness. The seated preview
+is hidden during bed extension because it is not a lying-down pose.
+
+Controls act directly on viewer geometry, persist in browser storage and do not regenerate CAD. The rig is detached
+before OCP disposes its old scene and reattached afterwards. OCP bundles Three.js r184; the GLTF loader uses the matching
+pinned npm version. Human geometry and material are allocated through OCP's constructors to keep numeric resource IDs
+unique. No second canvas or render loop is used. The mannequin is not included in build123d assemblies or CAD exports.

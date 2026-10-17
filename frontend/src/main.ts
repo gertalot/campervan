@@ -3,6 +3,7 @@ import { createController } from './controller';
 import { setupSidebarResize } from './sidebar';
 import { setupVisibility } from './visibility';
 import { createCadViewer } from './viewer';
+import { setupMannequinControls } from './mannequin-controls';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -19,8 +20,11 @@ const error = element('error');
 const viewer = createCadViewer(element('viewer'), () => visibility.restore(), message => {
   error.textContent = message;
   error.hidden = false;
-});
+}, message => {
+  element('mannequin-status').textContent = message;
+}, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
+const mannequinControls = setupMannequinControls(element<HTMLDetailsElement>('mannequin'), pose => viewer.setMannequinPose(pose));
 let dirty = false;
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 

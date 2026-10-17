@@ -37,9 +37,8 @@ def cross_stop_layout(p: Parameters, layout: "CrossBedLayout") -> StopLayout:
         or bottom - p.cross_stop_head_allowance_mm < height + clearance
         or x - half - clearance <= layout.moving_start
         or x + layout.travel + half + clearance >= layout.width + p.frame_thickness_mm
-        or x + layout.travel + half >= layout.width - p.bracket_arm_mm - p.bracket_clearance_mm
     ):
-        raise ValueError("Plate stops need closed slat pockets, deck clearance and separation from the angle brackets.")
+        raise ValueError("Plate stops need closed slat pockets and clearance above the deck.")
     rear_y, rear_width = layout.slats[0]
     rear_edge = rear_y + rear_width
     front_edge = layout.slats[-1][0]

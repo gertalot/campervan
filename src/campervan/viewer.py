@@ -17,6 +17,7 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
     from campervan.cad.bed_motion import bed_keyframes
     from campervan.cad.cross_bed import cross_bed_layout
     from campervan.cad.cushions import cushion_motion_tracks
+    from campervan.cad.mirror import mirror_motion_tracks
     from campervan.cad.sliding_bed import long_bed_layout
 
     ocp_viewer.set_port(settings.viewer_port, settings.viewer_host)
@@ -29,42 +30,48 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
             "motions": {
                 "cross_lid_open_percent": {
                     "position": parameters.cross_lid_open_percent,
-                    "tracks": [
-                        {
-                            "path": "/Campervan/Cross bench/Storage lid",
-                            "axis": "x",
-                            "kind": "rotation",
-                            "travel": -70,
-                        }
-                    ],
+                    "tracks": mirror_motion_tracks(
+                        [
+                            {
+                                "path": "/Campervan/Cross bench/Storage lid",
+                                "axis": "x",
+                                "kind": "rotation",
+                                "travel": -70,
+                            }
+                        ]
+                    ),
                 },
                 "bed_extension_percent": {
                     "position": parameters.bed_extension_percent,
-                    "tracks": [
-                        {
-                            "path": "/Campervan/Long bench/Sliding bed/Sliding assembly",
-                            "axis": "x",
-                            "keyframes": bed_keyframes(long_bed_layout(parameters).travel),
-                        },
-                        {
-                            "path": "/Campervan/Cross bench/Sliding assembly",
-                            "axis": "x",
-                            "keyframes": bed_keyframes(cross_bed_layout(parameters).travel),
-                        },
-                        *cushion_motion_tracks(parameters),
-                    ],
+                    "tracks": mirror_motion_tracks(
+                        [
+                            {
+                                "path": "/Campervan/Long bench/Sliding bed/Sliding assembly",
+                                "axis": "x",
+                                "keyframes": bed_keyframes(long_bed_layout(parameters).travel),
+                            },
+                            {
+                                "path": "/Campervan/Cross bench/Sliding assembly",
+                                "axis": "x",
+                                "keyframes": bed_keyframes(cross_bed_layout(parameters).travel),
+                            },
+                            *cushion_motion_tracks(parameters),
+                        ]
+                    ),
                 },
                 "drawer_extension_percent": {
                     "position": parameters.drawer_extension_percent,
-                    "tracks": [
-                        {"path": f"{drawer}/Tray", "axis": "y", "travel": -parameters.slide_travel_mm},
-                        {
-                            "path": f"{drawer}/Rails/Intermediate",
-                            "axis": "y",
-                            "travel": -parameters.slide_travel_mm / 2,
-                        },
-                        {"path": f"{drawer}/Rails/Moving", "axis": "y", "travel": -parameters.slide_travel_mm},
-                    ],
+                    "tracks": mirror_motion_tracks(
+                        [
+                            {"path": f"{drawer}/Tray", "axis": "y", "travel": -parameters.slide_travel_mm},
+                            {
+                                "path": f"{drawer}/Rails/Intermediate",
+                                "axis": "y",
+                                "travel": -parameters.slide_travel_mm / 2,
+                            },
+                            {"path": f"{drawer}/Rails/Moving", "axis": "y", "travel": -parameters.slide_travel_mm},
+                        ]
+                    ),
                 },
             },
         }

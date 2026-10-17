@@ -22,6 +22,14 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Floor outline"]},
     )
 
+    furniture_rear_gap_mm: float = Field(
+        default=85.0,
+        ge=0,
+        title="Furniture gap to rear door",
+        description="Rear gap shared by both benches and cabinet. Owner estimates 70–100mm for the folded solar panel.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Floor outline"]},
+    )
+
     arch_rear_offset_mm: float = Field(
         default=216.0,
         ge=0,
@@ -251,6 +259,124 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
+    cab_length_mm: float = Field(
+        default=1100.0,
+        gt=0,
+        title="Cab length",
+        description="Estimated cab floor extension forward from the cargo body endpoint.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Floor"]},
+    )
+    cab_front_width_mm: float = Field(
+        default=1400.0,
+        gt=0,
+        title="Front floor width",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Floor"]},
+    )
+    cab_seat_width_mm: float = Field(
+        default=475.0,
+        gt=0,
+        title="Seat width",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_seat_depth_mm: float = Field(
+        default=455.0,
+        gt=0,
+        title="Cushion depth",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_seat_height_mm: float = Field(
+        default=300.0,
+        gt=0,
+        title="Cushion rear height",
+        description="Rear cushion top above the shared floor. The front rises separately.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_seat_front_rise_mm: float = Field(
+        default=80.0,
+        ge=0,
+        title="Cushion front rise",
+        description="Front lip above the rear cushion top; estimated from the older Japanese side drawing.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_seat_thickness_mm: float = Field(
+        default=90.0,
+        gt=0,
+        title="Padding thickness",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_backrest_height_mm: float = Field(
+        default=550.0,
+        gt=0,
+        title="Backrest to shoulders",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_headrest_height_mm: float = Field(
+        default=180.0,
+        gt=0,
+        title="Integrated headrest height",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_seat_spacing_mm: float = Field(
+        default=760.0,
+        gt=0,
+        title="Seat centre spacing",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
+    )
+    cab_driver_offset_mm: float = Field(
+        default=160.0,
+        ge=0,
+        title="Forward offset",
+        description="Backrest pivot forward of cargo boundary; estimated for a small mattress gap. Right (+X).",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats", "Driver seat"]},
+    )
+    cab_driver_recline_deg: float = Field(
+        default=15.0,
+        ge=0,
+        le=45,
+        title="Recline",
+        json_schema_extra={"unit": "°", "group": ["Vehicle references", "Cab", "Seats", "Driver seat"]},
+    )
+    cab_passenger_offset_mm: float = Field(
+        default=160.0,
+        ge=0,
+        title="Forward offset",
+        description="Backrest pivot forward of cargo boundary; estimated for a small mattress gap. Left (−X).",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats", "Passenger seat"]},
+    )
+    cab_passenger_recline_deg: float = Field(
+        default=15.0,
+        ge=0,
+        le=45,
+        title="Recline",
+        json_schema_extra={"unit": "°", "group": ["Vehicle references", "Cab", "Seats", "Passenger seat"]},
+    )
+    cab_headliner_front_setback_mm: float = Field(
+        default=200.0,
+        ge=0,
+        title="Front setback",
+        description="Headliner front edge behind the front end of the cab floor.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Headliner"]},
+    )
+    cab_headliner_front_drop_mm: float = Field(
+        default=0.0,
+        ge=0,
+        title="Front drop",
+        description="Below the rear headliner centre. Zero keeps it level along the cab.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Headliner"]},
+    )
+    cab_headliner_front_width_mm: float = Field(
+        default=1150.0,
+        gt=0,
+        title="Front width",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Headliner"]},
+    )
+    cab_headliner_crown_mm: float = Field(
+        default=35.0,
+        ge=0,
+        title="Crown rise",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Headliner"]},
+    )
+
     long_bench_width_mm: float = Field(
         default=600.0, gt=0, title="Width", json_schema_extra={"unit": "mm", "group": ["Long bench"]}
     )
@@ -283,6 +409,7 @@ class Parameters(BaseModel):
         default=100.0,
         gt=0,
         title="Slide mounting band",
+        description="Height of the lower drawer-slide mounting rails in the long bench and cross-bench end frames.",
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
@@ -520,6 +647,22 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame", "Fixed deck"]},
     )
 
+    cross_bearer_height_mm: float = Field(
+        default=18.0,
+        gt=0,
+        title="Bearer thickness",
+        description="Thickness of the fixed and moving bearers. Both use the shared member width.",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench"]},
+    )
+
+    cross_leg_clearance_mm: float = Field(
+        default=2.0,
+        gt=0,
+        title="Leg nesting gap",
+        description="Gap between the retracted legs/bearer and the shortened fixed supports and deck.",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly"]},
+    )
+
     cross_stop_plate_length_mm: float = Field(
         default=100.0,
         gt=0,
@@ -613,10 +756,10 @@ class Parameters(BaseModel):
     )
 
     cabinet_length_mm: float = Field(
-        default=1190.0,
+        default=1087.0,
         gt=0,
         title="Length",
-        description="Along the van. Cabinet depth is cargo width minus bed width.",
+        description="Along the van from the furniture rear gap. Default ends at the sliding door's rear edge.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
@@ -626,6 +769,21 @@ class Parameters(BaseModel):
         title="Upper shelf rail height",
         description="Top of the upper shelf rail and frame step. The lower shelf rail follows the bed support height.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
+    )
+
+    cabinet_shelf_thickness_mm: float = Field(
+        default=12.0,
+        gt=0,
+        title="Shelf thickness",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},
+    )
+
+    cabinet_ledge_size_mm: float = Field(
+        default=19.0,
+        gt=0,
+        title="Ledge size",
+        description="Square timber profile supporting the shelves.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
     )
 
     @model_validator(mode="after")

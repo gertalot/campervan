@@ -24,6 +24,11 @@ p { margin: 0; }
 #visibility legend { margin-bottom: 5px; padding: 0; font-size: 11px; color: #929aa6; }
 #visibility label { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; cursor: pointer; }
 #visibility input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
+#mannequin { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #34373e; }
+#mannequin summary { cursor: pointer; font-size: 11px; color: #b6bec9; margin-bottom: 8px; }
+.mannequin-visibility { display: flex; gap: 5px; align-items: center; }
+.mannequin-visibility input { width: 12px; height: 12px; margin: 0; }
+.mannequin-presets { display: flex; gap: 5px; margin: 8px 0; }
 #fields details { min-width: 0; margin-bottom: 10px; padding-left: 14px; }
 #fields details > .parameter-row { margin-left: 14px; }
 #fields .parameter-row + details { margin-top: 8px; }

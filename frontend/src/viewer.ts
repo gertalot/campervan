@@ -1,5 +1,8 @@
 /** Our host for the installed OCP renderer. No second viewer or playback timeline. */
 import { createViewCube } from './view-cube';
+import { loadMannequin, type MannequinPose } from './mannequin';
+import { createSeatCushion } from './seat-cushion';
+import { Box3, type Object3D, type Scene } from 'three';
 
 type Axis = 'x' | 'y' | 'z';
 interface Track {
@@ -34,6 +37,7 @@ interface CameraPose {
 interface CadViewer {
   ready: boolean;
   rendered: {
+    scene: Scene;
     nestedGroup: { groups: Record<string, SceneGroup> };
     orientationMarker: { setVisible(value: boolean): void };
     camera: { camera: CameraPose & { top: number; bottom: number } };
@@ -49,7 +53,9 @@ interface CadViewer {
   update(change: boolean, controls: boolean): void;
 }
 
-export function createCadViewer(container: HTMLElement, onModel: () => void, onError: (message: string) => void) {
+export function createCadViewer(container: HTMLElement, onModel: () => void, onError: (message: string) => void,
+  onMannequinStatus: (message: string) => void = () => {},
+  onMannequinFit: (pose: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) => void = () => {}) {
   let viewer: CadViewer | undefined;
   let cube: ReturnType<typeof createViewCube> | undefined;
   let socket: WebSocket | undefined;
@@ -59,6 +65,36 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const cameraKey = 'campervan.camera';
   let rendering = false;
   let cameraAnimation: number | null = null;
+  let mannequin: Awaited<ReturnType<typeof loadMannequin>> | undefined;
+  let mannequinLoading: Promise<void> | undefined;
+  let mannequinPose: MannequinPose;
+  let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
+
+  function showMannequin() {
+    if (!mannequin || !viewer?.ready) return;
+    const groups = viewer.rendered.nestedGroup.groups;
+    const seat = groups['/Campervan/Long bench/Cushions/Long seat/Foam'] as unknown as Object3D;
+    const back = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam'] as unknown as Object3D;
+    if (!seat || !back) return;
+    seatCushion ??= createSeatCushion(seat);
+    const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
+    const visible = mannequinPose.visible && bed === 0;
+    const fitted = mannequin.seat({ ...mannequinPose, visible }, seatCushion.bounds(), new Box3().setFromObject(back).min.x);
+    const { x, y, z, facing, hip, knee } = fitted.pose;
+    Object.assign(mannequinPose, { x, y, z, facing, hip, knee });
+    mannequinPose.fitSeat = false;
+    onMannequinFit({ x, y, z, facing, hip, knee });
+    mannequin.attach(viewer.rendered.scene);
+    seatCushion.deform(visible ? mannequin.root : null);
+    const cabinet = groups['/Campervan/Cabinet'] as unknown as Object3D;
+    const cabinetBounds = cabinet ? new Box3().setFromObject(cabinet) : null;
+    onMannequinStatus(bed > 0 ? 'Retract the bed to show the seated preview.'
+      : cabinetBounds?.intersectsBox(fitted.feet) ? 'Feet overlap the cabinet: this layout needs more legroom.'
+      : fitted.compression < -5 ? 'This leg pose lifts the hips off the seat.'
+      : fitted.compression > (seatCushion.bounds().max.z - seatCushion.bounds().min.z) * 0.55
+        ? 'This leg pose needs more compression than the cushion allows.' : '');
+    viewer.update(true, false);
+  }
 
   function cancelCameraAnimation() {
     if (cameraAnimation !== null) cancelAnimationFrame(cameraAnimation);
@@ -153,6 +189,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         group.updateMatrixWorld(true);
       }
     }
+    showMannequin();
     viewer.update(true, true);
   }
 
@@ -239,6 +276,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
               }
             }
             rendering = true;
+            // OCP disposes its old scene when replacing geometry; keep the independent human rig.
+            if (message.type === 'data') {
+              mannequin?.root.removeFromParent();
+              seatCushion?.dispose();
+              seatCushion = undefined;
+            }
             try { page.handleMessage(message); }
             finally { rendering = false; }
             if (message.type === 'data') {
@@ -256,6 +299,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
               }
               saveCamera();
               onModel();
+              showMannequin();
             }
           }
         } catch (error) { onError(error instanceof Error ? error.message : String(error)); }
@@ -272,6 +316,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       socket.onclose = () => onError('CAD viewer connection closed. Refresh after restarting make viewer.');
     },
     setPosition(name: string, percent: number) { positions[name] = percent; move(); },
+    setMannequinPose(pose: MannequinPose) {
+      mannequinPose = { ...pose };
+      if (mannequin) showMannequin();
+      else if (pose.visible) mannequinLoading ??= loadMannequin().then(model => {
+        mannequin = model;
+        showMannequin();
+      }).catch(error => onError(`Mannequin: ${error instanceof Error ? error.message : String(error)}`));
+    },
     getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed' {
       const states = viewer?.ready ? viewer.getStates() : {};
       const visible = Object.entries(states)

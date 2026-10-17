@@ -7,6 +7,7 @@ rear-left corner is the origin. References are not manufactured parts.
 from build123d import Align, Axis, Box, Color, Compound, Location, Part, Polyline, Wire, fillet
 
 from campervan.cad.body import build_body
+from campervan.cad.cab import build_cab
 from campervan.parameters import Parameters
 
 
@@ -41,8 +42,9 @@ def build_vehicle_references(parameters: Parameters) -> Compound:
     return Compound(
         label="Vehicle references",
         children=[
-            floor_outline(p.cargo_width_mm, p.cargo_length_mm),
+            floor_outline(p.cargo_width_mm, p.cargo_length_mm).moved(Location((0, p.furniture_rear_gap_mm, 0))),
             Compound(label="Wheel arches", children=arches),
             *build_body(p),
+            build_cab(p),
         ],
     )
