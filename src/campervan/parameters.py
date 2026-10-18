@@ -31,17 +31,18 @@ class Parameters(BaseModel):
     )
 
     arch_rear_offset_mm: float = Field(
-        default=340.0,
+        default=310.0,
         ge=0,
         title="Rear offset",
-        description="Rear pillar transition (200mm) plus measured rear gap (140mm); insulated arch envelope.",
+        description="Approx. 310mm from closed rear door beside pillar, along wall; aligned to measured door opening.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
     arch_length_mm: float = Field(
-        default=750.0,
+        default=760.0,
         gt=0,
         title="Length",
+        description="Wall-side span: measured front 1070mm minus rear 310mm from the same rear-door reference.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
@@ -116,7 +117,7 @@ class Parameters(BaseModel):
     )
 
     side_opening_width_mm: float = Field(
-        default=740.0,
+        default=680.0,
         gt=0,
         title="Door opening width",
         description="Measured lower opening width along the van; the rear edge flares outward higher up.",
@@ -148,18 +149,18 @@ class Parameters(BaseModel):
     )
 
     left_door_front_offset_mm: float = Field(
-        default=60.0,
+        default=10.0,
         gt=0,
         title="Door setback from cab end",
-        description="Estimated distance from body front boundary to the front edge of this opening.",
+        description="1900mm body boundary minus measured front rubber-seal position at 1890mm.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls", "Left wall"]},
     )
 
     right_door_front_offset_mm: float = Field(
-        default=60.0,
+        default=10.0,
         gt=0,
         title="Door setback from cab end",
-        description="Estimated distance from body front boundary to the front edge of this opening.",
+        description="1900mm body boundary minus measured front rubber-seal position at 1890mm.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls", "Right wall"]},
     )
 
@@ -440,10 +441,10 @@ class Parameters(BaseModel):
     )
 
     side_opening_upper_width_mm: float = Field(
-        default=820.0,
+        default=760.0,
         ge=0,
         title="Upper opening width",
-        description="Measured fore–aft opening width above the curved rear-pillar transition.",
+        description="Estimated from the revised 680mm lower opening plus the original 80mm rearward transition.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
@@ -455,11 +456,27 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
+    side_opening_upper_lean_mm: float = Field(
+        default=20.0,
+        ge=0,
+        title="Upper pillar lean",
+        description="Photo estimate: upper opening edge leans rearward toward the roof, above the lower curve.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
     side_opening_curve_end_mm: float = Field(
         default=770.0,
         ge=0,
         title="Curve end height",
         description="280mm above the existing 490mm mattress top.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    side_pillar_width_mm: float = Field(
+        default=180.0,
+        gt=0,
+        title="Rear pillar fore–aft width",
+        description="Measured at the existing mattress height, from rear side panel to sliding-door opening.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
@@ -1013,6 +1030,8 @@ class Parameters(BaseModel):
             raise ValueError("Sliding-door curve must fit between sill and upper corners.")
         if self.side_opening_upper_width_mm < self.side_opening_width_mm:
             raise ValueError("Sliding-door upper opening must be at least as wide as its lower opening.")
+        if self.side_opening_upper_lean_mm > self.side_opening_upper_width_mm - self.side_opening_width_mm:
+            raise ValueError("Upper pillar lean must fit within the opening's rearward transition.")
         if self.ceiling_rear_y_mm + self.ceiling_length_mm > self.body_length_mm:
             raise ValueError("Cargo plywood must end before the cab floor boundary.")
         if self.floor_ply_thickness_mm > self.floor_build_up_mm:

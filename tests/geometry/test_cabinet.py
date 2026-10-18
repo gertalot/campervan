@@ -42,9 +42,7 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     placed = cabinet.moved(Location((0, p.furniture_rear_gap_mm, 0)))
     assert placed.bounding_box().min.Y == pytest.approx(p.furniture_rear_gap_mm)
     assert placed.bounding_box().max.Y == pytest.approx(p.furniture_rear_gap_mm + p.cabinet_length_mm)
-    assert placed.bounding_box().max.Y == pytest.approx(
-        p.body_length_mm - p.left_door_front_offset_mm - p.side_opening_width_mm
-    )
+    assert placed.bounding_box().max.Y <= (p.body_length_mm - p.left_door_front_offset_mm - p.side_opening_width_mm)
     middle = next(part for part in parts if part.label == "Middle frame")
     arch_left = (p.cargo_width_mm + p.arch_gap_mm) / 2
     beam_bottom = p.platform_height_mm - p.slat_thickness_mm - p.member_width_mm

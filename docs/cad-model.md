@@ -147,17 +147,26 @@ The vehicle uses [Gert's measurements and photographs](research/nv200/measuremen
 are identified in sidebar tooltips. In particular, rear seal elevation and upper forward rake remain estimates.
 
 - Main panel width is 1500 at mattress height. Rear sliding-door pillars intrude approximately 40 per side, following
-  the wall taper and S-shaped opening. Their shapes, roof side rails and rear corners also constrain cabinet fitting.
+  the wall taper and S-shaped opening. Their fore–aft width is 180 at that height, measured from the opening to
+  the rear side panel. Their shapes, roof side rails and rear corners also constrain cabinet fitting.
+  The lower rear-pillar return is trimmed against the same positioned wheel-house solid used for display, so
+  it meets the rounded arch without overlapping it. `body.wheel_arch` owns that shared envelope.
   Front pillars behind the cab doors are solid profiles with the same wall taper and rounded opening returns.
   Their inward depth is separately adjustable (40mm estimate); their fore–aft width follows each opening's cab-end setback.
 - Rear corners have a 60mm straight section followed by an angled transition ending at Y = 200. The original
   `rear_corner_radius_mm` identifier is retained for saved parameters, but its control is **Corner transition depth**.
+  This implemented extent still needs reconciling with the owner's clarification of 60 straight plus 200 flared;
+  see the [dimension audit](research/nv200/dimension-audit.md) for the distinct rear-door/opening references.
 - Rear aperture widths are 1250 at floor, 1265 at Z = 390 and 1115 at 60 below its 1280 centre height. Its outline is
   non-planar, bowing aft by 120 at the centre near bed height and leaning forward at the roof (80mm estimate).
   The closed hatch inner surface is a separate approximate reference, constrained to Y = −30 at the centre at
   the measured 390mm slat height: 130mm behind the existing bed's rear edge at Y = 100. This is the inside panel,
   not the outer door skin; its remaining curvature is approximate.
-- Sliding openings are 740 wide low down and 820 above the smooth rear-pillar transition at Z = 630–770. Their tops
+- Sliding openings are 680 wide low down (rubber seals at Y = 1210 and 1890) and an estimated 760 above the smooth
+  rear-pillar transition at Z = 630–770. Of the original 80mm rearward change, an estimated 20mm is distributed
+  along the upper edge toward the roof, matching the owner's interior photo. The lower curve joins that inclined
+  edge tangentially rather than forming a sharp S-step. The pillar is 180 wide below, 120 just above the lower
+  curve, and 100 below the rounded roof return. Their tops
   are at 1170 above finished floor; lower sill offset is provisionally zero. Fore edges are independently adjustable.
   Open-door envelopes leave 680 to the front pillars and sit approximately 60 outside the body, with 100 depth.
   Their outer faces use the same wall-profile curves as the body in the closed position. The complete curved
@@ -172,15 +181,16 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
 - The 3mm ceiling sheet spans Y = 240–1660. Its underside is 1290 at centre and 1270 at its wall-side edges.
   Exposed side rails, rear header and three approximate bows are separate parts. The ceiling still uses concentric
   circular profiles for real sheet thickness. The bare roof estimate is 1347 above finished floor, with 55 crown.
-- Wheel arches remain approximate rounded 750 × 140 × 280 envelopes. The 700–720 inner-side measured length includes
-  insulation; 750 conservatively represents the longer wall side. Their rear position is 340 from the pillar datum,
-  using the 200mm corner depth plus 140mm gap. Their exact profile and insulated height remain unmeasured.
+- Wheel arches remain approximate rounded 760 × 140 × 280 envelopes. Wall-side endpoints are at Y = 310–1070,
+  from direct measurements parallel to the centreline from the closed rear door beside the pillar. With the lower
+  sliding opening at 1210, this leaves approximately 140mm ahead of the arch. The shorter 700–720 inner-side length
+  is recorded but not separately shaped; the full footprint is a conservative clearance envelope. The exact
+  profile and insulated height remain unmeasured. Floor and furniture cutouts follow the shared arch parameters.
 
-**Longitudinal discrepancy:** the corner/arch chain predicts the lower sliding opening at Y = 1230
-(200 + 140 + estimated 750 + 140). The bed/seat/opening chain puts it near Y = 1100
-(100 + 1890 − 150 − 740). The model retains the arch at 340 and the opening at 1100 as independently adjustable
-references; the resulting arch-to-opening gap is 10, not the measured 140. Recheck the reference faces before
-fabricating around that junction. Do not silently alter the measured widths or pretend this discrepancy is resolved.
+The direct arch and rubber-seal measurements confirm the 140mm front arch gap. Relative to the lower opening,
+the arch rear is 900mm aft and its front is 140mm aft. The closed-door reference and rear-opening datum remain
+distinct; their offset and the rear pillar's local straight/flare segments still need reconciling. See the
+[dimension audit](research/nv200/dimension-audit.md).
 
 Walls, pillars, roof and floors remain translucent, with named assembly groups and visibility controls.
 Measurements describe the existing bed at 390 slat-top height; the design's platform height remains independently
@@ -278,7 +288,7 @@ The lid moves independently of the beds and drawer. Hinge hardware and toilet ha
 
 `cabinet.py` adapts the right-hand branch of `benchCarcass` and `wheelArchFrame` to the body envelope. Its nominal
 footprint is X = 1070–1500, Y = 0–1000, narrowed at the rear corners and pillars. With the 100mm rear gap, it spans vehicle
-Y = 100–1100, ending at the rear edge of the left sliding-door opening. Length has its own Cabinet control; changing it
+Y = 100–1100, ending 110mm behind the lower rear seal of the left sliding-door opening. Length has its own Cabinet control; changing it
 keeps the rear fixed and repositions the middle support halfway along the cabinet, resizing both shelf bays.
 Depth follows the space between bed and wall. The fixed-height setting is replaced by `cabinet_ceiling_gap_mm`, default 3. Height
 of the skins follows the plywood underside, curving gently down toward the wall.

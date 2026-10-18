@@ -32,6 +32,21 @@ from campervan.parameters import Parameters
 WALL = Color(0.55, 0.62, 0.66, 0.32)
 
 
+def wheel_arch(p: Parameters, right: bool) -> Part:
+    """Shared positioned wheel-house envelope for display and adjoining pillar trim."""
+    depth = (p.cargo_width_mm - p.arch_gap_mm) / 2
+    block = Box(depth, p.arch_length_mm, p.arch_height_mm, align=(Align.MIN, Align.MIN, Align.MIN))
+    arch = fillet(block.edges().filter_by(Axis.X).group_by(Axis.Z)[-1], p.arch_radius_mm)
+    crown_edges = [
+        edge for edge in arch.edges() if edge.bounding_box().size.X < 1e-6 and edge.bounding_box().min.Z > 1e-6
+    ]
+    arch = fillet(crown_edges, p.arch_crown_radius_mm)
+    arch.color = Color(0.45, 0.49, 0.52, 0.32)
+    arch.label = "Right wheel arch" if right else "Left wheel arch"
+    arch.location = Location((p.cargo_width_mm - depth if right else 0, p.arch_rear_offset_mm, 0))
+    return arch
+
+
 def body_section(p: Parameters, y: float, inset: float = 0) -> list[Edge]:
     """Seven matching edges, shared by visible walls and cabinet fitting solids."""
     half = p.cargo_width_mm / 2
@@ -193,10 +208,14 @@ def build_ceiling(p: Parameters) -> tuple[Compound, Part]:
 
 
 def side_aperture(p: Parameters, front: float) -> Wire:
-    """YZ opening with the measured smooth, rearward S-offset in its rear pillar."""
+    """YZ seal outline: lower curve flowing into the photo-derived upper pillar lean."""
     rear, upper = front - p.side_opening_width_mm, front - p.side_opening_upper_width_mm
     bottom, top, r = p.side_opening_sill_mm, p.side_opening_height_mm + p.side_opening_sill_mm, p.side_opening_radius_mm
     start, end = p.side_opening_curve_start_mm, p.side_opening_curve_end_mm
+    lean = p.side_opening_upper_lean_mm
+    upper_bottom = upper + lean
+    slope = lean / (top - r - end)
+    handle = (end - start) / 3
 
     def pt(y: float, z: float) -> tuple[float, float, float]:
         return (-1, y, z)
@@ -214,9 +233,14 @@ def side_aperture(p: Parameters, front: float) -> Wire:
             line((front, bottom + r), (front, top - r)),
             curve((front, top - r), (front, top), (front - r, top)),
             line((front - r, top), (upper + r, top)),
-            curve((upper + r, top), (upper, top), (upper, top - r)),
-            line((upper, top - r), (upper, end)),
-            curve((upper, end), (upper, (start + end) / 2), (rear, (start + end) / 2), (rear, start)),
+            curve((upper + r, top), (upper - slope * r, top), (upper, top - r)),
+            line((upper, top - r), (upper_bottom, end)),
+            curve(
+                (upper_bottom, end),
+                (upper_bottom + slope * handle, end - handle),
+                (rear, start + handle),
+                (rear, start),
+            ),
             line((rear, start), (rear, bottom + r)),
             curve((rear, bottom + r), (rear, bottom), (rear + r, bottom)),
         ]
@@ -232,15 +256,19 @@ def side_pillar(p: Parameters, front: float, right: bool, *, rear: bool = True) 
     inward = body.moved(Location((-width if right else width, 0, 0)))
     strip = body - inward
     if rear:
-        start = front - p.side_opening_upper_width_mm - 70
         end = front - p.side_opening_width_mm
+        start = end - p.side_pillar_width_mm
     else:
         start = front - p.side_opening_radius_mm
         end = p.body_length_mm
     slab = Box(p.cargo_width_mm, end - start, p.side_opening_height_mm, align=(Align.MIN, Align.MIN, Align.MIN)).moved(
         Location((0, start, 0))
     )
-    return Part(((strip & slab) - cut).solids(), label="Rear pillar" if rear else "Front pillar", color=WALL)
+    pillar = (strip & slab) - cut
+    if rear:
+        # The pressed lower return meets the wheel house instead of occupying its volume.
+        pillar = pillar - wheel_arch(p, right)
+    return Part(pillar.solids(), label="Rear pillar" if rear else "Front pillar", color=WALL)
 
 
 def sliding_door_offset(p: Parameters, percent: float, right: bool) -> tuple[float, float]:

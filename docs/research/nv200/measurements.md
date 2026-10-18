@@ -20,14 +20,17 @@ perspective, occlusion and different depth planes prevent direct global pixel-to
 | [7. Right sliding-door interior](sources/gert-2026-10-18/07-right-sliding-door-interior.png) | Clear view of rear opening edge's smooth S-shaped offset, upper roof rail, cab-headliner junction and driver's seat rear. Door/window recesses, seals and pillar surfaces are distinct boundaries. |
 
 Geometry implications: fit the rear pillars and header as connected shapes, including the rear opening's forward rake
-toward the ceiling; use the measured 60–200mm corner transition for its plan profile. Fit the sliding-door rear edge
+toward the ceiling; use the 60mm straight section plus 200mm flared section for its plan profile. Fit the sliding-door rear edge
 with a smooth transition through the measured 630–770mm height band. Keep the shallow plywood ceiling crown
 (20mm wall-to-centre rise at the measured station) distinct from the deeper roof rails and shaped cab headliner.
 These photographs do not expose complete wheel-house profiles or hidden ceiling bows and do not establish exact
 fillet radii, rear-opening rake or door travel. These photographs and measurements inform the vehicle model; see [CAD conventions](../../cad-model.md) for applied
-values, approximations and the unresolved 130mm longitudinal discrepancy.
+values, approximations and the unresolved longitudinal measurement chain.
 
 ## Owner measurements — 2026-10-18
+
+See the [generated-model dimension audit](dimension-audit.md) for measured matches, unapplied measurements and
+the unresolved longitudinal measurement chain. Do not adjust furniture to compensate for that conflict.
 
 | Measurement | Value (mm) | Reference / certainty |
 | --- | ---: | --- |
@@ -56,22 +59,39 @@ values, approximations and the unresolved 130mm longitudinal discrepancy.
 | Clear width between inner side panels below rear side windows | 1500 | At existing mattress-top height, Z = 490 above fitted floor; between panel surfaces; exact fore–aft measurement position not recorded |
 | Sliding-door rear pillar rearward curve: lower height | About 630 | 140mm above existing mattress top; start of the transition to the wider upper opening |
 | Sliding-door rear pillar rearward curve: upper height | About 770 | 280mm above existing mattress top; end of the transition to the wider upper opening |
-| Sliding-door opening fore–aft width, narrower part | 740 | Lower portion of side opening; exact measurement endpoints not recorded |
-| Sliding-door opening fore–aft width, wider part | 820 | Upper portion of side opening; rear pillar curves toward the rear, widening the opening |
+| Sliding-door opening fore–aft width, narrower part | 740 | Earlier measurement, superseded by 680mm between the later 1210/1890 rubber-seal endpoints |
+| Sliding-door opening fore–aft width, wider part | 820 | Earlier measurement paired with 740 lower width; model uses their 80mm difference with the revised 680 lower width, giving an estimated 760 upper width |
 | Sliding-door opening centre height above fitted plywood floor | 1170 | From plywood floor top to the top of the opening at its centre; floor-based measurement, not a sill-to-top aperture height |
 | Front sliding-door pillar to open door edge | About 680 | Fore–aft distance with door open; door edge sits forward of the opening's rear edge, reducing access; exact pillar face, height and full-open stop position not confirmed |
 | Mattress edge to outside of open sliding door | 270 | Interpreted as transverse distance outward from mattress side edge; door open, measurement height unspecified |
 | Mattress edge to inside of open sliding door | 170 | Same mattress-edge interpretation and open-door position as outside measurement |
 | Mattress edge to outside of side pillar | About 110 | Same transverse mattress-edge reference assumed; exact pillar face and height unspecified |
 
-| Rear corner pillar constant-width section, fore–aft length | About 60 | From the aft-most point of the rear door opening, forward into the van; maintains the opening width |
-| Rear corner pillar outward transition, start / end from rear | About 60 / 200 | Fore–aft distances from the same aft-most opening reference; angled section joins the rear side panel |
-| Rear pillar corner to rear edge of wheel arch, along side panel | 140 | Fore–aft gap measured at the side panel; corner interpreted as the pillar-to-side-panel junction; measurement height and vehicle side not specified |
-| Wheel-arch fore–aft length on inner (aisle-facing) side, including insulation | About 700–720 | Wall-side span is slightly longer, not yet measured. Includes neoprene/aluminium insulation, not bare metal; insulation thickness unmeasured |
-| Front edge of wheel arch to rear edge of sliding-door opening, along wall | 140 | Fore–aft gap measured along the wall; measurement height and vehicle side unspecified; wheel arch has neoprene/aluminium insulation |
+| Rear corner pillar constant-width section, fore–aft length | About 60 | Owner clarified: local length of the straight section beside the pillar, measured parallel to the vehicle centreline |
+| Rear corner pillar flared triangular section, fore–aft length | About 200 | Owner clarified: length of the flared section itself, parallel to the centreline; not an endpoint coordinate. Straight plus flared length is about 260 |
+| Rear pillar flare/side-wall junction to sliding-door opening | 900 | Parallel to the centreline, at existing mattress-top height Z = 490 |
+| Closed rear door beside rear pillar to sliding-door opening | 1100 | Earlier rear-opening position, superseded by 1210mm to the rubber seal |
+| Aft sliding-door sidewall/pillar fore–aft width | 180 | Section blending into the rear side panel, measured at Z = 490 |
+| Rear pillar corner to rear edge of wheel arch, along side panel | 140 | Earlier measurement; superseded for longitudinal placement by the direct rear-door-to-arch measurements below |
+| Wheel-arch fore–aft length on inner (aisle-facing) side, including insulation | About 700–720 | Includes neoprene/aluminium insulation, not bare metal; insulation thickness unmeasured |
+| Front edge of wheel arch to rear edge of sliding-door opening, along wall | 140 | Earlier measurement; superseded for longitudinal placement by the direct rear-door-to-arch measurements below |
+| Closed rear door beside pillar to rear of wheel arch | About 310 | Parallel to centreline, using wall-side arch endpoint; owner notes measurement difficulty and possible small errors |
+| Closed rear door beside pillar to front of wheel arch | About 1070 | Same reference and wall-side measurement as rear endpoint |
+| Wheel-arch wall-side fore–aft length | About 760 | Derived: 1070 − 310; consistent with wall side being longer than the 700–720 inner side |
+| Closed rear door beside pillar to rear sliding-door opening endpoint, later measurement | About 1210 | Owner confirmed rubber seal of the body opening, not parked sliding-door edge |
+| Closed rear door beside pillar to front sliding-door opening endpoint, later measurement | About 1890 | Same reference as the later 1210 rear endpoint; measurements approximate |
 
-If the 680mm front-pillar-to-door-edge measurement shares endpoints and height with the 740mm lower opening width,
-the open door overlaps that opening by about 60mm. The lateral offsets place the open door's inner face about 60mm
+The owner confirmed the later endpoints are the rubber seals. They give a 680mm lower opening (1890 − 1210)
+and a 140mm gap ahead of the wall-side wheel arch (1210 − 1070). Use these direct endpoints instead of the
+previous 1100 rear-opening position and 740 lower width. The earlier 680mm open-door access remains recorded;
+the measurements no longer imply a 60mm overlap at mattress height.
+
+The 900mm rear pillar/side-wall junction to opening measurement now implies a junction at 310 relative to the
+closed-door reference, rather than the earlier inferred 200. This conflicts with the previous rear arch gap
+and is not used to relocate the rear corner without reconciling the surfaces. The direct arch measurements
+establish its wall-side length as approximately 760mm. Measurements are approximate due to access difficulty.
+
+The lateral offsets place the open door's inner face about 60mm
 outside the pillar's outer face (170 minus 110), with a 100mm span between the measured inner and outer door surfaces
 (270 minus 170). These are conditional differences between measured surfaces, not established uniform door thickness
 or clearance along its entire travel. The mattress side-edge position relative to the van centreline remains unmeasured.
@@ -83,15 +103,21 @@ clearance is 130mm at the centreline. At the same height and bed endpoint, this 
 forward of the centreline opening reference (220 minus 130); this is a reference offset, not door-panel thickness.
 
 In plan view, the rear corner pillars have an approximately triangular profile: maintain the rear opening width
-for the first 60mm forward, then flare outward over the next 140mm, reaching the rear side panels 200mm forward
-of the aft-most opening point. The side-panel clear width is 1500mm at mattress height (Z = 490 above fitted floor).
+for 60mm, then flare outward over a further 200mm: 260mm combined longitudinal extent. These are local section
+lengths beside the pillar, not offsets from the bowed centre of the rear opening. The side-panel clear width is 1500mm at mattress height (Z = 490 above fitted floor).
 The height of this observed corner profile was not specified; do not assume the same cross-section at every height
 or combine the 1265mm opening width at Z = 390 with the side-panel width at Z = 490 as a measured same-height taper.
 
-The sliding-door opening widens by 80mm through the rear-pillar transition between approximately Z = 630 and 770mm
-above the fitted floor. This describes the opening's fore–aft profile, not transverse van width. The owner identifies
-the rear pillar as curving rearward; assigning the full 80mm width change to that pillar assumes the front opening
-edge stays at the same fore–aft position. The intermediate curve shape has not been measured.
+The original opening widths imply an 80mm fore–aft change, with the lower rear-pillar curve observed between
+approximately Z = 630 and 770mm above the fitted floor. The intermediate shape has not been measured. Following
+the owner's later photo comparison, the model distributes an estimated 20mm of that change into a gently inclined
+upper edge, leaving 60mm in the lower curve. Assigning the change to the rear pillar assumes the front edge stays
+at the same fore–aft position. The lean is an adjustable photo-based approximation, not another measured constraint.
+
+The owner's close photo of the lower sliding-door pillar and insulated wheel arch shows the pillar trim meeting
+the curved arch. Their longitudinal extents can overlap in projection, but the interior envelopes must not occupy
+the same volume. The model trims the lower pillar against its shared rounded wheel-house envelope; the junction
+remains approximate because the insulation and pressed trim profiles have not been measured.
 
 Together, the ceiling measurements place the plywood rear edge 240mm and its cab-headliner junction 1660mm forward
 of the rear door opening, assuming both distances are fore–aft and share the same plywood endpoint. This opening

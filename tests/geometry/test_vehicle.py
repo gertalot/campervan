@@ -1,7 +1,7 @@
 """A few measured reference checks; Gert inspects shape and fit in the viewer."""
 
 import pytest
-from build123d import Compound, Vector
+from build123d import Compound, Plane, Vector
 
 from campervan.cad.body import body_section, ceiling_height, side_aperture, sliding_door, sliding_door_offset
 from campervan.cad.vehicle import build_vehicle_references
@@ -18,7 +18,14 @@ def test_measured_vehicle_references():
     for corner, sign in zip(groups["Rear corners"].children, (1, -1), strict=True):
         assert all(face.normal_at().X * sign > 0 for face in corner.faces())
     assert all(face.normal_at().Z < 0 for face in roof["Bare roof"].faces())
-    for wall in groups["Side walls"].children:
+    for wall, arch in zip(groups["Side walls"].children, groups["Wheel arches"].children, strict=True):
+        rear_pillar = next(part for part in wall.children if part.label == "Rear pillar")
+        assert (rear_pillar & arch).volume < 1e-4
+        assert rear_pillar.distance_to(arch) < 1e-5
+        section = rear_pillar.intersect(Plane(origin=(0, 0, 490)))
+        assert Compound(section).bounding_box().size.Y == pytest.approx(180)
+        upper_section = rear_pillar.intersect(Plane(origin=(0, 0, 900)))
+        assert 100 < Compound(upper_section).bounding_box().size.Y < 120
         pillar = next(part for part in wall.children if part.label == "Front pillar")
         assert len(pillar.solids()) == 1 and pillar.volume > 0
         assert pillar.bounding_box().max.Y == pytest.approx(p.body_length_mm)
@@ -37,9 +44,11 @@ def test_measured_vehicle_references():
     assert opening.bounding_box().max.Z == pytest.approx(1280)
     hatch = groups["Rear opening"].children[2]
     assert hatch.distance_to(Vector(centre, p.furniture_rear_gap_mm - 130, 390)) < 0.01
-    side = side_aperture(p, 1840)
-    assert side.distance_to(Vector(-1, 1840 - 740, 490)) < 1e-5
-    assert side.distance_to(Vector(-1, 1840 - 820, 900)) < 1e-5
+    front = p.body_length_mm - p.left_door_front_offset_mm
+    assert front == pytest.approx(1890)
+    side = side_aperture(p, front)
+    assert side.distance_to(Vector(-1, 1210, 490)) < 1e-5
+    assert side.distance_to(Vector(-1, 1890 - 760, 1110)) < 1e-5
     assert side.bounding_box().max.Z == pytest.approx(1170)
     floor = {part.label: part for part in groups["Body floor"].children}
     assert floor["Finished floor plywood"].bounding_box().max.Z == pytest.approx(0)
@@ -56,6 +65,10 @@ def test_measured_vehicle_references():
     cab = {part.label: part for part in groups["Cab"].children}
     assert cab["Headliner"].bounding_box().min.Y == pytest.approx(1660)
     left, right = groups["Wheel arches"].children
+    for arch in (left, right):
+        bounds = arch.bounding_box()
+        assert (bounds.min.Y, bounds.max.Y) == pytest.approx((310, 1070))
+    assert front - p.side_opening_width_mm - 1070 == pytest.approx(140)
     assert right.bounding_box().min.X - left.bounding_box().max.X == pytest.approx(p.arch_gap_mm)
     # Both open doors retain the exact wall curvature, including the upper taper.
     section = body_section(p, 0)
