@@ -2,7 +2,7 @@
 
 from math import floor
 
-from build123d import Color, Compound, Edge, Location, Part
+from build123d import Color, Compound, Face, Location, Part, Wire
 
 from campervan.cad.body import ceiling_height, interior_limits
 from campervan.cad.panels import frame_panel, panel
@@ -22,8 +22,8 @@ def build_cabinet(p: Parameters) -> Compound:
     arch_front = arch_rear + p.arch_length_mm
     if length > min(p.seat_length_mm, p.body_length_mm - gap) or length <= 2 * total or width <= thickness + total:
         raise ValueError("Cabinet must fit beside the bed and leave room between its end panels.")
-    if arch_rear < total or length - total < arch_front:
-        raise ValueError("Cabinet end panels must clear the wheel arch.")
+    if arch_rear < total:
+        raise ValueError("Cabinet rear panel must clear the wheel arch.")
 
     # A flat frame top below the lowest plywood edge; the skins follow its shallow curve.
     height = ceiling_height(p, p.cargo_width_mm, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm)
@@ -43,7 +43,8 @@ def build_cabinet(p: Parameters) -> Compound:
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
     room = (body & ceiling).moved(Location((0, -gap, 0)))
     shelf_thickness, ledge = p.cabinet_shelf_thickness_mm, p.cabinet_ledge_size_mm
-    if shelf_thickness + ledge > member:
+    ledge_height = p.cabinet_ledge_height_mm
+    if shelf_thickness + ledge_height > member:
         raise ValueError("Shelf thickness and ledge must fit within the frame cross-beam height.")
     arch_left = (p.cargo_width_mm + p.arch_gap_mm) / 2
     clearance = 3.0
@@ -70,16 +71,24 @@ def build_cabinet(p: Parameters) -> Compound:
     )
     place(aisle, "Aisle frame", Location((x + thickness, 0, 0), (0, 0, 90)))
 
-    def frame_width(frame_y: float, z: float) -> float:
-        # The rear body widens toward the cab. Check both faces of the flat stock,
-        # and round inward to whole millimetres instead of scribing a curved edge.
+    def frame_width(frame_y: float, bottom: float, top: float) -> float:
+        # A straight frame edge must clear the whole height band, including the
+        # sliding-door pillar's S-bend, on both faces of the plywood stock.
         widths = []
         for y in (frame_y, frame_y + thickness):
-            line = Edge.make_line((x + thickness, y, z), (p.cargo_width_mm, y, z))
-            section = room & line
-            if not section.edges():
-                raise ValueError("Cabinet frame lies outside the wall or ceiling profile.")
-            widths.append(section.bounding_box().max.X - x - thickness)
+            face = Face(
+                Wire.make_polygon(
+                    [
+                        (x + thickness, y, bottom),
+                        (p.cargo_width_mm, y, bottom),
+                        (p.cargo_width_mm, y, top),
+                        (x + thickness, y, top),
+                    ]
+                )
+            )
+            outside = face - room
+            edge = outside.bounding_box().min.X if outside.faces() else p.cargo_width_mm
+            widths.append(edge - x - thickness)
         return float(floor(min(widths)))
 
     middle_y = (length - thickness) / 2
@@ -89,8 +98,8 @@ def build_cabinet(p: Parameters) -> Compound:
         ("Middle", middle_y, None),
         ("Cab-end", length - total, length - skin),
     ):
-        lower_width = frame_width(frame_y, step)
-        upper_width = frame_width(frame_y, height)
+        lower_width = frame_width(frame_y, 0, step)
+        upper_width = frame_width(frame_y, step, height)
         if upper_width <= 2 * member or lower_width < upper_width:
             raise ValueError("Cabinet is too narrow for the stepped frame and its upper opening.")
         # The same rounded-opening primitive also rounds the step's inside corner.
@@ -100,12 +109,12 @@ def build_cabinet(p: Parameters) -> Compound:
         ]
         if lower_width > upper_width:
             openings.append((upper_width, lower_width + 2 * radius, step, height + 2 * radius))
-        if name == "Middle" and frame_y < arch_front and frame_y + thickness > arch_rear:
+        if frame_y < arch_front and frame_y + thickness > arch_rear:
             # Narrow the lowest opening so a full-width upright lands beside the arch.
             foot_width = arch_left - clearance - x - thickness
             beam_bottom = bed_rail - member
             if beam_bottom - radius < p.arch_height_mm + clearance:
-                raise ValueError("The middle frame's lower cross-beam must clear the wheel arch and corner radius.")
+                raise ValueError("The frame's lower cross-beam must clear the wheel arch and corner radius.")
             openings[0] = (member, foot_width - member, member, beam_bottom)
             # Carry the beam's straight underside out to the wall, without a hanging stub.
             openings.append(
@@ -121,7 +130,9 @@ def build_cabinet(p: Parameters) -> Compound:
         frame_widths[name] = (lower_width, upper_width)
         if skin_y is not None:
             blank = panel(width - thickness, skin, p.body_height_mm).moved(Location((x + thickness, skin_y, 0)))
-            parts.append(Part((blank & room).solids(), label=f"{name} skin", color=Color(0.75, 0.66, 0.49)))
+            parts.append(
+                Part(((blank & room) - arch_cutout).solids(), label=f"{name} skin", color=Color(0.75, 0.66, 0.49))
+            )
 
     shelves, ledges = [], []
     for bay_name, start, end, end_names in (
@@ -132,7 +143,7 @@ def build_cabinet(p: Parameters) -> Compound:
             raise ValueError("Cabinet bays must leave room between the shelf ledges.")
         for level_name, rail_z in zip(("Lower", "Middle", "Upper"), shelf_levels, strict=True):
             ledge_z = rail_z - member
-            shelf_z = ledge_z + ledge
+            shelf_z = ledge_z + ledge_height
             label = f"{bay_name} {level_name.lower()}"
             blank = panel(width - thickness, end - start, shelf_thickness).moved(
                 Location((x + thickness, start, shelf_z))
@@ -140,12 +151,12 @@ def build_cabinet(p: Parameters) -> Compound:
             shelves.append(Part(((blank & room) - arch_cutout).solids(), label=label, color=Color(0.75, 0.66, 0.49)))
             for frame_name, ledge_y in zip(end_names, (start, end - ledge), strict=True):
                 support_width = frame_widths[frame_name][int(rail_z >= step)]
-                if frame_name == "Middle" and ledge_z < p.arch_height_mm + clearance + radius:
+                if start < arch_front and end > arch_rear and ledge_z < p.arch_height_mm + clearance + radius:
                     support_width = min(support_width, arch_left - clearance - radius - x - thickness)
-                support = panel(support_width, ledge, ledge).moved(Location((x + thickness, ledge_y, ledge_z)))
+                support = panel(support_width, ledge, ledge_height).moved(Location((x + thickness, ledge_y, ledge_z)))
                 support.label, support.color = f"{label} {frame_name.lower()} ledge", Color(0.88, 0.61, 0.25)
                 ledges.append(support)
-            support = panel(ledge, end - start - 2 * ledge, ledge).moved(
+            support = panel(ledge, end - start - 2 * ledge, ledge_height).moved(
                 Location((x + thickness, start + ledge, ledge_z))
             )
             support.label, support.color = f"{label} aisle ledge", Color(0.88, 0.61, 0.25)

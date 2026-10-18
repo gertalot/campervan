@@ -1,6 +1,8 @@
 const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
   cabinet: ['/Campervan/Cabinet'],
+  longBench: ['/Campervan/Long bench'],
+  crossBench: ['/Campervan/Cross bench'],
   cushions: ['/Campervan/Long bench/Cushions', '/Campervan/Cross bench/Cushions'],
   slats: [
     '/Campervan/Long bench/Fixed frame/Fixed slats',
@@ -14,7 +16,7 @@ const categories: Record<string, string[]> = {
 };
 
 interface VisibilityViewer {
-  setVisibility(paths: string[], visible: boolean): void;
+  setVisibility(rules: Record<string, boolean>): void;
   getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed';
 }
 
@@ -22,7 +24,17 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   const inputs = [...container.querySelectorAll<HTMLInputElement>('input')];
   const groups = new Map<HTMLButtonElement, { path: string; title: string }>();
   const key = 'campervan.visibility.paths';
-  const rules: Record<string, boolean> = JSON.parse(localStorage.getItem(key) ?? '{}');
+  const rules: Record<string, boolean> = {
+    '/Campervan/Vehicle references/Floor outline': false,
+    '/Campervan/Vehicle references/Rear opening/Clear opening': false,
+    ...JSON.parse(localStorage.getItem(key) ?? '{}'),
+  };
+  // Assembly switches must retain independent content filters and reference-wire choices.
+  const independentPaths = new Set([
+    ...Object.values(categories).flat(),
+    '/Campervan/Vehicle references/Floor outline',
+    '/Campervan/Vehicle references/Rear opening/Clear opening',
+  ]);
   if (!localStorage.getItem(key)) {
     for (const input of inputs) {
       for (const path of categories[input.name]) {
@@ -33,9 +45,10 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
 
   function refresh() {
     for (const input of inputs) {
-      const state = viewer.getVisibility(categories[input.name]);
-      input.checked = state === 'shown';
-      input.indeterminate = state === 'mixed';
+      // A checkbox represents its own switch, even when another switch masks its contents.
+      const enabled = categories[input.name].map(path => rules[path] !== false);
+      input.checked = enabled.every(Boolean);
+      input.indeterminate = enabled.some(Boolean) && !input.checked;
     }
     for (const [button, { path, title }] of groups) {
       const state = viewer.getVisibility([path]);
@@ -48,12 +61,13 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
 
   function change(paths: string[], visible: boolean) {
     for (const path of paths) {
-      // A parent toggle replaces its children's overrides.
-      for (const existing of Object.keys(rules)) if (existing.startsWith(`${path}/`)) delete rules[existing];
+      for (const existing of Object.keys(rules)) {
+        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing)) delete rules[existing];
+      }
       rules[path] = visible;
     }
     localStorage.setItem(key, JSON.stringify(rules));
-    viewer.setVisibility(paths, visible);
+    viewer.setVisibility(rules);
     refresh();
   }
 
@@ -63,10 +77,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
 
   return {
     restore() {
-      // Apply parent choices before explicit child choices.
-      for (const path of Object.keys(rules).sort((a, b) => a.split('/').length - b.split('/').length)) {
-        viewer.setVisibility([path], rules[path]);
-      }
+      viewer.setVisibility(rules);
       refresh();
     },
     resetGroups() { groups.clear(); },
@@ -79,7 +90,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        change([path], viewer.getVisibility([path]) !== 'shown');
+        change([path], rules[path] === false);
       });
       heading.append(button);
       refresh();

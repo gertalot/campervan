@@ -77,7 +77,12 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
                 p.platform_height_mm - p.slat_thickness_mm - p.member_width_mm / 2,
                 p.cabinet_frame_step_height_mm - p.member_width_mm / 2,
             ):
-                if part.label == "Middle frame" and z < p.arch_height_mm:
+                if (
+                    part.label != "Aisle frame"
+                    and bounds.min.Y < p.arch_rear_offset_mm - p.furniture_rear_gap_mm + p.arch_length_mm
+                    and bounds.max.Y > p.arch_rear_offset_mm - p.furniture_rear_gap_mm
+                    and z < p.arch_height_mm
+                ):
                     continue  # Its wall-side foot is cut away around the wheel arch.
                 if part.label == "Aisle frame":
                     rail = Edge.make_line((bounds.center().X, bounds.min.Y, z), (bounds.center().X, bounds.max.Y, z))
@@ -91,7 +96,7 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     )
     # Flat end-panel stock is scribed into a narrower outline at its upper edge.
     end = next(part for part in parts if part.label == "Cab-end skin")
-    assert end.bounding_box().max.X == pytest.approx(p.cargo_width_mm)
+    assert end.bounding_box().max.X < p.cargo_width_mm  # Scribed around the sliding-door pillar.
     vehicle = build_vehicle_references(p)
     arch = vehicle.children[1].children[1].moved(to_furniture)
     roof = next(group for group in vehicle.children if group.label == "Roof")

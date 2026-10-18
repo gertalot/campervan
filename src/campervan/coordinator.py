@@ -4,14 +4,16 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from campervan.parameters import Parameters, default_parameters
+from campervan.materials import PROJECT_PATH, CutPart, Project, Selection, load_project, resolve, save_project
+from campervan.parameters import Parameters
 from campervan.settings import Settings
 from campervan.worker import regenerate_model
 
-Regenerate = Callable[[Parameters, Settings], Awaitable[None]]
+Regenerate = Callable[[Parameters, Settings], Awaitable[list[CutPart] | None]]
 logger = logging.getLogger(__name__)
 
 
@@ -30,17 +32,26 @@ class ModelStatus:
 
 
 class Coordinator:
-    def __init__(self, settings: Settings, regenerate: Regenerate = regenerate_model) -> None:
+    def __init__(
+        self, settings: Settings, regenerate: Regenerate = regenerate_model, project_path: Path = PROJECT_PATH
+    ) -> None:
         self.session_id = str(uuid4())
-        self.parameters = default_parameters()
+        self._project_path = project_path
+        project = load_project(project_path)
+        self.parameters = project.parameters
+        self.materials = project.materials
+        self.cuts: list[CutPart] = []
+        self.cuts_revision: int | None = None
         self._status = ModelStatus(session_id=self.session_id)
         self._settings = settings
         self._regenerate = regenerate
         self._task: asyncio.Task[None] | None = None
 
-    async def accept(self, parameters: Parameters | None = None) -> int:
-        if parameters is not None:
-            self.parameters = parameters
+    async def accept(self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None) -> int:
+        selected = self.materials if materials is None else materials
+        resolved = resolve(parameters or self.parameters, selected)
+        save_project(Project(parameters=resolved, materials=selected), self._project_path)
+        self.parameters, self.materials = resolved, selected
         revision = self._status.requested_revision + 1
         self._status = replace(self._status, requested_revision=revision, state="regenerating", error=None)
         if self._task is None or self._task.done():
@@ -59,7 +70,10 @@ class Coordinator:
             revision = self._status.requested_revision
             error = None
             try:
-                await self._regenerate(self.parameters, self._settings)
+                cuts = await self._regenerate(self.parameters, self._settings)
+                if revision == self._status.requested_revision:
+                    self.cuts = cuts or []
+                    self.cuts_revision = revision
                 self._status = replace(self._status, published_revision=revision)
             except Exception as failure:
                 logger.error("Regeneration failed: %s", failure)

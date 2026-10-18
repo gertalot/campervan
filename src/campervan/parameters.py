@@ -23,18 +23,18 @@ class Parameters(BaseModel):
     )
 
     furniture_rear_gap_mm: float = Field(
-        default=85.0,
+        default=100.0,
         ge=0,
         title="Furniture gap to rear door",
-        description="Rear gap shared by both benches and cabinet. Owner estimates 70–100mm for the folded solar panel.",
+        description="Furniture setback from the rear opening at the pillar; the opening centre bows farther aft.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Floor outline"]},
     )
 
     arch_rear_offset_mm: float = Field(
-        default=216.0,
+        default=340.0,
         ge=0,
         title="Rear offset",
-        description="Distance from the rear floor edge to the wheel arches.",
+        description="Rear pillar transition (200mm) plus measured rear gap (140mm); insulated arch envelope.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
@@ -76,10 +76,10 @@ class Parameters(BaseModel):
     )
 
     rear_corner_radius_mm: float = Field(
-        default=100.0,
+        default=200.0,
         gt=0,
-        title="Plan radius",
-        description="Estimated rear corner depth and inward offset; also used for furniture setback.",
+        title="Corner transition depth",
+        description="Rear pillar-to-side-panel depth from the pillar datum; also sets furniture clearance.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear corners"]},
     )
 
@@ -92,10 +92,10 @@ class Parameters(BaseModel):
     )
 
     body_height_mm: float = Field(
-        default=1365.0,
+        default=1347.0,
         gt=0,
         title="Bare roof height",
-        description="Japanese DX bare cargo height above the floor, before the custom ceiling lining.",
+        description="Estimated bare roof above finished floor: catalogue 1365mm minus about 18mm floor build-up.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references"]},
     )
 
@@ -108,7 +108,7 @@ class Parameters(BaseModel):
     )
 
     wall_taper_start_mm: float = Field(
-        default=750.0,
+        default=490.0,
         gt=0,
         title="Taper starts above floor",
         description="Estimated height where the upright lower walls begin curving inward.",
@@ -116,23 +116,23 @@ class Parameters(BaseModel):
     )
 
     side_opening_width_mm: float = Field(
-        default=668.0,
+        default=740.0,
         gt=0,
         title="Door opening width",
-        description="Japanese sliding-door aperture width along the van.",
+        description="Measured lower opening width along the van; the rear edge flares outward higher up.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
     side_opening_height_mm: float = Field(
-        default=1169.0,
+        default=1170.0,
         gt=0,
         title="Door opening height",
-        description="Japanese sliding-door aperture height above its sill.",
+        description="Measured opening centre height above finished plywood floor; 1170mm with zero sill offset.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
     side_opening_sill_mm: float = Field(
-        default=30.0,
+        default=0.0,
         ge=0,
         title="Door sill height",
         description="Estimated height above the floor; opening positions and corner radii need measuring.",
@@ -164,7 +164,7 @@ class Parameters(BaseModel):
     )
 
     roof_crown_mm: float = Field(
-        default=75.0,
+        default=55.0,
         gt=0,
         title="Crown rise",
         description="Estimated rise from the roof shoulders to the centre of the bare roof.",
@@ -172,7 +172,7 @@ class Parameters(BaseModel):
     )
 
     roof_bow_depth_mm: float = Field(
-        default=90.0,
+        default=54.0,
         gt=0,
         title="Centre depth",
         description="Estimated bow depth at the roof centre; the top follows the bare roof.",
@@ -180,10 +180,10 @@ class Parameters(BaseModel):
     )
 
     roof_bow_crown_mm: float = Field(
-        default=15.0,
+        default=20.0,
         ge=0,
         title="Underside crown rise",
-        description="Estimated underside rise from roof shoulders to centre. The plywood follows this shallow curve.",
+        description="Measured plywood rise from wall to centre: 20mm. Bows follow the same shallow curve.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Roof bows"]},
     )
 
@@ -228,34 +228,34 @@ class Parameters(BaseModel):
     )
 
     rear_opening_width_mm: float = Field(
-        default=1255.0,
+        default=1265.0,
         gt=0,
         title="Opening width",
-        description="Japanese rear aperture maximum clear width, not overall body width.",
+        description="Measured width at 390mm above finished floor, at the slat tops of the existing bed.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
     rear_opening_height_mm: float = Field(
-        default=1230.0,
+        default=1280.0,
         gt=0,
         title="Opening height",
-        description="Japanese rear aperture vertical height; the sill shares the floor datum pending measurement.",
+        description="Measured centre seal-to-seal height; sill offset from finished floor remains an estimate.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
     rear_opening_upper_width_mm: float = Field(
-        default=1150.0,
+        default=1115.0,
         gt=0,
         title="Upper opening width",
-        description="Estimated width before the rounded top corners, guided by the rear-aperture image traces.",
+        description="Measured width one top-corner height below the highest point (60mm at defaults).",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
     rear_opening_radius_mm: float = Field(
-        default=120.0,
+        default=60.0,
         gt=0,
         title="Top corner size",
-        description="Estimated extent of the curved top corners; the aperture is a smooth tapered profile.",
+        description="Height from the upper-width measurement to the opening top; rounded top shoulders.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
@@ -305,7 +305,7 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
     )
     cab_backrest_height_mm: float = Field(
-        default=550.0,
+        default=600.0,
         gt=0,
         title="Backrest to shoulders",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
@@ -323,28 +323,28 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats"]},
     )
     cab_driver_offset_mm: float = Field(
-        default=160.0,
+        default=175.0,
         ge=0,
         title="Forward offset",
-        description="Backrest pivot forward of cargo boundary; estimated for a small mattress gap. Right (+X).",
+        description="Pivot forward of cargo boundary; calibrated to rear surface at Z=490. Right (+X).",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats", "Driver seat"]},
     )
     cab_driver_recline_deg: float = Field(
-        default=15.0,
+        default=10.437,
         ge=0,
         le=45,
         title="Recline",
         json_schema_extra={"unit": "°", "group": ["Vehicle references", "Cab", "Seats", "Driver seat"]},
     )
     cab_passenger_offset_mm: float = Field(
-        default=160.0,
+        default=175.0,
         ge=0,
         title="Forward offset",
-        description="Backrest pivot forward of cargo boundary; estimated for a small mattress gap. Left (−X).",
+        description="Pivot forward of cargo boundary; calibrated to rear surface at Z=490. Left (−X).",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Seats", "Passenger seat"]},
     )
     cab_passenger_recline_deg: float = Field(
-        default=15.0,
+        default=10.437,
         ge=0,
         le=45,
         title="Recline",
@@ -375,6 +375,157 @@ class Parameters(BaseModel):
         ge=0,
         title="Crown rise",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Cab", "Headliner"]},
+    )
+
+    floor_build_up_mm: float = Field(
+        default=18.0,
+        ge=0,
+        title="Floor build-up",
+        description="Finished floor above vehicle floor; owner estimate.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+    )
+
+    floor_ply_thickness_mm: float = Field(
+        default=12.0,
+        ge=0,
+        title="Floor plywood",
+        description="Owner reports 11–12mm; use 12mm within the 18mm total build-up.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+    )
+
+    rear_corner_straight_mm: float = Field(
+        default=60.0,
+        ge=0,
+        title="Straight section",
+        description="Distance forward at constant width before the corner flares into the side panel.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear corners"]},
+    )
+
+    rear_opening_floor_width_mm: float = Field(
+        default=1250.0,
+        ge=0,
+        title="Width at floor",
+        description="Measured clear width between rear pillars at finished-floor height.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
+    rear_opening_bow_mm: float = Field(
+        default=120.0,
+        ge=0,
+        title="Centre rearward bow",
+        description="Centreline opening is 120mm aft of the pillar at slat height.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
+    rear_opening_rake_mm: float = Field(
+        default=80.0,
+        ge=0,
+        title="Upper forward rake",
+        description="Unmeasured estimate from owner photos; upper opening leans forward.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
+    rear_opening_sill_mm: float = Field(
+        default=0.0,
+        title="Seal sill offset",
+        description="Bottom seal relative to finished floor; zero is provisional.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
+    rear_hatch_centre_y_mm: float = Field(
+        default=-30.0,
+        title="Closed inner panel position",
+        description="100mm bed setback minus 130mm closed-door clearance at centreline.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
+    side_opening_upper_width_mm: float = Field(
+        default=820.0,
+        ge=0,
+        title="Upper opening width",
+        description="Measured fore–aft opening width above the curved rear-pillar transition.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    side_opening_curve_start_mm: float = Field(
+        default=630.0,
+        ge=0,
+        title="Curve start height",
+        description="140mm above the existing 490mm mattress top.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    side_opening_curve_end_mm: float = Field(
+        default=770.0,
+        ge=0,
+        title="Curve end height",
+        description="280mm above the existing 490mm mattress top.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    side_pillar_intrusion_mm: float = Field(
+        default=40.0,
+        ge=0,
+        title="Rear pillar intrusion",
+        description="1500mm panel width minus 1420mm pillar width at mattress height, shared equally between sides.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    front_pillar_intrusion_mm: float = Field(
+        default=40.0,
+        gt=0,
+        title="Front pillar intrusion",
+        description="Estimated inward depth of the pillars behind the cab doors, following the wall curvature.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    ceiling_rear_y_mm: float = Field(
+        default=240.0,
+        ge=0,
+        title="Rear edge position",
+        description="Measured rear opening to plywood rear edge; using pillar datum provisionally.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Finished ceiling"]},
+    )
+
+    ceiling_length_mm: float = Field(
+        default=1420.0,
+        ge=0,
+        title="Plywood length",
+        description="Measured fore–aft length to the cab headliner.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Finished ceiling"]},
+    )
+
+    side_door_clear_width_mm: float = Field(
+        default=680.0,
+        ge=0,
+        title="Open clear width",
+        description="Measured front pillar to the edge of the open sliding door.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    doors_close_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Doors closed (%)",
+        description="Both doors slide forward, then pull inward during the final 15%. Zero is fully open.",
+        json_schema_extra={"unit": "%", "group": ["Vehicle references", "Sliding doors"], "control": "position"},
+    )
+
+    side_door_standoff_mm: float = Field(
+        default=60.0,
+        ge=0,
+        title="Open door standoff",
+        description="170mm mattress-to-inner-door minus 110mm mattress-to-outer-pillar.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    side_door_thickness_mm: float = Field(
+        default=100.0,
+        ge=0,
+        title="Door envelope thickness",
+        description="270mm to outer face minus 170mm to inner face; approximate overall envelope.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
     )
 
     long_bench_width_mm: float = Field(
@@ -429,7 +580,7 @@ class Parameters(BaseModel):
     )
 
     wall_thickness_mm: float = Field(
-        default=7.0,
+        default=4.0,
         gt=0,
         title="Skin thickness",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Cab-end skin"]},
@@ -480,7 +631,7 @@ class Parameters(BaseModel):
     )
 
     ledge_width_mm: float = Field(
-        default=25.0,
+        default=18.0,
         gt=0,
         title="Ledge width",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Guide ledges"]},
@@ -651,7 +802,7 @@ class Parameters(BaseModel):
         default=18.0,
         gt=0,
         title="Bearer thickness",
-        description="Thickness of the fixed and moving bearers. Both use the shared member width.",
+        description="Plywood thickness of the fixed and moving support rails. Both use the shared member width.",
         json_schema_extra={"unit": "mm", "group": ["Cross bench"]},
     )
 
@@ -756,7 +907,7 @@ class Parameters(BaseModel):
     )
 
     cabinet_length_mm: float = Field(
-        default=1087.0,
+        default=1000.0,
         gt=0,
         title="Length",
         description="Along the van from the furniture rear gap. Default ends at the sliding door's rear edge.",
@@ -779,10 +930,17 @@ class Parameters(BaseModel):
     )
 
     cabinet_ledge_size_mm: float = Field(
-        default=19.0,
+        default=18.0,
         gt=0,
-        title="Ledge size",
-        description="Square timber profile supporting the shelves.",
+        title="Ledge width",
+        description="Horizontal width of the timber supporting the shelves.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
+    )
+
+    cabinet_ledge_height_mm: float = Field(
+        default=18.0,
+        gt=0,
+        title="Ledge height",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
     )
 
@@ -828,7 +986,7 @@ class Parameters(BaseModel):
         for offset in (self.left_door_front_offset_mm, self.right_door_front_offset_mm):
             if self.body_length_mm - offset - self.side_opening_width_mm <= self.rear_corner_radius_mm:
                 raise ValueError("Sliding-door openings must fit between the rear corners and the cab boundary.")
-        if self.rear_opening_width_mm >= self.cargo_width_mm - 2 * self.rear_corner_radius_mm:
+        if self.rear_opening_width_mm >= self.cargo_width_mm:
             raise ValueError("Rear opening must leave space for the rear pillars.")
         if not 2 * self.rear_opening_radius_mm < self.rear_opening_upper_width_mm <= self.rear_opening_width_mm:
             raise ValueError("Rear upper opening must fit its corners and be no wider than the lower opening.")
@@ -844,6 +1002,21 @@ class Parameters(BaseModel):
             raise ValueError("Frame members must cover the plywood thickness at joints.")
         if self.platform_height_mm <= self.slat_thickness_mm + 2 * self.member_width_mm:
             raise ValueError("Platform height must leave room for the frame below the slats.")
+        if not 0 < self.rear_corner_straight_mm < self.rear_corner_radius_mm:
+            raise ValueError("Rear corner straight section must end before the side-panel junction.")
+        if (
+            not self.side_opening_sill_mm
+            < self.side_opening_curve_start_mm
+            < self.side_opening_curve_end_mm
+            < self.side_opening_height_mm - self.side_opening_radius_mm
+        ):
+            raise ValueError("Sliding-door curve must fit between sill and upper corners.")
+        if self.side_opening_upper_width_mm < self.side_opening_width_mm:
+            raise ValueError("Sliding-door upper opening must be at least as wide as its lower opening.")
+        if self.ceiling_rear_y_mm + self.ceiling_length_mm > self.body_length_mm:
+            raise ValueError("Cargo plywood must end before the cab floor boundary.")
+        if self.floor_ply_thickness_mm > self.floor_build_up_mm:
+            raise ValueError("Floor plywood must fit within the total floor build-up.")
         return self
 
 

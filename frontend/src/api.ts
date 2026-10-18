@@ -5,6 +5,7 @@ export interface FieldMetadata {
   unit: string;
   group: string[];
   control?: 'position';
+  material?: string;
   description?: string;
   minimum?: number;
   exclusiveMinimum?: number;
@@ -34,7 +35,7 @@ export class ApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
 }
 
-async function request<T>(path: string, method = 'GET', body?: Parameters): Promise<T> {
+export async function request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   const response = await fetch(`/api/v1/${path}`, {
     method,
     ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),

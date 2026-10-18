@@ -332,13 +332,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       if (!visible.length || visible.every(Boolean)) return 'shown';
       return visible.some(Boolean) ? 'mixed' : 'hidden';
     },
-    setVisibility(prefixes: string[], visible: boolean) {
+    setVisibility(rules: Record<string, boolean>) {
       if (!viewer?.ready) return;
       const states: Record<string, number[]> = {};
+      const hidden = Object.keys(rules).filter(path => !rules[path]);
       for (const [path, state] of Object.entries(viewer.getStates())) {
-        if (prefixes.some(prefix => path === prefix || path.startsWith(`${prefix}/`))) {
-          states[path] = state.map(value => value === 3 ? 3 : Number(visible));
-        }
+        // Every containing assembly and content filter must permit visibility.
+        const visible = !hidden.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+        states[path] = state.map(value => value === 3 ? 3 : Number(visible));
       }
       viewer.setStates(states);
     },

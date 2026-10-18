@@ -1,77 +1,84 @@
-"""Basic envelope checks; measured fit and appearance are inspected in the viewer."""
+"""A few measured reference checks; Gert inspects shape and fit in the viewer."""
 
 import pytest
-from build123d import Align, Box, Face, Location, Vector
+from build123d import Compound, Vector
 
-from campervan.cad.body import ceiling_height, rear_aperture
+from campervan.cad.body import body_section, ceiling_height, side_aperture, sliding_door, sliding_door_offset
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
 
 
-def test_vehicle_envelope_and_openings():
-    for p in (Parameters(), Parameters(body_length_mm=2000, body_upper_width_mm=1300)):
-        vehicle = build_vehicle_references(p)
-        groups = {group.label: group for group in vehicle.children}
-        assert all(part.is_valid for part in vehicle.leaves)
-        assert tuple(groups["Floor outline"].bounding_box().size) == pytest.approx((1500, 1860, 0))
-        assert groups["Floor outline"].bounding_box().min.Y == pytest.approx(p.furniture_rear_gap_mm)
-        assert tuple(vehicle.bounding_box().size) == pytest.approx(
-            (1500, p.body_length_mm + p.cab_length_mm, p.body_height_mm)
-        )
-        floor, seats, headliner = groups["Cab"].children
-        roof_z = ceiling_height(p, p.cargo_width_mm / 2, p.ceiling_ply_thickness_mm)
-        roof_front = p.body_length_mm + p.cab_length_mm - p.cab_headliner_front_setback_mm
-        assert headliner.distance_to(Vector(p.cargo_width_mm / 2, roof_front, roof_z)) < 1e-5
-        assert floor.bounding_box().min.Y == pytest.approx(p.body_length_mm)
-        assert floor.bounding_box().min.Z == pytest.approx(0)
-        assert floor.bounding_box().max.Z == pytest.approx(0)
-        driver, passenger = seats.children
-        assert driver.bounding_box().min.X > passenger.bounding_box().max.X
-        for seat in seats.children:
-            cushion = next(part for part in seat.children if part.label == "Cushion")
-            assert cushion.bounding_box().max.Z == pytest.approx(p.cab_seat_height_mm + p.cab_seat_front_rise_mm)
-            assert tuple(cushion.bounding_box().size)[:2] == pytest.approx((p.cab_seat_width_mm, p.cab_seat_depth_mm))
-            back = next(part for part in seat.children if part.label == "Integrated backrest and headrest")
-            assert len(back.solids()) == 1
-            assert seat.bounding_box().min.Z == pytest.approx(0)
-            # The upper backrest can overhang the mattress in plan view. Check
-            # actual mattress clearance rather than the whole seat's Y bounds.
-            if p.body_length_mm == 1900:
-                mattress = Box(
-                    p.bed_width_mm,
-                    p.cargo_length_mm,
-                    p.foam_thickness_mm,
-                    align=(Align.MIN, Align.MIN, Align.MIN),
-                ).moved(
-                    Location((p.cargo_width_mm - p.bed_width_mm - 7, p.furniture_rear_gap_mm, p.platform_height_mm))
-                )
-                assert 0 < seat.distance_to(mattress) < 20
-            assert seat.distance_to(headliner) > 0
-        left, right = groups["Wheel arches"].children
-        assert right.bounding_box().min.X - left.bounding_box().max.X == pytest.approx(p.arch_gap_mm)
-        assert left.bounding_box().max.Z == pytest.approx(p.arch_height_mm)
-        # The door openings are holes in the surfaces, not just lines drawn on walls.
-        for wall, x, offset in zip(
-            groups["Side walls"].children,
-            (0, 1500),
-            (p.left_door_front_offset_mm, p.right_door_front_offset_mm),
-            strict=True,
-        ):
-            door_centre = Vector(x, p.body_length_mm - offset - p.side_opening_width_mm / 2, 500)
-            assert wall.distance_to(door_centre) > 100
-            assert wall.distance_to(Vector(x, 500, 500)) < 1e-6
-        surround = groups["Rear opening"].children[0]
-        overlap = surround & Face(rear_aperture(p))
-        assert overlap is None or overlap.area < 1e-5
-        assert surround.area > 0
-        _, bows, ply = groups["Roof"].children
-        assert len(bows.children) == 3 and len(ply.solids()) == 1
-        for bow in bows.children:
-            assert len(bow.solids()) == 1
-            assert bow.distance_to(ply) < 1e-5
-            overlap = bow & ply
-            assert overlap is None or overlap.volume < 1e-4
-        # The sheet has actual thickness, rather than being another roof reference face.
-        centre = p.cargo_width_mm / 2
-        underside = Vector(centre, 500, p.body_height_mm - p.roof_bow_depth_mm - p.ceiling_ply_thickness_mm)
-        assert ply.distance_to(underside) < 1e-5
+def test_measured_vehicle_references():
+    p = Parameters()
+    vehicle = build_vehicle_references(p)
+    groups = {group.label: group for group in vehicle.children}
+    assert all(part.is_valid for part in vehicle.leaves)
+    assert groups["Floor outline"].bounding_box().min.Y == pytest.approx(p.furniture_rear_gap_mm)
+    roof = {part.label: part for part in groups["Roof"].children}
+    for corner, sign in zip(groups["Rear corners"].children, (1, -1), strict=True):
+        assert all(face.normal_at().X * sign > 0 for face in corner.faces())
+    assert all(face.normal_at().Z < 0 for face in roof["Bare roof"].faces())
+    for wall in groups["Side walls"].children:
+        pillar = next(part for part in wall.children if part.label == "Front pillar")
+        assert len(pillar.solids()) == 1 and pillar.volume > 0
+        assert pillar.bounding_box().max.Y == pytest.approx(p.body_length_mm)
+    ply = roof["Finished ceiling"]
+    bounds = ply.bounding_box()
+    assert (bounds.min.Y, bounds.max.Y) == pytest.approx((240, 1660))
+    centre = p.cargo_width_mm / 2
+    edge = centre - p.body_upper_width_mm / 2
+    assert ceiling_height(p, centre, p.ceiling_ply_thickness_mm) == pytest.approx(1290)
+    assert ceiling_height(p, edge, p.ceiling_ply_thickness_mm) == pytest.approx(1270, abs=0.01)
+    for bow in roof["Roof bows"].children:
+        assert bow.distance_to(ply) < 1e-5
+    opening = groups["Rear opening"].children[1]
+    assert opening.distance_to(Vector((1500 - 1265) / 2, 0, 390)) < 1e-5
+    assert opening.bounding_box().min.Y == pytest.approx(-120, abs=0.1)
+    assert opening.bounding_box().max.Z == pytest.approx(1280)
+    hatch = groups["Rear opening"].children[2]
+    assert hatch.distance_to(Vector(centre, p.furniture_rear_gap_mm - 130, 390)) < 0.01
+    side = side_aperture(p, 1840)
+    assert side.distance_to(Vector(-1, 1840 - 740, 490)) < 1e-5
+    assert side.distance_to(Vector(-1, 1840 - 820, 900)) < 1e-5
+    assert side.bounding_box().max.Z == pytest.approx(1170)
+    floor = {part.label: part for part in groups["Body floor"].children}
+    assert floor["Finished floor plywood"].bounding_box().max.Z == pytest.approx(0)
+    assert floor["Vehicle floor"].bounding_box().max.Z == pytest.approx(-18)
+    plywood = floor["Finished floor plywood"]
+    assert plywood.bounding_box().min.Y == pytest.approx(0)
+    assert plywood.distance_to(Vector(centre, 0, 0)) < 1e-5
+    rear_inset = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
+    for x in (rear_inset - 10, p.cargo_width_mm - rear_inset + 10):
+        assert plywood.distance_to(Vector(x, p.rear_corner_straight_mm / 2, 0)) == pytest.approx(10)
+    arch_depth = (p.cargo_width_mm - p.arch_gap_mm) / 2
+    for x in (arch_depth / 2, p.cargo_width_mm - arch_depth / 2):
+        assert plywood.distance_to(Vector(x, p.arch_rear_offset_mm + p.arch_length_mm / 2, 0)) > 1
+    cab = {part.label: part for part in groups["Cab"].children}
+    assert cab["Headliner"].bounding_box().min.Y == pytest.approx(1660)
+    left, right = groups["Wheel arches"].children
+    assert right.bounding_box().min.X - left.bounding_box().max.X == pytest.approx(p.arch_gap_mm)
+    # Both open doors retain the exact wall curvature, including the upper taper.
+    section = body_section(p, 0)
+    for door, edge, sign, offset in zip(
+        groups["Sliding doors"].children,
+        (section[1], section[4]),
+        (-1, 1),
+        (p.left_door_front_offset_mm, p.right_door_front_offset_mm),
+        strict=True,
+    ):
+        surface = Compound(door.faces())
+        y = p.body_length_mm - offset - p.side_door_clear_width_mm - 30
+        for t in (0.3, 0.5):
+            point = edge.position_at(t)
+            point.X += sign * (p.side_door_standoff_mm + p.side_door_thickness_mm)
+            point.Y = y
+            assert surface.distance_to(point) < 1e-5
+        right = sign == 1
+        closed = p.model_copy(update={"doors_close_percent": 100})
+        closed_door = sliding_door(closed, p.body_length_mm - offset, right)
+        assert closed_door.is_valid
+        assert sliding_door_offset(p, 100, right) == (0, 0)
+        assert sliding_door_offset(p, 85, right)[0] == sliding_door_offset(p, 0, right)[0]
+        point = edge.position_at(0.5)
+        point.Y = p.body_length_mm - offset - 30
+        assert Compound(closed_door.faces()).distance_to(point) < 1e-5

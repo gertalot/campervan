@@ -122,9 +122,11 @@ def build_cab(p: Parameters) -> Compound:
     roof_end = rear + p.cab_length_mm - p.cab_headliner_front_setback_mm
     rear_height = ceiling_height(p, centre, p.ceiling_ply_thickness_mm)
     rear_edge = ceiling_height(p, centre - p.body_upper_width_mm / 2, p.ceiling_ply_thickness_mm)
+    headliner_rear = p.ceiling_rear_y_mm + p.ceiling_length_mm
     profiles = []
     for y, width, z, crown in (
-        (rear, p.body_upper_width_mm, rear_height, rear_height - rear_edge),
+        (headliner_rear, p.body_upper_width_mm, rear_height, rear_height - rear_edge),
+        (rear, p.body_upper_width_mm + 90, rear_height, 100),
         (
             rear + (roof_end - rear) * 0.65,
             p.body_upper_width_mm,
@@ -142,7 +144,7 @@ def build_cab(p: Parameters) -> Compound:
         if crown == 0:
             left_edge = Edge.make_line((centre - half, y, z), (centre, y, z))
             right_edge = Edge.make_line((centre, y, z), (centre + half, y, z))
-        elif y == rear:
+        elif y == headliner_rear:
             left = (centre - half, y, z - crown)
             middle = (centre, y, z)
             quarter_z = ceiling_height(p, centre - half / 2, p.ceiling_ply_thickness_mm)
@@ -162,7 +164,7 @@ def build_cab(p: Parameters) -> Compound:
                 (centre + half, y, z - crown),
             ).edge()
         profiles.append(Wire([left_edge, right_edge]))
-    headliner = Shell.make_loft(profiles)
+    headliner = Shell.make_loft(profiles, ruled=True)
     headliner.label, headliner.color = "Headliner", Color(0.66, 0.68, 0.66, 0.32)
 
     seats = Compound(

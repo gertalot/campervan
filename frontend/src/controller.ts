@@ -124,7 +124,11 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
       }
       await request(() => api.putParameters(parameters));
     },
-    async regenerate() { await request(() => api.regenerate()); },
+    async regenerate() {
+      await request(() => api.regenerate());
+      try { view.setParameters({ ...(await api.getParameters()).parameters, ...positions }, false); }
+      catch (error) { showError(error); }
+    },
     previewPosition: setPosition,
     async savePosition(name: string, percent: number) {
       setPosition(name, percent);

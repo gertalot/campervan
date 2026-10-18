@@ -52,6 +52,7 @@ The page automatically regenerates the model on opening. Edit dimensions in the 
 Sidebar groups follow the model's assembly hierarchy. Click a heading to collapse it; the browser remembers that choice.
 Click a group's eye icon to show or hide its geometry without regeneration. Visibility is saved across reloads;
 the eye icons and category checkboxes reflect partial visibility when only some children are shown.
+The floor reference rectangle and rear-door opening wire are hidden by default.
 Drag the sidebar's right edge to resize it; the browser remembers its width too.
 Use **Regenerate** to retry after an error.
 The browser remembers your camera view, slider positions and visibility choices across regeneration and page reloads.
@@ -62,17 +63,21 @@ Click a cube face, edge or corner to select a view; its four top corners give th
 Clicks rotate at 360°/s; drag the cube to orbit directly. View changes preserve zoom and viewing centre.
 Dragging in the main viewer also keeps Z upright, so the vehicle does not roll onto its side.
 Dragging, zooming or another click interrupts the rotation. There is no splash model or Tools/Info panel.
-Vehicle references include rounded wheel arches, tapered walls, sliding-door openings, a crowned roof, a separate
-finished-ceiling reference and the rear hatch opening. Use the group eyes to hide the walls or roof while working inside.
+Vehicle references use the measured door openings, rear pillars, fitted floor and ceiling, plus approximate wheel
+arches and cab geometry. Open sliding-door envelopes and a closed hatch inner surface show storage clearances. Use the group eyes to hide the walls or roof while working inside.
 Body length is independent of furniture layout length. Width is shared. Profile controls and door positions are editable
 under **Vehicle references**; their tooltips identify estimates. See the [NV200 research](docs/research/nv200/README.md)
 for sources and the measurements needed to check the fit against the van.
 The long bench contains separate fixed plywood frames, a cab-end skin and a rear header. Its dimensions and construction
 thicknesses are editable in the sidebar. Platform height includes the allowance for slats above the frame.
 Live controls sit at the top of the sidebar, outside the collapsible dimension groups.
-The **Vehicle**, **Slats**, **Cushions** and **Cabinet** checkboxes show or hide those categories without regeneration.
+The **Vehicle**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes show or hide those
+categories without regeneration. Assembly switches and content filters work together: showing a bench keeps disabled
+slats/cushions hidden, and enabling slats/cushions never reveals a hidden bench. Checkboxes retain their own settings.
 Slats includes both beds' fixed and moving slats, the cross-bench plywood deck, hinged storage lid and plate stops.
 Visibility preferences are saved in the browser and reapplied after regeneration.
+**Doors closed (%)** slides both doors forward, then pulls them inward over the final 15%.
+Zero is fully open; 100 is closed. The control animates instantly and retains its position.
 Drag **Bed conversion (%)** through three stages: 0–40 extends both bed frames, 40–80 repositions the cushions,
 and 80–100 lowers the backrests into place. Dragging backward reverses that sequence.
 **Drawer extension (%)** moves the rear drawer independently from retracted to fully extended.
@@ -103,16 +108,16 @@ The two recessed cross-bed stops move with the slats. Their dimensions are under
 **Cross bench → Sliding assembly → Extension stops**.
 Both cross-bench end slats move, keeping a regular support gap at the long-bench junction. Slats retain their stock
 width; the cross bench distributes the remaining space evenly between them.
-The right-side **Cabinet** has an aisle frame, stepped end frames and a central support frame, with the same rounded
-openings as the benches. Each bay has three 12mm plywood shelves resting on 19mm square ledges, below the rails at
+The left-side **Cabinet** has an aisle frame, stepped end frames and a central support frame, with the same rounded
+openings as the benches. Each bay has three 12mm plywood shelves resting on 18mm square ledges, below the rails at
 bed-support height, frame-step height and halfway through the upper opening. The van floor serves as the bottom.
-The centre frame clears the wheel arch. Ledge bottoms align with the cross-beam bottoms, leaving a 29mm retaining
+Frames crossing the wheel arch have notches and an inboard support leg. Ledge bottoms align with the cross-beam bottoms, leaving a 30mm retaining
 lip above the shelf surfaces with the default material sizes.
 Adjust **Upper shelf rail height**, length and **Ceiling gap** under **Cabinet**, and material sizes under **Shelves**
-and **Shelf ledges**. The 7mm end skins and shelf edges follow the wall profile.
+and **Shelf ledges**. The 4mm end skins and shelf edges follow the wall profile.
 The ceiling gap defaults to 3mm;
 zero brings the skins to the ceiling. Openings have no doors, and there is no cabinet top panel.
-Under **Vehicle references → Roof**, adjust the estimated **Roof bows** and the **Finished ceiling** plywood thickness.
+Under **Vehicle references → Roof**, adjust the estimated **Roof bows** and the **Finished ceiling** plywood thickness, rear position and length.
 The 3mm plywood follows the bows' shallow underside curve. Cabinet height and skin contours follow its underside.
 
 **Vehicle references → Cab** contains an estimated cab floor, driver/passenger seats and headliner. Adjust the floor
@@ -197,3 +202,22 @@ After changing source code, stop the application, run `make build` again and res
 - [Application architecture](docs/ARCHTECTURE.md)
 - [CAD model conventions](docs/cad-model.md)
 - [Current FeatureScript](docs/fs/nv200-interior.fs)
+
+Use **Bill of materials** for a read-only sourcing list: supplier product links, NZD prices including GST,
+pack sizes, availability notes and the parts each material supplies. Bunnings availability is for Lyall Bay, Wellington;
+listed prices exclude freight. Each supplier product appears once, combining requirements across components.
+Material dimensions in the CAD sidebar open that product and highlight the relevant component use.
+
+Expand a product using its arrow to see **Used by** and the **Combined cut list**. Identical cut sizes are grouped
+across components; expand a size to see its part locations. Sheet and timber purchase counts need a
+cutting layout that allows for kerf, grain and waste. Hardware pack counts come from the model; the three stages
+of each drawer slide count as one purchased slide. Shelves, drawer and deck/lid share the same 12mm plywood product.
+
+Tell Codex when you want a product sourced or changed. Selected stock dimensions drive the model automatically:
+shelf ledges use the sourced 18 × 18mm pine, for example. Measured overrides account for the actual material you buy.
+Sheet sizes and timber lengths define stock to cut; they do not change the furniture layout. Product details live in
+`src/campervan/materials.json`; default selections and parameter bindings live in `materials.py`. Selections and
+measured overrides persist with parameters in `.local/project.json` and can be updated through the materials API.
+Camera and visibility stay intact when switching tabs.
+The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`), so reloads, bookmarks and
+browser Back/Forward restore that view.

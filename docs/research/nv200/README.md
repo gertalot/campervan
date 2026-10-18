@@ -4,6 +4,9 @@ Research date: 2026-10-16. All dimensions are millimetres unless stated otherwis
 
 Cab research: [older Japanese seat dimensions, seat variants and headliner evidence](cab.md).
 
+[Gert's measured van and photographs](measurements.md) provide direct dimensions and shape references for the actual
+vehicle. Prefer these over generic reference estimates where the measurement endpoints agree.
+
 Follow-up: [likely curvature and reproducible pixel analysis](curvature.md) combines upper mounting dimensions,
 bare-body photographs and two rear-opening traces into provisional profiles and explains integration with the arches.
 

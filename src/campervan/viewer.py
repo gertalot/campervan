@@ -15,6 +15,7 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
     import ocp_viewer  # type: ignore[import-untyped]
 
     from campervan.cad.bed_motion import bed_keyframes
+    from campervan.cad.body import sliding_door_offset
     from campervan.cad.cross_bed import cross_bed_layout
     from campervan.cad.cushions import cushion_motion_tracks
     from campervan.cad.mirror import mirror_motion_tracks
@@ -28,6 +29,21 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
         {
             "type": "campervan_motion",
             "motions": {
+                "doors_close_percent": {
+                    "position": parameters.doors_close_percent,
+                    "tracks": [
+                        {
+                            "path": f"/Campervan/Vehicle references/Sliding doors/{side.title()} door",
+                            "axis": axis,
+                            "keyframes": [
+                                (percent, sliding_door_offset(parameters, percent, side == "right")[index])
+                                for percent in (0, 85, 100)
+                            ],
+                        }
+                        for side in ("left", "right")
+                        for index, axis in enumerate(("x", "y"))
+                    ],
+                },
                 "cross_lid_open_percent": {
                     "position": parameters.cross_lid_open_percent,
                     "tracks": mirror_motion_tracks(

@@ -1,0 +1,143 @@
+[
+  {
+    "id": "tigerply-18",
+    "name": "Tigerply untreated plywood · 18mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-18mm-non-structural-untreated-plywood-18mm_p0170556",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 18
+    },
+    "price_nzd": 89.9,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "BC radiata pine faces, poplar core, EZero glue. Sold as non-structural plywood; no structural rating claimed.",
+    "availability": "Lyall Bay: in stock · Ask staff for aisle · Click & Collect unavailable",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "tigerply-12",
+    "name": "Tigerply untreated plywood · 12mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-12mm-non-structural-untreated-plywood-12mm_p0170555",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 12
+    },
+    "price_nzd": 57.5,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "BC radiata pine faces, poplar core, EZero glue. Sold as non-structural plywood; no structural rating claimed.",
+    "availability": "Lyall Bay: in stock · Ask staff for aisle · Click & Collect unavailable",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "tigerply-okoume-4",
+    "name": "Tigerply Okoume plywood · 4mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-4mm-okoume-plywood-4mm_p0345102",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 4
+    },
+    "price_nzd": 47.57,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "Okoume hardwood faces, lightweight poplar core. Interior lining plywood; takes paint, stain or oil. Item 0345102.",
+    "availability": "Lyall Bay: special order · Not stocked in-store · Available to order online or at the Special Orders desk · Click & Collect unavailable",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "carinya-50-40",
+    "name": "Carinya reinforcing angles · 50 × 50 × 40 × 2mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/carinya-50-x-50-x-40-x-2mm-galvanised-reinforcing-angle-bracket-8-pack_p3962402",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 50,
+      "width": 40,
+      "thickness": 2
+    },
+    "price_nzd": 8,
+    "sale_unit": "8-pack",
+    "pack_quantity": 8,
+    "specification": "Galvanised steel; equal 50mm arms, 40mm wide, 2mm thick.",
+    "availability": "Lyall Bay: in stock · Aisle 9, bay 9 · 2-hour Click & Collect",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "zenith-100-22",
+    "name": "Zenith mending plates · 100 × 22mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/zenith-mending-plate-100x22mm-4pk-zp_p0821317",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 100,
+      "width": 22
+    },
+    "price_nzd": 16.48,
+    "sale_unit": "4-pack",
+    "pack_quantity": 4,
+    "specification": "Zinc plated; self-drill screws included. Steel thickness not published.",
+    "availability": "Lyall Bay: in stock · Aisle 9, bay 9 · 2-hour Click & Collect",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "instantpanel-1200",
+    "name": "1200mm full-extension slides · 53 × 19mm",
+    "supplier": "Instant Panel NZ",
+    "url": "https://instantpanel.co.nz/product/drawer-slides-1200mm-x-53mm-heavy-duty-runners.html",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 1200,
+      "width": 53,
+      "thickness": 19,
+      "travel": 1215
+    },
+    "price_nzd": 179.99,
+    "sale_unit": "pair",
+    "pack_quantity": 2,
+    "specification": "SKU 10536. Non-locking; 2415mm fully extended, 61kg rated pair. 19 ± 0.5mm side clearance. Flat-head M5 fixings not included.",
+    "availability": "Orderable online · stock quantity / dispatch not stated",
+    "checked": "2026-10-17"
+  },
+  {
+    "id": "taskmaster-610",
+    "name": "Taskmaster continuous hinge · 610 × 27mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/taskmaster-610-x-27mm-nickel-plated-continuous-hinge_p0445960",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 610,
+      "width": 27
+    },
+    "price_nzd": 14.98,
+    "sale_unit": "hinge",
+    "pack_quantity": 1,
+    "specification": "Nickel plated, fixed pin; furniture continuous hinge.",
+    "availability": "Lyall Bay: in stock · Aisle 8, bay 11 · 2-hour Click & Collect",
+    "checked": "2026-10-18"
+  },
+  {
+    "id": "zenith-8g-15",
+    "name": "Zenith 8g × 15mm button-head timber screws",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/zenith-8g-x-15mm-galvanised-button-head-stitching-timber-screws-100-pack_p2420703",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 15
+    },
+    "price_nzd": 11.32,
+    "sale_unit": "100-pack",
+    "pack_quantity": 100,
+    "specification": "Galvanised button head; intended for fixing into timber or steel.",
+    "availability": "Lyall Bay: in stock · Aisle 10, bay 3 · 2-hour Click & Collect",
+    "checked": "2026-10-18"
+  }
+]

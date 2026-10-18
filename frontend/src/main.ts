@@ -4,6 +4,7 @@ import { setupSidebarResize } from './sidebar';
 import { setupVisibility } from './visibility';
 import { createCadViewer } from './viewer';
 import { setupMannequinControls } from './mannequin-controls';
+import { setupMaterials } from './materials';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -26,6 +27,7 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
 const visibility = setupVisibility(element('visibility'), viewer);
 const mannequinControls = setupMannequinControls(element<HTMLDetailsElement>('mannequin'), pose => viewer.setMannequinPose(pose));
 let dirty = false;
+const materials = setupMaterials();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
 const controller = createController(api, {
@@ -76,6 +78,15 @@ const controller = createController(api, {
       input.step = field.control === 'position' ? '0.1' : 'any';
       input.autocomplete = 'off';
       input.placeholder = String(field.default);
+      if (field.material) {
+        input.readOnly = true;
+        input.addEventListener('click', () => materials.show(field.material));
+        label.title = 'Edit stock dimensions in Bill of materials';
+        const link = document.createElement('button');
+        link.type = 'button'; link.className = 'material-link'; link.textContent = field.title;
+        link.addEventListener('click', () => materials.show(field.material));
+        label.replaceChildren(link);
+      }
       const bounds: string[] = [];
       if (field.exclusiveMinimum !== undefined) bounds.push(`greater than ${field.exclusiveMinimum}`);
       else if (field.minimum !== undefined) bounds.push(`at least ${field.minimum}`);
@@ -103,14 +114,13 @@ const controller = createController(api, {
     }
   },
   setParameters(parameters, reset) {
-    if (reset || !dirty) {
-      for (const [name, input] of inputs) {
-        input.value = String(parameters[name]);
-        const output = document.getElementById(`${name}-value`);
-        if (output) output.textContent = input.value;
-      }
-      dirty = false;
+    for (const [name, input] of inputs) {
+      if (dirty && !reset && !input.readOnly) continue;
+      input.value = String(parameters[name]);
+      const output = document.getElementById(`${name}-value`);
+      if (output) output.textContent = input.value;
     }
+    if (reset) dirty = false;
   },
   setViewerUrl: url => viewer.connect(url),
   setPosition(name, percent) {
@@ -121,6 +131,7 @@ const controller = createController(api, {
     viewer.setPosition(name, percent);
   },
   setStatus(model) {
+    materials.onStatus(model);
     const labels = {
       idle: 'Ready',
       regenerating: 'Regenerating…',
@@ -128,6 +139,7 @@ const controller = createController(api, {
       failed: 'Regeneration failed',
     };
     status.textContent = labels[model.state];
+    status.dataset.state = model.state;
   },
   setError(message) {
     error.textContent = message;
