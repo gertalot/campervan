@@ -10,6 +10,8 @@ from campervan.parameters import Parameters
 
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
+    if "Cabinet" in path and name == "back lining":
+        return "cabinet-back"
     if "Angle brackets" in path:
         return "brackets"
     if "Extension stops" in path and "plate" in name:
@@ -53,7 +55,15 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         size = part.located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
-        if material == "slides":
+        if material == "cabinet-back":
+            from campervan.cad.cabinet import cabinet_back_profile
+
+            centre = cabinet_back_profile(
+                parameters, parameters.cabinet_back_clearance_mm + parameters.cabinet_back_thickness_mm / 2
+            )
+            length, width = sorted((round(centre.length, 2), round(size.Y, 2)), reverse=True)
+            thickness = parameters.cabinet_back_thickness_mm
+        elif material == "slides":
             # The fixed, intermediate and moving leaves describe the same two purchased slides.
             if "Fixed" not in path:
                 return

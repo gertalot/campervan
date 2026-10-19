@@ -76,6 +76,17 @@ for role in ROLES:
 ROLES.extend(
     [
         MaterialRole(
+            id="cabinet-back",
+            name="Cabinet back lining",
+            kind="sheet",
+            fields={"thickness": "cabinet_back_thickness_mm"},
+            default_product_id="tunnelcore-white-3",
+            note=(
+                "Curved backing to the plywood ceiling, clear of the rear corner, with a wheel-arch notch. "
+                "Cut rectangle uses developed curve length; confirm flute orientation before cutting."
+            ),
+        ),
+        MaterialRole(
             id="bearers",
             name="Cross-bench support rails",
             kind="sheet",

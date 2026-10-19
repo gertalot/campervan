@@ -22,7 +22,6 @@ from build123d import (
     Shell,
     Solid,
     ThreePointArc,
-    Vector,
     Wire,
     fillet,
 )
@@ -47,23 +46,20 @@ def wheel_arch(p: Parameters, right: bool) -> Part:
     return arch
 
 
-def body_section(p: Parameters, y: float, inset: float = 0) -> list[Edge]:
+def body_section(p: Parameters, y: float) -> list[Edge]:
     """Seven matching edges, shared by visible walls and cabinet fitting solids."""
     half = p.cargo_width_mm / 2
     shoulder = (p.cargo_width_mm - p.body_upper_width_mm) / 2
     h, crown, start = p.body_height_mm, p.roof_crown_mm, p.wall_taper_start_mm
-    # Broad, angled rear pillars, with much less extra intrusion at the roof.
-    bottom = inset
-    eave = shoulder + inset * 0.20
+    bottom = 0.0
+    eave = shoulder
     span = half - eave
     run = min(shoulder, span / 3)
-    weight = inset / max(1, (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2)
 
     def point(x: float, z: float) -> tuple[float, float, float]:
-        return (x, y + weight * p.rear_opening_rake_mm * z / h, z)
+        return (x, y, z)
 
-    start = start * (1 - weight) + 390 * weight
-    waist = bottom - weight * (p.rear_opening_width_mm - p.rear_opening_floor_width_mm) / 2
+    waist = bottom
     wall = [
         point(waist, start),
         point(waist, start + (h - crown - start) * 0.55),
@@ -86,13 +82,8 @@ def body_section(p: Parameters, y: float, inset: float = 0) -> list[Edge]:
     ]
 
 
-def rear_stations(p: Parameters) -> list[tuple[float, float]]:
-    inset = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
-    return [(0, inset), (p.rear_corner_straight_mm, inset), (p.rear_corner_radius_mm, 0)]
-
-
-def rear_aperture(p: Parameters, margin: float = 0, closed: bool = False) -> Wire:
-    """Non-planar hatch outline: measured widths, bowed sill and upper forward rake."""
+def rear_aperture_sections(p: Parameters, margin: float = 0, closed: bool = False) -> list[Wire]:
+    """Seven corresponding sections shared by the hatch perimeter and rear body loft."""
     half = p.cargo_width_mm / 2
     low = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2 - margin
     waist = (p.cargo_width_mm - p.rear_opening_width_mm) / 2 - margin
@@ -101,12 +92,9 @@ def rear_aperture(p: Parameters, margin: float = 0, closed: bool = False) -> Wir
 
     def pt(x: float, z: float) -> tuple[float, float, float]:
         fraction = max(0.0, min(1.0, (z - sill) / h))
-        cross = max(0.0, 1 - ((x - half) / (p.rear_opening_width_mm / 2)) ** 2)
-        # Keep the measured centre bow through bed height, then ease it out at the header.
+        # Side and header edges belong to the same seal in both open and closed references.
         upper_blend = max(0.0, (fraction - 390 / h) / (1 - 390 / h))
-        y = p.rear_opening_rake_mm * upper_blend**2 - p.rear_opening_bow_mm * cross * (1 - upper_blend**2)
-        if closed:
-            y += (p.rear_opening_bow_mm + p.rear_hatch_centre_y_mm) * cross * (1 - upper_blend**2)
+        y = p.rear_opening_rake_mm * upper_blend**2
         return (x, y, z)
 
     # Control points use physical stations: floor, slat height, 60mm below the crown.
@@ -119,9 +107,31 @@ def rear_aperture(p: Parameters, margin: float = 0, closed: bool = False) -> Wir
     left = [Bezier(*(pt(x, z) for x, z in points)).edge() for points in paths]
     right = [Bezier(*(pt(p.cargo_width_mm - x, z) for x, z in reversed(points))).edge() for points in reversed(paths)]
     floor = ThreePointArc(
-        pt(p.cargo_width_mm - low, sill - margin), pt(half, sill - margin), pt(low, sill - margin)
+        pt(p.cargo_width_mm - low, sill - margin),
+        (half, p.rear_hatch_centre_y_mm if closed else -p.rear_opening_bow_mm, sill - margin),
+        pt(low, sill - margin),
     ).edge()
-    return Wire([*left, *right, floor])
+    return [
+        Wire([left[0]]),
+        Wire([left[1]]),
+        Wire(left[2:]),
+        Wire(right[:2]),
+        Wire([right[2]]),
+        Wire([right[3]]),
+        Wire([floor]),
+    ]
+
+
+def rear_aperture(p: Parameters, margin: float = 0, closed: bool = False) -> Wire:
+    """Measured opening with a separate closed-door centre bow, sharing its side and top edges."""
+    return Wire([edge for section in rear_aperture_sections(p, margin, closed) for edge in section.edges()])
+
+
+def rear_sections(p: Parameters) -> list[list[Wire]]:
+    opening = rear_aperture_sections(p)
+    straight = [section.moved(Location((0, p.rear_corner_straight_mm, 0))) for section in opening]
+    main = [Wire([edge]) for edge in body_section(p, p.rear_corner_radius_mm)]
+    return [opening, straight, main]
 
 
 def ceiling_height(p: Parameters, x: float, offset: float = 0) -> float:
@@ -151,30 +161,50 @@ def ceiling_space(p: Parameters, offset: float = 0) -> Part:
 
 
 def body_space(p: Parameters) -> Part:
-    wires = [Wire(body_section(p, y, inset)) for y, inset in rear_stations(p)]
-    rear = Solid.make_loft(wires, ruled=True)
+    sections = rear_sections(p)
+    wires = [Wire([edge for section in station for edge in section.edges()]) for station in sections]
+    # The measured rear perimeter is non-planar. Sew an explicit curved cap instead
+    # of asking a solid loft to close it with a planar end face.
+    faces = [face for i in range(7) for face in Shell.make_loft([s[i] for s in sections], ruled=True).faces()]
+    rear = Solid(Shell([*faces, Face.make_surface(wires[0]), Face(wires[-1])]))
     main = Solid.extrude(Face(wires[-1]), (0, p.body_length_mm - p.rear_corner_radius_mm, 0))
     return Part(rear.fuse(main).solids())
 
 
-def roof_rails(p: Parameters, body: Part) -> Compound:
+def roof_rails(p: Parameters) -> Compound:
     """Exposed roof side members; approximate lower returns from owner photographs."""
     edge = (p.cargo_width_mm - p.body_upper_width_mm) / 2
+    outer = body_section(p, p.rear_corner_radius_mm)[1]
+    inner = outer.moved(Location((p.roof_rail_intrusion_mm, 0, 0)))
+    section = Face(
+        Wire(
+            [
+                outer,
+                Edge.make_line(outer.position_at(1), inner.position_at(1)),
+                inner.reversed(),
+                Edge.make_line(inner.position_at(0), outer.position_at(0)),
+            ]
+        )
+    )
+    left = Part([Solid.extrude(section, (0, p.body_length_mm - p.rear_corner_radius_mm, 0))])
     parts = []
-    for name, x in (("Left roof rail", 0), ("Right roof rail", p.cargo_width_mm - edge)):
+    for name, x, direction in (("Left roof rail", 0, 1), ("Right roof rail", p.cargo_width_mm - edge, -1)):
         blank = Box(
             edge,
             p.body_length_mm - p.rear_corner_radius_mm,
             p.body_height_mm - p.side_opening_height_mm,
             align=(Align.MIN, Align.MIN, Align.MIN),
         ).moved(Location((x, p.rear_corner_radius_mm, p.side_opening_height_mm)))
-        parts.append(Part((body & blank).solids(), label=name, color=WALL))
+        # The pressed rail follows the wall. A full shoulder-width box made its
+        # lower edge project into the cabin, contrary to the owner's photos.
+        strip = left if direction == 1 else left.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+        parts.append(Part((strip & blank).solids(), label=name, color=WALL))
     return Compound(label="Side rails", children=parts)
 
 
 def interior_limits(p: Parameters, ceiling_gap: float) -> tuple[Part, Part]:
     body = body_space(p)
-    room = body - roof_rails(p, body)
+    room = body - roof_rails(p)
     for offset, right in ((p.left_door_front_offset_mm, False), (p.right_door_front_offset_mm, True)):
         room = room - side_pillar(p, p.body_length_mm - offset, right)
         room = room - side_pillar(p, p.body_length_mm - offset, right, rear=False)
@@ -281,36 +311,143 @@ def sliding_door_offset(p: Parameters, percent: float, right: bool) -> tuple[flo
     return x, y
 
 
+def side_wall_depth(p: Parameters) -> float:
+    """Outward body depth; the remaining door thickness is the measured pillar intrusion."""
+    depth = p.side_door_thickness_mm - p.side_pillar_intrusion_mm
+    if depth <= p.rear_side_window_recess_mm:
+        raise ValueError("Door thickness minus pillar intrusion must exceed the rear window recess depth.")
+    return depth
+
+
+def side_wall_blank(p: Parameters, start: float, length: float, inner_offset: float = 0) -> Solid:
+    """Left wall/door envelope between the measured inner profile and shared outer profile."""
+    lower, upper = body_section(p, start)[:2]
+    lower = Edge.make_line(lower.position_at(0), lower.position_at(1))
+    outer = [edge.moved(Location((-side_wall_depth(p), 0, 0))) for edge in (lower, upper)]
+    inner = [edge.moved(Location((inner_offset, 0, 0))) for edge in (lower, upper)]
+    profile = Wire(
+        [
+            *outer,
+            Edge.make_line(outer[-1].position_at(1), inner[-1].position_at(1)),
+            *(edge.reversed() for edge in reversed(inner)),
+            Edge.make_line(inner[0].position_at(0), outer[0].position_at(0)),
+        ]
+    )
+    return Solid.extrude(Face(profile), (0, length, 0))
+
+
+def side_opening_cut(p: Parameters, front: float) -> Solid:
+    """Project the seal through both inner and outer body surfaces."""
+    face = Face(side_aperture(p, front)).moved(Location((-p.cargo_width_mm, 0, 0)))
+    return Solid.extrude(face, (3 * p.cargo_width_mm, 0, 0))
+
+
+def window_cutter(p: Parameters, y: float, z: float, width: float, height: float, margin: float = 0) -> Part:
+    """Rounded window outline projected through the curved body side."""
+    blank = Box(3 * p.cargo_width_mm, width + 2 * margin, height + 2 * margin, align=(Align.MIN, Align.MIN, Align.MIN))
+    return fillet(blank.edges().filter_by(Axis.X), 55 + margin).moved(
+        Location((-p.cargo_width_mm, y - margin, z - margin))
+    )
+
+
+def window_recess(
+    p: Parameters,
+    upper: Edge,
+    y: float,
+    bottom: float,
+    width: float,
+    height: float,
+    inner_offset: float,
+    glass_offset: float,
+) -> tuple[Part, Solid, Compound]:
+    """One sloping surround construction for door and fixed windows."""
+    window = window_cutter(p, y, bottom, width, height)
+    surround = window_cutter(p, y, bottom, width, height, p.side_window_surround_mm)
+    surface = Face.extrude(upper, (0, p.body_length_mm, 0))
+    glass_surface = surface.moved(Location((glass_offset, 0, 0))) & window
+    inner_surface = surface.moved(Location((inner_offset, 0, 0))) & surround
+    if glass_surface is None or inner_surface is None:
+        raise ValueError("Window must overlap the upper side panel.")
+    # Use the actual curved boundaries so the reveal meets the inner wall flush.
+    glass_wire = glass_surface.faces()[0].outer_wire()
+    inner_wire = inner_surface.faces()[0].outer_wire()
+    pocket = Solid.make_loft(
+        [
+            glass_wire,
+            inner_wire,
+            inner_wire.moved(Location((p.cargo_width_mm, 0, 0))),
+        ],
+        ruled=True,
+    )
+    glass = Compound(glass_surface.faces(), label="Window glass", color=Color(0.45, 0.62, 0.68, 0.12))
+    return window, pocket, glass
+
+
+def rear_side_window(p: Parameters, front: float, right: bool) -> tuple[Part, Compound]:
+    """The reveal starts at the inner wall and slopes outward to the recessed glass."""
+    pillar_rear = front - p.side_opening_width_mm - p.side_pillar_width_mm
+    bay_width = pillar_rear - p.rear_corner_radius_mm
+    width, height, surround = p.rear_side_window_width_mm, p.rear_side_window_height_mm, p.side_window_surround_mm
+    if width + 2 * surround >= bay_width:
+        raise ValueError("Rear side window and surround must fit between the rear corner and sliding-door pillar.")
+    y = p.rear_corner_radius_mm + (bay_width - width) / 2
+    top = p.side_opening_height_mm + p.side_opening_sill_mm - p.rear_side_window_top_gap_mm
+    panel_cut = window_cutter(p, y, top - height, width, height, surround)
+    upper = body_section(p, 0)[1]
+    opening, pocket, glass = window_recess(
+        p,
+        upper,
+        y,
+        top - height,
+        width,
+        height,
+        0,
+        -p.rear_side_window_recess_mm,
+    )
+    band = side_wall_blank(p, 0, p.body_length_mm)
+    window_band = band & panel_cut
+    if window_band is None:
+        raise ValueError("Rear side window must overlap the side wall.")
+    envelope = Part(window_band.solids())
+    metal = Part(((envelope - opening) - pocket).solids(), label="Metal surround", color=WALL)
+    parts = [metal, glass]
+    if right:
+        parts = [part.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0))) for part in parts]
+    return panel_cut, Compound(label="Rear window", children=parts)
+
+
 def sliding_door(p: Parameters, front: float, right: bool) -> Compound:
     """Fit the closed aperture, with a movable parent shared by CAD and viewer animation."""
     length = p.side_opening_upper_width_mm + 50
-    section = body_section(p, 0)
-    # The outer face is exactly the wall surface. Thickness runs into the van;
-    # translating the finished door preserves its shape instead of bending it open.
-    lower = Edge.make_line(section[0].position_at(0), section[0].position_at(1))
-    upper = section[1]
-    depth = Vector(p.side_door_thickness_mm, 0, 0)
-    profile = Wire(
-        [
-            lower,
-            upper,
-            Edge.make_line(upper.position_at(1), upper.position_at(1) + depth),
-            upper.moved(Location(depth)).reversed(),
-            lower.moved(Location(depth)).reversed(),
-            Edge.make_line(lower.position_at(0) + depth, lower.position_at(0)),
-        ]
-    )
-    curved = Solid.extrude(Face(profile), (0, length, 0))
-    blank = Solid.extrude(Face(side_aperture(p, length)), (p.cargo_width_mm + 2, 0, 0))
+    upper = body_section(p, 0)[1]
+    curved = side_wall_blank(p, 0, length, p.side_pillar_intrusion_mm)
+    blank = side_opening_cut(p, length)
     window_start = length - p.side_opening_width_mm + 60
-    window = Box(p.cargo_width_mm + 2, length - window_start - 60, 480, align=(Align.MIN, Align.MIN, Align.MIN))
-    window = fillet(window.edges().filter_by(Axis.X), 55).moved(Location((-1, window_start, 610)))
-    skin = Part(((curved & blank) - window).solids(), label="Door envelope", color=Color(0.55, 0.62, 0.66, 0.16))
-    if right:
-        skin = skin.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
-    skin.move(Location((0, front - length, 0)))
+    window_width = length - window_start - 60
+    window_top = p.side_opening_height_mm + p.side_opening_sill_mm - p.side_window_top_gap_mm
+    window_bottom = window_top - p.side_window_height_mm
+    window, pocket, glass = window_recess(
+        p,
+        upper,
+        window_start,
+        window_bottom,
+        window_width,
+        p.side_window_height_mm,
+        p.side_pillar_intrusion_mm,
+        -side_wall_depth(p) + 8,
+    )
+    skin = Part(
+        (((curved & blank) - window) - pocket).solids(),
+        label="Door envelope",
+        color=Color(0.55, 0.62, 0.66, 0.16),
+    )
+    parts = [skin, glass]
+    for i, part in enumerate(parts):
+        if right:
+            part = part.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+        parts[i] = part.moved(Location((0, front - length, 0)))
     x, y = sliding_door_offset(p, p.doors_close_percent, right)
-    door = Compound(label="Right door" if right else "Left door", children=[skin])
+    door = Compound(label="Right door" if right else "Left door", children=parts)
     door.location = Location((x, y, 0))
     return door
 
@@ -341,32 +478,98 @@ def floor_outline_wire(p: Parameters) -> Wire:
     return Wire.make_polygon(pts)
 
 
+def rear_hatch(p: Parameters) -> Compound:
+    """Curved liftgate with a recessed, slightly tapered window; retain measured inner clearance."""
+    inner = Face.make_surface(
+        rear_aperture(p, closed=True),
+        surface_points=[(p.cargo_width_mm / 2, p.rear_hatch_centre_y_mm, 390)],
+    )
+    centre = p.cargo_width_mm / 2
+    width = p.rear_hatch_window_width_mm
+    top_width = width - p.rear_hatch_window_taper_mm
+    top = p.rear_opening_height_mm + p.rear_opening_sill_mm - p.rear_hatch_window_top_gap_mm
+    bottom = top - p.rear_hatch_window_height_mm
+    if top_width <= 120 or bottom <= p.rear_opening_sill_mm:
+        raise ValueError("Rear-door window must fit above the sill and have a positive rounded top width.")
+
+    def cutter(margin: float) -> Solid:
+        outline = Face(
+            Wire.make_polygon(
+                [
+                    (centre - width / 2 - margin, -500, bottom - margin),
+                    (centre + width / 2 + margin, -500, bottom - margin),
+                    (centre + top_width / 2 + margin, -500, top + margin),
+                    (centre - top_width / 2 - margin, -500, top + margin),
+                ]
+            )
+        )
+        outline = outline.fillet_2d(55 + margin, outline.vertices())
+        return Solid.extrude(outline, (0, 1000, 0))
+
+    opening = cutter(0)
+    surround = cutter(p.side_window_surround_mm)
+    recess = p.rear_hatch_window_recess_mm
+    glass_surface = inner.moved(Location((0, -recess, 0))) & opening
+    inner_window = inner & surround
+    if glass_surface is None or inner_window is None:
+        raise ValueError("Rear-door window must overlap the hatch.")
+    glass_wire = glass_surface.faces()[0].outer_wire()
+    inner_wire = inner_window.faces()[0].outer_wire()
+    pocket = Solid.make_loft(
+        [
+            glass_wire,
+            inner_wire,
+            inner_wire.moved(Location((0, 500, 0))),
+        ],
+        ruled=True,
+    )
+    envelope = Solid.extrude(inner, (0, -recess - 8, 0))
+    metal = Part(((envelope - opening) - pocket).solids(), label="Door envelope", color=WALL)
+    glass = Compound(glass_surface.faces(), label="Window glass", color=Color(0.45, 0.62, 0.68, 0.12))
+    return Compound(label="Closed hatch", children=[metal, glass])
+
+
 def build_body(p: Parameters) -> list[Compound]:
-    sections = [body_section(p, y, inset) for y, inset in rear_stations(p)]
+    sections = rear_sections(p)
     # Loft normals oppose extrusion normals for this section order. Keep all
     # interior reference surfaces facing into the van, including the rear roof.
-    rear = [-Shell.make_loft([Wire([section[i]]) for section in sections], ruled=True) for i in range(7)]
-    main = [Face.extrude(edge, (0, p.body_length_mm - p.rear_corner_radius_mm, 0)) for edge in sections[-1]]
+    rear = [-Shell.make_loft([section[i] for section in sections], ruled=True) for i in range(7)]
+    main = [
+        Face.extrude(section.edges()[0], (0, p.body_length_mm - p.rear_corner_radius_mm, 0)) for section in sections[-1]
+    ]
     corners = Compound(
         label="Rear corners",
         children=[
-            Compound([rear[0], rear[1]], label="Left rear corner", color=WALL),
-            Compound([rear[4], rear[5]], label="Right rear corner", color=WALL),
+            Part(
+                [Solid.extrude(face, (-side_wall_depth(p), 0, 0)) for i in (0, 1) for face in rear[i].faces()],
+                label="Left rear corner",
+                color=WALL,
+            ),
+            Part(
+                [Solid.extrude(face, (side_wall_depth(p), 0, 0)) for i in (4, 5) for face in rear[i].faces()],
+                label="Right rear corner",
+                color=WALL,
+            ),
         ],
     )
     walls, doors = [], []
-    for name, indices, offset, right in (
-        ("Left wall", (0, 1), p.left_door_front_offset_mm, False),
-        ("Right wall", (4, 5), p.right_door_front_offset_mm, True),
+    for name, offset, right in (
+        ("Left wall", p.left_door_front_offset_mm, False),
+        ("Right wall", p.right_door_front_offset_mm, True),
     ):
         front = p.body_length_mm - offset
-        cutter = Solid.extrude(Face(side_aperture(p, front)), (p.cargo_width_mm + 2, 0, 0))
-        wall = Compound([main[i] for i in indices]).cut(cutter)
+        cutter = side_opening_cut(p, front)
+        window_cut, window = rear_side_window(p, front, right)
+        wall = side_wall_blank(p, p.rear_corner_radius_mm, p.body_length_mm - p.rear_corner_radius_mm)
+        if right:
+            wall = wall.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+        wall = wall.cut(cutter).cut(window_cut)
         walls.append(
             Compound(
                 label=name,
                 children=[
-                    Compound(wall.faces(), label="Side panel", color=WALL),
+                    Part(wall.solids(), label="Side panel", color=WALL),
+                    window,
                     side_pillar(p, front, right),
                     side_pillar(p, front, right, rear=False),
                 ],
@@ -375,19 +578,18 @@ def build_body(p: Parameters) -> list[Compound]:
         doors.append(sliding_door(p, front, right))
     roof = Compound([main[2], main[3], rear[2], rear[3]], label="Bare roof", color=Color(0.67, 0.71, 0.75, 0.2))
     bows, ceiling = build_ceiling(p)
-    rails = roof_rails(p, body_space(p))
+    rails = roof_rails(p)
     header_slab = Box(p.cargo_width_mm, p.ceiling_rear_y_mm, p.body_height_mm, align=(Align.MIN, Align.MIN, Align.MIN))
+    # Heal trimmed surface wires where the rounded aperture roof crosses the ceiling cut.
+    header_shape = ((body_space(p) & header_slab) - ceiling_space(p, p.ceiling_ply_thickness_mm)).fix()
     header = Part(
-        ((body_space(p) & header_slab) - ceiling_space(p, p.ceiling_ply_thickness_mm)).solids(),
+        header_shape.solids(),
         label="Rear header",
         color=WALL,
     )
     aperture = rear_aperture(p)
     surround = Shell.make_loft([aperture, rear_aperture(p, 20)], ruled=True)
-    hatch = Face.make_surface(
-        rear_aperture(p, closed=True),
-        surface_points=[(p.cargo_width_mm / 2, p.rear_hatch_centre_y_mm, 390)],
-    )
+    hatch = rear_hatch(p)
     floor = Face(floor_outline_wire(p))
     plywood = Solid.extrude(floor, (0, 0, -p.floor_ply_thickness_mm))
     plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
@@ -402,7 +604,7 @@ def build_body(p: Parameters) -> list[Compound]:
             children=[
                 Compound(surround.faces(), label="Hatch surround", color=WALL),
                 Wire(aperture.edges(), label="Clear opening", color=Color(0.65, 0.75, 0.85)),
-                Compound([hatch], label="Closed hatch inner panel", color=Color(0.55, 0.62, 0.66, 0.16)),
+                hatch,
             ],
         ),
         Compound(label="Body floor", children=[metal, plywood]),

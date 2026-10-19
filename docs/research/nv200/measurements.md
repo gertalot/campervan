@@ -95,6 +95,29 @@ The lateral offsets place the open door's inner face about 60mm
 outside the pillar's outer face (170 minus 110), with a 100mm span between the measured inner and outer door surfaces
 (270 minus 170). These are conditional differences between measured surfaces, not established uniform door thickness
 or clearance along its entire travel. The mattress side-edge position relative to the van centreline remains unmeasured.
+The owner subsequently confirmed that closed doors are flush with the body outside and the pillars inside.
+On 2026-10-19 the owner confirmed approximately 100mm sliding-door thickness and requested exterior body surfaces
+outside the measured interior walls. The model now uses 100mm door depth: 40mm inward pillar intrusion plus 60mm
+outward body depth. Closed doors align with the pillars inside and the new body exterior outside. This depth is a
+transverse approximation; its variation along the door remains unmeasured. Open inner-face standoff remains 60mm
+from the exterior, giving 160mm to the open outer face.
+The later interior door photo shows a wide, shallow window and the inner metal sloping outward to meet the glass.
+The model uses a provisional 560 × 280mm glass opening, 80mm below the header, with a 30mm surround. These are
+visual estimates, not measurements from a rectified photo. The glass sits near the outside skin; the inner metal
+is recessed around it rather than maintaining full pillar-depth thickness up to the opening.
+The subsequent photo showing both side windows, with insulation covering the rear glass, shows a similar rear
+window profile. The owner explicitly corrected the height comparison to **slightly taller**. Rear glass is modelled
+at an estimated 600 × 300mm versus 560 × 280mm in the sliding door, with a 30mm recess from the inner surround.
+The glass is 8mm inside the existing exterior profile; the local surround extends 38mm inward. These depth
+estimates keep both glass and metal within the exterior, rather than projecting them outside a zero-thickness wall.
+The owner also noted the higher rear-window top. The rear glass is therefore placed 20mm higher at its top
+(Z = 1110 versus 1090), keeping the bottoms approximately aligned at Z = 810. This offset is a photo estimate,
+adjustable independently through the rear window's 60mm top-gap setting.
+The insulation conceals the exact glass boundary; none of these rear-window dimensions are direct measurements.
+The subsequent interior rear-corner and exterior closed-hatch photos show broad rear-door glass, rounded corners,
+a slightly narrower top, and a substantial lower metal panel. Provisional hatch glass dimensions are 1000mm at
+the bottom, 940mm at the top, 450mm high, with a 100mm top gap. The 30mm glass recess and 38mm total door depth
+are estimates. The existing measured inner-panel position is retained; door depth extends outward from it.
 Assuming the existing bed's rear edge is straight across the van, the rear-opening reference at the centreline lies
 about 120mm farther aft than at the pillar (220 minus 100). The opening therefore must not be represented as a
 single transverse plane at slat height. Keep the pillar-based fore–aft distances separate from this centreline

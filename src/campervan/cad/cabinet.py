@@ -2,11 +2,43 @@
 
 from math import floor
 
-from build123d import Color, Compound, Face, Location, Part, Wire
+from build123d import Color, Compound, Edge, Face, Location, Part, Plane, Side, Solid, Wire
 
-from campervan.cad.body import ceiling_height, interior_limits
+from campervan.cad.body import body_section, ceiling_height, interior_limits
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
+
+
+def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
+    """One bend across the sheet height, bridging recesses and clearing projecting side posts.
+
+    Construct against the actual left side, then reflect into furniture-local coordinates.
+    The top meets the plywood underside. Recesses are bridged, not followed.
+    """
+    start = max(p.furniture_rear_gap_mm, p.rear_corner_radius_mm + p.cabinet_back_clearance_mm)
+    end = p.furniture_rear_gap_mm + p.cabinet_length_mm
+    front = p.body_length_mm - p.left_door_front_offset_mm
+    rear_post = front - p.side_opening_width_mm
+    intrusion = p.roof_rail_intrusion_mm
+    if start < rear_post and end > rear_post - p.side_pillar_width_mm:
+        intrusion = max(intrusion, p.side_pillar_intrusion_mm)
+    if end > front - p.side_opening_radius_mm:
+        intrusion = max(intrusion, p.front_pillar_intrusion_mm)
+    lower, upper = body_section(p, 0)[:2]
+    curve = Wire([Edge.make_line(lower.position_at(0), lower.position_at(1)), upper])
+    curve = curve.moved(Location((intrusion, 0, 0))).offset_2d(inset, side=Side.RIGHT, closed=False)
+    # Trim each face at the actual curved plywood underside.
+    if curve.position_at(0).Z > curve.position_at(1).Z:
+        curve = Wire([edge.reversed() for edge in reversed(Wire(curve.edges()).order_edges())])
+    lo, hi = 0.0, 1.0
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        point = curve.position_at(mid)
+        if point.Z < ceiling_height(p, point.X, p.ceiling_ply_thickness_mm):
+            lo = mid
+        else:
+            hi = mid
+    return Wire(curve.trim(0, (lo + hi) / 2).edges()).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
 
 
 def build_cabinet(p: Parameters) -> Compound:
@@ -41,7 +73,7 @@ def build_cabinet(p: Parameters) -> Compound:
     if any(top - bottom <= 2 * radius for bottom, top in opening_heights):
         raise ValueError("Cabinet shelf rails must leave room for rounded openings below, between and above them.")
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
-    room = (body & ceiling).moved(Location((0, -gap, 0)))
+    room = (body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -gap, 0)))
     shelf_thickness, ledge = p.cabinet_shelf_thickness_mm, p.cabinet_ledge_size_mm
     ledge_height = p.cabinet_ledge_height_mm
     if shelf_thickness + ledge_height > member:
@@ -53,6 +85,43 @@ def build_cabinet(p: Parameters) -> Compound:
         p.arch_length_mm + 2 * clearance,
         p.arch_height_mm + clearance,
     ).moved(Location((arch_left - clearance, arch_rear - clearance, 0)))
+
+    outer = cabinet_back_profile(p, p.cabinet_back_clearance_mm)
+    inner = cabinet_back_profile(p, p.cabinet_back_clearance_mm + p.cabinet_back_thickness_mm)
+    back_start = max(0.0, p.rear_corner_radius_mm + p.cabinet_back_clearance_mm - gap)
+    if back_start >= length:
+        raise ValueError("Cabinet backing must have space ahead of the rear corner pillar.")
+    back_section = Face(
+        Wire(
+            [
+                *outer.edges(),
+                Edge.make_line(outer.position_at(1), inner.position_at(1)),
+                *(edge.reversed() for edge in reversed(inner.order_edges())),
+                Edge.make_line(inner.position_at(0), outer.position_at(0)),
+            ]
+        )
+    )
+    backing = Part(
+        (
+            Solid.extrude(back_section, (0, length - back_start, 0)).moved(Location((0, back_start, 0))) - arch_cutout
+        ).solids(),
+        label="Back lining",
+        color=Color(0.9, 0.9, 0.88),
+    )
+    # Reserve everything behind the sheet, not just its 3mm material.
+    bottom, top = inner.position_at(0), inner.position_at(1)
+    fitting_section = Face(
+        Wire(
+            [
+                *inner.edges(),
+                Edge.make_line(top, (top.X, 0, p.body_height_mm)),
+                Edge.make_line((top.X, 0, p.body_height_mm), (0, 0, p.body_height_mm)),
+                Edge.make_line((0, 0, p.body_height_mm), (0, 0, bottom.Z)),
+                Edge.make_line((0, 0, bottom.Z), bottom),
+            ]
+        )
+    )
+    room = room & Solid.extrude(fitting_section, (0, length, 0))
     parts: list[Part] = []
 
     def place(part: Part, name: str, placement: Location) -> None:
@@ -163,5 +232,10 @@ def build_cabinet(p: Parameters) -> Compound:
             ledges.append(support)
     return Compound(
         label="Cabinet",
-        children=[*parts, Compound(label="Shelf ledges", children=ledges), Compound(label="Shelves", children=shelves)],
+        children=[
+            *parts,
+            backing,
+            Compound(label="Shelf ledges", children=ledges),
+            Compound(label="Shelves", children=shelves),
+        ],
     )

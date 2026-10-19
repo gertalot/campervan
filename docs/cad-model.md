@@ -18,9 +18,9 @@ geometry, not a display-only reflection. The coordinate examples in the furnitur
 to the generators' original local coordinates, before this shared reflection and placement.
 
 The bench converts wheel-arch and rear-corner positions to furniture-local coordinates before constructing supports.
-The cabinet translates body/ceiling fitting volumes and wheel-arch cutouts into that coordinate system before scribing.
-The body fitting envelope and wheel houses are symmetric at the defaults; keep checking fit if vehicle measurements
-introduce side-to-side differences. A perfect furniture reflection does not imply an asymmetric vehicle is mirrored.
+The cabinet reflects and translates body/ceiling fitting volumes into that coordinate system before scribing,
+so its mirrored placement fits the actual left side. Wheel-arch cutouts remain symmetric.
+A perfect furniture reflection does not imply an asymmetric vehicle is mirrored.
 `src/campervan/parameters.py` owns dimensions, constraints and sidebar metadata. Geometry code does not call the API
 or viewer.
 
@@ -50,6 +50,10 @@ Campervan
 │   │   └── Right rear corner
 │   ├── Side walls
 │   │   ├── Left wall
+│   │   │   ├── Side panel
+│   │   │   ├── Rear window (Metal surround, Window glass)
+│   │   │   ├── Rear pillar
+│   │   │   └── Front pillar
 │   │   └── Right wall
 │   ├── Roof
 │   │   ├── Bare roof
@@ -60,7 +64,8 @@ Campervan
 │   │   └── Finished ceiling
 │   ├── Rear opening
 │   │   ├── Hatch surround
-│   │   └── Clear opening
+│   │   ├── Clear opening
+│   │   └── Closed hatch (Door envelope, Window glass)
 │   ├── Body floor
 │   └── Cab
 │       ├── Floor
@@ -127,6 +132,7 @@ Campervan
     ├── Middle frame
     ├── Cab-end frame
     ├── Cab-end skin
+    ├── Back lining
     ├── Shelf ledges
     └── Shelves
 ```
@@ -153,10 +159,34 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   it meets the rounded arch without overlapping it. `body.wheel_arch` owns that shared envelope.
   Front pillars behind the cab doors are solid profiles with the same wall taper and rounded opening returns.
   Their inward depth is separately adjustable (40mm estimate); their fore–aft width follows each opening's cab-end setback.
+  Roof-side rails follow this curved wall with an adjustable 20mm inward-depth estimate, capped at the ceiling's
+  lateral edge. They do not fill the entire shoulder-width box: that former shape projected too far inward at its
+  lower edge compared with the owner's photographs. The 20mm depth remains an estimate, not a new measurement.
+  `body_section` describes the inner wall, not the exterior. Side panels and rear corners have closed solid envelopes
+  extending outward by door thickness minus rear-pillar intrusion: 100 − 40 = 60mm at defaults. This leaves the
+  measured interior unchanged and aligns exterior walls with the closed doors. The outer shape is an estimate
+  following the inner curvature, not a measured exterior scan; these solids represent body cavities, not solid steel.
+- Fixed rear side windows have separate glass and metal-surround parts within each wall. The initial glass estimate
+  is 600 × 300mm, only 20mm taller than the sliding-door glass, with the extra height above it: rear glass spans
+  Z = 810–1110 versus door glass at 810–1090. Its separate top-gap control defaults to 60mm. They sit midway between
+  the rear corner transition and sliding-door pillar. Glass follows the curved wall 30mm outward from the interior,
+  within the 60mm wall depth. The surround starts flush with the inner wall and slopes outward to the glass;
+  no raised band projects into the cabin. Its outer surface shares the rest of the side panel's exterior profile.
+  Width, height and recess depth are adjustable under Side walls. Both window types share `window_recess`,
+  rounded-corner cutters and the surround-width setting. Furniture fitting continues to use the measured inner wall.
 - Rear corners have a 60mm straight section followed by an angled transition ending at Y = 200. The original
   `rear_corner_radius_mm` identifier is retained for saved parameters, but its control is **Corner transition depth**.
   This implemented extent still needs reconciling with the owner's clarification of 60 straight plus 200 flared;
   see the [dimension audit](research/nv200/dimension-audit.md) for the distinct rear-door/opening references.
+  Their rear side/header edges now come directly from the measured aperture used by the hatch, rather than a
+  separate scaled wall profile. Both visible surfaces and the cabinet-fitting volume use these same sections.
+  The curved rear end of the fitting solid is explicitly capped; a planar-ended solid loft cannot represent it.
+- The closed rear hatch retains its measured inner surface (130mm behind the bed at the centreline, Z = 390).
+  Its estimated 38mm depth extends outward from that surface. Rounded trapezoidal glass is estimated at 1000mm
+  bottom width, 940mm top width and 450mm height, with its top 100mm below the opening crown. The glass follows
+  the hatch curvature, recessed 30mm outward from the inner panel and remaining 8mm inside the exterior.
+  The tapered metal return follows both curved window boundaries. Width, taper, height, top gap and recess
+  are adjustable under Rear opening; the surround width is shared with the side windows.
 - Rear aperture widths are 1250 at floor, 1265 at Z = 390 and 1115 at 60 below its 1280 centre height. Its outline is
   non-planar, bowing aft by 120 at the centre near bed height and leaning forward at the roof (80mm estimate).
   The closed hatch inner surface is a separate approximate reference, constrained to Y = −30 at the centre at
@@ -168,12 +198,18 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   edge tangentially rather than forming a sharp S-step. The pillar is 180 wide below, 120 just above the lower
   curve, and 100 below the rounded roof return. Their tops
   are at 1170 above finished floor; lower sill offset is provisionally zero. Fore edges are independently adjustable.
-  Open-door envelopes leave 680 to the front pillars and sit approximately 60 outside the body, with 100 depth.
-  Their outer faces use the same wall-profile curves as the body in the closed position. The complete curved
+  Open-door envelopes leave 680 to the front pillars and their inner faces sit approximately 60 outside the body.
+  Door thickness is owner-measured at approximately 100mm: closed outer faces follow the new exterior wall profile,
+  and closed inner faces follow the pillars. The complete curved
   envelopes fit the aperture outline and retain the body taper throughout their travel. The shared door-closing
   slider moves both forward over 0–85%, then inward with the last 30mm of forward travel over 85–100%.
   CAD placement and viewer keyframes share `sliding_door_offset`; the controls need no regeneration.
   These remain approximate clearance envelopes, without detailed rollers, tracks, seals or door construction.
+  The sliding-door glass is a wide, shallow 560 × 280mm reference surface at defaults, with its top 80mm below
+  the opening header. These are photo estimates. A 30mm sloping metal surround recesses from the inner panel to
+  a glass seat 8mm inward of the outer wall. The pocket joins the actual curved inner and glass boundaries;
+  the glass follows the curved wall. Window height, top gap and surround width are
+  adjustable. See inside also fades the glass but preserves its low opacity on the far side.
 - The 12mm fitted plywood floor occupies Z = −12 to 0; the vehicle floor reference is at −18. The remaining build-up
   is not assigned an invented material. The floor has a straight rear edge at Y = 0 and cutouts following both
   wheel-arch base footprints. Its rear corners follow the pillars' straight sections and angled transitions.
@@ -316,7 +352,7 @@ Any transverse frame crossing the approximate wheel arch has a narrower lowest o
 inside corner where it meets that upright; no wall-side stub hangs above the arch.
 All shelf rails align across the frames. The space below the
 bed-height shelf is obstructed by the extended bed.
-The wall-facing side is open, without a longitudinal support frame.
+The wall-facing side has a flute-board lining, without a longitudinal support frame.
 End frames butt against the aisle frame at X = 1088.
 Frame thickness, skin thickness, member width and opening radius reuse the shared dimensions under Long bench.
 Each bay has three separate shelves using `cabinet_shelf_thickness_mm` (12mm); the van floor serves as its bottom,
@@ -328,7 +364,19 @@ both bays. Shelf thickness and ledge height must fit within the cross-beam heigh
 rounded wheel-arch cut-out; shelves also clear the arch if adjusted heights bring them into its space.
 Shelves and ledges have their own assembly groups and sidebar visibility controls. Each physical piece is a native
 Part. Skin and shelf edges may need bevels where the body varies through their thickness; frames remain flat stock.
-There is no wall-facing skin, top panel or door. Shelf fasteners are not modelled.
+The wall-facing back lining is Bunnings Tunnelcore 3mm white polypropylene flute board
+(2440 × 1220mm, item 0999179). It bends across its height, follows the general wall curvature, and bridges the
+window recess. The most projecting side-pillar profile within the cabinet span determines its position, with
+1mm normal clearance. Its top meets the plywood ceiling; it stops 1mm ahead of the rear corner transition,
+never wrapping around that pillar. Its cab end follows the cabinet end. A bottom notch uses the cabinet's
+existing wheel-arch cutout and 3mm allowance. At defaults it spans Y = 201–1100 in the vehicle.
+The cabinet's shelves and skins are trimmed to the backing's inner face, and straight stepped frames and their
+ledges shorten to fit. The space behind the sheet is excluded from the carcass fitting volume.
+Thickness comes from the selected product; clearance has its own Cabinet / Back lining control and visibility eye.
+The Visibility section also has a Cabinet backing checkbox; its saved preference survives hiding/showing the cabinet.
+The BOM records the sheet separately from plywood and uses its developed centre-curve length for the cut rectangle,
+not the curved part's bounding-box depth. Confirm flute orientation and physical fit before cutting.
+There is no top panel or door yet. Shelf fasteners are not modelled.
 
 `cushions.py` ports the six foam blocks and their day/night placements from `nv200-interior.fs`.
 Seats are 600 × 1280 and 835 × 580; the four backrests are 235 wide by 1280, 530, 750 and 580 long.
@@ -391,6 +439,14 @@ Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle
 live in browser localStorage and are reapplied when geometry arrives. Slats covers both beds' fixed and moving slats, the cross-bench
 fixed plywood deck, the complete storage lid including its attached slats, and the cross-bed plate stops.
 Cushions covers both benches' foam groups; their sidebar eyes also work independently.
+
+**See inside** adjusts vehicle opacity in the browser before the existing viewer paints each frame. Assembly paths
+assign walls, doors, pillars and arches to their vehicle side; roofs and floors have vertical directions. Corners
+and roof rails fade when either adjoining side faces the camera. `frontend/src/vehicle-fade.ts` smoothly blends
+faces from 70% opacity on the far side to 5% on the near side, and outlines from 50% to 2%. It leaves visibility
+states and furniture materials unchanged. The toggle defaults on and persists as `campervan.see-inside` in localStorage.
+New geometry reattaches the effect; turning it off restores ordinary OCP transparency. Camera movement requires
+no regeneration, API request or separate animation loop for this effect.
 
 The cushion check compares the six daytime bounds with the source layout and checks flat bed coverage and no foam
 overlaps at either endpoint. Intermediate poses and physical cushion handling remain visual checks.

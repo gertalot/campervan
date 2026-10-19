@@ -25,6 +25,13 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
   element('mannequin-status').textContent = message;
 }, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
+const seeInside = element<HTMLInputElement>('see-inside');
+seeInside.checked = localStorage.getItem('campervan.see-inside') !== 'false';
+viewer.setSeeInside(seeInside.checked);
+seeInside.addEventListener('change', () => {
+  localStorage.setItem('campervan.see-inside', String(seeInside.checked));
+  viewer.setSeeInside(seeInside.checked);
+});
 const mannequinControls = setupMannequinControls(element<HTMLDetailsElement>('mannequin'), pose => viewer.setMannequinPose(pose));
 let dirty = false;
 const materials = setupMaterials();

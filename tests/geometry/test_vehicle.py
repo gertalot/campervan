@@ -3,7 +3,16 @@
 import pytest
 from build123d import Compound, Plane, Vector
 
-from campervan.cad.body import body_section, ceiling_height, side_aperture, sliding_door, sliding_door_offset
+from campervan.cad.body import (
+    body_section,
+    body_space,
+    ceiling_height,
+    rear_aperture_sections,
+    side_aperture,
+    side_wall_depth,
+    sliding_door,
+    sliding_door_offset,
+)
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
 
@@ -15,10 +24,26 @@ def test_measured_vehicle_references():
     assert all(part.is_valid for part in vehicle.leaves)
     assert groups["Floor outline"].bounding_box().min.Y == pytest.approx(p.furniture_rear_gap_mm)
     roof = {part.label: part for part in groups["Roof"].children}
-    for corner, sign in zip(groups["Rear corners"].children, (1, -1), strict=True):
-        assert all(face.normal_at().X * sign > 0 for face in corner.faces())
+    for corner in groups["Rear corners"].children:
+        assert corner.solids() and corner.volume > 0
     assert all(face.normal_at().Z < 0 for face in roof["Bare roof"].faces())
+    envelope = body_space(p)
+    depth = side_wall_depth(p)
     for wall, arch in zip(groups["Side walls"].children, groups["Wheel arches"].children, strict=True):
+        window = next(part for part in wall.children if part.label == "Rear window")
+        metal, glass = window.children
+        assert metal.volume > 0
+        assert (metal & envelope).volume < 1e-4  # Reveals extend outward, never into the cabin.
+        assert (glass & envelope).area < 1e-4
+        assert metal.distance_to(glass) < 1e-4
+        panel = next(part for part in wall.children if part.label == "Side panel")
+        assert panel.solids() and panel.volume > 0
+        assert (panel & envelope).volume < 1e-4
+        assert panel.distance_to(metal) < 1e-4
+        sign = -1 if wall.label.startswith("Left") else 1
+        base = 0 if sign == -1 else p.cargo_width_mm
+        for x in (base, base + sign * depth):
+            assert Compound(panel.faces()).distance_to(Vector(x, 500, 390)) < 1e-4
         rear_pillar = next(part for part in wall.children if part.label == "Rear pillar")
         assert (rear_pillar & arch).volume < 1e-4
         assert rear_pillar.distance_to(arch) < 1e-5
@@ -43,7 +68,19 @@ def test_measured_vehicle_references():
     assert opening.bounding_box().min.Y == pytest.approx(-120, abs=0.1)
     assert opening.bounding_box().max.Z == pytest.approx(1280)
     hatch = groups["Rear opening"].children[2]
-    assert hatch.distance_to(Vector(centre, p.furniture_rear_gap_mm - 130, 390)) < 0.01
+    # Door sides and header must meet the body along their entire shared boundary.
+    body_rear = Compound([*groups["Rear corners"].faces(), *roof["Bare roof"].faces()])
+    for section in rear_aperture_sections(p, closed=True)[:6]:
+        for edge in section.edges():
+            for t in (0, 0.25, 0.5, 0.75, 1):
+                point = edge.position_at(t)
+                assert body_rear.distance_to(point) < 1e-4
+                assert Compound(hatch.faces()).distance_to(point) < 1e-4
+    assert Compound(hatch.faces()).distance_to(Vector(centre, p.furniture_rear_gap_mm - 130, 390)) < 0.01
+    hatch_metal, hatch_glass = hatch.children
+    assert len(hatch_metal.solids()) == 1
+    assert hatch_glass.bounding_box().size.Z == pytest.approx(p.rear_hatch_window_height_mm)
+    assert hatch_metal.distance_to(hatch_glass) < 1e-4
     front = p.body_length_mm - p.left_door_front_offset_mm
     assert front == pytest.approx(1890)
     side = side_aperture(p, front)
@@ -83,7 +120,7 @@ def test_measured_vehicle_references():
         y = p.body_length_mm - offset - p.side_door_clear_width_mm - 30
         for t in (0.3, 0.5):
             point = edge.position_at(t)
-            point.X += sign * (p.side_door_standoff_mm + p.side_door_thickness_mm)
+            point.X += sign * (depth + p.side_door_standoff_mm + p.side_door_thickness_mm)
             point.Y = y
             assert surface.distance_to(point) < 1e-5
         right = sign == 1
@@ -94,4 +131,10 @@ def test_measured_vehicle_references():
         assert sliding_door_offset(p, 85, right)[0] == sliding_door_offset(p, 0, right)[0]
         point = edge.position_at(0.5)
         point.Y = p.body_length_mm - offset - 30
+        point.X += sign * depth
         assert Compound(closed_door.faces()).distance_to(point) < 1e-5
+        point.X -= sign * p.side_door_thickness_mm
+        assert Compound(closed_door.faces()).distance_to(point) < 1e-5
+        waist = Compound(closed_door.intersect(Plane(origin=(0, 0, 490)))).bounding_box()
+        assert (waist.min.X, waist.max.X) == pytest.approx((1460, 1560) if right else (-60, 40))
+        assert waist.size.X == pytest.approx(p.side_door_thickness_mm)

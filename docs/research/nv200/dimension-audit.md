@@ -71,11 +71,11 @@ seats and breaking the bed-to-seat measurement.
 | Ceiling underside above fitted floor, wall / centre | 1270 / 1290, derived from mattress clearances | 1269.994 / 1290. |
 | Ceiling plywood thickness | 3 | 3, normal to its curved surface. |
 | Open door edge from front pillar | 680 | 680 when fully open. |
-| Open door inside / outside relative to outer pillar | 60 / 160, derived from 170/270 minus 110 | 60 / 160 at the lower straight body profile; door shape and thickness remain approximate. |
+| Open door inside / outside relative to outer pillar | 60 / 160, derived from 170/270 minus 110 | 60 / 160. Owner reconfirmed approximately 100mm door thickness on 2026-10-19; exterior is now 60mm outside the measured inner side wall, with 40mm inward pillar intrusion. |
 
-The rear corner also has a separate modelling error: its linear forward roof rake moves the rear section
-23.2mm forward at Z = 390, while the opening at that height is still at Y = 0. Correct this connection when the
-longitudinal layout is resolved rather than preserving the offset as a measurement.
+The former rear-corner mismatch is corrected: the corner loft and hatch now share the measured side/header
+outline. This removes the old 23.2mm forward offset at Z = 390 and the separate upper-corner curves.
+The opening's bowed sill and the closed hatch's inner centre bow remain distinct measured references.
 
 The 1900mm `body_length_mm` is a catalogue-derived cargo/cab modelling boundary, **not** a measured rear-to-seat
 clearance. The extra 1100mm cab floor, front floor width, seat widths/depths/heights, roof bow locations/depths,

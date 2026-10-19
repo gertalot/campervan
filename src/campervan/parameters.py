@@ -172,6 +172,14 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Bare roof"]},
     )
 
+    roof_rail_intrusion_mm: float = Field(
+        default=20.0,
+        gt=0,
+        title="Side rail inward depth",
+        description="Estimated depth from the curved inner wall, capped at the plywood ceiling edge; not measured.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Side rails"]},
+    )
+
     roof_bow_depth_mm: float = Field(
         default=54.0,
         gt=0,
@@ -440,6 +448,42 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
     )
 
+    rear_hatch_window_width_mm: float = Field(
+        default=1000.0,
+        gt=120,
+        title="Window bottom width",
+        description="Photo estimate of rear-door glass width; insulation obscures its inner boundary.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+    rear_hatch_window_taper_mm: float = Field(
+        default=60.0,
+        ge=0,
+        title="Window top narrowing",
+        description="Photo estimate: total reduction in glass width at the top.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+    rear_hatch_window_height_mm: float = Field(
+        default=450.0,
+        gt=120,
+        title="Window height",
+        description="Photo estimate of rear-door glass height.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+    rear_hatch_window_top_gap_mm: float = Field(
+        default=100.0,
+        gt=0,
+        title="Window top gap",
+        description="Photo estimate below the top of the rear opening.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+    rear_hatch_window_recess_mm: float = Field(
+        default=30.0,
+        gt=0,
+        title="Window recess",
+        description="Estimated outward recess from measured inner door surface; exterior is another 8mm outward.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Rear opening"]},
+    )
+
     side_opening_upper_width_mm: float = Field(
         default=760.0,
         ge=0,
@@ -539,10 +583,66 @@ class Parameters(BaseModel):
 
     side_door_thickness_mm: float = Field(
         default=100.0,
-        ge=0,
-        title="Door envelope thickness",
-        description="270mm to outer face minus 170mm to inner face; approximate overall envelope.",
+        gt=0,
+        title="Door thickness",
+        description="Owner-measured approximate transverse depth. Exterior walls align with closed door outer faces.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    side_window_height_mm: float = Field(
+        default=280.0,
+        gt=110,
+        title="Window height",
+        description="Photo estimate for the wide, shallow glass opening; not owner-measured.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    side_window_top_gap_mm: float = Field(
+        default=80.0,
+        gt=0,
+        title="Window top gap",
+        description="Estimated distance below the opening header to the glass edge.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    side_window_surround_mm: float = Field(
+        default=30.0,
+        gt=0,
+        title="Window surround width",
+        description="Photo estimate for the metal slope from the inner door panel toward the glass.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
+    )
+
+    rear_side_window_width_mm: float = Field(
+        default=600.0,
+        gt=110,
+        title="Rear window width",
+        description="Photo estimate for the fixed rear side windows, centred between the pillars.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    rear_side_window_height_mm: float = Field(
+        default=300.0,
+        gt=110,
+        title="Rear window height",
+        description="Photo estimate: slightly taller than the 280mm sliding-door glass.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    rear_side_window_top_gap_mm: float = Field(
+        default=60.0,
+        gt=0,
+        title="Rear window top gap",
+        description="Photo estimate: top edge 20mm above the sliding-door glass, with approximately aligned bottoms.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
+    rear_side_window_recess_mm: float = Field(
+        default=30.0,
+        ge=0,
+        title="Rear window recess",
+        description="Estimated outward depth from the measured inner side wall to glass, within the body thickness.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
     long_bench_width_mm: float = Field(
@@ -944,6 +1044,22 @@ class Parameters(BaseModel):
         gt=0,
         title="Shelf thickness",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},
+    )
+
+    cabinet_back_thickness_mm: float = Field(
+        default=3.0,
+        gt=0,
+        title="Thickness",
+        description="Selected flute-board stock thickness, measured normal to the curved backing.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Back lining"]},
+    )
+
+    cabinet_back_clearance_mm: float = Field(
+        default=1.0,
+        gt=0,
+        title="Vehicle clearance",
+        description="Gap to the projecting wall/pillar contour and rear corner. The top meets the plywood ceiling.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Back lining"]},
     )
 
     cabinet_ledge_size_mm: float = Field(

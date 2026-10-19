@@ -1,5 +1,23 @@
 [
   {
+    "id": "tunnelcore-white-3",
+    "name": "Tunnelcore white polypropylene flute board · 3mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/tunnelcore-2440-x-1220-x-3mm-white-double-wall-pp-flute-board_p0999179",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2440,
+      "width": 1220,
+      "thickness": 3
+    },
+    "price_nzd": 19.8,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "White double-wall polypropylene flute board. Lightweight, pliable, waterproof and easy to cut. Non-structural cabinet lining. Item 0999179.",
+    "availability": "Listed online; Lyall Bay stock and collection availability not confirmed.",
+    "checked": "2026-10-19"
+  },
+  {
     "id": "tigerply-18",
     "name": "Tigerply untreated plywood · 18mm",
     "supplier": "Bunnings NZ",

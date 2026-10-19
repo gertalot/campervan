@@ -2,6 +2,7 @@
 import { createViewCube } from './view-cube';
 import { loadMannequin, type MannequinPose } from './mannequin';
 import { createSeatCushion } from './seat-cushion';
+import { createVehicleFade } from './vehicle-fade';
 import { Box3, type Object3D, type Scene } from 'three';
 
 type Axis = 'x' | 'y' | 'z';
@@ -69,6 +70,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let mannequinLoading: Promise<void> | undefined;
   let mannequinPose: MannequinPose;
   let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
+  const vehicleFade = createVehicleFade();
+  let seeInside = false;
 
   function showMannequin() {
     if (!mannequin || !viewer?.ready) return;
@@ -217,6 +220,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           viewer = this as unknown as CadViewer;
           const update = this.update.bind(this);
           this.update = (...updateArgs: any[]) => {
+            if (this.ready && seeInside) vehicleFade.update(this.getCameraQuaternion());
             update(...updateArgs);
             if (this.ready) cube?.update(this.getCameraQuaternion());
           };
@@ -278,6 +282,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             rendering = true;
             // OCP disposes its old scene when replacing geometry; keep the independent human rig.
             if (message.type === 'data') {
+              vehicleFade.clear();
               mannequin?.root.removeFromParent();
               seatCushion?.dispose();
               seatCushion = undefined;
@@ -285,6 +290,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             try { page.handleMessage(message); }
             finally { rendering = false; }
             if (message.type === 'data') {
+              vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
               motions = {};
               bases.clear();
               trimToolbar();
@@ -316,6 +322,11 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       socket.onclose = () => onError('CAD viewer connection closed. Refresh after restarting make viewer.');
     },
     setPosition(name: string, percent: number) { positions[name] = percent; move(); },
+    setSeeInside(enabled: boolean) {
+      seeInside = enabled;
+      if (!enabled) vehicleFade.restore();
+      viewer?.update(true, false);
+    },
     setMannequinPose(pose: MannequinPose) {
       mannequinPose = { ...pose };
       if (mannequin) showMannequin();

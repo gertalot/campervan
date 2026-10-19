@@ -20,6 +20,8 @@ def test_stock_dimensions_and_measured_override(tmp_path):
     sourced = load_project(path)
     assert sourced.materials["skins"].product_id == "tigerply-okoume-4"
     assert sourced.parameters.wall_thickness_mm == 4
+    assert sourced.materials["cabinet-back"].product_id == "tunnelcore-white-3"
+    assert sourced.parameters.cabinet_back_thickness_mm == 3
     assert sourced.materials["ledges"].product_id == "tigerply-18"
     assert sourced.parameters.cabinet_ledge_size_mm == 19  # Strip width is a cut dimension.
     assert sourced.parameters.cabinet_ledge_height_mm == 18

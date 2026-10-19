@@ -1,6 +1,7 @@
 const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
   cabinet: ['/Campervan/Cabinet'],
+  cabinetBacking: ['/Campervan/Cabinet/Back lining'],
   longBench: ['/Campervan/Long bench'],
   crossBench: ['/Campervan/Cross bench'],
   cushions: ['/Campervan/Long bench/Cushions', '/Campervan/Cross bench/Cushions'],
@@ -21,7 +22,7 @@ interface VisibilityViewer {
 }
 
 export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer) {
-  const inputs = [...container.querySelectorAll<HTMLInputElement>('input')];
+  const inputs = [...container.querySelectorAll<HTMLInputElement>('input[name]')];
   const groups = new Map<HTMLButtonElement, { path: string; title: string }>();
   const key = 'campervan.visibility.paths';
   const rules: Record<string, boolean> = {

@@ -3,10 +3,11 @@
 from itertools import combinations
 
 import pytest
-from build123d import Edge, GeomType, Location
+from build123d import Edge, GeomType, Location, Plane
 
 from campervan.cad.body import ceiling_height, interior_limits
-from campervan.cad.cabinet import build_cabinet
+from campervan.cad.bom import cut_list
+from campervan.cad.cabinet import build_cabinet, cabinet_back_profile
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
 
@@ -17,6 +18,18 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     parts = list(cabinet.children)
     leaves = [leaf for leaf in cabinet.descendants if not leaf.children]
     assert all(part.is_valid and len(part.solids()) == 1 for part in leaves)
+    backing = next(part for part in parts if part.label == "Back lining")
+    assert backing.bounding_box().min.Y == pytest.approx(
+        p.rear_corner_radius_mm + p.cabinet_back_clearance_mm - p.furniture_rear_gap_mm, abs=1e-5
+    )
+    assert backing.bounding_box().max.Y == pytest.approx(p.cabinet_length_mm)
+    outer = cabinet_back_profile(p, p.cabinet_back_clearance_mm)
+    inner = cabinet_back_profile(p, p.cabinet_back_clearance_mm + p.cabinet_back_thickness_mm)
+    assert outer.distance_to(inner) == pytest.approx(p.cabinet_back_thickness_mm, abs=1e-4)
+    cuts = cut_list(cabinet, p)
+    back_cut = next(cut for cut in cuts if cut.material == "cabinet-back")
+    assert back_cut.thickness == 3
+    assert back_cut.length > backing.bounding_box().size.Z  # Developed length, not curved bounding-box height.
     shelves = next(part for part in parts if part.label == "Shelves")
     assert len(shelves.children) == 6
     assert all(shelf.bounding_box().size.Z == pytest.approx(p.cabinet_shelf_thickness_mm) for shelf in shelves.children)
@@ -38,7 +51,8 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     assert cabinet.bounding_box().max.Y == pytest.approx(p.cabinet_length_mm)
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
     to_furniture = Location((0, -p.furniture_rear_gap_mm, 0))
-    body, ceiling = body.moved(to_furniture), ceiling.moved(to_furniture)
+    reflection = Location((p.cargo_width_mm, -p.furniture_rear_gap_mm, 0))
+    body, ceiling = body.mirror(Plane.YZ).moved(reflection), ceiling.mirror(Plane.YZ).moved(reflection)
     placed = cabinet.moved(Location((0, p.furniture_rear_gap_mm, 0)))
     assert placed.bounding_box().min.Y == pytest.approx(p.furniture_rear_gap_mm)
     assert placed.bounding_box().max.Y == pytest.approx(p.furniture_rear_gap_mm + p.cabinet_length_mm)
@@ -61,7 +75,8 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     assert not (middle & wall_side).edges()
     for part in parts:
         assert (part - body).volume < 1e-4, part.label
-        assert (part - ceiling).volume < 1e-4, part.label
+        if part != backing:  # Backing reaches the ply; the carcass retains its fitting gap.
+            assert (part - ceiling).volume < 1e-4, part.label
         if part.label.endswith("frame"):
             assert all(edge.geom_type in (GeomType.LINE, GeomType.CIRCLE) for edge in part.edges()), part.label
             corners = [edge for edge in part.edges() if edge.geom_type == GeomType.CIRCLE]
@@ -98,7 +113,14 @@ def test_cabinet_follows_body_and_ceiling_without_part_or_arch_collisions():
     vehicle = build_vehicle_references(p)
     arch = vehicle.children[1].children[1].moved(to_furniture)
     roof = next(group for group in vehicle.children if group.label == "Roof")
+    wall = next(group for group in vehicle.children if group.label == "Side walls").children[1]
+    pillar = next(part for part in wall.children if part.label == "Rear pillar").moved(to_furniture)
+    assert backing.distance_to(pillar) == pytest.approx(p.cabinet_back_clearance_mm, abs=1e-4)
+    rail = next(group for group in roof.children if group.label == "Side rails").children[1].moved(to_furniture)
+    assert backing.distance_to(rail) >= p.cabinet_back_clearance_mm - 1e-4
+    assert backing.distance_to(arch) >= 2.99
     ply = next(part for part in roof.children if part.label == "Finished ceiling").moved(to_furniture)
+    assert backing.distance_to(ply) < 1e-4
     for part in parts:
         overlap = part & ply
         assert overlap is None or overlap.volume < 1e-4, part.label
