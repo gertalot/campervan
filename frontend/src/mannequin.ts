@@ -5,15 +5,31 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createSpine } from './spine-rig';
 
 export interface MannequinPose {
+  mode: 'seated' | 'lying' | 'lying-second';
   visible: boolean;
   x: number; y: number; z: number; facing: number; compression: number;
   lean: number; curvature: number; headTilt: number; hip: number; knee: number; shoulder: number; elbow: number;
   autoLegs: boolean; fitSeat: boolean;
 }
 export const seatedPose: MannequinPose = {
-  visible: true, x: 1153, y: 700, z: 560, facing: 270, compression: 30,
+  mode: 'seated', visible: true, x: 1153, y: 700, z: 560, facing: 270, compression: 30,
   lean: 20, curvature: 35, headTilt: 15, hip: 82, knee: 82, shoulder: 10, elbow: 80, autoLegs: true, fitSeat: true,
 };
+export const lyingPose: MannequinPose = {
+  ...seatedPose, mode: 'lying', x: 0, y: 0, z: 0, facing: 0, compression: 100,
+  lean: 0, curvature: 0, headTilt: 0, hip: 0, knee: 0, shoulder: 0, elbow: 0, fitSeat: true,
+};
+
+export const secondLyingPose: MannequinPose = { ...lyingPose, mode: 'lying-second' };
+
+/** Earlier lying settings stored seated coordinates, before pillow-relative controls existed. */
+export function restoreMannequinPose(defaults: MannequinPose, saved: Partial<MannequinPose> & { poseVersion?: number }) {
+  if ((saved.mode && saved.mode !== defaults.mode) || (defaults.mode === 'lying' && saved.poseVersion !== 2)) {
+    return { ...defaults };
+  }
+  return { ...defaults, ...saved, mode: defaults.mode };
+}
+
 interface RigPose {
   visible: boolean; x: number; y: number; z: number; facing: number;
   lean: number; curvature: number; headTilt: number; hip: number; knee: number; shoulder: number; elbow: number;
@@ -134,13 +150,20 @@ export function createMannequin(body: Group) {
 
   // Keep only contact vertices for quick seated fitting (no triangle collision engine).
   const contacts = meshes.map(mesh => {
-    const groups: Record<string, number[]> = { pelvis: [], feet: [], legs: [] };
+    const groups: Record<string, number[]> = { pelvis: [], feet: [], legs: [], torso: [], head: [], hands: [], belly: [] };
     const indices = mesh.geometry.attributes.skinIndex, weights = mesh.geometry.attributes.skinWeight;
     for (let i = 0; i < indices.count; i++) {
       let dominant = 0;
       for (let j = 1; j < 4; j++) if (weights.getComponent(i, j) > weights.getComponent(i, dominant)) dominant = j;
       const name = mesh.skeleton.bones[indices.getComponent(i, dominant)].name;
       if (name === 'pelvis') groups.pelvis.push(i);
+      if (/^(pelvis|spine_|back_)/.test(name)) {
+        groups.torso.push(i);
+        const point = mesh.getVertexPosition(i, new Vector3()).applyMatrix4(mesh.matrixWorld);
+        if (point.y > pelvis.y + 60 && point.y < pelvis.y + 300) groups.belly.push(i);
+      }
+      if (name === 'head') groups.head.push(i);
+      if (/^(hand|index|middle|ring|pinky|thumb)_/.test(name)) groups.hands.push(i);
       if (/^(foot|ball)_/.test(name)) groups.feet.push(i);
       if (/^(calf|foot|ball)_/.test(name)) groups.legs.push(i);
     }
@@ -201,6 +224,80 @@ export function createMannequin(body: Group) {
       root.visible = pose.visible;
       root.updateMatrixWorld(true);
       for (const mesh of meshes) mesh.skeleton.update();
+    },
+    lie(pose: MannequinPose, mattress: Box3, pillow: Box3) {
+      const solveArm = (side: string, target: Vector3) => {
+        const shoulder = bone(`upperarm_${side}`).getWorldPosition(new Vector3());
+        const elbow = bone(`lowerarm_${side}`).getWorldPosition(new Vector3());
+        const hand = bone(`hand_${side}`).getWorldPosition(new Vector3());
+        const upper = shoulder.distanceTo(elbow), lower = elbow.distanceTo(hand);
+        const axis = target.clone().sub(shoulder);
+        const distance = Math.min(axis.length(), upper + lower - 1);
+        axis.normalize();
+        const along = (upper * upper - lower * lower + distance * distance) / (2 * distance);
+        const outward = new Vector3(shoulder.x < pelvis.x ? -1 : 1, 0, -.3);
+        outward.addScaledVector(axis, -outward.dot(axis)).normalize();
+        const bend = shoulder.clone().addScaledVector(axis, along)
+          .addScaledVector(outward, Math.sqrt(Math.max(0, upper * upper - along * along)));
+        aim(`upperarm_${side}`, `lowerarm_${side}`, bend.sub(shoulder));
+        const origin = bone(`lowerarm_${side}`).getWorldPosition(new Vector3());
+        aim(`lowerarm_${side}`, `hand_${side}`, target.clone().sub(origin));
+        aim(`hand_${side}`, `middle_01_${side}`, new Vector3(side === 'l' ? -1 : 1, -.25, -.12));
+      };
+      const poseBody = (neck: number) => {
+        body.removeFromParent();
+        body.position.set(0, 0, 0);
+        for (const [joint, rotation] of rest) joint.quaternion.copy(rotation);
+        body.updateMatrixWorld(true);
+        spine.pose(pose.lean, pose.curvature);
+        pitch('neck_01', neck * .65);
+        pitch('head', neck * .35);
+        for (const side of ['l', 'r']) {
+          const sign = bone(`thigh_${side}`).getWorldPosition(new Vector3()).x < pelvis.x ? 1 : -1;
+          aim(`thigh_${side}`, `calf_${side}`, new Vector3(sign * .08, -Math.cos(radians(pose.hip)), Math.sin(radians(pose.hip))));
+          aim(`calf_${side}`, `foot_${side}`, new Vector3(sign * .18, -Math.cos(radians(pose.hip - pose.knee)),
+            Math.sin(radians(pose.hip - pose.knee)) + (side === 'l' ? .10 : 0)));
+          aim(`foot_${side}`, `ball_${side}`, new Vector3(-sign * .1, -.45, .75));
+        }
+        const belly = contactBounds('belly').max.z;
+        const placeHands = (height: number) => {
+          solveArm('l', pelvis.clone().add(new Vector3(30, 180 + pose.shoulder, belly - pelvis.z + 35 + height)));
+          solveArm('r', pelvis.clone().add(new Vector3(-35, 205 + pose.shoulder, belly - pelvis.z + 60 + height)));
+        };
+        placeHands(0);
+        // Fit the default to the belly, then apply the user's signed offset without clamping it away.
+        const contactHeight = belly - contactBounds('hands').min.z;
+        placeHands(contactHeight + pose.elbow);
+        body.position.copy(pelvis).negate();
+        root.add(body);
+        root.rotation.set(0, 0, 0);
+        root.position.set(0, 0, 0);
+        root.visible = pose.visible;
+        root.updateMatrixWorld(true);
+        for (const mesh of meshes) mesh.skeleton.update();
+        root.position.z = mattress.max.z - Math.min(
+          contactBounds('torso').min.z, contactBounds('legs').min.z,
+        );
+        root.updateMatrixWorld(true);
+      };
+      const target = pillow.max.z - Math.min(pose.compression, (pillow.max.z - pillow.min.z) * .65);
+      let low = 0, high = 50;
+      for (let i = 0; i < 8; i++) {
+        const angle = (low + high) / 2;
+        poseBody(angle);
+        if (contactBounds('head').min.z < target) low = angle; else high = angle;
+      }
+      poseBody((low + high) / 2 + pose.headTilt);
+      root.rotation.z = radians(pose.facing);
+      root.updateMatrixWorld(true);
+      const head = contactBounds('head').getCenter(new Vector3());
+      const support = pillow.getCenter(new Vector3());
+      root.position.x += support.x - head.x + pose.x;
+      root.position.y += support.y - head.y + pose.y;
+      root.position.z += pose.z;
+      root.updateMatrixWorld(true);
+      return { head: contactBounds('head'), feet: contactBounds('feet'),
+        hands: contactBounds('hands'), belly: contactBounds('belly'), torso: contactBounds('torso'), bounds: new Box3().setFromObject(root, true) };
     },
     seat(pose: MannequinPose, cushion: Box3, backrestFront: number) {
       const compression = Math.min(pose.compression, (cushion.max.z - cushion.min.z) * 0.5);

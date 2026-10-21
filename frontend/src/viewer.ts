@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 /** Our host for the installed OCP renderer. No second viewer or playback timeline. */
 import { createViewCube } from './view-cube';
-import { loadMannequin, type MannequinPose } from './mannequin';
+import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPose } from './mannequin';
 import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
@@ -68,9 +68,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const cameraKey = 'campervan.camera';
   let rendering = false;
   let cameraAnimation: number | null = null;
-  let mannequin: Awaited<ReturnType<typeof loadMannequin>> | undefined;
+  const mannequins: Partial<Record<MannequinPose['mode'], Awaited<ReturnType<typeof loadMannequin>>>> = {};
   let mannequinLoading: Promise<void> | undefined;
-  let mannequinPose: MannequinPose;
+  const mannequinPoses = { seated: { ...seatedPose }, lying: { ...lyingPose }, 'lying-second': { ...secondLyingPose } };
   let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
   const vehicleFade = createVehicleFade();
   let pillows = createPillows();
@@ -84,13 +84,44 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let seeInside = false;
 
   function showMannequin() {
-    if (!mannequin || !viewer?.ready) return;
+    if (!viewer?.ready) return;
+    const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
+    for (const model of Object.values(mannequins)) model.root.visible = false;
+    const mode = bed === 100 ? 'lying' : 'seated';
+    const mannequin = mannequins[mode];
+    const mannequinPose = mannequinPoses[mode];
+    if (!mannequin) return;
     const groups = viewer.rendered.nestedGroup.groups;
     const seat = groups['/Campervan/Long bench/Cushions/Long seat/Foam'] as unknown as Object3D;
     const back = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam'] as unknown as Object3D;
     if (!seat || !back) return;
     seatCushion ??= createSeatCushion(seat);
-    const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
+    pillows.supportHead(null);
+    pillows.supportHead(null, false);
+    if (mannequinPose.mode === 'lying') {
+      seatCushion.deform(null);
+      const cross = groups['/Campervan/Cross bench/Cushions/Cross seat/Foam'] as unknown as Object3D;
+      if (!cross) return;
+      const mattress = seatCushion.bounds().union(new Box3().setFromObject(cross));
+      let feetOutside = false;
+      for (const id of ['lying', 'lying-second'] as const) {
+        const model = mannequins[id];
+        const pose = mannequinPoses[id];
+        const first = id === 'lying';
+        const path = first ? '/Campervan/Cross bench/Cushions/Front pillow/Pillow'
+          : '/Campervan/Long bench/Cushions/Rear pillow/Pillow';
+        const pillow = groups[path] as unknown as Object3D;
+        if (!model || !pillow) continue;
+        const fitted = model.lie({ ...pose, visible: pose.visible && bed === 100 },
+          mattress, new Box3().setFromObject(pillow));
+        model.attach(viewer.rendered.scene);
+        if (model.root.visible) pillows.supportHead(fitted.head, first);
+        feetOutside ||= fitted.feet.min.y < mattress.min.y;
+      }
+      onMannequinStatus(feetOutside ? 'Feet extend beyond the mattress.' : '');
+      viewer.update(true, false);
+      return;
+    }
     const visible = mannequinPose.visible && bed === 0;
     const fitted = mannequin.seat({ ...mannequinPose, visible }, seatCushion.bounds(), new Box3().setFromObject(back).min.x);
     const { x, y, z, facing, hip, knee } = fitted.pose;
@@ -294,7 +325,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             // OCP disposes its old scene when replacing geometry; keep the independent human rig.
             if (message.type === 'data') {
               vehicleFade.clear();
-              mannequin?.root.removeFromParent();
+              Object.values(mannequins).forEach(model => model.root.removeFromParent());
               seatCushion?.dispose();
               seatCushion = undefined;
             }
@@ -341,10 +372,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       viewer?.update(true, false);
     },
     setMannequinPose(pose: MannequinPose) {
-      mannequinPose = { ...pose };
-      if (mannequin) showMannequin();
-      else if (pose.visible) mannequinLoading ??= loadMannequin().then(model => {
-        mannequin = model;
+      mannequinPoses[pose.mode] = { ...pose };
+      if (mannequins.seated && mannequins.lying && mannequins['lying-second']) showMannequin();
+      else if (pose.visible) mannequinLoading ??= Promise.all([loadMannequin(), loadMannequin(), loadMannequin()]).then(([seated, lying, second]) => {
+        mannequins.seated = seated;
+        mannequins.lying = lying;
+        mannequins['lying-second'] = second;
         showMannequin();
       }).catch(error => onError(`Mannequin: ${error instanceof Error ? error.message : String(error)}`));
     },

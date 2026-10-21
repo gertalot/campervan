@@ -113,20 +113,17 @@ def build_cabinet_doors(
         openings = rear_openings if bay_name == "Rear" else opening_heights
         for i, (bottom, top) in enumerate(openings):
             upper = i >= len(openings) - 2
-            if bay_name == "Rear" and not upper:
+            if bay_name == "Rear" and i == 0:
                 left, right = start - overlap, end + overlap
                 width = (right - left - p.cabinet_door_gap_mm) / 2
                 height = top - bottom + 2 * overlap
-                position = (
-                    p.cabinet_storage_doors_open_percent if i == 0 else p.cabinet_storage_upper_doors_open_percent
-                )
+                position = p.cabinet_storage_doors_open_percent
                 angle = position * 90 / 100
-                tier = "" if i == 0 else "upper "
                 for name, hinge, reverse, sign in (("Aft", left, False, 1), ("Fore", right, True, -1)):
                     doors.append(
                         _hinged_door(
                             p,
-                            f"Rear storage {tier}{name.lower()}",
+                            f"Rear storage {name.lower()}",
                             hinge,
                             bottom - overlap,
                             width,
@@ -139,19 +136,25 @@ def build_cabinet_doors(
                 continue
             number = i - (len(openings) - 2) + 1 if upper else i + 1
             label = f"{bay_name} {'upper' if upper else 'lower'} {number}"
+            if bay_name == "Rear" and i == 1:
+                label = "Rear storage upper flap"
             width, height = end - start + 2 * overlap, top - bottom + 2 * overlap
             if min(width, height) <= 2 * corner:
                 raise ValueError("Cabinet doors must leave room for their rounded corners.")
             position = (
                 p.cabinet_upper_doors_open_percent
                 if upper
+                else p.cabinet_storage_upper_doors_open_percent
+                if bay_name == "Rear"
                 else p.cabinet_lower_doors_open_percent
                 if i == 0
                 else p.cabinet_front_upper_door_open_percent
             )
             angle = 90 * position / 100
             doors.append(
-                _hinged_door(p, label, start - overlap, bottom - overlap, width, height, angle, upper=upper, latch=True)
+                _hinged_door(
+                    p, label, start - overlap, bottom - overlap, width, height, angle, upper=upper or i == 1, latch=True
+                )
             )
     return Compound(label="Doors", children=doors)
 
@@ -178,13 +181,11 @@ def cabinet_door_motions(p: Parameters) -> dict[str, object]:
                 ("Rear upper 1", "Rear upper 2", "Cab-end upper 1", "Cab-end upper 2"),
             ),
             ("cabinet_lower_doors_open_percent", "z", 90, ("Cab-end lower 1",)),
-            ("cabinet_front_upper_door_open_percent", "z", 90, ("Cab-end lower 2",)),
+            ("cabinet_front_upper_door_open_percent", "y", -90, ("Cab-end lower 2",)),
+            ("cabinet_storage_upper_doors_open_percent", "y", -90, ("Rear storage upper flap",)),
         )
     }
-    for field, tier in (
-        ("cabinet_storage_doors_open_percent", ""),
-        ("cabinet_storage_upper_doors_open_percent", "upper "),
-    ):
+    for field, tier in (("cabinet_storage_doors_open_percent", ""),):
         motions[field] = {
             "position": getattr(p, field),
             "tracks": mirror_motion_tracks(

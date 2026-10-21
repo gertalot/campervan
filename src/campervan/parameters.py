@@ -1016,7 +1016,7 @@ class Parameters(BaseModel):
         default=0.0,
         ge=0,
         le=100,
-        title="Storage above-bed doors",
+        title="Storage above-bed flap",
         description="Open the upper storage pair independently, above the mattress, without regenerating.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
     )

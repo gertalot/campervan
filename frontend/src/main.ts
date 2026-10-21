@@ -22,7 +22,7 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
   error.textContent = message;
   error.hidden = false;
 }, message => {
-  element('mannequin-status').textContent = message;
+  for (const mode of ['seated', 'lying', 'lying-second']) element(`mannequin-${mode}-status`).textContent = message;
 }, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
 const seeInside = element<HTMLInputElement>('see-inside');
@@ -133,7 +133,7 @@ const controller = createController(api, {
       inputs.set(name, input);
     }
     // Reattach the same live controls after metadata refreshes, preserving pose and listeners.
-    groupFor(['Mannequin'], fields, false).append(seatedMannequin);
+    fields.append(seatedMannequin);
   },
   setConstraints(metadata, errors, adjustments, parameters) {
     for (const [name, input] of inputs) {

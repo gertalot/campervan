@@ -391,17 +391,16 @@ The BOM records the sheet separately from plywood and uses its developed centre-
 not the curved part's bounding-box depth. Confirm flute orientation and physical fit before cutting.
 There is no top panel. Shelf fasteners are not modelled.
 
-`cabinet_doors.py` makes ten 9mm plywood overlay doors. The four upper shelf openings each have a
-bottom-hinged flap, intended to stop horizontally on two short chain restraints. The two front lower openings
-retain vertical hinges, with separate live controls above/below the mattress. All edges overlap the openings by
+`cabinet_doors.py` makes nine 9mm plywood overlay doors. The four upper shelf openings each have a
+bottom-hinged flap, intended to stop horizontally on two short chain restraints. The front bottom door retains its vertical hinge; its above-bed neighbour is bottom-hinged, with separate live controls. All edges overlap the openings by
 15mm, with 12mm plan corner radii and 2mm face roundovers. The four original upper flaps retain their dimensions.
-The rear storage doors have two opposed pairs, split at the raised front shelf's rail. The aisle crossbeam divides
+The rear storage has an opposed bottom pair and one full-width bottom-hinged flap above the raised shelf rail. The aisle crossbeam divides
 access without adding a shelf or rear crossbar. The rear chair-loading entrance remains 730mm high.
 
 `cabinet_mattress_clearance_mm` places the front lower shelf top 10mm above the uncompressed mattress. At the
 saved platform height 390mm and foam thickness 100mm, the shelf top is 500mm, the beam spans 470–530mm, and the
 above-bed doors begin at 515mm. Clear access openings above that beam are 200mm high. The two front lower doors
-are 284 × 440mm and 284 × 230mm; the four rear storage leaves are 297mm wide with heights 440/230mm.
+are 284 × 440mm and 284 × 230mm; the bottom rear storage leaves are 297 × 440mm and the merged above-bed flap is 596 × 230mm.
 These dimensions follow bed height, foam, clearance, stock sizes and overlay instead of fixed elevations.
 
 The closed door fronts stay at X = `bed_width_mm` (1070mm), and backs at X = 1079. The aisle frame starts at
@@ -414,13 +413,13 @@ Door groups have hinge-centred origins and native plywood children, keeping cutt
 `cabinet_lower_doors_open_percent` rotates the lower groups about Z from 0 to 90 degrees. The viewer reuses
 these tracks through the existing mirrored motion mechanism, without regeneration.
 `cabinet_storage_doors_open_percent` turns the bottom rear pair about Z by +90 and −90 degrees before mirroring.
-`cabinet_storage_upper_doors_open_percent` independently turns the above-bed rear pair. The front bottom door
+`cabinet_storage_upper_doors_open_percent` independently drops the above-bed rear flap about Y through −90 degrees before mirroring. The front bottom door
 uses `cabinet_lower_doors_open_percent`; its raised neighbour uses `cabinet_front_upper_door_open_percent`.
-The three above-bed side-hinged leaves clear the flat uncompressed mattress in the fully made-up bed.
+The two above-bed drop-down flaps clear the flat uncompressed mattress in the fully made-up bed.
 Bottom doors still require the bed stowed; sliders do not enforce furniture operating sequences.
 
-The BoM includes twenty Zenith 35mm fixed-pin butt hinges, ten Vanlifer Point push latches and one 3m pack of
-Pinnacle 2mm double jack chain. The four drop-down flaps each require two chain restraints; cut lengths depend
+The BoM includes eighteen Zenith 35mm fixed-pin butt hinges, nine Vanlifer Point push latches and two 3m packs of
+Pinnacle 2mm double jack chain. The six drop-down flaps each require two chain restraints; cut lengths depend
 on actual anchor positions (roughly 240–300mm each as an initial allowance).
 
 All doors use Vanlifer NZ Point LL016 positive push latches (NZ$16 each including GST), each with its supplied striker.
@@ -555,12 +554,12 @@ skinning joints along a continuous arc from the sacrum to the shoulders, replaci
 The pelvis follows the bottom tangent; shoulders, arms, neck and head follow the top tangent. Non-trunk skin influences
 are retained, and the original GLB is unchanged.
 
-**Sit on bench** fits a seated pose to the displayed long-seat cushion, allows estimated foam compression and clears
+**Seated mannequin → Reset posture** fits a seated pose to the displayed long-seat cushion, allows estimated foam compression and clears
 the calves past the bench edge. XYZ hip position, facing and joints remain adjustable with sliders. Ankle rotation
 maintains the flat-foot orientation independently of the calves. Joint edits retain the chosen angles and adjust hip
 height to put the soles on the floor; hip-height edits solve the legs instead. Recline sets the mean torso lean;
 curvature sets the total bend along the arc, starting at the sacrum. The arc deforms the mesh's existing anatomical
-shape. Leg and ankle posing compensates for pelvis rotation to retain floor contact. **Sit on bench** starts with
+shape. Leg and ankle posing compensates for pelvis rotation to retain floor contact. **Seated mannequin → Reset posture** starts with
 20° recline and 35° curvature; saved manual poses remain unchanged.
 Gaze compensation is shared between neck and head, maintaining
 a downward laptop gaze without forcing the skull to counter-rotate against a backward-pointing neck.
@@ -571,9 +570,19 @@ bottom fixed. Compression is a visual approximation, capped at 55% of foam thick
 original geometry. This does not change the manufactured CAD cushion or simulate foam stiffness. The seated preview
 is hidden during bed extension because it is not a lying-down pose.
 
-The geometry-control hierarchy contains **Mannequin → Seated mannequin**, with room for additional poses. Its checkbox
+The **Mannequin** group contains **Seated mannequin**, **Lying mannequin** and **Second lying mannequin** controls
+and independent rig instances. Both lying people use the same measured body size, each fitted to its own pillow.
+Each posture persists independently; the single visibility checkbox gates all three. The seated instance shows only at
+0% bed extension, both lying instances only at 100%; none show during travel. The lying posture uses the measured rig,
+with extended legs, lightly crossed ankles and hands over the belly. It is visible at full bed extension only.
+Head position follows the front pillow; adjustable pillow compression deforms its displayed mesh and restores it when
+the person is hidden or seated. Contact fitting is approximate and needs visual inspection.
+The pose reference is [PoseMyArt's lying crossed-legs pose](https://posemy.art/crossed-legs-poses/lying-crossed-legs-male-pose/666/).
+The mannequin checkbox
 lives alongside the other switches in **Visibility**. Pose and visibility retain the existing browser-storage key;
-metadata refreshes reattach the same controls without resetting them.
+the lying posture uses its own storage key. Metadata refreshes reattach the same controls without resetting them.
+Lying sliders adjust pillow-relative X/Y/Z offsets, body rotation, back lift/curvature, head tilt, hip/knee bend and
+hand position above/along the belly. Reset posture restores only that instance.
 Controls act directly on viewer geometry, persist in browser storage and do not regenerate CAD. The rig is detached
 before OCP disposes its old scene and reattached afterwards. OCP bundles Three.js r184; the GLTF loader uses the matching
 pinned npm version. Human geometry and material are allocated through OCP's constructors to keep numeric resource IDs
@@ -632,8 +641,9 @@ sets `wall_thickness_mm` for the bed and bench partition skins; shelves, lids an
 
 Sleeping pillows use the CC0 Poly Haven Throw Pillows 01 mesh (source/license beside frontend/src/pillow-mesh.json).
 The viewer replaces CAD fitting envelopes with this cloth geometry, retaining the pose and visibility hierarchy.
-Each measures 680 × 400 × 200mm uncompressed; the user's fluffed width is 500mm in sleeping mode.
-Both lie across the cab end, touching at the centre, leaving 35mm each side at the 1070mm bed width.
-The long-bench slider moves both pillows and changes their displayed width without regeneration.
+Each measures 600 × 400 × 200mm throughout conversion.
+Both lie across the cab end with centres 500mm apart. Their 600mm width envelopes overlap by 100mm
+and overhang by 15mm each side at the 1070mm bed width.
+The long-bench slider moves both pillows without changing their width or requiring regeneration.
 CAD supplies visibility anchors only. Pillow geometry, support contact, rotations and conversion poses are owned by
 frontend/src/pillows.ts and update in the browser without CAD regeneration.

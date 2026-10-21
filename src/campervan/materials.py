@@ -102,14 +102,14 @@ ROLES.extend(
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
             default_product_id="tigerply-okoume-9",
-            note="Ten overlay doors: four drop-down flaps, two front doors and two independent storage pairs.",
+            note="Nine overlay doors: six drop-down flaps, one front door and the bottom storage pair.",
         ),
         MaterialRole(
             id="cabinet-hinges",
             name="Cabinet door hinges",
             kind="hardware",
             fields={},
-            quantity=20,
+            quantity=18,
             default_product_id="zenith-butt-35",
             note=(
                 "Two per door. Face-mount the leaves between door rear and aisle frame, within the closing gap. "
@@ -125,7 +125,7 @@ ROLES.extend(
             default_product_id="vanlifer-point-ll016",
             note=(
                 "One positive push latch per door, including its supplied striker. 50mm from front face to body rear "
-                "means 41mm projects behind 9mm plywood. Six strikers mount under shelf ledges; four 70mm pine "
+                "means 41mm projects behind 9mm plywood. Five strikers mount under shelf ledges; four 70mm pine "
                 "blocks support the topmost and bottom-storage strikers. No centre post in the storage openings. "
                 "Body/bore dimensions follow the supplier drawing, but striker size, flange thickness "
                 "and fixings need checking on receipt."
@@ -133,13 +133,13 @@ ROLES.extend(
         ),
         MaterialRole(
             id="cabinet-chains",
-            name="Upper door chain restraints",
+            name="Drop-down door chain restraints",
             kind="hardware",
             fields={},
-            quantity=1,
+            quantity=2,
             default_product_id="pinnacle-double-jack-2",
             note=(
-                "One 3m pack for eight short restraints: two per drop-down upper door. "
+                "Two 3m packs for twelve short restraints: two per drop-down door. "
                 "Allow roughly 240–300mm each at default door sizes; cut to the actual anchor positions "
                 "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
                 "to plywood frame members, not the 4mm skin. Chains, anchors and fixings are not modelled. "

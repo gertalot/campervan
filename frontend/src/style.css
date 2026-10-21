@@ -146,3 +146,5 @@ header button[aria-pressed="true"] { color: #eef3fa; border-bottom-color: #8bb7e
 #bom-panel a, .material-link { color: #9ec5ef; }
 .material-link { border: 0; padding: 0; background: none; font: inherit; cursor: pointer; text-decoration: underline; }
 aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
+
+.parameter-row[hidden] { display: none; }

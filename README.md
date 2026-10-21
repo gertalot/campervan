@@ -93,11 +93,14 @@ repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, 
 Shared foam thickness is under **Long bench → Cushions**.
 
 Expand **Mannequin** for a poseable human sized to 178cm with an 80cm inseam, 40cm thighs and 50cm floor-to-knee height.
-**Sit on bench** fits the initial seated pose. X/Y/Z, facing, hip/knee bend, back recline, back curvature, head tilt and
+**Seated mannequin** fits the initial seated pose. X/Y/Z, facing, hip/knee bend, back recline, back curvature, head tilt and
 arm angles have live sliders. Position is measured at the hip joint. Ankles compensate to keep the feet flat;
 changing leg angles adjusts hip height to retain floor contact. Changing hip height solves the leg angles instead.
 The seat cushion dents under the person; **Foam compression** is an estimate, adjustable in millimetres.
-**Show** toggles the person. Pose and visibility persist across reloads and regeneration.
+**Visibility → Mannequin** toggles all three mannequins. Each nested control group saves its posture independently.
+The lying controls adjust position offsets, rotation, back, head, hip/knee bend and hand position live.
+**Lying mannequin** and **Second lying mannequin** show two same-size people on their respective pillows automatically when the bed is fully extended, with the head on the front pillow, ankles lightly
+crossed and hands over the belly. **Pillow compression** adjusts head support directly in the browser.
 The seated preview is hidden while extending the bed. Other body proportions and foam deformation are estimates;
 the mannequin is a visual fit reference and is not part of CAD exports.
 
@@ -144,18 +147,19 @@ keep the raised divider below the next shelf opening; they update when these dim
 The cabinet has ten 9mm overlay doors with 15mm overlap, 12mm corner radii and 2mm edge roundovers.
 The rear storage doors are split into lower and above-bed pairs, each opening outward on opposite hinges.
 An aisle-only crossbeam joins their horizontal split; there is no shelf behind it and rear loading stays clear.
-Its aisle skin is removed while rear loading stays open. All ten doors use Vanlifer NZ Point push latches;
+Its aisle skin is removed while rear loading stays open. All nine doors use Vanlifer NZ Point push latches;
 their 50mm depth is measured from the door front, so 41mm sits inside the cupboard. Latch and striker envelopes
 are shown; four pine blocks support the topmost and lower-storage strikers. Striker dimensions and fixing details still need
 checking against the actual hardware.
 Each of the four upper shelf openings has its own bottom-hinged flap, restrained horizontally by two short chains.
-The two lower forward openings have side-hinged doors.
+The bottom storage pair and bottom forward door remain side-hinged. The merged storage above-bed door and its
+forward neighbour are bottom-hinged flaps, each with two chain restraints.
 The **Cabinet upper doors** slider operates the four drop-down flaps. **Cabinet front bottom door**,
-**Cabinet front above-bed door**, **Storage bottom doors** and **Storage above-bed doors** independently open
-the side-hinged leaves to 90 degrees without regenerating.
+**Cabinet front above-bed door**, **Storage bottom doors** and **Storage above-bed flap** independently open
+the corresponding doors to 90 degrees without regenerating.
 The carcass moves toward the wall to reserve the door thickness and closing gap, retaining the 1070mm bed envelope.
-Door plywood, small face-mounted hinges and a 3m pack of restraint chain have Bunnings NZ links and prices;
-the ten positive push latches are sourced from Vanlifer NZ. Hardware and fasteners are sourcing candidates;
+Door plywood, small face-mounted hinges and two 3m packs of restraint chain have Bunnings NZ links and prices;
+the nine positive push latches are sourced from Vanlifer NZ. Hardware and fasteners are sourcing candidates;
 confirm leaf thickness, fixing holes, through-fixings and chain attachment/closing clearance before drilling 9mm doors.
 Under **Vehicle references → Roof**, adjust the estimated **Roof bows** and the **Finished ceiling** plywood thickness, rear position and length.
 The 3mm plywood follows the bows' shallow underside curve. Cabinet height and the cab-end panel contour follow its underside.
@@ -262,5 +266,5 @@ Camera and visibility stay intact when switching tabs.
 The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`), so reloads, bookmarks and
 browser Back/Forward restore that view.
 
-Two dark-grey 680 × 400 × 200mm pillows share the long-bench conversion control. In day mode they are propped at 45°:
-the rear pillow sits diagonally in the rear-door/backrest corner and the front pillow sits toward the right sliding door; in bed mode they lie side by side at the cab end, each fluffed to 500mm wide across the bed.
+Two dark-grey 600 × 400 × 200mm pillows share the long-bench conversion control. In day mode they are propped at 45°:
+the rear pillow sits diagonally in the rear-door/backrest corner and the front pillow sits toward the right sliding door; in bed mode they lie side by side at the cab end, each remaining 600mm wide across the bed.

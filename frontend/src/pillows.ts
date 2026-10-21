@@ -4,7 +4,7 @@ import asset from '../../src/campervan/cad/pillow_mesh.json';
 
 /** Poly Haven cloth mesh inside the CAD pillow's existing pose/visibility group. */
 export function createPillows() {
-  const meshes: { mesh: Mesh; dayWidth: number }[] = [];
+  const meshes: { mesh: Mesh; supportsHead: boolean; original: Float32Array }[] = [];
   const placements: { root: Object3D; day: Vector3; night: Vector3; rotation: Quaternion }[] = [];
   return {
     attach(groups: Record<string, unknown>) {
@@ -27,7 +27,7 @@ export function createPillows() {
             .multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), rear ? -Math.PI / 4 : Math.PI / 4));
           const points: Vector3[] = [];
           for (let i = 0; i < asset.positions.length; i += 3) {
-            points.push(new Vector3(-asset.positions[i] * (rear ? 500 : 680),
+            points.push(new Vector3(-asset.positions[i] * 600,
               asset.positions[i + 1] * 400, asset.positions[i + 2] * 200).applyQuaternion(rotation));
           }
           const cloth = new Box3().setFromPoints(points);
@@ -98,8 +98,32 @@ export function createPillows() {
           cad.edges.geometry.dispose();
           cad.edges.geometry = new BufferGeometry();
         }
-        meshes.push({ mesh, dayWidth: path.includes("/Rear pillow/") ? 500 : 680 });
-        if (cad.back) meshes.push({ mesh: cad.back, dayWidth: path.includes("/Rear pillow/") ? 500 : 680 });
+        meshes.push({ mesh, supportsHead: path.includes("/Front pillow/"), original: new Float32Array(vertices) });
+        if (cad.back) meshes.push({ mesh: cad.back, supportsHead: path.includes("/Front pillow/"), original: new Float32Array(vertices) });
+      }
+    },
+    supportHead(head: Box3 | null, front = true) {
+      for (const { mesh, supportsHead, original } of meshes) {
+        if (supportsHead !== front) continue;
+        const positions = mesh.geometry.getAttribute('position');
+        mesh.updateWorldMatrix(true, false);
+        const inverse = mesh.matrixWorld.clone().invert();
+        const center = head?.getCenter(new Vector3());
+        for (let i = 0; i < positions.count; i++) {
+          const point = new Vector3(original[i * 3], original[i * 3 + 1], original[i * 3 + 2]);
+          if (head && center && point.z > 0) {
+            point.applyMatrix4(mesh.matrixWorld);
+            const radius = Math.hypot((point.x - center.x) / 120, (point.y - center.y) / 145);
+            const weight = Math.max(0, Math.min(1, (1.5 - radius) / .65));
+            point.z -= Math.max(0, point.z - head.min.z) * weight;
+            point.applyMatrix4(inverse);
+          }
+          positions.setXYZ(i, point.x, point.y, point.z);
+        }
+        positions.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+        mesh.geometry.computeBoundingBox();
+        mesh.geometry.computeBoundingSphere();
       }
     },
     pose(percent: number) {
@@ -109,8 +133,8 @@ export function createPillows() {
         root.quaternion.copy(rotation).slerp(new Quaternion(), compression);
         root.updateMatrixWorld(true);
       }
-      for (const { mesh, dayWidth } of meshes) {
-        mesh.scale.x = dayWidth + (500 - dayWidth) * compression;
+      for (const { mesh } of meshes) {
+        mesh.scale.x = 600;
         mesh.updateMatrixWorld(true);
       }
     },

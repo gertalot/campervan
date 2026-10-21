@@ -140,7 +140,7 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
         piece.location = cushion.location(percent)
         pieces.append(piece)
     # Only a hierarchy/visibility anchor: cloth geometry and all pillow poses live in the browser.
-    pillow = Box(680, 400, 200)
+    pillow = Box(600, 400, 200)
     pillow.label, pillow.color = "Pillow", Color(0.22, 0.22, 0.22)
     pieces.append(Compound(label="Rear pillow" if bench == "Long bench" else "Front pillow", children=[pillow]))
     # Keep wall clearance on the parent so CAD poses and live child motion share the offset.

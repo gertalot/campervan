@@ -14,6 +14,15 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 
 ## Validation
 
+### CRITICAL: Do not create or run tests
+
+- **UNDER NO CIRCUMSTANCES create, add, restore, or run tests.** This includes Python and frontend tests.
+- The test directories and frontend test files have been deleted intentionally. Do not recreate them or introduce
+  replacement test suites, test scaffolding, or test infrastructure.
+- Prioritize quick iteration in this one-person hobby project. Use the model's existing runtime constraint checks
+  and Gert's visual inspection; do not launch extra test or verification processes.
+- This instruction overrides any conflicting test requirements in skills or other general workflow guidance.
+
 - The main test is Gert visually inspecting the model and reporting what looks wrong.
 - Keep only a minimum of fast smoke tests for scaffolding and plumbing. Do not grow exhaustive API contracts,
   subprocess fault injection, race-condition matrices, browser automation suites, coverage targets or release gates.
