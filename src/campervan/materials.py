@@ -49,9 +49,6 @@ ROLES = [
     MaterialRole(id="shelves", name="Shelf plywood", kind="sheet", fields={"thickness": "cabinet_shelf_thickness_mm"}),
     MaterialRole(id="drawer", name="Drawer plywood", kind="sheet", fields={"thickness": "drawer_ply_mm"}),
     MaterialRole(
-        id="deck", name="Cross-bench deck / lid", kind="sheet", fields={"thickness": "cross_deck_thickness_mm"}
-    ),
-    MaterialRole(
         id="ledges",
         name="Cabinet battens",
         kind="timber",
@@ -78,13 +75,10 @@ for role in ROLES:
         "skins": "tigerply-okoume-4",
         "shelves": "tigerply-12",
         "drawer": "tigerply-12",
-        "deck": "tigerply-12",
         "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
-    if role.id in {"cabinet-frames", "shelves", "drawer", "deck"}:
-        role.note = (
-            "Share 12mm sheets across cabinet partitions/frames, shelves, drawer and deck/lid; plan cuts together."
-        )
+    if role.id in {"cabinet-frames", "shelves", "drawer"}:
+        role.note = "Share 12mm sheets across cabinet partitions/frames, shelves and drawer; plan cuts together."
 
 ROLES.extend(
     [
@@ -164,14 +158,6 @@ ROLES.extend(
             ),
         ),
         MaterialRole(
-            id="bearers",
-            name="Cross-bench support rails",
-            kind="sheet",
-            fields={"thickness": "cross_bearer_height_mm"},
-            default_product_id="tigerply-18",
-            note="Cut the fixed and sliding support rails from the same plywood stock as the frames.",
-        ),
-        MaterialRole(
             id="guides",
             name="Bed guide ledges",
             kind="sheet",
@@ -185,17 +171,9 @@ ROLES.extend(
             kind="hardware",
             fields={"length": "bracket_arm_mm", "width": "bracket_width_mm", "thickness": "bracket_thickness_mm"},
             default_product_id="carinya-50-40",
-            note="Three on the long bench, two on the cross bench. Check hole positions and bend radius on receipt.",
-        ),
-        MaterialRole(
-            id="stops",
-            name="Cross-bed stop plates",
-            kind="hardware",
-            fields={"length": "cross_stop_plate_length_mm", "width": "cross_stop_plate_width_mm"},
-            default_product_id="zenith-100-22",
             note=(
-                "Model assumes 2mm steel; supplier does not state thickness. "
-                "Measure plate and screw heads before cutting recesses. Screws included."
+                "Three on the long bench; the fixed cross bench has no angle brackets. "
+                "Check hole positions and bend radius on receipt."
             ),
         ),
         MaterialRole(
@@ -213,15 +191,6 @@ ROLES.extend(
                 "One complete pair, including all three rail stages. "
                 "Non-locking; drawer restraint and M5 fixings still to specify."
             ),
-        ),
-        MaterialRole(
-            id="lid-hinge",
-            name="Storage lid hinge",
-            kind="hardware",
-            fields={},
-            quantity=1,
-            default_product_id="taskmaster-610",
-            note="Candidate continuous hinge; cut to lid hinge edge. Mounting recess and short screws still to detail.",
         ),
         MaterialRole(
             id="bracket-screws",
@@ -302,10 +271,11 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         saved = json.loads(path.read_text())
         parameters = saved.get("parameters", {})
         # Previously one saved position controlled both benches.
-        parameters.setdefault("cross_bed_extension_percent", parameters.get("bed_extension_percent", 0))
         project = Project.model_validate(saved | {"parameters": parameters})
     else:
         project = Project()
+    for role in ("deck", "bearers", "stops", "lid-hinge"):
+        project.materials.pop(role, None)
     # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.
     project.materials.pop("cabinet-stays", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.

@@ -113,7 +113,7 @@ it('restores all sliders from browser storage and sends them to a restarted API 
   const saved = new Map<string, string>();
   const first = setup(saved);
   for (const [name, value] of Object.entries({
-    bed_extension_percent: 75, cross_bed_extension_percent: 25, drawer_extension_percent: 40, cross_lid_open_percent: 60,
+    bed_extension_percent: 75, drawer_extension_percent: 40,
     chair_1_x_mm: 280, chair_1_yaw_deg: -90, solar_bag_y_mm: 35,
   })) first.controller.previewPosition(name, value);
   first.controller.stop();
@@ -145,10 +145,10 @@ it('restores all sliders from browser storage and sends them to a restarted API 
   controller.stop();
 });
 
-it('restores the old shared bed pose to both new bench controls', async () => {
-  const saved = new Map([['campervan.positions', JSON.stringify({ bed_extension_percent: 75 })]]);
+it('discards the retired cross cushion position', async () => {
+  const saved = new Map([['campervan.positions', JSON.stringify({ bed_extension_percent: 75, cross_bed_extension_percent: 25 })]]);
   const { api, view, controller, parameters } = setup(saved);
-  for (const name of ['bed_extension_percent', 'cross_bed_extension_percent']) {
+  for (const name of ['bed_extension_percent']) {
     parameters.parameters[name] = 0;
     parameters.schema.properties[name] = {
       title: name, default: 0, minimum: 0, maximum: 100, unit: '%', group: [], control: 'position',
@@ -156,7 +156,7 @@ it('restores the old shared bed pose to both new bench controls', async () => {
   }
   await controller.start();
   expect(view.setPosition).toHaveBeenCalledWith('bed_extension_percent', 75);
-  expect(view.setPosition).toHaveBeenCalledWith('cross_bed_extension_percent', 75);
-  expect(api.setPosition).toHaveBeenCalledWith('cross_bed_extension_percent', 75);
+  expect(view.setPosition).not.toHaveBeenCalledWith('cross_bed_extension_percent', 25);
+  expect(api.setPosition).not.toHaveBeenCalledWith('cross_bed_extension_percent', 25);
   controller.stop();
 });

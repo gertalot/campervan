@@ -78,29 +78,12 @@ def test_api_smoke(tmp_path):
                 assert (await client.get("/api/v1/parameters")).json()["parameters"]["bed_extension_percent"] == 75
                 assert (await client.get("/api/v1/model/status")).json()["requested_revision"] == 1
                 assert len(generated) == 1
-                cross = await client.patch("/api/v1/model/position", json={"cross_bed_extension_percent": 25})
-                assert cross.status_code == 200
-                assert cross.json()["cross_bed_extension_percent"] == 25
-                assert cross.json()["bed_extension_percent"] == 75
                 await client.patch("/api/v1/model/position", json={"drawer_extension_percent": 40})
                 positions = (await client.get("/api/v1/parameters")).json()["parameters"]
                 assert positions["bed_extension_percent"] == 75 and positions["drawer_extension_percent"] == 40
-                lid = await client.patch("/api/v1/model/position", json={"cross_lid_open_percent": 80})
-                assert lid.status_code == 200
-                assert {
-                    name: lid.json()[name]
-                    for name in (
-                        "bed_extension_percent",
-                        "drawer_extension_percent",
-                        "cross_lid_open_percent",
-                        "doors_close_percent",
-                    )
-                } == {
-                    "bed_extension_percent": 75,
-                    "drawer_extension_percent": 40,
-                    "cross_lid_open_percent": 80,
-                    "doors_close_percent": 0,
-                }
+                assert "cross_lid_open_percent" not in initial["schema"]["properties"]
+                assert "cross_bed_extension_percent" not in initial["schema"]["properties"]
+                assert initial["parameters"]["cross_bench_overhang_mm"] == 200
                 doors = await client.patch("/api/v1/model/position", json={"doors_close_percent": 100})
                 assert doors.json()["doors_close_percent"] == 100
                 assert len(generated) == 1
@@ -138,9 +121,6 @@ def test_api_smoke(tmp_path):
                 assert (
                     await client.patch("/api/v1/model/position", json={"bed_extension_percent": 101})
                 ).status_code == 422
-                assert (
-                    await client.patch("/api/v1/model/position", json={"cross_bed_extension_percent": 101})
-                ).status_code == 422
 
                 regenerated = await client.post("/api/v1/model/regenerate")
                 assert regenerated.status_code == 202
@@ -148,9 +128,7 @@ def test_api_smoke(tmp_path):
                 final = (await client.get("/api/v1/model/status")).json()
                 assert final["state"] == "ready" and final["published_revision"] == 2
                 assert generated[-1].bed_extension_percent == 75
-                assert generated[-1].cross_bed_extension_percent == 25
                 assert generated[-1].drawer_extension_percent == 40
-                assert generated[-1].cross_lid_open_percent == 80
                 assert generated[-1].doors_close_percent == 100
                 assert generated[-1].cabinet_upper_doors_open_percent == 100
                 assert generated[-1].cabinet_lower_doors_open_percent == 50

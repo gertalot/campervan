@@ -36,12 +36,8 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
             "Sliding-bed tie strip must remain above the wheel arch.",
         ),
         (
-            slat + p.cross_deck_thickness_mm + member + p.drawer_mount_band_mm + 2 * radius + 0.1,
-            "Cross-bench frames need room for the drawer-slide mounting band, top rail and rounded openings.",
-        ),
-        (
-            slat + p.cross_deck_thickness_mm + 2 * member + 2 * radius + 0.1,
-            "Cross-bench divider needs room for its rails and rounded opening.",
+            slat + member + 0.1,
+            "Cross-bench frames need room for their top rails and open legs.",
         ),
         (
             slat + p.drawer_mount_band_mm + 2 * member + 2 * radius + 1.1,
@@ -80,7 +76,6 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
         (
             (2 * p.frame_thickness_mm, "the tie strip and guide thicknesses"),
             (p.bracket_arm_mm + p.bracket_clearance_mm + 0.1, "the bed angle brackets and their clearance"),
-            (p.cross_bearer_height_mm + 0.1, "the cross-bench bearer"),
             (
                 p.cabinet_shelf_thickness_mm + p.cabinet_ledge_height_mm + p.cabinet_door_overlap_mm,
                 "the shelf, its ledge and door overlap above the mattress",
@@ -94,6 +89,11 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
         p.seat_length_mm - arch_rear - p.arch_length_mm - p.arch_clearance_mm,
     )
     return {
+        "cross_bench_overhang_mm": {
+            "minimum": 0,
+            "maximum": p.bed_width_mm - p.drawer_support_x_mm - 2 * p.frame_thickness_mm - 0.1,
+            "reason": "Leave room between the drawer-aligned wall-side frame and the aisle support frame.",
+        },
         "platform_height_mm": {
             "minimum": minimum,
             "maximum": maximum,

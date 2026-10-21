@@ -24,14 +24,10 @@ def material_for(path: tuple[str, ...]) -> str:
         return "cabinet-frames"
     if "Angle brackets" in path:
         return "brackets"
-    if "Extension stops" in path and "plate" in name:
-        return "stops"
     if "Rear drawer" in path and "Rails" in path:
         return "slides"
     if "Guide ledges" in path:
         return "guides"
-    if name in {"fixed bearer", "bearer"}:
-        return "bearers"
     if "Shelf ledges" in path or "Corner cleats" in path or "Rail joint blocks" in path:
         return "ledges"
     if "Shelves" in path:
@@ -40,8 +36,6 @@ def material_for(path: tuple[str, ...]) -> str:
         return "drawer"
     if "skin" in name or name == "separating panel":
         return "skins"
-    if name in {"fixed deck", "plywood lid"}:
-        return "deck"
     if "slat" in name:
         return "slats"
     if "frame" in name or name in {"rear header", "tie strip (extension stop)", "rear leg", "cab-end leg"}:

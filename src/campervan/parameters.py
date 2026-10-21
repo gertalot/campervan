@@ -4,6 +4,26 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+RETIRED_CROSS_BENCH_FIELDS = frozenset(
+    {
+        "cross_toilet_bay_depth_mm",
+        "cross_deck_thickness_mm",
+        "cross_bearer_height_mm",
+        "cross_leg_clearance_mm",
+        "cross_stop_plate_length_mm",
+        "cross_stop_plate_width_mm",
+        "cross_stop_plate_thickness_mm",
+        "cross_stop_recess_depth_mm",
+        "cross_stop_clearance_mm",
+        "cross_stop_head_allowance_mm",
+        "cross_storage_lid_gap_mm",
+        "cross_lid_finger_diameter_mm",
+        "cross_lid_open_percent",
+        "cross_bed_extension_percent",
+        "cab_backrest_length_mm",
+    }
+)
+
 
 class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
@@ -735,7 +755,7 @@ class Parameters(BaseModel):
         default=80.0,
         gt=0,
         title="Slat width",
-        description="Reused stock width for both benches; cross-bench spacing adjusts to fit without narrowing slats.",
+        description="Reused stock width for both benches; four full-width slats span the fixed cross bench.",
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
@@ -743,7 +763,9 @@ class Parameters(BaseModel):
         default=5.0,
         gt=0,
         title="Slat gap",
-        description="Long-bench gap. Cross-bench gaps are distributed evenly to fit the available depth.",
+        description=(
+            "Running gap between interleaving long-bench slats. Cross-bench gaps follow its four slats and depth."
+        ),
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
@@ -763,19 +785,6 @@ class Parameters(BaseModel):
         json_schema_extra={
             "unit": "%",
             "group": ["Long bench", "Sliding bed", "Sliding assembly"],
-            "control": "position",
-        },
-    )
-
-    cross_bed_extension_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Cross bench conversion (%)",
-        description="0–40 extends the cross bed; 40–80 repositions its cushions; 80–100 lowers its backrests.",
-        json_schema_extra={
-            "unit": "%",
-            "group": ["Cross bench", "Sliding assembly"],
             "control": "position",
         },
     )
@@ -913,119 +922,22 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "%", "group": ["Long bench", "Rear drawer"], "control": "position"},
     )
 
-    cross_toilet_bay_depth_mm: float = Field(
-        default=440.0,
-        gt=0,
-        title="Toilet bay depth",
-        description="Clear width across the van. Onshape baseline: assumed 420 mm toilet plus 20 mm allowance.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame", "Toilet-storage divider"]},
-    )
-
-    cross_deck_thickness_mm: float = Field(
-        default=12.0,
-        gt=0,
-        title="Deck thickness",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame", "Fixed deck"]},
-    )
-
-    cross_bearer_height_mm: float = Field(
-        default=18.0,
-        gt=0,
-        title="Bearer thickness",
-        description="Plywood thickness of the fixed and moving support rails. Both use the shared member width.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench"]},
-    )
-
-    cross_leg_clearance_mm: float = Field(
-        default=2.0,
-        gt=0,
-        title="Leg nesting gap",
-        description="Gap between the retracted legs/bearer and the shortened fixed supports and deck.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly"]},
-    )
-
-    cross_stop_plate_length_mm: float = Field(
-        default=100.0,
-        gt=0,
-        title="Plate length",
-        description="Across the neighbouring slats; half is attached beneath the moving slat.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_stop_plate_width_mm: float = Field(
-        default=22.0,
-        gt=0,
-        title="Plate width",
-        description="Along the direction of bed extension.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_stop_plate_thickness_mm: float = Field(
-        default=2.0,
-        gt=0,
-        title="Plate thickness",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_stop_recess_depth_mm: float = Field(
-        default=4.0,
-        gt=0,
-        title="Recess depth",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_stop_clearance_mm: float = Field(
-        default=0.5,
-        gt=0,
-        title="Running clearance",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_stop_head_allowance_mm: float = Field(
-        default=1.0,
+    cross_bench_overhang_mm: float = Field(
+        default=200.0,
         ge=0,
-        title="Screw-head allowance",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Sliding assembly", "Extension stops"]},
-    )
-
-    cross_storage_lid_gap_mm: float = Field(
-        default=2.0,
-        gt=0,
-        title="Storage lid gap",
-        description="Gap reserved between the fixed deck and the storage lid, centred over the divider frame.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Storage lid"]},
-    )
-
-    cross_lid_finger_diameter_mm: float = Field(
-        default=25.0,
-        gt=0,
-        title="Finger hole diameter",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Storage lid"]},
-    )
-
-    cross_lid_open_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Storage lid opening (%)",
-        description="0 is closed; 100 opens the lid 70 degrees toward the cab.",
-        json_schema_extra={"unit": "%", "group": ["Cross bench", "Storage lid"], "control": "position"},
+        title="Aisle slat overhang / foot recess",
+        description=(
+            "Overhang at the aisle end. The wall-side cross-bench frame aligns with the internal drawer support."
+        ),
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},
     )
 
     foam_thickness_mm: float = Field(
         default=100.0,
         gt=0,
         title="Foam thickness (all)",
-        description="Shared thickness of all six seat and backrest cushions.",
+        description="Shared thickness of all four seat and backrest cushions.",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Cushions"]},
-    )
-
-    cab_backrest_length_mm: float = Field(
-        default=750.0,
-        gt=0,
-        title="Cab backrest length",
-        description="Rear backrest length is the remaining long-bench length. Both form the aisle-side bed infill.",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Cushions"]},
     )
 
     cabinet_frame_thickness_mm: float = Field(
@@ -1342,8 +1254,27 @@ class Parameters(BaseModel):
         json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chairs", "Chair 2"]},
     )
 
+    @property
+    def drawer_support_x_mm(self) -> float:
+        """Shared wall-side face of the drawer support and cross-bench leg frame."""
+        return (self.cargo_width_mm - self.arch_gap_mm) / 2 + self.drawer_arch_clearance_mm
+
+    @model_validator(mode="before")
+    @classmethod
+    def discard_retired_cross_bench_fields(cls, data: object) -> object:
+        """Read saved sliding-bench projects without retaining obsolete controls."""
+        if isinstance(data, dict):
+            return {name: value for name, value in data.items() if name not in RETIRED_CROSS_BENCH_FIELDS}
+        return data
+
     @model_validator(mode="after")
     def check_geometry(self) -> Self:
+        if (
+            self.bed_width_mm - self.cross_bench_overhang_mm - self.drawer_support_x_mm <= 2 * self.frame_thickness_mm
+            or self.cargo_length_mm - self.seat_length_mm - self.wall_thickness_mm
+            <= 2 * self.member_width_mm + 2 * self.inside_radius_mm
+        ):
+            raise ValueError("Cross-bench overhang must leave room for two support frames and their rounded openings.")
         if self.arch_gap_mm >= self.cargo_width_mm:
             raise ValueError("Arch clear gap must be smaller than cargo width.")
         if self.arch_rear_offset_mm + self.arch_length_mm > self.cargo_length_mm:

@@ -8,14 +8,45 @@ from campervan.materials import Project, Selection, load_project, resolve, save_
 from campervan.parameters import Parameters
 
 
-def test_legacy_bed_position_is_restored_to_both_benches(tmp_path):
+def test_retired_cross_cushion_parameters_are_discarded(tmp_path):
     path = tmp_path / "project.json"
-    path.write_text(json.dumps({"parameters": {"bed_extension_percent": 75}}))
+    path.write_text(
+        json.dumps(
+            {
+                "parameters": {
+                    "bed_extension_percent": 75,
+                    "cross_bed_extension_percent": 25,
+                    "cab_backrest_length_mm": 750,
+                }
+            }
+        )
+    )
     restored = load_project(path)
-    assert restored.parameters.bed_extension_percent == restored.parameters.cross_bed_extension_percent == 75
-    restored.parameters = restored.parameters.model_copy(update={"cross_bed_extension_percent": 0})
+    assert restored.parameters.bed_extension_percent == 75
+    assert "cross_bed_extension_percent" not in restored.parameters.model_dump()
     save_project(restored, path)
-    assert load_project(path).parameters.cross_bed_extension_percent == 0
+    assert load_project(path).parameters == restored.parameters
+
+
+def test_saved_sliding_cross_bench_adopts_fixed_structure_without_obsolete_materials(tmp_path):
+    path = tmp_path / "project.json"
+    path.write_text(
+        json.dumps(
+            {
+                "parameters": {"cross_deck_thickness_mm": 12, "cross_lid_open_percent": 80},
+                "materials": {
+                    "deck": {"product_id": "tigerply-12"},
+                    "bearers": {"product_id": "tigerply-18"},
+                    "stops": {"product_id": "zenith-100-22"},
+                    "lid-hinge": {"product_id": "taskmaster-610"},
+                },
+            }
+        )
+    )
+    project = load_project(path)
+    assert project.parameters.cross_bench_overhang_mm == 200
+    assert "cross_deck_thickness_mm" not in project.parameters.model_dump()
+    assert not {"deck", "bearers", "stops", "lid-hinge"} & project.materials.keys()
 
 
 def test_stock_dimensions_and_measured_override(tmp_path):
@@ -52,7 +83,7 @@ def test_stock_dimensions_and_measured_override(tmp_path):
     assert sourced.parameters.cabinet_ledge_size_mm == 18
     assert sourced.parameters.cabinet_ledge_height_mm == 18
     assert sourced.parameters.ledge_width_mm == 18
-    assert all(sourced.materials[role].product_id == "tigerply-18" for role in ("frames", "bearers", "guides"))
+    assert all(sourced.materials[role].product_id == "tigerply-18" for role in ("frames", "guides"))
     choices = {
         "skins": Selection(product_id="tigerply-okoume-4", measured={"thickness": 3.8}),
         "ledges": Selection(product_id="pinetrim-18-18-2400"),

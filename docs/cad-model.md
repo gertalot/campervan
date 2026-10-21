@@ -108,33 +108,15 @@ Campervan
 │   └── Cushions
 │       ├── Long seat
 │       ├── Wall backrest
-│       └── Rear end backrest
+│       └── Outer backrest
 ├── Cross bench
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
-│   │   ├── Rear frame
+│   │   ├── Aisle frame
 │   │   ├── Rear skin
-│   │   ├── Cab-end frame
-│   │   ├── Cab-end skin
-│   │   ├── Fixed bearer
-│   │   ├── Toilet-storage divider
-│   │   │   ├── Frame
-│   │   │   └── Separating panel
-│   │   ├── Fixed deck
 │   │   └── Fixed slats
-│   ├── Sliding assembly
-│   │   ├── Moving slats
-│   │   ├── Bearer
-│   │   ├── Legs (rear and cab-end)
-│   │   ├── Angle brackets
-│   │   └── Extension stops (rear and cab-end plates)
-│   ├── Storage lid
-│   │   ├── Plywood lid
-│   │   └── Lid slats (three separate parts)
 │   └── Cushions
-│       ├── Cross seat
-│       ├── Wall backrest
-│       └── Cab-facing backrest
+│       └── Cross seat
 └── Cabinet
     ├── Aisle frame
     ├── Middle panel
@@ -260,11 +242,9 @@ The aisle frame retains its 100-high slide mounting band. Wall-side openings rea
 the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has separate 18-thick frame and 4-thick skin.
 The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. The header spans
 X = 168–582, bed-local Y = 0–18, Z = 322–382, leaving the drawer exit open.
-At the bench junction, the long bench's cab-end frame/skin and the cross bench's rear frame/skin start at that same
-wall-side face, X = 150, instead of X = 25. This cuts each pair back by 125mm, opening the low storage channel beside
-the drawer into the cross-bench storage area. The rounded frame openings are rebuilt at the shorter width.
-`drawer.drawer_support_x` shares this alignment with the drawer placement; it follows wheel-arch width and drawer
-clearance. The cross bench's far cab-end frame/skin, deck and lid retain their wall-side extent.
+The long bench's cab-end frame/skin starts at the same wall-side face, X = 150, instead of X = 25,
+opening its low storage channel beside the drawer. `drawer.drawer_support_x` shares this alignment with the drawer
+placement; it follows wheel-arch width and drawer clearance. The new fixed cross bench has separate recessed frames.
 
 `sliding_bed.py` ports `longSlatDimensions`, the long-bench branch of `slidingSlatAssembly`, `slidingBracketDimensions`,
 `slideAngleBracket` and `slidingBenchBrackets`. Eight fixed and seven moving slats alternate on an 85 pitch. Ordinary
@@ -299,47 +279,27 @@ simplified 1200 × 53mm envelopes; intermediate stages move half the tray distan
 rails. Its stationary internal support belongs to the bed's Fixed frame alongside the aisle frame and rear header,
 so hiding or omitting the drawer leaves the bed supports in place.
 
-`cross_bench.py` ports the cross-bench branch of `benchCarcass`, `crossBenchPartition` and the fixed deck from
-`crossBenchSlats`. Width is `(bed width + long bench width) / 2`; depth is `cargo length - seat length`.
-The 835 × 580 baseline sits at Y = 1280–1860. The frame top is Z = 370, with a 12mm deck up to Z = 382.
-Frame thickness, skin thickness, member width and opening radius use the same parameters as the long bench.
-There is no fixed aisle frame across the toilet exit. Both ends have separate solid skins; the wall-side frame has no
-skin. The end frames, skins and fixed deck finish at X = 791, leaving a 2mm nesting gap beside the retracted legs/bearer.
-A 60 × 566 × 18mm fixed plywood support rail runs along that deck edge, parallel to the moving bearer. It sits in shallow rebates
-in the two end frames, between the end skins, with its top flush against the deck underside at Z = 370.
-Its underside at Z = 352 limits toilet extraction height before allowing for a tray and running clearance.
-Both end frames have continuous bottom rails for future drawer slides, using the long bench's
-`drawer_mount_band_mm` setting (100mm high at defaults). Their openings retain the shared rounded corners.
+`cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
+18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. At the default 400mm platform height,
+the frame tops are Z = 382; the 18mm slats bear directly on them. There is no divider, deck, sliding assembly,
+cab-end skin, hinged lid, brackets or stop plates.
 
-The 440mm toilet bay preserves the old assumed 420mm footprint plus 20mm allowance as one clear-bay parameter.
-It places the divider frame at X = 352–370 and its separating skin at X = 370–377. The frame keeps a bottom rail
-around its 446 × 250, R25 opening. Both layers have 18 × 60 top-corner recesses around the end beams and
-18 × 100 bottom-corner notches around the drawer-slide mounting rails; notch heights follow their respective rails.
-The fixed deck starts at X = 362, reserving half the 2mm storage-lid seam over the divider frame.
-`cross_bed.py` builds three fixed slats and four moving slats. A flat 60 × 580 × 18mm plywood support rail joins the moving slats,
-supported by two separate 60 × 18mm legs whose broad faces run across the van. The legs occupy only 18mm each along
-the toilet opening, leaving 544mm between them. Their tops meet the bearer underside at Z = 364. Two angle brackets
-face inward along the van, rotated ±90° from the long-bed brackets, and join the legs to the bearer underside.
-There is no middle bracket. The brackets project 2mm into the opening near its top on each side.
-Both support rails are cut from the frame plywood stock. Thickness (`cross_bearer_height_mm`) is shared
-by the fixed and moving rails; nesting gap
-(`cross_leg_clearance_mm`) has its own control;
-leg width/thickness reuse member width/frame thickness. Bed height remains the shared platform-height parameter.
-The toilet, its tray and fasteners remain unmodelled; this opening does not establish toilet fit or structural capacity.
-Both end slats move, continuing the alternating pattern across the junction with the long bench. The cross bench fits
-the largest odd number of full-width slats that leaves positive gaps, distributed evenly with no end margins.
-At the baseline, seven 80mm slats leave six gaps of 3⅓mm across the 580mm depth. The extended junction gap is 90mm.
-This supersedes the Onshape arrangement with fixed, narrowed end slats. Moving slats are 376mm long and travel 217mm,
-retaining 159mm overlap at full
-extension. The shortened deck clears the moving supports without bracket relief pockets. The long bench uses
-`bed_extension_percent`; the cross bench independently uses `cross_bed_extension_percent`. Their default travels are
-452mm and 217mm respectively, each ending at X = 1070 when fully extended.
+`cross_bench_overhang_mm` defaults to 200mm at the aisle slat ends. The wall-side frame aligns with the internal
+drawer-support frame at X = 150–168, following the shared `Parameters.drawer_support_x_mm` datum;
+the aisle frame occupies X = 852–870. Both run Y = 1284–1860. The aft 4mm skin bridges between the two rear legs,
+covering X = 150–870, Y = 1280–1284 from floor to rail top. The space between frames is unobstructed;
+toilet/tray hardware and slat/frame fixing details remain unmodelled. The skin is intended to brace the two rear legs
+when properly attached; the CAD geometry does not establish load capacity.
 
-The 358 × 576 × 12 plywood storage lid carries three wall-side slat sections aligned with the fixed toilet-side rows.
-These strips retain their full 80mm width. The 25mm finger hole sits in a gap between them.
-Its group origin is the cab-side hinge at Y = 1858, Z = 400. Children use coordinates relative to that hinge.
-`cross_lid_open_percent` rotates the group from 0 to −70 degrees about X, lifting the rear edge toward the cab.
-The lid moves independently of the beds and drawer. Hinge hardware and toilet hardware are not modelled.
+Four 1070mm-long 80 × 18mm stock slats run across the van, directly over both support rails, matching the previous
+extended cross bench's four moving rows. The first starts at Y = 1280; the last finishes at Y = 1860. Three equal
+86⅔mm ventilation gaps fill the 580mm depth. The junction to the long bench's last extended moving slat remains
+90mm, with no added empty margin at either end of the cross bench. Slat count stays four; their gaps follow the shared
+stock width and cross-bench depth.
+The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
+Its conversion slider is removed. The two green cushions are one full-length backrest beside the orange
+backrest in day mode, moving with the long-bench control into the outer bed strip.
+Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 `cabinet.py` builds the left-side cabinet in furniture-local coordinates, before the common mirror/placement.
 Its closed-door footprint starts at X = 1070, Y = 0–1000, narrowed by the vehicle envelope and wall support. With the
@@ -506,32 +466,17 @@ The cabinet and bed are unchanged. The owner confirms the real bag fits behind t
 spare clearance; the current estimated hatch shape conflicts with that reference above about Z=550 and remains
 to be reconciled. This discrepancy is not evidence that the real bag needs more space.
 
-`cushions.py` ports the six foam blocks and their day/night placements from `nv200-interior.fs`.
-Seats are 600 × 1280 and 835 × 580; the four backrests are 235 wide by 1280, 530, 750 and 580 long.
-All six use the shared 100mm foam thickness. They belong to their daytime bench's Cushions group.
-Both Cushions groups have a fixed +7mm X offset for wall clearance, retained throughout the animation.
-Each cushion is a centred native box in its own located Compound, so its live rotation uses the same origin as CAD.
-Each bench's conversion slider moves its seat and wall backrest. The green rear-end and cab-facing cushions remain
-upright at their seated positions, with no live motion tracks. At 100 the moving cushions lie at Z = 400–500;
-the green cushions remain above them, so this preview no longer tiles the entire bed with flat foam.
-The orange and purple wall backrests fold toward the wall without changing their day/night positions.
-Each bench's cushions remain in their daytime positions until its frame finishes extending at 40%.
-The two wall backrests finish turning and moving horizontally at 80%. During the turn their lowest corner
-stays above the blue seats, with a small handling clearance; the remaining travel lowers them vertically into place.
-The blue seats finish sliding at 80% too, clearing the wall-side infill spaces before the backrests descend.
-Python generates pose samples used by both CAD and the viewer, which interpolate the same centres and intrinsic XYZ
-angles. This is a hand-repositioning preview, not a physical mechanism or a general collision-free handling path.
-Cushions are moved by hand and are not attached to the storage lid.
-Hide them to inspect lid movement. Rear-corner foam fit and retention remain physical-layout questions.
-
-`cross_stops.py` ports `crossStopDimensions` and `crossBenchStops`. Two 100 × 22 × 2mm plate envelopes attach under
-the first and last moving slats. Each projects inward across the 3⅓mm gap, engaging 46⅔mm of the neighbouring fixed
-slat's underside guide pocket. The 239mm-long guide pockets combine 217mm travel and 22mm plate width, with exact
-closed end faces.
-The moving mounting pockets are 3.5mm deep; fixed guides are 4mm deep. Plates sit 1.5mm above the deck, reserving
-1mm for screw heads and 0.5mm running clearance. Thickness and screw allowances are provisional, and holes are not
-modelled. These stops limit horizontal travel; they do not capture the slats against lifting.
-Plate and pocket dimensions are under Cross bench → Sliding assembly → Extension stops.
+`cushions.py` builds four foam blocks using the shared 100mm thickness.
+The long seat is 600 × 1280; the fixed cross seat is 1070 × 580.
+The orange and green backrests are each 235 × 1280, upright alongside each other in day mode.
+The green backrest sits immediately inward of the orange, occupying X = 100–200 before the shared 7mm offset.
+At full conversion, orange fills X = 0–235, the long seat X = 235–835, and green X = 835–1070.
+Both Cushions groups retain their existing +7mm X offset.
+The long-bench slider moves the long seat and both backrests; the cross seat remains flat and stationary.
+Each cushion is a centred native box in its own located Compound.
+Cushions hold until 40%; by 80% the seat has shifted and the backrests have turned above the seats;
+the final stage lowers the backrests. CAD and live tracks use the same sampled poses.
+This previews manual repositioning; real cushion fit and intermediate handling remain visual checks.
 
 `frontend/src/viewer.ts` owns the viewer host. It embeds the installed OCP renderer through `createPage`, using the
 constructor hook to retain the viewer instance. FastAPI serves that package's JS/CSS at `/viewer-assets`; Vite proxies
@@ -556,7 +501,7 @@ camera. Notifications during rendering do not overwrite the saved view with inte
 
 Dimensions rebuild geometry. After `show`, `viewer.py` sends `campervan_motion` with each position parameter's assembly
 paths, axes, travel and published pose. The host retains each group's original translation or rotation and applies an
-absolute offset from that pose. Bed, drawer and lid sliders work without an animation timeline or regeneration.
+absolute offset from that pose. Long-bed, cross-cushion and drawer sliders work without an animation timeline or regeneration.
 Each bench slider also repositions its own cushions. Their tracks include position/angle keyframes from the same layout used
 by CAD, so regeneration at an intermediate position preserves the preview. Translation and
 rotation bases are stored separately for groups that use both.
@@ -568,8 +513,8 @@ Older project files and browser storage containing only the shared bed position 
 position. Once separate positions are saved, they remain independent.
 
 Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Slats, Cushions and Cabinet preferences
-live in browser localStorage and are reapplied when geometry arrives. Slats covers both beds' fixed and moving slats, the cross-bench
-fixed plywood deck, the complete storage lid including its attached slats, and the cross-bed plate stops.
+live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's fixed/moving slats
+and the fixed cross-bench slats.
 Cushions covers both benches' foam groups; their sidebar eyes also work independently.
 
 **See inside** adjusts vehicle opacity in the browser before the existing viewer paints each frame. Assembly paths
@@ -583,13 +528,11 @@ remain unchanged. The toggle defaults on and persists as `campervan.see-inside` 
 New geometry reattaches the effect; turning it off restores ordinary OCP transparency. Camera movement requires
 no regeneration, API request or separate animation loop for this effect.
 
-The cushion check compares the six daytime bounds with the source layout and checks flat bed coverage and no foam
-overlaps at either endpoint. Intermediate poses and physical cushion handling remain visual checks.
-It also samples all four backrests' turn and descent to check clearance above/beside the blue seats.
+The cushion check verifies the four daytime bounds, full-bed coverage and no foam overlap at either endpoint.
+It samples backrest turning and descent and compares live poses with regenerated CAD.
+The cross-bench smoke check covers support alignment, the aft skin, slat spacing and cutting-list materials.
+Long-bench conversion leaves the complete cross bench unchanged.
 
-The cross-bench smoke check covers part validity, baseline dimensions, the divider's open centre and beam recesses,
-and retracted/halfway/extended clearance of the sliding assembly and lid. It also checks that both extended beds align,
-and that the plate stops clear their mounting pockets but meet the guide ends when pushed beyond either travel limit.
 The fixed-frame smoke check covers valid single-solid pieces, dimensions and unintended volume intersections between
 the plywood pieces and with the left wheel arch, at the default and one adjusted bench size.
 The cabinet check covers valid flat-stock parts, five recessed shelves and contact with their supporting ledges,
@@ -667,7 +610,7 @@ Local leaf envelopes ignore parent motion, so opening the lid, sliding the bed o
 The worker returns cuts to the coordinator alongside successful regeneration. The BOM marks previous cuts as stale
 while a new revision is pending or failed, and displays regeneration errors.
 
-Plywood frames, skins, shelves, drawer panels and deck/lid, plus shelf ledges, guide ledges, bearers and slats,
+Plywood frames, skins, shelves and drawer panels, plus shelf ledges, guide ledges and slats,
 have material assignments. Hardware includes angle brackets, stop plates and complete drawer slides. Only the
 fixed rail leaves contribute to slide quantities; intermediate and moving stages belong to those same purchased
 slides. Bracket entries use arm length, width and steel thickness, not their rectangular bounding-box depth.
@@ -680,7 +623,7 @@ purchase quantities require a cutting layout; roles selecting the same product m
 
 Bed frame supports, cross-bench support rails and bed guide ledges use the selected 18mm plywood.
 Cabinet ledges, corner cleats and strike blocks share ready-made 18 × 18mm untreated pine.
-Cabinet partitions and frames use their own 12mm role, sharing sheets with shelves, drawer and deck/lid.
+Cabinet partitions and frames use their own 12mm role, sharing sheets with shelves and drawer.
 The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
 Both cabinet batten section dimensions come from the selected timber product, with measured overrides.
 

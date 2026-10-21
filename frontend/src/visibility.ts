@@ -10,10 +10,6 @@ const categories: Record<string, string[]> = {
     '/Campervan/Long bench/Fixed frame/Fixed slats',
     '/Campervan/Long bench/Sliding bed/Sliding assembly/Moving slats',
     '/Campervan/Cross bench/Fixed frame/Fixed slats',
-    '/Campervan/Cross bench/Fixed frame/Fixed deck',
-    '/Campervan/Cross bench/Sliding assembly/Moving slats',
-    '/Campervan/Cross bench/Sliding assembly/Extension stops',
-    '/Campervan/Cross bench/Storage lid',
   ],
 };
 

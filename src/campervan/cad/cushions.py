@@ -1,4 +1,4 @@
-"""Six foam blocks and their hand-repositioned day/night layouts from nv200-interior.fs."""
+"""Four foam blocks: fixed cross seat and convertible long-bench cushions."""
 
 from dataclasses import dataclass
 from math import cos, pi, radians, sin
@@ -20,11 +20,9 @@ class Cushion:
     night_center: Vector3
     day_rotation: Vector3
     color: Vector3
-    fixed: bool = False
+    position_parameter: str | None = "bed_extension_percent"
 
     def poses(self) -> list[Pose]:
-        if self.fixed:
-            return [(0, self.day_center, self.day_rotation), (100, self.day_center, self.day_rotation)]
         if not any(self.day_rotation):
             # Seats clear the infill spaces before the backrests start descending.
             return [
@@ -71,17 +69,15 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
     width, length, end = p.long_bench_width_mm, p.seat_length_mm, p.cargo_length_mm
     foam, height = p.foam_thickness_mm, p.platform_height_mm
     infill = (p.bed_width_mm - width) / 2
-    cross_width, cross_length = width + infill, end - length
-    rear_length = length - p.cab_backrest_length_mm
+    cross_length = end - length
     flat_z, upright_z = height + foam / 2, height + foam + infill / 2
     # Fold the wall backrests toward the wall while retaining the same day/night bounds.
     wall_rotation = (0.0, 90.0, 0.0)
-    end_rotation = (90.0, 0.0, 90.0)
     flat = (0.0, 0.0, 0.0)
     green = (0.46, 0.61, 0.35)
-    if infill <= 0 or not 0 < p.cab_backrest_length_mm < length:
-        raise ValueError("Cushions need positive bed infill and a cab-facing backrest shorter than the long bench.")
-    if foam >= min(width, cross_width, cross_length, length):
+    if infill <= 0:
+        raise ValueError("Cushions need positive bed infill.")
+    if foam >= min(width / 2, cross_length, length):
         raise ValueError("Upright backrests must leave room on both seat cushions.")
     if bench == "Long bench":
         return (
@@ -102,41 +98,25 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 (0.83, 0.52, 0.22),
             ),
             Cushion(
-                "Rear end backrest",
-                (infill, rear_length, foam),
-                (foam + rear_length / 2, foam / 2, upright_z),
-                (width + 1.5 * infill, rear_length / 2, flat_z),
-                end_rotation,
+                "Outer backrest",
+                (infill, length, foam),
+                (1.5 * foam, length / 2, upright_z),
+                (width + 1.5 * infill, length / 2, flat_z),
+                wall_rotation,
                 green,
-                fixed=True,
             ),
         )
     if bench == "Cross bench":
+        center = (p.bed_width_mm / 2, (length + end) / 2, flat_z)
         return (
             Cushion(
                 "Cross seat",
-                (cross_width, cross_length, foam),
-                (cross_width / 2, (length + end) / 2, flat_z),
-                (infill + cross_width / 2, (length + end) / 2, flat_z),
+                (p.bed_width_mm, cross_length, foam),
+                center,
+                center,
                 flat,
                 (0.26, 0.57, 0.70),
-            ),
-            Cushion(
-                "Wall backrest",
-                (infill, cross_length, foam),
-                (foam / 2, (length + end) / 2, upright_z),
-                (infill / 2, (length + end) / 2, flat_z),
-                wall_rotation,
-                (0.64, 0.43, 0.66),
-            ),
-            Cushion(
-                "Cab-facing backrest",
-                (infill, p.cab_backrest_length_mm, foam),
-                (foam + p.cab_backrest_length_mm / 2, end - foam / 2, upright_z),
-                (width + 1.5 * infill, rear_length + p.cab_backrest_length_mm / 2, flat_z),
-                end_rotation,
-                green,
-                fixed=True,
+                position_parameter=None,
             ),
         )
     raise ValueError(f"Unknown cushion bench: {bench}")
@@ -148,7 +128,7 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
         foam = Box(*cushion.size)
         foam.label, foam.color = "Foam", Color(*cushion.color)
         piece = Compound(label=cushion.label, children=[foam])
-        percent = p.bed_extension_percent if bench == "Long bench" else p.cross_bed_extension_percent
+        percent = getattr(p, cushion.position_parameter) if cushion.position_parameter else 0
         piece.location = cushion.location(percent)
         pieces.append(piece)
     # Keep wall clearance on the parent so CAD poses and live child motion share the offset.
@@ -157,17 +137,21 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
     return cushions
 
 
-def cushion_motion_tracks(p: Parameters, bench: str) -> list[dict[str, object]]:
-    """Share the CAD pose samples with the viewer, including the lift/turn/lower sequence."""
+def cushion_motion_tracks(p: Parameters, position_parameter: str) -> list[dict[str, object]]:
+    """Group CAD pose samples by their controller; the fixed cross seat has no controller."""
     tracks: list[dict[str, object]] = []
-    for cushion in cushion_layout(p, bench):
-        path = f"/Campervan/{bench}/Cushions/{cushion.label}"
-        poses = cushion.poses()
-        for i, axis in enumerate("xyz"):
-            for kind in ("translation", "rotation"):
-                values = [
-                    (percent, (center if kind == "translation" else rotation)[i]) for percent, center, rotation in poses
-                ]
-                if any(value != values[0][1] for _, value in values[1:]):
-                    tracks.append({"path": path, "axis": axis, "kind": kind, "keyframes": values})
+    for bench in ("Long bench", "Cross bench"):
+        for cushion in cushion_layout(p, bench):
+            if cushion.position_parameter != position_parameter:
+                continue
+            path = f"/Campervan/{bench}/Cushions/{cushion.label}"
+            poses = cushion.poses()
+            for i, axis in enumerate("xyz"):
+                for kind in ("translation", "rotation"):
+                    values = [
+                        (percent, (center if kind == "translation" else rotation)[i])
+                        for percent, center, rotation in poses
+                    ]
+                    if any(value != values[0][1] for _, value in values[1:]):
+                        tracks.append({"path": path, "axis": axis, "kind": kind, "keyframes": values})
     return tracks

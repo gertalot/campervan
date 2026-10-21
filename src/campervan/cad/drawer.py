@@ -8,7 +8,7 @@ from campervan.parameters import Parameters
 
 def drawer_support_x(p: Parameters) -> float:
     """Wall-side face of the internal support, in furniture construction coordinates."""
-    return (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.drawer_arch_clearance_mm
+    return p.drawer_support_x_mm
 
 
 def build_rear_drawer(p: Parameters) -> Compound:

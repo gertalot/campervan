@@ -77,22 +77,20 @@ Live controls sit at the top of the sidebar, outside the collapsible dimension g
 The **Vehicle**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes show or hide those
 categories without regeneration. Assembly switches and content filters work together: showing a bench keeps disabled
 slats/cushions hidden, and enabling slats/cushions never reveals a hidden bench. Checkboxes retain their own settings.
-Slats includes both beds' fixed and moving slats, the cross-bench plywood deck, hinged storage lid and plate stops.
+Slats includes the long bench's fixed/moving slats and the fixed cross-bench slats.
 Visibility preferences are saved in the browser and reapplied after regeneration.
 **Doors closed (%)** slides both doors forward, then pulls them inward over the final 15%.
 Zero is fully open; 100 is closed. The control animates instantly and retains its position.
-**Long bench conversion (%)** and **Cross bench conversion (%)** work independently. Each runs through three stages:
-0–40 extends that bench's frame, 40–80 repositions its seat and wall backrest, and 80–100 lowers that backrest into place.
-The green end cushions stay upright in their seated positions throughout.
-Dragging backward reverses that sequence.
+**Long bench conversion (%)** runs through three stages: 0–40 extends its frame, 40–80 repositions its seat and
+backrests, and 80–100 lowers them into place. The combined green backrest sits beside the orange backrest
+when folded, and fills the outer bed strip when extended. The cross bench has one full-width fixed cushion
+and no conversion slider. Dragging backward reverses the long-bench sequence.
 **Drawer extension (%)** moves the rear drawer independently from retracted to fully extended.
-**Storage lid opening (%)** opens the lid up to 70 degrees.
 No Apply or regeneration is needed. Slider positions are saved in browser storage and sent to the API;
 dimension changes, source edits and page reloads retain the selected positions.
-Each bench slider previews its seat and wall backrest being repositioned. This represents
-repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all six.
-Shared foam thickness is under **Long bench → Cushions**; cab-facing backrest length is under **Cross bench → Cushions**.
-Hide cushions when inspecting the storage lid; they do not lift with it.
+The sliders preview the cushions being repositioned. This represents
+repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all four.
+Shared foam thickness is under **Long bench → Cushions**.
 
 Expand **Mannequin** for a poseable human sized to 178cm with an 80cm inseam, 40cm thighs and 50cm floor-to-knee height.
 **Sit on bench** fits the initial seated pose. X/Y/Z, facing, hip/knee bend, back recline, back curvature, head tilt and
@@ -105,14 +103,15 @@ the mannequin is a visual fit reference and is not part of CAD exports.
 
 The rear drawer has five 12mm plywood panels and simplified three-stage rails on each side. Its dimensions are under
 **Long bench → Rear drawer**. Rails and bed brackets are provisional hardware envelopes.
-The cross bench behind the cab contains its fixed frame, toilet-storage divider, deck, sliding slats and hinged storage
-lid. Adjust the toilet bay depth and deck dimensions under **Cross bench → Fixed frame**, and the lid gap and finger
-hole under **Cross bench → Storage lid**. Its width follows the bed and long-bench widths; its depth fills the space
-between the long bench and the cab.
-The two recessed cross-bed stops move with the slats. Their dimensions are under
-**Cross bench → Sliding assembly → Extension stops**.
-Both cross-bench end slats move, keeping a regular support gap at the long-bench junction. Slats retain their stock
-width; the cross bench distributes the remaining space evenly between them.
+The fixed cross bench behind the cab is two open-legged plywood support frames, with slats screwed directly
+across their top rails. The existing aft skin spans between the rear legs of the two frames. There is no slide-out,
+divider, deck, hinged lid, stop hardware or cab-end skin. Its footprint remains the fully extended bed width by the
+remaining cargo length. **Cross bench → Fixed frame → Aisle slat overhang / foot recess** defaults to 200mm
+at the aisle end. The wall-side support follows the internal drawer support, giving 150mm overhang at defaults.
+The two support frames run fore/aft. Four long slats run across the van, with the first and last
+at the bench edges, matching the previous extended cross bench. At defaults, 80mm slats have 86⅔mm clear gaps
+within the 580mm depth; the junction to the extended long bench retains its 90mm gap. Toilet/tray hardware and
+fixing details remain unmodelled.
 The left-side **Cabinet** uses 12mm plywood for its solid centre/cab-end partitions, aisle frame, seven separate
 rear rails and narrow transverse rear upright, independently of the bed's 18mm frames. The rails and upright
 are under **Cabinet → Wall supports**. There are no cabinet skins, broad wall-side frames or bottom panel.
@@ -252,7 +251,7 @@ Material dimensions in the CAD sidebar open that product and highlight the relev
 Expand a product using its arrow to see **Used by** and the **Combined cut list**. Identical cut sizes are grouped
 across components; expand a size to see its part locations. Sheet and timber purchase counts need a
 cutting layout that allows for kerf, grain and waste. Hardware pack counts come from the model; the three stages
-of each drawer slide count as one purchased slide. Shelves, drawer and deck/lid share the same 12mm plywood product.
+of each drawer slide count as one purchased slide. Shelves and drawer share the same 12mm plywood product.
 
 Tell Codex when you want a product sourced or changed. Selected stock dimensions drive the model automatically:
 shelf ledges use the sourced 18 × 18mm pine, for example. Measured overrides account for the actual material you buy.

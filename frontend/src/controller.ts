@@ -26,9 +26,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let previewRevision = 0;
   const positionKey = 'campervan.positions';
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
-  if (positions.cross_bed_extension_percent === undefined && positions.bed_extension_percent !== undefined) {
-    positions.cross_bed_extension_percent = positions.bed_extension_percent;
-  }
+  delete positions.cross_bed_extension_percent;
 
   function setPosition(name: string, percent: number) {
     positions[name] = percent;
