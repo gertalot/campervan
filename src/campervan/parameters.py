@@ -936,7 +936,7 @@ class Parameters(BaseModel):
         default=100.0,
         gt=0,
         title="Foam thickness (all)",
-        description="Shared thickness of all four seat and backrest cushions.",
+        description="Shared thickness of all five seat and backrest cushions.",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Cushions"]},
     )
 

@@ -1,4 +1,4 @@
-"""Four foam blocks: fixed cross seat and convertible long-bench cushions."""
+"""Five foam blocks: fixed cross seat and convertible long-bench cushions."""
 
 from dataclasses import dataclass
 from math import cos, pi, radians, sin
@@ -23,7 +23,7 @@ class Cushion:
     position_parameter: str | None = "bed_extension_percent"
 
     def poses(self) -> list[Pose]:
-        if not any(self.day_rotation):
+        if not any(self.day_rotation[:2]):
             # Seats clear the infill spaces before the backrests start descending.
             return [
                 (0, self.day_center, self.day_rotation),
@@ -97,14 +97,6 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 wall_rotation,
                 (0.83, 0.52, 0.22),
             ),
-            Cushion(
-                "Outer backrest",
-                (infill, length, foam),
-                (1.5 * foam, length / 2, upright_z),
-                (width + 1.5 * infill, length / 2, flat_z),
-                wall_rotation,
-                green,
-            ),
         )
     if bench == "Cross bench":
         center = (p.bed_width_mm / 2, (length + end) / 2, flat_z)
@@ -117,6 +109,22 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 flat,
                 (0.26, 0.57, 0.70),
                 position_parameter=None,
+            ),
+            Cushion(
+                "Right backrest",
+                (infill, cross_length, foam),
+                (foam / 2, (length + end) / 2, upright_z),
+                (width + 1.5 * infill, cross_length / 2, flat_z),
+                wall_rotation,
+                green,
+            ),
+            Cushion(
+                "Front backrest",
+                (infill, length - cross_length, foam),
+                (foam + (length - cross_length) / 2, end - foam / 2, upright_z),
+                (width + 1.5 * infill, (length + cross_length) / 2, flat_z),
+                (90, 0, 90),
+                green,
             ),
         )
     raise ValueError(f"Unknown cushion bench: {bench}")
@@ -131,6 +139,10 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
         percent = getattr(p, cushion.position_parameter) if cushion.position_parameter else 0
         piece.location = cushion.location(percent)
         pieces.append(piece)
+    # Only a hierarchy/visibility anchor: cloth geometry and all pillow poses live in the browser.
+    pillow = Box(680, 400, 200)
+    pillow.label, pillow.color = "Pillow", Color(0.22, 0.22, 0.22)
+    pieces.append(Compound(label="Rear pillow" if bench == "Long bench" else "Front pillow", children=[pillow]))
     # Keep wall clearance on the parent so CAD poses and live child motion share the offset.
     cushions = Compound(label="Cushions", children=pieces)
     cushions.location = Location((7, 0, 0))

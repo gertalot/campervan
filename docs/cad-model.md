@@ -108,7 +108,6 @@ Campervan
 │   └── Cushions
 │       ├── Long seat
 │       ├── Wall backrest
-│       └── Outer backrest
 ├── Cross bench
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
@@ -297,8 +296,8 @@ extended cross bench's four moving rows. The first starts at Y = 1280; the last 
 90mm, with no added empty margin at either end of the cross bench. Slat count stays four; their gaps follow the shared
 stock width and cross-bench depth.
 The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
-Its conversion slider is removed. The two green cushions are one full-length backrest beside the orange
-backrest in day mode, moving with the long-bench control into the outer bed strip.
+Its conversion slider is removed. The green backrests sit along the cross bench’s right side and front,
+then move with the long-bench control into the outer bed strip.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 `cabinet.py` builds the left-side cabinet in furniture-local coordinates, before the common mirror/placement.
@@ -466,10 +465,10 @@ The cabinet and bed are unchanged. The owner confirms the real bag fits behind t
 spare clearance; the current estimated hatch shape conflicts with that reference above about Z=550 and remains
 to be reconciled. This discrepancy is not evidence that the real bag needs more space.
 
-`cushions.py` builds four foam blocks using the shared 100mm thickness.
+`cushions.py` builds five foam blocks using the shared 100mm thickness.
 The long seat is 600 × 1280; the fixed cross seat is 1070 × 580.
-The orange and green backrests are each 235 × 1280, upright alongside each other in day mode.
-The green backrest sits immediately inward of the orange, occupying X = 100–200 before the shared 7mm offset.
+The orange backrest is 235 × 1280. Green is split into 235 × 580 along the cross-bench right side
+and 235 × 700 along its front, upright in day mode. The split follows cross-bench depth as dimensions change.
 At full conversion, orange fills X = 0–235, the long seat X = 235–835, and green X = 835–1070.
 Both Cushions groups retain their existing +7mm X offset.
 The long-bench slider moves the long seat and both backrests; the cross seat remains flat and stationary.
@@ -528,7 +527,7 @@ remain unchanged. The toggle defaults on and persists as `campervan.see-inside` 
 New geometry reattaches the effect; turning it off restores ordinary OCP transparency. Camera movement requires
 no regeneration, API request or separate animation loop for this effect.
 
-The cushion check verifies the four daytime bounds, full-bed coverage and no foam overlap at either endpoint.
+The cushion check verifies the five daytime bounds, full-bed coverage and no foam overlap at either endpoint.
 It samples backrest turning and descent and compares live poses with regenerated CAD.
 The cross-bench smoke check covers support alignment, the aft skin, slat spacing and cutting-list materials.
 Long-bench conversion leaves the complete cross bench unchanged.
@@ -629,3 +628,12 @@ Both cabinet batten section dimensions come from the selected timber product, wi
 
 Skin panels use 4mm Tigerply Okoume-faced poplar-core plywood (Bunnings special order). The selected sheet thickness
 sets `wall_thickness_mm` for the bed and bench partition skins; shelves, lids and frames keep their own stock.
+
+
+Sleeping pillows use the CC0 Poly Haven Throw Pillows 01 mesh (source/license beside frontend/src/pillow-mesh.json).
+The viewer replaces CAD fitting envelopes with this cloth geometry, retaining the pose and visibility hierarchy.
+Each measures 680 × 400 × 200mm uncompressed; the user's fluffed width is 500mm in sleeping mode.
+Both lie across the cab end, touching at the centre, leaving 35mm each side at the 1070mm bed width.
+The long-bench slider moves both pillows and changes their displayed width without regeneration.
+CAD supplies visibility anchors only. Pillow geometry, support contact, rotations and conversion poses are owned by
+frontend/src/pillows.ts and update in the browser without CAD regeneration.

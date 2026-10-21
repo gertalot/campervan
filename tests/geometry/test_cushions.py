@@ -1,4 +1,4 @@
-"""Check the four documented foam blocks; intermediate repositioning is a visual preview."""
+"""Check the five documented foam blocks; intermediate repositioning is a visual preview."""
 
 from itertools import combinations
 
@@ -13,21 +13,22 @@ def test_cushion_day_layout_and_conversion():
     day_bounds = [
         ((0, 0, 400), (600, 1280, 500)),
         ((0, 0, 500), (100, 1280, 735)),
-        ((100, 0, 500), (200, 1280, 735)),
         ((0, 1280, 400), (1070, 1860, 500)),
+        ((0, 1280, 500), (100, 1860, 735)),
+        ((100, 1760, 500), (800, 1860, 735)),
     ]
     for percent in (0, 20, 40, 100):
         p = Parameters(bed_extension_percent=percent)
         cushions = Compound(children=[build_cushions(p, "Long bench"), build_cushions(p, "Cross bench")])
-        pieces = [leaf.located(leaf.global_location) for leaf in cushions.leaves]
-        assert len(pieces) == 4 and all(piece.is_valid for piece in pieces)
+        pieces = [leaf.located(leaf.global_location) for leaf in cushions.leaves if leaf.label == "Foam"]
+        assert len(pieces) == 5 and all(piece.is_valid for piece in pieces)
         if percent <= 40:
             for piece, (lower, upper) in zip(pieces, day_bounds, strict=True):
                 bounds = piece.bounding_box()
                 assert tuple(bounds.min) == pytest.approx((lower[0] + 7, lower[1], lower[2]))
                 assert tuple(bounds.max) == pytest.approx((upper[0] + 7, upper[1], upper[2]))
         else:
-            bounds = cushions.bounding_box()
+            bounds = Compound(children=pieces).bounding_box()
             assert tuple(bounds.min) == pytest.approx((7, 0, 400))
             assert tuple(bounds.max) == pytest.approx((1077, 1860, 500))
             assert sum(piece.volume for piece in pieces) == pytest.approx(1070 * 1860 * 100)
@@ -42,7 +43,7 @@ def test_backrests_turn_above_seats_then_lower():
         p = Parameters(bed_extension_percent=percent)
         long, cross = build_cushions(p, "Long bench"), build_cushions(p, "Cross bench")
         seats = [long.children[0], cross.children[0]]
-        backrests = [*long.children[1:], *cross.children[1:]]
+        backrests = [long.children[1], *cross.children[1:3]]
         for cushion in backrests:
             bounds = cushion.bounding_box()
             if percent <= 80:
@@ -59,11 +60,13 @@ def test_cross_seat_is_fixed_and_green_backrest_follows_long_bench():
     day, night = Parameters(), Parameters(bed_extension_percent=100)
     a = build_cushions(day, "Cross bench")
     b = build_cushions(night, "Cross bench")
-    assert len(a.children) == 1
+    assert len(a.children) == 4
     assert a.children[0].location == b.children[0].location
-    green = build_cushions(night, "Long bench").children[2].bounding_box()
-    assert tuple(green.min) == pytest.approx((835, 0, 400))
-    assert tuple(green.max) == pytest.approx((1070, 1280, 500))
+    right, front = b.children[1:3]
+    assert tuple(right.bounding_box().min) == pytest.approx((835, 0, 400))
+    assert tuple(right.bounding_box().max) == pytest.approx((1070, 580, 500))
+    assert tuple(front.bounding_box().min) == pytest.approx((835, 580, 400))
+    assert tuple(front.bounding_box().max) == pytest.approx((1070, 1280, 500))
     tracks = cushion_motion_tracks(day, "bed_extension_percent")
-    assert any(track["path"].endswith("/Outer backrest") for track in tracks)
-    assert all("/Long bench/" in track["path"] for track in tracks)
+    assert any(track["path"].endswith("/Right backrest") for track in tracks)
+    assert any(track["path"].endswith("/Front backrest") for track in tracks)

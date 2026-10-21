@@ -82,14 +82,14 @@ Visibility preferences are saved in the browser and reapplied after regeneration
 **Doors closed (%)** slides both doors forward, then pulls them inward over the final 15%.
 Zero is fully open; 100 is closed. The control animates instantly and retains its position.
 **Long bench conversion (%)** runs through three stages: 0–40 extends its frame, 40–80 repositions its seat and
-backrests, and 80–100 lowers them into place. The combined green backrest sits beside the orange backrest
-when folded, and fills the outer bed strip when extended. The cross bench has one full-width fixed cushion
+backrests, and 80–100 lowers them into place. The green backrest is split into 580mm along the cross bench’s right side and 700mm along its front.
+Both pieces fill the outer long-bed strip when extended. The cross bench has one full-width fixed cushion
 and no conversion slider. Dragging backward reverses the long-bench sequence.
 **Drawer extension (%)** moves the rear drawer independently from retracted to fully extended.
 No Apply or regeneration is needed. Slider positions are saved in browser storage and sent to the API;
 dimension changes, source edits and page reloads retain the selected positions.
 The sliders preview the cushions being repositioned. This represents
-repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all four.
+repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all cushions and pillows.
 Shared foam thickness is under **Long bench → Cushions**.
 
 Expand **Mannequin** for a poseable human sized to 178cm with an 80cm inseam, 40cm thighs and 50cm floor-to-knee height.
@@ -261,3 +261,6 @@ measured overrides persist with parameters in `.local/project.json` and can be u
 Camera and visibility stay intact when switching tabs.
 The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`), so reloads, bookmarks and
 browser Back/Forward restore that view.
+
+Two dark-grey 680 × 400 × 200mm pillows share the long-bench conversion control. In day mode they are propped at 45°:
+the rear pillow sits diagonally in the rear-door/backrest corner and the front pillow sits toward the right sliding door; in bed mode they lie side by side at the cab end, each fluffed to 500mm wide across the bed.

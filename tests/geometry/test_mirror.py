@@ -48,4 +48,8 @@ def test_native_mirror_and_live_cushion_poses_agree():
                                 break
                     piece.location = Location(tuple(position), tuple(rotation))
                 for posed, rebuilt in zip(live.leaves, mirrored.leaves, strict=True):
-                    assert vertices(posed) == vertices(rebuilt)
+                    if posed.label == "Pillow":
+                        # Cloth width is deformed in the browser, separately from rigid pose tracks.
+                        assert posed.global_location == rebuilt.global_location
+                    else:
+                        assert vertices(posed) == vertices(rebuilt)

@@ -1,6 +1,8 @@
+/// <reference types="vite/client" />
 /** Our host for the installed OCP renderer. No second viewer or playback timeline. */
 import { createViewCube } from './view-cube';
 import { loadMannequin, type MannequinPose } from './mannequin';
+import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
 import { Box3, type Object3D, type Scene } from 'three';
@@ -71,6 +73,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let mannequinPose: MannequinPose;
   let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
   const vehicleFade = createVehicleFade();
+  let pillows = createPillows();
+  if (import.meta.hot) import.meta.hot.accept('./pillows', module => {
+    if (!module || !viewer?.ready) return;
+    pillows = module.createPillows();
+    pillows.attach(viewer.rendered.nestedGroup.groups);
+    pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    viewer.update(true, true);
+  });
   let seeInside = false;
 
   function showMannequin() {
@@ -192,6 +202,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         group.updateMatrixWorld(true);
       }
     }
+    pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
     showMannequin();
     viewer.update(true, true);
   }
@@ -291,6 +302,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             finally { rendering = false; }
             if (message.type === 'data') {
               vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
+              pillows.attach(viewer!.rendered.nestedGroup.groups);
+              pillows.pose(positions.bed_extension_percent ?? 0);
               motions = {};
               bases.clear();
               trimToolbar();
