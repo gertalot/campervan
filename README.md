@@ -49,6 +49,9 @@ make chrome
 Open **http://127.0.0.1:5173**.
 
 The page automatically regenerates the model on opening. Edit dimensions in the sidebar and click **Apply**.
+Bed-height limits update while editing and explain which part prevents a lower or higher platform. Drawer and support
+heights reduce automatically if needed; the sidebar shows those adjustments. Invalid drafts cannot be applied and are
+not saved or sent to CAD. Stock sizes and measured vehicle dimensions remain unchanged.
 Sidebar groups follow the model's assembly hierarchy. Click a heading to collapse it; the browser remembers that choice.
 Click a group's eye icon to show or hide its geometry without regeneration. Visibility is saved across reloads;
 the eye icons and category checkboxes reflect partial visibility when only some children are shown.
@@ -78,13 +81,15 @@ Slats includes both beds' fixed and moving slats, the cross-bench plywood deck, 
 Visibility preferences are saved in the browser and reapplied after regeneration.
 **Doors closed (%)** slides both doors forward, then pulls them inward over the final 15%.
 Zero is fully open; 100 is closed. The control animates instantly and retains its position.
-Drag **Bed conversion (%)** through three stages: 0–40 extends both bed frames, 40–80 repositions the cushions,
-and 80–100 lowers the backrests into place. Dragging backward reverses that sequence.
+**Long bench conversion (%)** and **Cross bench conversion (%)** work independently. Each runs through three stages:
+0–40 extends that bench's frame, 40–80 repositions its seat and wall backrest, and 80–100 lowers that backrest into place.
+The green end cushions stay upright in their seated positions throughout.
+Dragging backward reverses that sequence.
 **Drawer extension (%)** moves the rear drawer independently from retracted to fully extended.
 **Storage lid opening (%)** opens the lid up to 70 degrees.
 No Apply or regeneration is needed. Slider positions are saved in browser storage and sent to the API;
 dimension changes, source edits and page reloads retain the selected positions.
-The bed slider also previews the six cushions moving from seats and upright backrests to a flat bed. This represents
+Each bench slider previews its seat and wall backrest being repositioned. This represents
 repositioning them by hand. Use each bench's **Cushions** eye to hide its foam, or the top checkbox to hide all six.
 Shared foam thickness is under **Long bench → Cushions**; cab-facing backrest length is under **Cross bench → Cushions**.
 Hide cushions when inspecting the storage lid; they do not lift with it.
@@ -108,17 +113,53 @@ The two recessed cross-bed stops move with the slats. Their dimensions are under
 **Cross bench → Sliding assembly → Extension stops**.
 Both cross-bench end slats move, keeping a regular support gap at the long-bench junction. Slats retain their stock
 width; the cross bench distributes the remaining space evenly between them.
-The left-side **Cabinet** has an aisle frame, stepped end frames and a central support frame, with the same rounded
-openings as the benches. Each bay has three 12mm plywood shelves resting on 18mm square ledges, below the rails at
-bed-support height, frame-step height and halfway through the upper opening. The van floor serves as the bottom.
-Frames crossing the wheel arch have notches and an inboard support leg. Ledge bottoms align with the cross-beam bottoms, leaving a 30mm retaining
-lip above the shelf surfaces with the default material sizes.
-Adjust **Upper shelf rail height**, length and **Ceiling gap** under **Cabinet**, and material sizes under **Shelves**
-and **Shelf ledges**. The 4mm end skins and shelf edges follow the wall profile.
-The ceiling gap defaults to 3mm;
-zero brings the skins to the ceiling. Openings have no doors, and there is no cabinet top panel.
+The left-side **Cabinet** uses 12mm plywood for its solid centre/cab-end partitions, aisle frame, seven separate
+rear rails and narrow transverse rear upright, independently of the bed's 18mm frames. The rails and upright
+are under **Cabinet → Wall supports**. There are no cabinet skins, broad wall-side frames or bottom panel.
+The rear bay has two shelves above a 650mm-deep, 730mm-high chair compartment with a clear rear entrance.
+Above that entrance, a 12mm **Rear upper panel** closes the two shelf compartments at the cabinet's rear edge.
+Its bottom follows **Rear storage clear height**, its top follows the ceiling, and its outer edge is scribed to the body.
+The forward bay has three shelves and 326mm clear length at defaults. The van floor serves as the bottom.
+The rear upright stands ahead of the rear pillar; its narrow plywood profile and the partitions will need
+physical templates from the real van. Straight rear rails sit progressively inward at higher levels and join
+the cabinet's partitions/upright. They are not fastened to the vehicle wall. The solid centre partition has a
+wheel-arch notch and reaches the floor inside the arch. Shelves are notched around the rear upright.
+All five shelves are intended to be glued to their pine ledges, with ledges bonded to the supporting panels/rails.
+Fourteen vertical pine blocks reinforce both ends of every rear rail, under **Cabinet → Rail joint blocks**.
+They are 18 × 18 × 60mm at defaults, with two adjacent faces glued to the rail and its upright/partition.
+Shelf corners are notched and adjoining ledges shortened around them. Two aisle corner cleats remain in the forward bay.
+Ledges, joint blocks, cleats and latch blocks use ready-made
+18 × 18mm untreated clear pine, sourced from Bunnings in 2.4m lengths; only square crosscuts are needed.
+The BoM includes one initial 250ml bottle of exterior PVA; clamp close-fitting bare-wood joints while curing.
+Glue layers, assembly screws and vehicle restraints are not modelled. Restraint must use existing mounting
+points only. The flute board is non-structural; the approximate CAD wall is not a final fabrication template.
+Ledge bottoms align with the rail bottoms, leaving a 30mm retaining lip at the default material sizes.
+Both bays share their middle shelf and beam heights, set by **Rear storage clear height**. Adjust **Upper shelf reference
+height**, length and **Ceiling gap** under **Cabinet**, and material sizes under **Shelves** and **Shelf ledges**.
+The ceiling gap defaults to 3mm; zero brings the solid cab-end panel to the ceiling. There is no cabinet top panel.
+The aisle frame above the doors always extends to the plywood ceiling, with its top scribed to the ceiling profile.
+The lower front shelf top follows the slat-top height plus uncompressed mattress thickness plus **Lower shelf above
+mattress** (10mm). The matching aisle beam and door overlap follow this height. With the saved 390mm platform and
+100mm mattress, the shelf top is 500mm, beam 470–530mm and upper door bottoms 515mm. Numeric bed/mattress bounds
+keep the raised divider below the next shelf opening; they update when these dimensions change.
+The cabinet has ten 9mm overlay doors with 15mm overlap, 12mm corner radii and 2mm edge roundovers.
+The rear storage doors are split into lower and above-bed pairs, each opening outward on opposite hinges.
+An aisle-only crossbeam joins their horizontal split; there is no shelf behind it and rear loading stays clear.
+Its aisle skin is removed while rear loading stays open. All ten doors use Vanlifer NZ Point push latches;
+their 50mm depth is measured from the door front, so 41mm sits inside the cupboard. Latch and striker envelopes
+are shown; four pine blocks support the topmost and lower-storage strikers. Striker dimensions and fixing details still need
+checking against the actual hardware.
+Each of the four upper shelf openings has its own bottom-hinged flap, restrained horizontally by two short chains.
+The two lower forward openings have side-hinged doors.
+The **Cabinet upper doors** slider operates the four drop-down flaps. **Cabinet front bottom door**,
+**Cabinet front above-bed door**, **Storage bottom doors** and **Storage above-bed doors** independently open
+the side-hinged leaves to 90 degrees without regenerating.
+The carcass moves toward the wall to reserve the door thickness and closing gap, retaining the 1070mm bed envelope.
+Door plywood, small face-mounted hinges and a 3m pack of restraint chain have Bunnings NZ links and prices;
+the ten positive push latches are sourced from Vanlifer NZ. Hardware and fasteners are sourcing candidates;
+confirm leaf thickness, fixing holes, through-fixings and chain attachment/closing clearance before drilling 9mm doors.
 Under **Vehicle references → Roof**, adjust the estimated **Roof bows** and the **Finished ceiling** plywood thickness, rear position and length.
-The 3mm plywood follows the bows' shallow underside curve. Cabinet height and skin contours follow its underside.
+The 3mm plywood follows the bows' shallow underside curve. Cabinet height and the cab-end panel contour follow its underside.
 
 **Vehicle references → Cab** contains an estimated cab floor, driver/passenger seats and headliner. Adjust the floor
 length/width, shared seat sizes, individual seat positions/reclines and headliner profile in those groups. Cab and

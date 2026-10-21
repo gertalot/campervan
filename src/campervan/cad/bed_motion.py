@@ -1,4 +1,4 @@
-"""Stages of the shared seat-to-bed slider, used by CAD and viewer motion."""
+"""Shared conversion stages for the independent bench sliders, used by CAD and viewer motion."""
 
 BED_EXTENDED = 40
 CUSHIONS_POSITIONED = 80

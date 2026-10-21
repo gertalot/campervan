@@ -22,11 +22,12 @@
           <label><input type="checkbox" name="cushions" checked /> Cushions</label>
           <label><input type="checkbox" name="cabinet" checked /> Cabinet</label>
           <label><input type="checkbox" name="cabinetBacking" checked /> Cabinet backing</label>
+          <label><input type="checkbox" name="storedGear" checked /> Stored gear</label>
           <label><input type="checkbox" name="longBench" checked /> Long bench</label>
           <label><input type="checkbox" name="crossBench" checked /> Cross bench</label>
+          <label><input type="checkbox" id="mannequin-visible" /> Seated mannequin</label>
           <label class="see-inside"><input type="checkbox" id="see-inside" /> See inside</label>
         </fieldset>
-        <details id="mannequin"></details>
         <h2>Model parameters</h2>
         <p class="dimension-hint">Dimensions · mm</p>
         <form id="parameters" novalidate>
@@ -34,7 +35,7 @@
             <button type="submit">Apply</button>
             <button id="regenerate" type="button">Regenerate</button>
           </div>
-          <div id="fields"></div>
+          <div id="fields"><details id="mannequin"></details></div>
         </form>
         <div class="feedback" aria-live="polite" aria-atomic="true">
           <p id="error" hidden></p>

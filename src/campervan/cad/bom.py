@@ -10,8 +10,18 @@ from campervan.parameters import Parameters
 
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
+    if name.startswith("point latch"):
+        return "cabinet-catches"
+    if name.endswith("strike block"):
+        return "ledges"
+    if "Cabinet" in path and "Doors" in path:
+        return "cabinet-doors"
     if "Cabinet" in path and name == "back lining":
         return "cabinet-back"
+    if "Cabinet" in path and (
+        "frame" in name or "Wall supports" in path or name in {"middle panel", "cab-end panel", "rear upper panel"}
+    ):
+        return "cabinet-frames"
     if "Angle brackets" in path:
         return "brackets"
     if "Extension stops" in path and "plate" in name:
@@ -22,7 +32,7 @@ def material_for(path: tuple[str, ...]) -> str:
         return "guides"
     if name in {"fixed bearer", "bearer"}:
         return "bearers"
-    if "Shelf ledges" in path:
+    if "Shelf ledges" in path or "Corner cleats" in path or "Rail joint blocks" in path:
         return "ledges"
     if "Shelves" in path:
         return "shelves"
@@ -44,8 +54,10 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
 
     def visit(part: Shape[Any], path: tuple[str, ...]) -> None:
         path = (*path, part.label)
-        if "Vehicle references" in path or "Cushions" in path:
+        if "Vehicle references" in path or "Cushions" in path or "Stored gear" in path:
             return
+        if "Latch strikes" in path:
+            return  # Supplied with the purchased Point latches.
         if part.children:
             for child in part.children:
                 visit(child, path)

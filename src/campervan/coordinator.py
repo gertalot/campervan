@@ -9,6 +9,7 @@ from typing import Literal
 from uuid import uuid4
 
 from campervan.materials import PROJECT_PATH, CutPart, Project, Selection, load_project, resolve, save_project
+from campervan.parameter_fit import fit_parameters
 from campervan.parameters import Parameters
 from campervan.settings import Settings
 from campervan.worker import regenerate_model
@@ -50,6 +51,7 @@ class Coordinator:
     async def accept(self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None) -> int:
         selected = self.materials if materials is None else materials
         resolved = resolve(parameters or self.parameters, selected)
+        resolved, _ = fit_parameters(resolved)
         save_project(Project(parameters=resolved, materials=selected), self._project_path)
         self.parameters, self.materials = resolved, selected
         revision = self._status.requested_revision + 1
@@ -63,7 +65,7 @@ class Coordinator:
 
     def set_positions(self, positions: dict[str, float]) -> None:
         """Retain the displayed pose for subsequent builds without regenerating geometry."""
-        self.parameters = self.parameters.model_copy(update=positions)
+        self.parameters = Parameters.model_validate(self.parameters.model_dump() | positions)
 
     async def _run(self) -> None:
         while True:

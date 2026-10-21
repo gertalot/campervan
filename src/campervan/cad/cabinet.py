@@ -1,10 +1,9 @@
-"""Straight stepped plywood frames with skins scribed to the van interior."""
-
-from math import floor
+"""Bonded plywood cabinet with independent rear rails, a rear upright and fixed shelves."""
 
 from build123d import Color, Compound, Edge, Face, Location, Part, Plane, Side, Solid, Wire
 
-from campervan.cad.body import body_section, ceiling_height, interior_limits
+from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
+from campervan.cad.cabinet_doors import build_cabinet_doors, cabinet_aisle_x, cabinet_door_strikes
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
@@ -42,36 +41,45 @@ def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
 
 
 def build_cabinet(p: Parameters) -> Compound:
-    x = p.bed_width_mm
+    x = cabinet_aisle_x(p)
     width, length = p.cargo_width_mm - x, p.cabinet_length_mm
-    thickness, skin, member = p.frame_thickness_mm, p.wall_thickness_mm, p.member_width_mm
+    thickness, member = p.cabinet_frame_thickness_mm, p.member_width_mm
     radius = p.inside_radius_mm
-    total = thickness + skin
     # Cabinet geometry is furniture-local; scribe against vehicle geometry
     # translated into the same coordinates before placing the finished assembly.
     gap = p.furniture_rear_gap_mm
     arch_rear = p.arch_rear_offset_mm - gap
-    arch_front = arch_rear + p.arch_length_mm
-    if length > min(p.seat_length_mm, p.body_length_mm - gap) or length <= 2 * total or width <= thickness + total:
+    if length > min(p.seat_length_mm, p.body_length_mm - gap) or length <= 2 * thickness or width <= 2 * thickness:
         raise ValueError("Cabinet must fit beside the bed and leave room between its end panels.")
-    if arch_rear < total:
-        raise ValueError("Cabinet rear panel must clear the wheel arch.")
-
-    # A flat frame top below the lowest plywood edge; the skins follow its shallow curve.
+    # Rear top rails and door openings use this datum; the aisle frame itself
+    # extends upward to meet the plywood ceiling.
     height = ceiling_height(p, p.cargo_width_mm, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm)
-    bed_rail = p.platform_height_mm - p.slat_thickness_mm
+    lower_rail = p.cabinet_lower_rail_top_mm
+    if lower_rail - member < p.arch_height_mm + 3:
+        raise ValueError("Cabinet wall rail must clear the wheel arch by 3mm.")
     step = p.cabinet_frame_step_height_mm
     upper_rail = (step + height) / 2
-    shelf_levels = (bed_rail, step, upper_rail)
-    opening_heights = tuple(
-        zip(
-            (member, *shelf_levels),
-            (bed_rail - member, step - member, upper_rail - member, height - member),
-            strict=True,
-        )
-    )
-    if any(top - bottom <= 2 * radius for bottom, top in opening_heights):
-        raise ValueError("Cabinet shelf rails must leave room for rounded openings below, between and above them.")
+    storage_rail = p.cabinet_rear_storage_height_mm + member
+    shelf_levels = (lower_rail, storage_rail, upper_rail)
+    rear_shelf_levels = (storage_rail, upper_rail)
+
+    def openings_between(rails: tuple[float, ...]) -> list[tuple[float, float]]:
+        # Shelf supports and their frames share the same rail elevations in both bays.
+        openings = []
+        bottom = member
+        if any(rail <= member or rail >= height - member for rail in rails):
+            raise ValueError("Cabinet shelf rails must fit between the bottom and top frame members.")
+        for rail in sorted((*rails, height)):
+            top = rail - member
+            if top > bottom:
+                if top - bottom <= 2 * radius:
+                    raise ValueError("Cabinet shelf rails must leave room for rounded openings.")
+                openings.append((bottom, top))
+            bottom = max(bottom, rail)
+        return openings
+
+    opening_heights = openings_between(shelf_levels)
+    rear_openings = openings_between(shelf_levels)
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
     room = (body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -gap, 0)))
     shelf_thickness, ledge = p.cabinet_shelf_thickness_mm, p.cabinet_ledge_size_mm
@@ -109,15 +117,15 @@ def build_cabinet(p: Parameters) -> Compound:
         color=Color(0.9, 0.9, 0.88),
     )
     # Reserve everything behind the sheet, not just its 3mm material.
-    bottom, top = inner.position_at(0), inner.position_at(1)
+    back_bottom, back_top = inner.position_at(0), inner.position_at(1)
     fitting_section = Face(
         Wire(
             [
                 *inner.edges(),
-                Edge.make_line(top, (top.X, 0, p.body_height_mm)),
-                Edge.make_line((top.X, 0, p.body_height_mm), (0, 0, p.body_height_mm)),
-                Edge.make_line((0, 0, p.body_height_mm), (0, 0, bottom.Z)),
-                Edge.make_line((0, 0, bottom.Z), bottom),
+                Edge.make_line(back_top, (back_top.X, 0, p.body_height_mm)),
+                Edge.make_line((back_top.X, 0, p.body_height_mm), (0, 0, p.body_height_mm)),
+                Edge.make_line((0, 0, p.body_height_mm), (0, 0, back_bottom.Z)),
+                Edge.make_line((0, 0, back_bottom.Z), back_bottom),
             ]
         )
     )
@@ -130,111 +138,175 @@ def build_cabinet(p: Parameters) -> Compound:
         part.location = placement
         parts.append(part)
 
-    bay = (length - 3 * member) / 2
+    middle_y = p.cabinet_rear_bay_length_mm
+    middle_centre = middle_y + thickness / 2
+    bay_spans = ((member, middle_centre - member / 2), (middle_centre + member / 2, length - member))
+    if any(end - start <= 2 * radius for start, end in bay_spans):
+        raise ValueError("Rear storage length must leave room for both cabinet bays and their frame openings.")
     aisle = frame_panel(
         length,
         thickness,
-        height,
-        [(start, start + bay, bottom, top) for start in (member, 2 * member + bay) for bottom, top in opening_heights],
+        p.body_height_mm,
+        [
+            (start, end, bottom, top)
+            for (start, end), openings in zip(bay_spans, (rear_openings, opening_heights), strict=True)
+            for bottom, top in openings
+        ],
         radius,
     )
-    place(aisle, "Aisle frame", Location((x + thickness, 0, 0), (0, 0, 90)))
+    aisle_pose = Location((x + thickness, 0, 0), (0, 0, 90))
+    to_furniture = Location((p.cargo_width_mm, -gap, 0))
+    ceiling_contact = ceiling_space(p, p.ceiling_ply_thickness_mm).mirror(Plane.YZ).moved(to_furniture)
+    aisle_fitted = aisle.moved(aisle_pose) & body.mirror(Plane.YZ).moved(to_furniture) & ceiling_contact
+    aisle = Part(aisle_fitted.moved(aisle_pose.inverse()).solids())
+    place(aisle, "Aisle frame", aisle_pose)
 
-    def frame_width(frame_y: float, bottom: float, top: float) -> float:
-        # A straight frame edge must clear the whole height band, including the
-        # sliding-door pillar's S-bend, on both faces of the plywood stock.
-        widths = []
-        for y in (frame_y, frame_y + thickness):
-            face = Face(
-                Wire.make_polygon(
-                    [
-                        (x + thickness, y, bottom),
-                        (p.cargo_width_mm, y, bottom),
-                        (p.cargo_width_mm, y, top),
-                        (x + thickness, y, top),
-                    ]
-                )
-            )
-            outside = face - room
-            edge = outside.bounding_box().min.X if outside.faces() else p.cargo_width_mm
-            widths.append(edge - x - thickness)
-        return float(floor(min(widths)))
+    # The lining is only containment. Separate straight rails carry the shelf
+    # backs; a narrow transverse upright transfers their rear ends to the floor.
+    def wall_x(z: float) -> float:
+        lo, hi = 0.0, 1.0
+        for _ in range(40):
+            mid = (lo + hi) / 2
+            if inner.position_at(mid).Z < z:
+                lo = mid
+            else:
+                hi = mid
+        return float(inner.position_at((lo + hi) / 2).X)
 
-    middle_y = (length - thickness) / 2
-    frame_widths = {}
-    for name, frame_y, skin_y in (
-        ("Rear", skin, 0),
-        ("Middle", middle_y, None),
-        ("Cab-end", length - total, length - skin),
+    upright_pose = Location((0, back_start, 0))
+    upright_blank = panel(p.cargo_width_mm, thickness, height).moved(upright_pose)
+    # A 60mm-wide strip in a transverse plywood sheet, not a broad sheet bent
+    # around the van. Its wall-facing edge is a real-van templating allowance.
+    upright_inside = Solid.extrude(fitting_section, (0, length, 0)).moved(Location((-member, 0, 0)))
+    rear_upright = Part(
+        ((upright_blank & room) - upright_inside).moved(upright_pose.inverse()).solids(),
+        label="Rear upright",
+        color=Color(0.88, 0.61, 0.25),
+    )
+    rear_upright.location = upright_pose
+    wall_rails = []
+    rail_blocks = []
+    rail_faces: dict[tuple[str, float], float] = {}
+    rail_names = {lower_rail: "lower", storage_rail: "middle", upper_rail: "upper", height: "top"}
+    for bay_name, start, end, rail_levels in (
+        ("Rear", back_start + thickness, middle_y, (*rear_shelf_levels, height)),
+        ("Cab-end", middle_y + thickness, length - thickness, (*shelf_levels, height)),
     ):
-        lower_width = frame_width(frame_y, 0, step)
-        upper_width = frame_width(frame_y, step, height)
-        if upper_width <= 2 * member or lower_width < upper_width:
-            raise ValueError("Cabinet is too narrow for the stepped frame and its upper opening.")
-        # The same rounded-opening primitive also rounds the step's inside corner.
-        openings = [
-            (member, (upper_width if bottom >= step else lower_width) - member, bottom, top)
-            for bottom, top in opening_heights
-        ]
-        if lower_width > upper_width:
-            openings.append((upper_width, lower_width + 2 * radius, step, height + 2 * radius))
-        if frame_y < arch_front and frame_y + thickness > arch_rear:
-            # Narrow the lowest opening so a full-width upright lands beside the arch.
-            foot_width = arch_left - clearance - x - thickness
-            beam_bottom = bed_rail - member
-            if beam_bottom - radius < p.arch_height_mm + clearance:
-                raise ValueError("The frame's lower cross-beam must clear the wheel arch and corner radius.")
-            openings[0] = (member, foot_width - member, member, beam_bottom)
-            # Carry the beam's straight underside out to the wall, without a hanging stub.
-            openings.append(
-                (
-                    foot_width,
-                    lower_width + 2 * radius,
-                    -2 * radius,
-                    beam_bottom,
-                )
-            )
-        frame = frame_panel(lower_width, thickness, height, openings, radius)
-        place(frame, f"{name} frame", Location((x + thickness, frame_y, 0)))
-        frame_widths[name] = (lower_width, upper_width)
-        if skin_y is not None:
-            blank = panel(width - thickness, skin, p.body_height_mm).moved(Location((x + thickness, skin_y, 0)))
-            parts.append(
-                Part(((blank & room) - arch_cutout).solids(), label=f"{name} skin", color=Color(0.75, 0.66, 0.49))
-            )
+        if end <= start:
+            raise ValueError("Cabinet bays must leave room for the rear upright and shelf rails.")
+        for rail_z in rail_levels:
+            bottom = rail_z - member
+            # Keep each rail vertical and rectangular, inboard of the most
+            # projecting point over its height. No bevel or wall fixing needed.
+            outer_x = min(wall_x(bottom), wall_x(rail_z))
+            rail_faces[bay_name, rail_z] = outer_x - thickness
+            rail = panel(thickness, end - start, member)
+            rail.location = Location((outer_x - thickness, start, bottom))
+            rail.label, rail.color = f"{bay_name} {rail_names[rail_z]} rail", Color(0.88, 0.61, 0.25)
+            wall_rails.append(rail)
+            # A vertical pine block bonds the broad rail face to the transverse
+            # upright/partition face. Use the selected square batten stock.
+            for end_name, block_y in (("rear", start), ("fore", end - ledge_height)):
+                block = panel(ledge, ledge_height, member)
+                block.location = Location((outer_x - thickness - ledge, block_y, bottom))
+                block.label, block.color = f"{rail.label} {end_name} block", Color(0.88, 0.61, 0.25)
+                rail_blocks.append(block)
+
+    block_cutout = Compound(children=[block.moved(Location()) for block in rail_blocks])
+
+    for name, panel_y in (("Middle", middle_y), ("Cab-end", length - thickness)):
+        panel_height = height if name == "Middle" else p.body_height_mm
+        placement = Location((x + thickness, panel_y, 0))
+        blank = panel(width - thickness, thickness, panel_height).moved(placement)
+        fitted = (blank & room) - arch_cutout
+        partition = Part(fitted.moved(placement.inverse()).solids(), color=Color(0.75, 0.66, 0.49))
+        place(partition, f"{name} panel", placement)
+
+    # Close only the upper rear compartments. The lower edge follows the
+    # storage-height parameter so the full chair-loading opening stays clear.
+    rear_pose = Location((x + thickness, 0, p.cabinet_rear_storage_height_mm))
+    rear_blank = panel(width - thickness, thickness, p.body_height_mm - p.cabinet_rear_storage_height_mm)
+    rear_fitted = (rear_blank.moved(rear_pose) & room) - rear_upright
+    rear_panel = Part(rear_fitted.moved(rear_pose.inverse()).solids(), color=Color(0.75, 0.66, 0.49))
+    place(rear_panel, "Rear upper panel", rear_pose)
 
     shelves, ledges = [], []
-    for bay_name, start, end, end_names in (
-        ("Rear", total, middle_y, ("Rear", "Middle")),
-        ("Cab-end", middle_y + thickness, length - total, ("Middle", "Cab-end")),
+    for bay_name, start, end, end_names, levels in (
+        (
+            "Rear",
+            thickness,
+            middle_y,
+            ("Rear", "Middle"),
+            tuple(zip(("Middle", "Upper"), rear_shelf_levels, strict=True)),
+        ),
+        (
+            "Cab-end",
+            middle_y + thickness,
+            length - thickness,
+            ("Middle", "Cab-end"),
+            tuple(zip(("Lower", "Middle", "Upper"), shelf_levels, strict=True)),
+        ),
     ):
         if end - start <= 2 * ledge:
             raise ValueError("Cabinet bays must leave room between the shelf ledges.")
-        for level_name, rail_z in zip(("Lower", "Middle", "Upper"), shelf_levels, strict=True):
+        for level_name, rail_z in levels:
             ledge_z = rail_z - member
             shelf_z = ledge_z + ledge_height
             label = f"{bay_name} {level_name.lower()}"
-            blank = panel(width - thickness, end - start, shelf_thickness).moved(
-                Location((x + thickness, start, shelf_z))
+            shelf_width = rail_faces[bay_name, rail_z] - x - thickness
+            blank = panel(shelf_width, end - start, shelf_thickness).moved(Location((x + thickness, start, shelf_z)))
+            shelves.append(
+                Part(
+                    ((blank & room) - arch_cutout - rear_upright - block_cutout).solids(),
+                    label=label,
+                    color=Color(0.75, 0.66, 0.49),
+                )
             )
-            shelves.append(Part(((blank & room) - arch_cutout).solids(), label=label, color=Color(0.75, 0.66, 0.49)))
-            for frame_name, ledge_y in zip(end_names, (start, end - ledge), strict=True):
-                support_width = frame_widths[frame_name][int(rail_z >= step)]
-                if start < arch_front and end > arch_rear and ledge_z < p.arch_height_mm + clearance + radius:
-                    support_width = min(support_width, arch_left - clearance - radius - x - thickness)
-                support = panel(support_width, ledge, ledge_height).moved(Location((x + thickness, ledge_y, ledge_z)))
+            ledge_ends = (start, end - ledge)
+            for frame_name, ledge_y in zip(end_names, ledge_ends, strict=True):
+                support = panel(shelf_width - ledge, ledge, ledge_height).moved(
+                    Location((x + thickness, ledge_y, ledge_z))
+                )
+                if frame_name == "Rear":
+                    # The rear pillar narrows the panel here. Scribe only this
+                    # ledge's outer end to the same vehicle fitting envelope.
+                    support = Part((support & room).solids())
                 support.label, support.color = f"{label} {frame_name.lower()} ledge", Color(0.88, 0.61, 0.25)
                 ledges.append(support)
-            support = panel(ledge, end - start - 2 * ledge, ledge_height).moved(
-                Location((x + thickness, start + ledge, ledge_z))
+            aisle_start = start + ledge
+            support = panel(ledge, end - ledge - aisle_start, ledge_height).moved(
+                Location((x + thickness, aisle_start, ledge_z))
             )
             support.label, support.color = f"{label} aisle ledge", Color(0.88, 0.61, 0.25)
             ledges.append(support)
+            wall_start = max(start + ledge_height, aisle_start, back_start + thickness + ledge_height)
+            wall_end = end - max(ledge, ledge_height)
+            support = panel(ledge, wall_end - wall_start, ledge_height)
+            support.location = Location((rail_faces[bay_name, rail_z] - ledge, wall_start, ledge_z))
+            support.label, support.color = f"{label} wall ledge", Color(0.88, 0.61, 0.25)
+            ledges.append(support)
+    # The two aisle cleats remain; the full-height rail joint blocks replace
+    # the former short wall cleats above the lowest forward shelf.
+    corner_cleats = []
+    cleat_z = lower_rail - member + ledge_height + shelf_thickness
+    for name, cleat_y in (("Middle", middle_y + thickness), ("Cab-end", length - thickness - ledge_height)):
+        aisle = panel(ledge, ledge_height, member)
+        aisle.location = Location((x + thickness, cleat_y, cleat_z))
+        aisle.label, aisle.color = f"{name} aisle corner cleat", Color(0.88, 0.61, 0.25)
+        corner_cleats.append(aisle)
+    doors = build_cabinet_doors(p, bay_spans, opening_heights, rear_openings)
+    strikes, strike_blocks = cabinet_door_strikes(p, doors)
     return Compound(
         label="Cabinet",
         children=[
             *parts,
+            Compound(label="Wall supports", children=[rear_upright, *wall_rails]),
+            Compound(label="Rail joint blocks", children=rail_blocks),
             backing,
+            doors,
+            strikes,
+            strike_blocks,
+            Compound(label="Corner cleats", children=corner_cleats),
             Compound(label="Shelf ledges", children=ledges),
             Compound(label="Shelves", children=shelves),
         ],

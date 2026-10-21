@@ -10,13 +10,16 @@ interface CadGroup extends Object3D {
 }
 
 const left: Direction = [-1, 0, 0], right: Direction = [1, 0, 0];
-const rear: Direction = [0, -1, 0], roof: Direction = [0, 0, 1], floor: Direction = [0, 0, -1];
+const front: Direction = [0, 1, 0], rear: Direction = [0, -1, 0];
+const roof: Direction = [0, 0, 1], floor: Direction = [0, 0, -1];
 
 function directions(path: string): Direction[] {
   const prefix = '/Campervan/Vehicle references/';
   if (!path.startsWith(prefix)) return [];
   const part = path.slice(prefix.length);
-  if (part.startsWith('Rear corners/')) return [part.includes('Left') ? left : right, rear];
+  if (part.startsWith('Cab/Seats/')) return [front];
+  // These are side-wall returns. A rearward direction would also fade the far corner.
+  if (part.startsWith('Rear corners/')) return [part.includes('Left') ? left : right];
   if (part.startsWith('Roof/Side rails/')) return [part.includes('Left') ? left : right, roof];
   if (part.startsWith('Roof/Rear header')) return [roof, rear];
   if (part.startsWith('Roof/') || part.startsWith('Cab/Headliner')) return [roof];
@@ -30,7 +33,7 @@ function directions(path: string): Direction[] {
 
 /** Fade vehicle sides, without touching visibility, geometry, or furniture materials. */
 export function createVehicleFade() {
-  type Entry = { group: CadGroup; directions: Direction[]; maxOpacity: number; materials: {
+  type Entry = { group: CadGroup; directions: Direction[]; maxOpacity: number; fadeAmount: number; materials: {
     material: Material; edge: boolean; opacity: number; transparent: boolean; depthWrite: boolean;
   }[] };
   let entries: Entry[] = [];
@@ -65,7 +68,8 @@ export function createVehicleFade() {
             transparent: material.transparent, depthWrite: material.depthWrite });
         }
         if (materials.length) entries.push({ group, directions: normals, materials,
-          maxOpacity: path.endsWith('/Window glass') ? group.front?.material.opacity ?? 0.12 : 0.7 });
+          fadeAmount: path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
+          maxOpacity: path.endsWith('/Window glass') ? group.front?.material.opacity ?? 0.12 : 1 });
       }
     },
     clear() { entries = []; },
@@ -76,12 +80,13 @@ export function createVehicleFade() {
       for (const entry of entries) {
         const facing = Math.max(...entry.directions.map(([x, y, z]) =>
           x * towardCamera.x + y * towardCamera.y + z * towardCamera.z));
-        const t = Math.max(0, Math.min(1, (facing + 0.35) / 0.7));
+        // Keep far-facing and edge-on panels solid; fade only as their side turns toward us.
+        const t = Math.max(0, Math.min(1, facing / 0.35));
         const near = t * t * (3 - 2 * t);
         for (const { material, edge } of entry.materials) {
           if (!material.transparent) { material.transparent = true; material.needsUpdate = true; }
-          material.depthWrite = false;
-          material.opacity = edge ? 0.5 - 0.48 * near : entry.maxOpacity * (1 - near * 0.65 / 0.7);
+          material.opacity = edge ? 0.5 - 0.48 * near : entry.maxOpacity * (1 - near * entry.fadeAmount);
+          material.depthWrite = !edge && material.opacity === 1;
         }
       }
     },

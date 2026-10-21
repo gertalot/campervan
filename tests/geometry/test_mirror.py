@@ -15,10 +15,11 @@ def vertices(part):
 
 def test_native_mirror_and_live_cushion_poses_agree():
     p = Parameters()
-    tracks = mirror_motion_tracks(cushion_motion_tracks(p))
-    for bench in ("Long bench", "Cross bench"):
+    for bench, field in (("Long bench", "bed_extension_percent"), ("Cross bench", "cross_bed_extension_percent")):
+        tracks = mirror_motion_tracks(cushion_motion_tracks(p, bench))
+        assert tracks and all(track["path"].startswith(f"/Campervan/{bench}/Cushions/") for track in tracks)
         for percent in (0, 60, 100):
-            original = build_cushions(Parameters(bed_extension_percent=percent), bench)
+            original = build_cushions(Parameters.model_validate(p.model_dump() | {field: percent}), bench)
             mirrored = mirror_assembly(original).moved(Location((p.cargo_width_mm, p.furniture_rear_gap_mm, 0)))
             for source, target in zip(original.leaves, mirrored.leaves, strict=True):
                 assert source.label == target.label and target.is_valid

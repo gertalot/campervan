@@ -32,7 +32,10 @@ seeInside.addEventListener('change', () => {
   localStorage.setItem('campervan.see-inside', String(seeInside.checked));
   viewer.setSeeInside(seeInside.checked);
 });
-const mannequinControls = setupMannequinControls(element<HTMLDetailsElement>('mannequin'), pose => viewer.setMannequinPose(pose));
+const seatedMannequin = element<HTMLDetailsElement>('mannequin');
+const mannequinControls = setupMannequinControls(
+  seatedMannequin, element<HTMLInputElement>('mannequin-visible'), pose => viewer.setMannequinPose(pose),
+);
 let dirty = false;
 const materials = setupMaterials();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
@@ -44,9 +47,7 @@ const controller = createController(api, {
     liveControls.replaceChildren();
     inputs.clear();
     const groups = new Map<string, HTMLDetailsElement>();
-    for (const [name, field] of Object.entries(metadata)) {
-      let parent: HTMLElement = field.control === 'position' ? liveControls : fields;
-      const groupPath = field.control === 'position' ? [] : field.group;
+    function groupFor(groupPath: string[], parent: HTMLElement, cadVisibility = true): HTMLElement {
       for (let depth = 0; depth < groupPath.length; depth++) {
         const title = groupPath[depth];
         const path = JSON.stringify(groupPath.slice(0, depth + 1));
@@ -66,13 +67,18 @@ const controller = createController(api, {
           });
           const heading = document.createElement('summary');
           heading.textContent = title;
-          visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
+          if (cadVisibility) visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
           group.append(heading);
           parent.append(group);
           groups.set(path, group);
         }
         parent = group;
       }
+      return parent;
+    }
+    for (const [name, field] of Object.entries(metadata)) {
+      const topLevelControl = field.control === 'position' && field.group[0] !== 'Stored gear';
+      const parent = groupFor(topLevelControl ? [] : field.group, topLevelControl ? liveControls : fields);
       const row = document.createElement('div');
       row.className = 'parameter-row';
       const label = document.createElement('label');
@@ -82,7 +88,7 @@ const controller = createController(api, {
       input.id = name;
       input.name = name;
       input.type = field.control === 'position' ? 'range' : 'number';
-      input.step = field.control === 'position' ? '0.1' : 'any';
+      input.step = field.control === 'position' ? (field.unit === '%' ? '0.1' : '1') : 'any';
       input.autocomplete = 'off';
       input.placeholder = String(field.default);
       if (field.material) {
@@ -115,10 +121,41 @@ const controller = createController(api, {
         row.append(label, value, input);
         input.addEventListener('input', () => controller.previewPosition(name, input.valueAsNumber));
         input.addEventListener('change', () => { void controller.savePosition(name, input.valueAsNumber); });
-      } else row.append(label, input);
+      } else {
+        const hint = document.createElement('small');
+        hint.id = `${name}-constraint`;
+        hint.className = 'parameter-constraint';
+        hint.hidden = true;
+        input.setAttribute('aria-describedby', hint.id);
+        row.append(label, input, hint);
+      }
       parent.append(row);
       inputs.set(name, input);
     }
+    // Reattach the same live controls after metadata refreshes, preserving pose and listeners.
+    groupFor(['Mannequin'], fields, false).append(seatedMannequin);
+  },
+  setConstraints(metadata, errors, adjustments, parameters) {
+    for (const [name, input] of inputs) {
+      if (input.type === 'range') continue;
+      const field = metadata[name];
+      const minimum = field.minimum ?? field.exclusiveMinimum;
+      const maximum = field.maximum ?? field.exclusiveMaximum;
+      input.min = minimum === undefined ? '' : String(minimum);
+      input.max = maximum === undefined ? '' : String(maximum);
+      if (field.reason) {
+        input.title = `${field.title}. ${field.reason}`;
+        if (input.labels?.[0]) input.labels[0].title = input.title;
+      }
+      input.setCustomValidity(errors[name] ?? '');
+      input.setAttribute('aria-invalid', String(Boolean(errors[name])));
+      if (adjustments[name]) input.value = String(parameters[name]);
+      const hint = element(`${name}-constraint`);
+      hint.textContent = errors[name] ?? adjustments[name] ?? field.reason ?? '';
+      hint.hidden = !hint.textContent;
+      hint.classList.toggle('invalid', Boolean(errors[name]));
+    }
+    form.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled = Object.keys(errors).length > 0;
   },
   setParameters(parameters, reset) {
     for (const [name, input] of inputs) {
@@ -157,12 +194,18 @@ const controller = createController(api, {
   clearTimeout: handle => window.clearTimeout(handle as number),
 }, window.localStorage);
 
+const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name, input.value]));
+let previewTimer: number;
 form.addEventListener('input', event => {
-  if ((event.target as HTMLInputElement).type !== 'range') dirty = true;
+  if ((event.target as HTMLInputElement).type === 'range') return;
+  dirty = true;
+  window.clearTimeout(previewTimer);
+  previewTimer = window.setTimeout(() => { void controller.preview(draftValues()); }, 180);
 });
 form.addEventListener('submit', event => {
   event.preventDefault();
-  void controller.apply(Object.fromEntries([...inputs].map(([name, input]) => [name, input.value])));
+  window.clearTimeout(previewTimer);
+  void controller.apply(draftValues());
 });
 element('regenerate').addEventListener('click', () => { void controller.regenerate(); });
 window.addEventListener('pagehide', () => controller.stop());

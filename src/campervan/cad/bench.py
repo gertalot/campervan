@@ -38,8 +38,8 @@ def build_long_bench(p: Parameters) -> Compound:
     if internal_x <= max(total, setback) or internal_x + thickness >= width - thickness:
         raise ValueError("Internal drawer support must clear the rear corner and leave a rear opening.")
 
-    if p.drawer_frame_height_mm >= height - 2 * thickness:
-        raise ValueError("Drawer support must leave room below the bed.")
+    if p.drawer_frame_height_mm >= height - member:
+        raise ValueError("Drawer support must leave room below the guide ledges.")
 
     parts: list[Part] = []
 

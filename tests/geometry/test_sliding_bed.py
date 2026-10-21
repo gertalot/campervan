@@ -8,7 +8,8 @@ from campervan.parameters import Parameters
 
 def test_sliding_bed_endpoints_and_sampled_clearance():
     for extension in (0, 20, 40):
-        p = Parameters(bed_extension_percent=extension)
+        # The dimensional reference below describes the original 7mm-skin layout.
+        p = Parameters(bed_extension_percent=extension, wall_thickness_mm=7)
         bench = build_long_bench(p)
         fixed_frame, bed, drawer = bench.children[:3]
         (moving,) = bed.children

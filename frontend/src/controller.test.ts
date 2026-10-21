@@ -16,6 +16,9 @@ function setup(saved = new Map<string, string>()) {
   };
   const api = {
     getParameters: vi.fn<Api['getParameters']>().mockResolvedValue(parameters),
+    previewParameters: vi.fn<Api['previewParameters']>().mockImplementation(async draft => ({ ...parameters,
+      parameters: draft, errors: {}, adjustments: {},
+    })),
     getStatus: vi.fn<Api['getStatus']>().mockResolvedValue(status),
     putParameters: vi.fn<Api['putParameters']>().mockResolvedValue({ session_id: 'first', requested_revision: 2 }),
     regenerate: vi.fn<Api['regenerate']>().mockResolvedValue({ session_id: 'first', requested_revision: 1 }),
@@ -24,6 +27,7 @@ function setup(saved = new Map<string, string>()) {
   const view: View = {
     setMetadata: vi.fn(), setParameters: vi.fn(), setViewerUrl: vi.fn(), setStatus: vi.fn(), setError: vi.fn(),
     setPosition: vi.fn(),
+    setConstraints: vi.fn(),
   };
   const controller = createController(api, view, {
     setTimeout: (callback, delay) => setTimeout(callback, delay),
@@ -40,6 +44,23 @@ it('initializes the viewer and requests regeneration', async () => {
   expect(view.setViewerUrl).toHaveBeenCalledWith(parameters.viewer_url);
   expect(view.setParameters).toHaveBeenCalledWith(parameters.parameters, true);
   expect(api.regenerate).toHaveBeenCalledTimes(1);
+  controller.stop();
+});
+
+it('blocks an invalid draft before Apply and shows dependent dimensions from a valid preview', async () => {
+  const { api, view, controller, parameters } = setup();
+  await controller.start();
+  api.previewParameters.mockResolvedValue({ ...parameters, errors: { cargo_width_mm: 'Wheel arch clearance needs 1500mm.' } });
+  await controller.apply({ cargo_width_mm: '200', cargo_length_mm: '1860' });
+  expect(api.putParameters).not.toHaveBeenCalled();
+  expect(view.setError).toHaveBeenLastCalledWith('Wheel arch clearance needs 1500mm.');
+  api.previewParameters.mockResolvedValue({ ...parameters, parameters: { cargo_width_mm: 1520, cargo_length_mm: 1800 },
+    errors: {}, adjustments: { cargo_length_mm: 'Length reduced to fit.' },
+  });
+  await controller.preview({ cargo_width_mm: '1520', cargo_length_mm: '1860' });
+  expect(view.setConstraints).toHaveBeenLastCalledWith(parameters.schema.properties, {},
+    { cargo_length_mm: 'Length reduced to fit.' }, { cargo_width_mm: 1520, cargo_length_mm: 1800 });
+  expect(api.putParameters).not.toHaveBeenCalled();
   controller.stop();
 });
 
@@ -92,7 +113,8 @@ it('restores all sliders from browser storage and sends them to a restarted API 
   const saved = new Map<string, string>();
   const first = setup(saved);
   for (const [name, value] of Object.entries({
-    bed_extension_percent: 75, drawer_extension_percent: 40, cross_lid_open_percent: 60,
+    bed_extension_percent: 75, cross_bed_extension_percent: 25, drawer_extension_percent: 40, cross_lid_open_percent: 60,
+    chair_1_x_mm: 280, chair_1_yaw_deg: -90, solar_bag_y_mm: 35,
   })) first.controller.previewPosition(name, value);
   first.controller.stop();
 
@@ -101,7 +123,7 @@ it('restores all sliders from browser storage and sends them to a restarted API 
   for (const name of Object.keys(positions)) {
     parameters.parameters[name] = 0;
     parameters.schema.properties[name] = {
-      title: name, default: 0, minimum: 0, maximum: 100, unit: '%', group: [], control: 'position',
+      title: name, default: 0, minimum: -1000, maximum: 3000, unit: 'mm', group: [], control: 'position',
     };
   }
   api.regenerate.mockImplementation(async () => {
@@ -117,8 +139,24 @@ it('restores all sliders from browser storage and sends them to a restarted API 
   api.setPosition.mockClear();
   parameters.session_id = status.session_id = 'restarted';
   await vi.advanceTimersByTimeAsync(500);
-  expect(api.setPosition).toHaveBeenCalledTimes(3);
+  expect(api.setPosition).toHaveBeenCalledTimes(Object.keys(positions).length);
   expect(view.setParameters).toHaveBeenLastCalledWith({ ...parameters.parameters, ...positions }, true);
   expect(api.regenerate).toHaveBeenCalledTimes(2);
+  controller.stop();
+});
+
+it('restores the old shared bed pose to both new bench controls', async () => {
+  const saved = new Map([['campervan.positions', JSON.stringify({ bed_extension_percent: 75 })]]);
+  const { api, view, controller, parameters } = setup(saved);
+  for (const name of ['bed_extension_percent', 'cross_bed_extension_percent']) {
+    parameters.parameters[name] = 0;
+    parameters.schema.properties[name] = {
+      title: name, default: 0, minimum: 0, maximum: 100, unit: '%', group: [], control: 'position',
+    };
+  }
+  await controller.start();
+  expect(view.setPosition).toHaveBeenCalledWith('bed_extension_percent', 75);
+  expect(view.setPosition).toHaveBeenCalledWith('cross_bed_extension_percent', 75);
+  expect(api.setPosition).toHaveBeenCalledWith('cross_bed_extension_percent', 75);
   controller.stop();
 });

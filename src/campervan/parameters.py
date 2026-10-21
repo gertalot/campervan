@@ -758,11 +758,24 @@ class Parameters(BaseModel):
         default=0.0,
         ge=0,
         le=100,
-        title="Bed conversion (%)",
-        description="0–40 extends both beds; 40–80 repositions cushions; 80–100 lowers the backrests into place.",
+        title="Long bench conversion (%)",
+        description="0–40 extends the long bed; 40–80 repositions its cushions; 80–100 lowers its backrests.",
         json_schema_extra={
             "unit": "%",
             "group": ["Long bench", "Sliding bed", "Sliding assembly"],
+            "control": "position",
+        },
+    )
+
+    cross_bed_extension_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cross bench conversion (%)",
+        description="0–40 extends the cross bed; 40–80 repositions its cushions; 80–100 lowers its backrests.",
+        json_schema_extra={
+            "unit": "%",
+            "group": ["Cross bench", "Sliding assembly"],
             "control": "position",
         },
     )
@@ -1015,6 +1028,87 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cross bench", "Cushions"]},
     )
 
+    cabinet_frame_thickness_mm: float = Field(
+        default=12.0,
+        gt=0,
+        title="Structure plywood thickness",
+        description="Cabinet partitions, aisle frame, rear rails and upright share 12mm plywood.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+    )
+
+    cabinet_door_thickness_mm: float = Field(
+        default=9.0,
+        gt=0,
+        title="Door plywood thickness",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
+    )
+    cabinet_door_gap_mm: float = Field(
+        default=2.0,
+        gt=0,
+        title="Closing gap",
+        description="Between each closed door and the aisle frame; the carcass moves wallward to retain bed clearance.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
+    )
+    cabinet_door_overlap_mm: float = Field(
+        default=15.0,
+        gt=0,
+        title="Opening overlap",
+        description="Overlap beyond each individual opening; each shelf compartment has its own door.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
+    )
+    cabinet_door_corner_radius_mm: float = Field(
+        default=12.0,
+        gt=0,
+        title="Door corner radius",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
+    )
+    cabinet_door_edge_radius_mm: float = Field(
+        default=2.0,
+        gt=0,
+        title="Door edge roundover",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
+    )
+    cabinet_upper_doors_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cabinet upper doors",
+        description="Lower all four upper flaps to horizontal, held by paired chains, without regeneration.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+    )
+    cabinet_lower_doors_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cabinet front bottom door",
+        description="Open the bottom front compartment independently of the door above the mattress.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+    )
+    cabinet_storage_doors_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Storage bottom doors",
+        description="Swing the lower storage pair outward on opposite hinges, without regenerating.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+    )
+    cabinet_front_upper_door_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cabinet front above-bed door",
+        description="Open the raised front compartment while the bed is made up, independently of the bottom door.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+    )
+    cabinet_storage_upper_doors_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Storage above-bed doors",
+        description="Open the upper storage pair independently, above the mattress, without regenerating.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+    )
+
     cabinet_ceiling_gap_mm: float = Field(
         default=3.0,
         ge=0,
@@ -1034,8 +1128,24 @@ class Parameters(BaseModel):
     cabinet_frame_step_height_mm: float = Field(
         default=750.0,
         gt=0,
-        title="Upper shelf rail height",
-        description="Top of the upper shelf rail and frame step. The lower shelf rail follows the bed support height.",
+        title="Upper shelf reference height",
+        description="The upper shelf rail is halfway from this reference level to the cabinet top.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
+    )
+
+    cabinet_rear_bay_length_mm: float = Field(
+        default=650.0,
+        gt=0,
+        title="Rear storage bay length",
+        description="Clear length from the open rear end to the centre support; the forward bay uses the remainder.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
+    )
+
+    cabinet_rear_storage_height_mm: float = Field(
+        default=730.0,
+        gt=0,
+        title="Rear storage clear height",
+        description="Floor to the lowest shelf supports in the rear bay; the rear entrance is open.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
@@ -1045,6 +1155,25 @@ class Parameters(BaseModel):
         title="Shelf thickness",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},
     )
+
+    cabinet_mattress_clearance_mm: float = Field(
+        default=10.0,
+        ge=0,
+        title="Lower shelf above mattress",
+        description="Lower front shelf top above the uncompressed mattress. The storage-door split follows it.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},
+    )
+
+    @property
+    def cabinet_lower_rail_top_mm(self) -> float:
+        return (
+            self.platform_height_mm
+            + self.foam_thickness_mm
+            + self.cabinet_mattress_clearance_mm
+            + self.member_width_mm
+            - self.cabinet_ledge_height_mm
+            - self.cabinet_shelf_thickness_mm
+        )
 
     cabinet_back_thickness_mm: float = Field(
         default=3.0,
@@ -1075,6 +1204,142 @@ class Parameters(BaseModel):
         gt=0,
         title="Ledge height",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
+    )
+
+    solar_bag_width_mm: float = Field(
+        default=830.0,
+        gt=0,
+        title="Folded width",
+        description="Owner-measured overall bag width.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_height_mm: float = Field(
+        default=760.0,
+        gt=0,
+        title="Folded height",
+        description="Owner-measured overall bag height.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_depth_mm: float = Field(
+        default=80.0,
+        gt=0,
+        title="Folded thickness",
+        description="Approximate owner-measured packed thickness.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_x_mm: float = Field(
+        default=750.0,
+        ge=-1000,
+        le=2500,
+        title="Centre X",
+        description="Footprint centre across the van, from the left inner wall.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_y_mm: float = Field(
+        default=45.0,
+        ge=-1000,
+        le=3000,
+        title="Centre Y",
+        description="Footprint centre forward of the rear opening at its side pillars.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_z_mm: float = Field(
+        default=0.0,
+        ge=0,
+        le=1300,
+        title="Bottom above floor",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    solar_bag_yaw_deg: float = Field(
+        default=0.0,
+        ge=-180,
+        le=180,
+        title="Rotation",
+        description="0 faces the rear door; 90 turns the wide face along the van.",
+        json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Solar panel bag"]},
+    )
+    chair_width_mm: float = Field(
+        default=600.0,
+        gt=0,
+        title="Folded width",
+        description="Overall width including armrests and hinge fittings.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chairs"]},
+    )
+    chair_height_mm: float = Field(
+        default=700.0,
+        gt=0,
+        title="Folded height",
+        description="Owner-measured overall folded height.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chairs"]},
+    )
+    chair_depth_mm: float = Field(
+        default=100.0,
+        gt=0,
+        title="Folded thickness",
+        description="Approximate overall depth of each folded chair.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chairs"]},
+    )
+    chair_1_x_mm: float = Field(
+        default=520.0,
+        ge=-1000,
+        le=2500,
+        title="Centre X",
+        description="Footprint centre across the van; provisional aisle placement.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 1"]},
+    )
+    chair_1_y_mm: float = Field(
+        default=600.0,
+        ge=-1000,
+        le=3000,
+        title="Centre Y",
+        description="Footprint centre forward of the rear opening at its side pillars.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 1"]},
+    )
+    chair_1_z_mm: float = Field(
+        default=0.0,
+        ge=0,
+        le=1300,
+        title="Bottom above floor",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 1"]},
+    )
+    chair_1_yaw_deg: float = Field(
+        default=90.0,
+        ge=-180,
+        le=180,
+        title="Rotation",
+        description="90 stores the chair edge-on, with its wide face along the van.",
+        json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chairs", "Chair 1"]},
+    )
+    chair_2_x_mm: float = Field(
+        default=640.0,
+        ge=-1000,
+        le=2500,
+        title="Centre X",
+        description="Footprint centre across the van; provisional aisle placement.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 2"]},
+    )
+    chair_2_y_mm: float = Field(
+        default=600.0,
+        ge=-1000,
+        le=3000,
+        title="Centre Y",
+        description="Footprint centre forward of the rear opening at its side pillars.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 2"]},
+    )
+    chair_2_z_mm: float = Field(
+        default=0.0,
+        ge=0,
+        le=1300,
+        title="Bottom above floor",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chairs", "Chair 2"]},
+    )
+    chair_2_yaw_deg: float = Field(
+        default=90.0,
+        ge=-180,
+        le=180,
+        title="Rotation",
+        description="90 stores the chair edge-on, with its wide face along the van.",
+        json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chairs", "Chair 2"]},
     )
 
     @model_validator(mode="after")

@@ -7,6 +7,7 @@ export interface FieldMetadata {
   control?: 'position';
   material?: string;
   description?: string;
+  reason?: string;
   minimum?: number;
   exclusiveMinimum?: number;
   maximum?: number;
@@ -17,6 +18,8 @@ export interface ParameterResponse {
   parameters: Parameters;
   schema: { properties: Record<string, FieldMetadata> };
   viewer_url: string;
+  errors?: Record<string, string>;
+  adjustments?: Record<string, string>;
 }
 export interface MutationResponse { session_id: string; requested_revision: number }
 export interface ModelStatus extends MutationResponse {
@@ -26,6 +29,7 @@ export interface ModelStatus extends MutationResponse {
 }
 export interface Api {
   getParameters(): Promise<ParameterResponse>;
+  previewParameters(parameters: Parameters): Promise<ParameterResponse>;
   getStatus(): Promise<ModelStatus>;
   putParameters(parameters: Parameters): Promise<MutationResponse>;
   regenerate(): Promise<MutationResponse>;
@@ -54,6 +58,7 @@ export async function request<T>(path: string, method = 'GET', body?: unknown): 
   return response.json() as Promise<T>;
 }
 export const getParameters = () => request<ParameterResponse>('parameters');
+export const previewParameters = (parameters: Parameters) => request<ParameterResponse>('parameters/preview', 'POST', parameters);
 export const getStatus = () => request<ModelStatus>('model/status');
 export const putParameters = (parameters: Parameters) => request<MutationResponse>('parameters', 'PUT', parameters);
 export const regenerate = () => request<MutationResponse>('model/regenerate', 'POST');

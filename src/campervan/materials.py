@@ -39,6 +39,12 @@ class MaterialRole(BaseModel):
 
 ROLES = [
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
+    MaterialRole(
+        id="cabinet-frames",
+        name="Cabinet structure plywood",
+        kind="sheet",
+        fields={"thickness": "cabinet_frame_thickness_mm"},
+    ),
     MaterialRole(id="skins", name="Skin plywood", kind="sheet", fields={"thickness": "wall_thickness_mm"}),
     MaterialRole(id="shelves", name="Shelf plywood", kind="sheet", fields={"thickness": "cabinet_shelf_thickness_mm"}),
     MaterialRole(id="drawer", name="Drawer plywood", kind="sheet", fields={"thickness": "drawer_ply_mm"}),
@@ -47,10 +53,14 @@ ROLES = [
     ),
     MaterialRole(
         id="ledges",
-        name="Shelf ledges",
-        kind="sheet",
-        fields={"thickness": "cabinet_ledge_height_mm"},
-        note="Rip strips from the frame plywood; strip width is a cut dimension.",
+        name="Cabinet battens",
+        kind="timber",
+        fields={"width": "cabinet_ledge_size_mm", "thickness": "cabinet_ledge_height_mm"},
+        note=(
+            "Ready-made 18 × 18mm untreated clear pine for shelf ledges, corner cleats and latch strike blocks. "
+            "Square crosscuts only: wall ledges now meet straight rear rails, with no wall-facing bevels. "
+            "No plywood strips to rip. Plan crosscuts with kerf/waste before buying lengths."
+        ),
     ),
     MaterialRole(
         id="slats",
@@ -64,17 +74,84 @@ ROLES = [
 for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
+        "cabinet-frames": "tigerply-12",
         "skins": "tigerply-okoume-4",
         "shelves": "tigerply-12",
         "drawer": "tigerply-12",
         "deck": "tigerply-12",
-        "ledges": "tigerply-18",
+        "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
-    if role.id in {"shelves", "drawer", "deck"}:
-        role.note = "Share 12mm sheets across shelves, drawer and deck/lid; plan the cuts together."
+    if role.id in {"cabinet-frames", "shelves", "drawer", "deck"}:
+        role.note = (
+            "Share 12mm sheets across cabinet partitions/frames, shelves, drawer and deck/lid; plan cuts together."
+        )
 
 ROLES.extend(
     [
+        MaterialRole(
+            id="cabinet-glue",
+            name="Cabinet wood glue",
+            kind="hardware",
+            fields={},
+            quantity=1,
+            default_product_id="selleys-aquadhere-exterior-250",
+            note=(
+                "One 250ml bottle as an initial cabinet allowance. Glue shelf-to-ledge, ledge-to-panel and "
+                "corner-cleat mating faces, including the panel/frame seams. Close-fitting bare wood only; "
+                "clamp during curing and leave unstressed for 24 hours. Furniture adhesive, not vehicle anchorage. "
+                "Flute-board lining remains non-structural and is not bonded with this PVA."
+            ),
+        ),
+        MaterialRole(
+            id="cabinet-doors",
+            name="Cabinet door plywood",
+            kind="sheet",
+            fields={"thickness": "cabinet_door_thickness_mm"},
+            default_product_id="tigerply-okoume-9",
+            note="Ten overlay doors: four drop-down flaps, two front doors and two independent storage pairs.",
+        ),
+        MaterialRole(
+            id="cabinet-hinges",
+            name="Cabinet door hinges",
+            kind="hardware",
+            fields={},
+            quantity=20,
+            default_product_id="zenith-butt-35",
+            note=(
+                "Two per door. Face-mount the leaves between door rear and aisle frame, within the closing gap. "
+                "Use countersunk through-fixings on the 9mm door, not screws into its edge. "
+                "Hole sizes, leaf thickness and fixings still require checking against the physical hinge."
+            ),
+        ),
+        MaterialRole(
+            id="cabinet-catches",
+            name="Cabinet door catches",
+            kind="hardware",
+            fields={},
+            default_product_id="vanlifer-point-ll016",
+            note=(
+                "One positive push latch per door, including its supplied striker. 50mm from front face to body rear "
+                "means 41mm projects behind 9mm plywood. Six strikers mount under shelf ledges; four 70mm pine "
+                "blocks support the topmost and bottom-storage strikers. No centre post in the storage openings. "
+                "Body/bore dimensions follow the supplier drawing, but striker size, flange thickness "
+                "and fixings need checking on receipt."
+            ),
+        ),
+        MaterialRole(
+            id="cabinet-chains",
+            name="Upper door chain restraints",
+            kind="hardware",
+            fields={},
+            quantity=1,
+            default_product_id="pinnacle-double-jack-2",
+            note=(
+                "One 3m pack for eight short restraints: two per drop-down upper door. "
+                "Allow roughly 240–300mm each at default door sizes; cut to the actual anchor positions "
+                "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
+                "to plywood frame members, not the 4mm skin. Chains, anchors and fixings are not modelled. "
+                "Confirm link openings, anchor details and closing clearance before buying fixings."
+            ),
+        ),
         MaterialRole(
             id="cabinet-back",
             name="Cabinet back lining",
@@ -221,7 +298,21 @@ def resolve(parameters: Parameters, selections: dict[str, Selection]) -> Paramet
 
 
 def load_project(path: Path = PROJECT_PATH) -> Project:
-    project = Project.model_validate_json(path.read_text()) if path.exists() else Project()
+    if path.exists():
+        saved = json.loads(path.read_text())
+        parameters = saved.get("parameters", {})
+        # Previously one saved position controlled both benches.
+        parameters.setdefault("cross_bed_extension_percent", parameters.get("bed_extension_percent", 0))
+        project = Project.model_validate(saved | {"parameters": parameters})
+    else:
+        project = Project()
+    # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.
+    project.materials.pop("cabinet-stays", None)
+    project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
+    if project.materials.get("cabinet-catches", Selection()).product_id == "taskmaster-roller-4":
+        project.materials["cabinet-catches"] = Selection(product_id="vanlifer-point-ll016")
+    if project.materials.get("ledges", Selection()).product_id == "tigerply-18":
+        project.materials["ledges"] = Selection(product_id="pinetrim-18-18-2400")
     project.materials = default_selections() | project.materials
     project.parameters = resolve(project.parameters, project.materials)
     return project

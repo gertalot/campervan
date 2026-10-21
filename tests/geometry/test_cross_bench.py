@@ -7,14 +7,16 @@ from build123d import Compound, Location
 
 from campervan.cad.bed_motion import bed_offset
 from campervan.cad.bench import build_long_bench
-from campervan.cad.cross_bed import cross_bed_layout
+from campervan.cad.cross_bed import build_cross_sliding_assembly, cross_bed_layout
 from campervan.cad.cross_bench import build_cross_bench
 from campervan.cad.panels import panel
+from campervan.cad.sliding_bed import build_sliding_bed, long_bed_layout
 from campervan.parameters import Parameters
 
 
 def test_cross_bench_frame_and_divider_fit():
-    p = Parameters()
+    # The dimensional reference below describes the original 7mm-skin layout.
+    p = Parameters(wall_thickness_mm=7)
     bench = build_cross_bench(p)
     fixed, moving, lid = bench.children[:3]
     assert bench.label == "Cross bench" and fixed.label == "Fixed frame"
@@ -80,13 +82,15 @@ def test_cross_bench_frame_and_divider_fit():
         posed = (
             bench
             if extension == 0
-            else build_cross_bench(Parameters(bed_extension_percent=extension, cross_lid_open_percent=100))
+            else build_cross_bench(
+                p.model_copy(update={"cross_bed_extension_percent": extension, "cross_lid_open_percent": 100})
+            )
         )
         fixed, moving, lid = posed.children[:3]
         assert moving.bounding_box().max.X == pytest.approx(853 + bed_offset(layout.travel, extension))
         if extension:
             assert lid.bounding_box().max.Z > 900
-            long_bench = build_long_bench(Parameters(bed_extension_percent=extension))
+            long_bench = build_long_bench(p.model_copy(update={"bed_extension_percent": extension}))
             if extension == 100:
                 assert long_bench.children[1].bounding_box().max.X == pytest.approx(moving.bounding_box().max.X)
             long_moving_slats = long_bench.children[1].children[0].children[0]
@@ -107,3 +111,13 @@ def test_cross_bench_frame_and_divider_fit():
                 past_stop = placed.moved(Location((0.5 if extension else -0.5, 0, 0)))
                 contact = past_stop & fixed
                 assert contact is not None and contact.volume > 1
+
+
+@pytest.mark.parametrize(("long_percent", "cross_percent"), [(0, 100), (20, 0), (100, 20)])
+def test_slide_out_frames_have_independent_positions(long_percent, cross_percent):
+    p = Parameters(bed_extension_percent=long_percent, cross_bed_extension_percent=cross_percent)
+    long_layout, cross_layout = long_bed_layout(p), cross_bed_layout(p)
+    long_frame = build_sliding_bed(p, long_layout).children[0]
+    cross_frame = build_cross_sliding_assembly(p, cross_layout)
+    assert long_frame.location.position.X == pytest.approx(bed_offset(long_layout.travel, long_percent))
+    assert cross_frame.location.position.X == pytest.approx(bed_offset(cross_layout.travel, cross_percent))

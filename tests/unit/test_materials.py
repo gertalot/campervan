@@ -1,9 +1,21 @@
 """Stock dimensions have one owner; custom measurements survive saving."""
 
+import json
+
 import pytest
 
 from campervan.materials import Project, Selection, load_project, resolve, save_project
 from campervan.parameters import Parameters
+
+
+def test_legacy_bed_position_is_restored_to_both_benches(tmp_path):
+    path = tmp_path / "project.json"
+    path.write_text(json.dumps({"parameters": {"bed_extension_percent": 75}}))
+    restored = load_project(path)
+    assert restored.parameters.bed_extension_percent == restored.parameters.cross_bed_extension_percent == 75
+    restored.parameters = restored.parameters.model_copy(update={"cross_bed_extension_percent": 0})
+    save_project(restored, path)
+    assert load_project(path).parameters.cross_bed_extension_percent == 0
 
 
 def test_stock_dimensions_and_measured_override(tmp_path):
@@ -13,7 +25,12 @@ def test_stock_dimensions_and_measured_override(tmp_path):
     save_project(
         Project(
             parameters=Parameters(cabinet_ledge_size_mm=19, cabinet_ledge_height_mm=19),
-            materials={"slats": Selection(owned=True)},
+            materials={
+                "slats": Selection(owned=True),
+                "cabinet-stays": Selection(product_id="hafele-duo-touch"),
+                "cabinet-catches": Selection(product_id="taskmaster-roller-4"),
+                "ledges": Selection(product_id="tigerply-18"),
+            },
         ),
         path,
     )
@@ -22,14 +39,23 @@ def test_stock_dimensions_and_measured_override(tmp_path):
     assert sourced.parameters.wall_thickness_mm == 4
     assert sourced.materials["cabinet-back"].product_id == "tunnelcore-white-3"
     assert sourced.parameters.cabinet_back_thickness_mm == 3
-    assert sourced.materials["ledges"].product_id == "tigerply-18"
-    assert sourced.parameters.cabinet_ledge_size_mm == 19  # Strip width is a cut dimension.
+    assert sourced.materials["cabinet-frames"].product_id == "tigerply-12"
+    assert sourced.materials["cabinet-glue"].product_id == "selleys-aquadhere-exterior-250"
+    assert sourced.parameters.cabinet_frame_thickness_mm == 12
+    assert sourced.materials["cabinet-doors"].product_id == "tigerply-okoume-9"
+    assert sourced.materials["cabinet-catches"].product_id == "vanlifer-point-ll016"
+    assert sourced.parameters.cabinet_door_thickness_mm == 9
+    assert "cabinet-stays" not in sourced.materials
+    assert sourced.materials["cabinet-chains"].product_id == "pinnacle-double-jack-2"
+    assert sourced.parameters.frame_thickness_mm == 18
+    assert sourced.materials["ledges"].product_id == "pinetrim-18-18-2400"
+    assert sourced.parameters.cabinet_ledge_size_mm == 18
     assert sourced.parameters.cabinet_ledge_height_mm == 18
     assert sourced.parameters.ledge_width_mm == 18
     assert all(sourced.materials[role].product_id == "tigerply-18" for role in ("frames", "bearers", "guides"))
     choices = {
         "skins": Selection(product_id="tigerply-okoume-4", measured={"thickness": 3.8}),
-        "ledges": Selection(product_id="tigerply-18"),
+        "ledges": Selection(product_id="pinetrim-18-18-2400"),
         "slats": Selection(owned=True),
     }
     resolved = resolve(original, choices)

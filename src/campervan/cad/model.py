@@ -5,6 +5,7 @@ from build123d import Compound, Location
 from campervan.cad.bench import build_long_bench
 from campervan.cad.cabinet import build_cabinet
 from campervan.cad.cross_bench import build_cross_bench
+from campervan.cad.gear import build_stored_gear
 from campervan.cad.mirror import mirror_assembly
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
@@ -17,6 +18,7 @@ def build_campervan(parameters: Parameters) -> Compound:
         label="Campervan",
         children=[
             build_vehicle_references(parameters),
+            build_stored_gear(parameters),
             *(mirror_assembly(assembly).moved(placement) for assembly in furniture),
         ],
     )

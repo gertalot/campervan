@@ -2,6 +2,7 @@ const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
   cabinet: ['/Campervan/Cabinet'],
   cabinetBacking: ['/Campervan/Cabinet/Back lining'],
+  storedGear: ['/Campervan/Stored gear'],
   longBench: ['/Campervan/Long bench'],
   crossBench: ['/Campervan/Cross bench'],
   cushions: ['/Campervan/Long bench/Cushions', '/Campervan/Cross bench/Cushions'],

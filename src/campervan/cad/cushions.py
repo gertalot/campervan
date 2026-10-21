@@ -20,8 +20,11 @@ class Cushion:
     night_center: Vector3
     day_rotation: Vector3
     color: Vector3
+    fixed: bool = False
 
     def poses(self) -> list[Pose]:
+        if self.fixed:
+            return [(0, self.day_center, self.day_rotation), (100, self.day_center, self.day_rotation)]
         if not any(self.day_rotation):
             # Seats clear the infill spaces before the backrests start descending.
             return [
@@ -105,6 +108,7 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 (width + 1.5 * infill, rear_length / 2, flat_z),
                 end_rotation,
                 green,
+                fixed=True,
             ),
         )
     if bench == "Cross bench":
@@ -132,6 +136,7 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 (width + 1.5 * infill, rear_length + p.cab_backrest_length_mm / 2, flat_z),
                 end_rotation,
                 green,
+                fixed=True,
             ),
         )
     raise ValueError(f"Unknown cushion bench: {bench}")
@@ -143,7 +148,8 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
         foam = Box(*cushion.size)
         foam.label, foam.color = "Foam", Color(*cushion.color)
         piece = Compound(label=cushion.label, children=[foam])
-        piece.location = cushion.location(p.bed_extension_percent)
+        percent = p.bed_extension_percent if bench == "Long bench" else p.cross_bed_extension_percent
+        piece.location = cushion.location(percent)
         pieces.append(piece)
     # Keep wall clearance on the parent so CAD poses and live child motion share the offset.
     cushions = Compound(label="Cushions", children=pieces)
@@ -151,19 +157,17 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
     return cushions
 
 
-def cushion_motion_tracks(p: Parameters) -> list[dict[str, object]]:
+def cushion_motion_tracks(p: Parameters, bench: str) -> list[dict[str, object]]:
     """Share the CAD pose samples with the viewer, including the lift/turn/lower sequence."""
     tracks: list[dict[str, object]] = []
-    for bench in ("Long bench", "Cross bench"):
-        for cushion in cushion_layout(p, bench):
-            path = f"/Campervan/{bench}/Cushions/{cushion.label}"
-            poses = cushion.poses()
-            for i, axis in enumerate("xyz"):
-                for kind in ("translation", "rotation"):
-                    values = [
-                        (percent, (center if kind == "translation" else rotation)[i])
-                        for percent, center, rotation in poses
-                    ]
-                    if any(value != values[0][1] for _, value in values[1:]):
-                        tracks.append({"path": path, "axis": axis, "kind": kind, "keyframes": values})
+    for cushion in cushion_layout(p, bench):
+        path = f"/Campervan/{bench}/Cushions/{cushion.label}"
+        poses = cushion.poses()
+        for i, axis in enumerate("xyz"):
+            for kind in ("translation", "rotation"):
+                values = [
+                    (percent, (center if kind == "translation" else rotation)[i]) for percent, center, rotation in poses
+                ]
+                if any(value != values[0][1] for _, value in values[1:]):
+                    tracks.append({"path": path, "axis": axis, "kind": kind, "keyframes": values})
     return tracks

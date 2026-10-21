@@ -160,8 +160,11 @@ The curved rear-door opening is a separate reference, not the outline of the flo
 | Folded solar panel | 830 | 760 | About 80 | Upright between the bed rear edge and closed rear door; owner-measured folded dimensions |
 | Folding chairs (2) | 600 each | 700 each | About 100 each | Owner-measured folded dimensions; storage location undecided; allow about 200mm combined depth when stacked without nesting |
 
-The measured 130mm bed-to-door clearance at the centreline exceeds the panel depth by about 50mm. Fit still depends
-on clearance across the full 830mm width and 760mm height, including the curved door/pillars and any restraints.
+The owner confirmed on 2026-10-19 that the folded solar panel bag fits the **existing** interior behind the bed
+with about 20–30mm spare clearance. This observed fit constrains the hatch shape; do not shrink the bag or move
+furniture to compensate for a collision with the estimated vehicle geometry. The 130mm centreline gap alone
+does not describe clearance across the bag's full width and height. The current provisional hatch curves into
+the upright bag reference above roughly Z=550; reconcile that vehicle-model discrepancy separately.
 
 ## Establish repeatable references
 

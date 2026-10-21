@@ -16,8 +16,10 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
 
     from campervan.cad.bed_motion import bed_keyframes
     from campervan.cad.body import sliding_door_offset
+    from campervan.cad.cabinet_doors import cabinet_door_motions
     from campervan.cad.cross_bed import cross_bed_layout
     from campervan.cad.cushions import cushion_motion_tracks
+    from campervan.cad.gear import gear_motions
     from campervan.cad.mirror import mirror_motion_tracks
     from campervan.cad.sliding_bed import long_bed_layout
 
@@ -29,6 +31,8 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
         {
             "type": "campervan_motion",
             "motions": {
+                **gear_motions(parameters),
+                **cabinet_door_motions(parameters),
                 "doors_close_percent": {
                     "position": parameters.doors_close_percent,
                     "tracks": [
@@ -66,12 +70,20 @@ def publish_model(model: Compound, settings: Settings, parameters: Parameters) -
                                 "axis": "x",
                                 "keyframes": bed_keyframes(long_bed_layout(parameters).travel),
                             },
+                            *cushion_motion_tracks(parameters, "Long bench"),
+                        ]
+                    ),
+                },
+                "cross_bed_extension_percent": {
+                    "position": parameters.cross_bed_extension_percent,
+                    "tracks": mirror_motion_tracks(
+                        [
                             {
                                 "path": "/Campervan/Cross bench/Sliding assembly",
                                 "axis": "x",
                                 "keyframes": bed_keyframes(cross_bed_layout(parameters).travel),
                             },
-                            *cushion_motion_tracks(parameters),
+                            *cushion_motion_tracks(parameters, "Cross bench"),
                         ]
                     ),
                 },

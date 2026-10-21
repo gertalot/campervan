@@ -1,4 +1,4 @@
-import type { Api, FieldMetadata, ModelStatus, MutationResponse, Parameters } from './api';
+import type { Api, FieldMetadata, ModelStatus, MutationResponse, ParameterResponse, Parameters } from './api';
 
 export interface View {
   setMetadata(metadata: Record<string, FieldMetadata>): void;
@@ -7,6 +7,8 @@ export interface View {
   setStatus(status: ModelStatus): void;
   setError(message: string | null): void;
   setPosition(name: string, percent: number): void;
+  setConstraints(metadata: Record<string, FieldMetadata>, errors: Record<string, string>,
+    adjustments: Record<string, string>, parameters: Parameters): void;
 }
 export interface Clock {
   setTimeout(callback: () => void, delay: number): unknown;
@@ -21,8 +23,12 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let metadata: Record<string, FieldMetadata> | null = null;
   let current: ModelStatus | null = null;
   let inputError: string | null = null;
+  let previewRevision = 0;
   const positionKey = 'campervan.positions';
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
+  if (positions.cross_bed_extension_percent === undefined && positions.bed_extension_percent !== undefined) {
+    positions.cross_bed_extension_percent = positions.bed_extension_percent;
+  }
 
   function setPosition(name: string, percent: number) {
     positions[name] = percent;
@@ -37,7 +43,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     }
     current = status;
     view.setStatus(status);
-    view.setError(status.error ? `Regeneration failed: ${status.error.message}` : inputError);
+    view.setError(inputError ?? (status.error ? `Regeneration failed: ${status.error.message}` : null));
   }
   function schedule(delay = current?.state === 'regenerating' ? 500 : 2000) {
     clock.clearTimeout(timer);
@@ -47,10 +53,10 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     view.setError(error instanceof Error ? error.message : String(error));
   }
   async function request(operation: () => Promise<MutationResponse>) {
-    if (!running) return;
+    if (!running) return false;
     try {
       const accepted = await operation();
-      if (!running) return;
+      if (!running) return false;
       inputError = null;
       if (accepted.session_id !== session) {
         // The next poll reloads parameters before displaying this session's revisions.
@@ -60,7 +66,41 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
           state: 'regenerating', error: null });
       }
       schedule();
-    } catch (error) { showError(error); schedule(2000); }
+      return true;
+    } catch (error) { showError(error); schedule(2000); return false; }
+  }
+  async function preview(raw: Record<string, string>): Promise<ParameterResponse | null> {
+    const revision = ++previewRevision;
+    if (!metadata) { view.setError('Parameters are unavailable.'); return null; }
+    const parameters: Parameters = {};
+    for (const [name, field] of Object.entries(metadata)) {
+      const text = raw[name] ?? '';
+      const value = Number(text);
+      if (!text.trim() || !Number.isFinite(value)) {
+        inputError = `${field.title}: enter a number.`;
+        view.setConstraints(metadata, { [name]: inputError }, {}, parameters);
+        view.setError(inputError);
+        return null;
+      }
+      parameters[name] = value;
+    }
+    try {
+      const data = await api.previewParameters(parameters);
+      if (revision !== previewRevision || !running) return null;
+      metadata = data.schema.properties;
+      const errors = data.errors ?? {};
+      inputError = Object.values(errors)[0] ?? null;
+      view.setConstraints(metadata, errors, data.adjustments ?? {}, data.parameters);
+      view.setError(inputError);
+      return inputError ? null : data;
+    } catch (error) {
+      if (revision === previewRevision) {
+        inputError = error instanceof Error ? error.message : String(error);
+        view.setConstraints(metadata, { _form: inputError }, {}, parameters);
+        view.setError(inputError);
+      }
+      return null;
+    }
   }
   async function poll() {
     if (!running || polling) return;
@@ -90,7 +130,10 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
         status = await api.getStatus();
         if (!running || status.session_id !== session) return;
         show(status);
-        if (status.state !== 'regenerating') await request(() => api.regenerate());
+        const draft = Object.fromEntries(Object.entries({ ...data.parameters, ...positions })
+          .map(([name, value]) => [name, String(value)]));
+        const valid = await preview(draft);
+        if (valid && status.state !== 'regenerating') await request(() => api.regenerate());
       } else show(status);
     } catch (error) { failed = true; showError(error); }
     finally {
@@ -105,25 +148,10 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
       await poll();
     },
     async apply(raw: Record<string, string>) {
-      if (!metadata) { view.setError('Parameters are unavailable.'); return; }
-      const parameters: Parameters = {};
-      for (const [name, field] of Object.entries(metadata)) {
-        const text = raw[name] ?? '';
-        const value = Number(text);
-        const invalid = !text.trim() || !Number.isFinite(value)
-          || (field.minimum !== undefined && value < field.minimum)
-          || (field.exclusiveMinimum !== undefined && value <= field.exclusiveMinimum)
-          || (field.maximum !== undefined && value > field.maximum)
-          || (field.exclusiveMaximum !== undefined && value >= field.exclusiveMaximum);
-        if (invalid) {
-          inputError = `${field.title}: enter a number within the displayed bounds.`;
-          view.setError(inputError);
-          return;
-        }
-        parameters[name] = value;
-      }
-      await request(() => api.putParameters(parameters));
+      const data = await preview(raw);
+      if (data && await request(() => api.putParameters(data.parameters))) view.setParameters(data.parameters, true);
     },
+    preview,
     async regenerate() {
       await request(() => api.regenerate());
       try { view.setParameters({ ...(await api.getParameters()).parameters, ...positions }, false); }

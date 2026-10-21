@@ -1,7 +1,11 @@
 import { seatedPose, type MannequinPose } from './mannequin';
 
 /** Browser-only pose controls: never send these through CAD regeneration. */
-export function setupMannequinControls(container: HTMLDetailsElement, change: (pose: MannequinPose) => void) {
+export function setupMannequinControls(
+  container: HTMLDetailsElement,
+  visible: HTMLInputElement,
+  change: (pose: MannequinPose) => void,
+) {
   const storageKey = 'campervan.mannequin.seated';
   const pose: MannequinPose = { ...seatedPose, ...JSON.parse(localStorage.getItem(storageKey) ?? '{}') };
   const inputs = new Map<keyof MannequinPose, HTMLInputElement>();
@@ -11,13 +15,7 @@ export function setupMannequinControls(container: HTMLDetailsElement, change: (p
   const summary = document.createElement('summary');
   summary.textContent = 'Seated mannequin · 178cm';
   container.append(summary);
-  const visibility = document.createElement('label');
-  visibility.className = 'mannequin-visibility';
-  const visible = document.createElement('input');
-  visible.type = 'checkbox';
   visible.checked = pose.visible;
-  visibility.append(visible, ' Show');
-  container.append(visibility);
   function update() {
     visible.checked = pose.visible;
     for (const [name, input] of inputs) {

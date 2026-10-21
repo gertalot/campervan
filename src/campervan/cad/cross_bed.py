@@ -107,7 +107,7 @@ def build_cross_sliding_assembly(p: Parameters, layout: CrossBedLayout) -> Compo
             build_cross_stops(p, layout),
         ],
     )
-    assembly.location = Location((bed_offset(layout.travel, p.bed_extension_percent), 0, 0))
+    assembly.location = Location((bed_offset(layout.travel, p.cross_bed_extension_percent), 0, 0))
     return assembly
 
 
