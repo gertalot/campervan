@@ -1,6 +1,6 @@
 """Bonded plywood cabinet with independent rear rails, a rear upright and fixed shelves."""
 
-from build123d import Color, Compound, Edge, Face, Location, Part, Plane, Side, Solid, Wire
+from build123d import Axis, Color, Compound, Edge, Face, Location, Part, Plane, Side, Solid, Wire
 
 from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
 from campervan.cad.cabinet_doors import build_cabinet_doors, cabinet_aisle_x, cabinet_door_strikes
@@ -57,9 +57,8 @@ def build_cabinet(p: Parameters) -> Compound:
     lower_rail = p.cabinet_lower_rail_top_mm
     if lower_rail - member < p.arch_height_mm + 3:
         raise ValueError("Cabinet wall rail must clear the wheel arch by 3mm.")
-    step = p.cabinet_frame_step_height_mm
-    upper_rail = (step + height) / 2
     storage_rail = p.cabinet_rear_storage_height_mm + member
+    upper_rail = (storage_rail + height) / 2
     shelf_levels = (lower_rail, storage_rail, upper_rail)
     rear_shelf_levels = (storage_rail, upper_rail)
 
@@ -227,7 +226,14 @@ def build_cabinet(p: Parameters) -> Compound:
     rear_pose = Location((x + thickness, 0, p.cabinet_rear_storage_height_mm))
     rear_blank = panel(width - thickness, thickness, p.body_height_mm - p.cabinet_rear_storage_height_mm)
     rear_fitted = (rear_blank.moved(rear_pose) & room) - rear_upright
-    rear_panel = Part(rear_fitted.moved(rear_pose.inverse()).solids(), color=Color(0.75, 0.66, 0.49))
+    # The rear corner opens out toward the cab. Use its restrictive rear-face
+    # outline as a flat cutting template, then extrude square through the ply.
+    # Keeping the 3D intersection would require a changing compound edge bevel.
+    rear_outline = rear_fitted.faces().filter_by(Plane.XZ).sort_by(Axis.Y)[0]
+    rear_panel = Part(
+        [Solid.extrude(rear_outline, (0, thickness, 0)).moved(rear_pose.inverse())],
+        color=Color(0.75, 0.66, 0.49),
+    )
     place(rear_panel, "Rear upper panel", rear_pose)
 
     shelves, ledges = [], []

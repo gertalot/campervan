@@ -245,10 +245,13 @@ After changing source code, stop the application, run `make build` again and res
 - [Existing campervan design](docs/what-we-built-in-onshape.md)
 - [Application architecture](docs/ARCHTECTURE.md)
 - [CAD model conventions](docs/cad-model.md)
+- [Conversion planner and purchases](docs/planner.md)
 - [Current FeatureScript](docs/fs/nv200-interior.fs)
 
-Use **Bill of materials** for a read-only sourcing list: supplier product links, NZD prices including GST,
-pack sizes, availability notes and the parts each material supplies. Bunnings availability is for Lyall Bay, Wellington;
+Use **Plan** as a continuous rich-text document with nested tasks, multiline text, tables and linked purchases.
+Use the compact toolbar or slash commands. Enter continues text within a task; Cmd/Ctrl+Shift+Enter adds another task.
+Use **Bill of materials** to edit categories/tags, quantities, purchases and costs, with filters and totals.
+Its **CAD stock and cutting details** section retains supplier links, pack sizes, availability and component uses. Bunnings availability is for Lyall Bay, Wellington;
 listed prices exclude freight. Each supplier product appears once, combining requirements across components.
 Material dimensions in the CAD sidebar open that product and highlight the relevant component use.
 
@@ -263,7 +266,7 @@ Sheet sizes and timber lengths define stock to cut; they do not change the furni
 `src/campervan/materials.json`; default selections and parameter bindings live in `materials.py`. Selections and
 measured overrides persist with parameters in `.local/project.json` and can be updated through the materials API.
 Camera and visibility stay intact when switching tabs.
-The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`), so reloads, bookmarks and
+The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`, `/plan`), so reloads, bookmarks and
 browser Back/Forward restore that view.
 
 Two dark-grey 600 × 400 × 200mm pillows share the long-bench conversion control. In day mode they are propped at 45°:

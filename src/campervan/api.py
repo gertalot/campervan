@@ -16,6 +16,7 @@ from campervan.coordinator import Coordinator, ModelStatus, Regenerate
 from campervan.materials import PROJECT_PATH, ROLES, MaterialUpdate, catalogue, resolve
 from campervan.parameter_fit import FitError, fit_parameters, parameter_constraints
 from campervan.parameters import Parameters, parameter_schema
+from campervan.planning_api import register_planning
 from campervan.settings import Settings, load_settings
 from campervan.worker import regenerate_model
 
@@ -87,6 +88,7 @@ def build_app(
                 await coordinator.close()
 
     app = FastAPI(lifespan=lifespan)
+    register_planning(app, project_path)
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None
     assets = Path(package.origin).parent / "server" / "static"
@@ -193,6 +195,7 @@ def create_app() -> FastAPI:
             raise RuntimeError("Built frontend missing. Run make build first, or use make dev-api for development.")
 
         @app.get("/cad", include_in_schema=False)
+        @app.get("/plan", include_in_schema=False)
         @app.get("/bom", include_in_schema=False)
         @app.get("/bom/{material}", include_in_schema=False)
         async def frontend_view() -> FileResponse:

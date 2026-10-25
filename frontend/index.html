@@ -10,6 +10,7 @@
     <header><h1>Campervan CAD</h1><nav aria-label="Project views">
       <button id="cad-tab" aria-controls="cad-panel" aria-pressed="true">CAD</button>
       <button id="bom-tab" aria-controls="bom-panel" aria-pressed="false">Bill of materials</button>
+      <button id="plan-tab" aria-controls="plan-panel" aria-pressed="false">Plan</button>
     </nav><p id="status" role="status" aria-live="polite" aria-atomic="true">Connecting…</p></header>
     <main id="workspace">
     <section id="cad-panel" aria-label="CAD">
@@ -45,6 +46,7 @@
         aria-orientation="vertical" aria-controls="sidebar"></div>
       <div id="viewer" aria-label="Interactive CAD viewer"></div>
     </section>
+    <section id="plan-panel" aria-label="Conversion plan" hidden></section>
     <section id="bom-panel" aria-label="Bill of materials" hidden></section>
     </main>
     <script type="module" src="/src/main.ts"></script>

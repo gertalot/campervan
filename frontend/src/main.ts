@@ -5,6 +5,9 @@ import { setupVisibility } from './visibility';
 import { createCadViewer } from './viewer';
 import { setupMannequinControls } from './mannequin-controls';
 import { setupMaterials } from './materials';
+import { PlanningClient } from './planning-api';
+import { setupPlanner } from './planner';
+import { setupTabs } from './tabs';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -37,7 +40,11 @@ const mannequinControls = setupMannequinControls(
   seatedMannequin, element<HTMLInputElement>('mannequin-visible'), pose => viewer.setMannequinPose(pose),
 );
 let dirty = false;
-const materials = setupMaterials();
+const planning = new PlanningClient();
+setupTabs();
+setupPlanner(element('plan-panel'), planning);
+const materials = setupMaterials(planning);
+void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
 const controller = createController(api, {

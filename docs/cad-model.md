@@ -313,7 +313,10 @@ The aisle frame's top rail extends to the finished plywood underside, following 
 It has no ceiling gap. Door openings and hinge elevations retain their existing heights; the top rail grows upward.
 The centre panel has the wheel-arch notch with 3mm clearance and reaches the floor inside the arch. The cab-end
 panel follows the plywood ceiling with the selected 3mm fitting gap. The `Rear upper panel` uses the same 12mm
-stock at Y = 0–12, starting at `cabinet_rear_storage_height_mm` (730mm) and following the body/ceiling fitting volume.
+stock at Y = 0–12, starting at `cabinet_rear_storage_height_mm` (730mm). Its outline is taken at the restrictive
+rear face of the body/ceiling fitting volume and extruded square through the plywood thickness. Both faces have
+the same outline: template and jigsaw the curves, without a compound bevel or sculpted edge. The opening widens
+toward the cab, leaving fitting clearance behind the wall-side edge.
 It closes the two upper rear compartments while leaving the full lower chair entrance open. Rear shelves start
 at its inner face, Y = 12; they have rear-panel ledges with their outer ends scribed around the rear pillar.
 There are no cabinet skins, full-height transverse rear frame, bottom threshold or lower rear crossbar.

@@ -1,4 +1,7 @@
 import { request, type ModelStatus, type Parameters } from './api';
+import type { PlanningClient } from './planning-api';
+import { mountPurchaseGrid } from './purchase-grid';
+import { onTab, showTab } from './tabs';
 
 interface Role { id: string; name: string; kind: 'sheet' | 'timber' | 'hardware'; fields: Record<string, string>; note: string; quantity: number | null }
 interface Product {
@@ -34,12 +37,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => {
 };
 const size = (cut: Cut) => `${cut.length} × ${cut.width} × ${cut.thickness}`;
 
-export function setupMaterials() {
+export function setupMaterials(client: PlanningClient) {
   const panel = document.getElementById('bom-panel')!;
-  const workspace = document.getElementById('workspace')!;
-  const cad = document.getElementById('cad-panel')!;
-  const cadTab = document.getElementById('cad-tab')!;
-  const bomTab = document.getElementById('bom-tab')!;
+  let purchaseGrid: ReturnType<typeof mountPurchaseGrid> | null = null;
   let data: Materials | null = null;
   let loading = false;
   let statusKey = '';
@@ -74,25 +74,15 @@ export function setupMaterials() {
     }
   }
 
-  function show(tab: 'cad' | 'bom', role?: string, updateUrl = true) {
-    const bom = tab === 'bom';
-    panel.hidden = !bom;
-    // Keep the CAD surface mounted and at its normal size, preserving its camera and WebSocket.
-    cad.style.visibility = bom ? 'hidden' : '';
-    cad.inert = bom;
-    workspace.classList.toggle('show-bom', bom);
-    cadTab.setAttribute('aria-pressed', String(!bom)); bomTab.setAttribute('aria-pressed', String(bom));
-    if (updateUrl) {
-      const path = bom && role ? `/bom/${encodeURIComponent(role)}` : `/${tab}`;
-      if (path !== window.location.pathname || window.location.search) window.history.pushState(null, '', path);
-    }
-    focusRole = role;
-    scrollToRole = Boolean(role);
+  onTab((tab, role) => {
+    if (tab !== 'bom') return;
+    focusRole = role; scrollToRole = Boolean(role);
+    const detail = panel.querySelector<HTMLDetailsElement>('.cad-stock-details');
+    if (role && detail) detail.open = true;
     highlightMaterial();
-    if (bom && (stale || !data)) void refresh();
-  }
-  cadTab.addEventListener('click', () => show('cad'));
-  bomTab.addEventListener('click', () => show('bom'));
+    if (stale || !data) void refresh();
+    else void purchaseGrid?.refresh();
+  });
 
   async function refresh() {
     if (loading) return;
@@ -107,7 +97,14 @@ export function setupMaterials() {
   }
 
   function render(data: Materials) {
-    panel.replaceChildren();
+    const host = document.getElementById('bom-panel')!;
+    purchaseGrid?.destroy(); host.replaceChildren();
+    host.append(el('h2', 'Bill of materials & purchases'));
+    const purchaseHost = el('div'); host.append(purchaseHost);
+    purchaseGrid = mountPurchaseGrid(purchaseHost, client);
+    const details = el('details'); details.className = 'cad-stock-details';
+    details.open = Boolean(focusRole); details.append(el('summary', 'CAD stock and cutting details'));
+    const panel = el('div'); details.append(panel); host.append(details);
     const groups = stockGroups(data);
     const intro = el('div'); intro.className = 'bom-intro';
     intro.append(el('h2', 'Bill of materials'), el('p', 'By material / product · NZD incl. GST · freight excluded'));
@@ -229,20 +226,14 @@ export function setupMaterials() {
     panel.append(el('p', 'Sheet and timber purchase counts need a cutting layout allowing for kerf, grain and waste. Selected stock dimensions drive the model.'));
     panel.append(el('p', 'Still to detail: drawer restraint / M5 slide fixings, lid screws, timber joint fixings and adhesive. Existing cushions and vehicle are outside this furniture shopping list.'));
   }
-  function restoreLocation() {
-    const match = window.location.pathname.match(/^\/bom(?:\/([a-z0-9-]+))?\/?$/);
-    show(match ? 'bom' : 'cad', match?.[1], false);
-    if (window.location.pathname === '/') window.history.replaceState(null, '', '/cad');
-  }
-  window.addEventListener('popstate', restoreLocation);
-  restoreLocation();
   return {
-    show: (role?: string) => show('bom', role),
+    show: (role?: string) => showTab('bom', role),
     onStatus(status: ModelStatus) {
       modelError = status.error ? `Regeneration failed: ${status.error.message}` : '';
       const key = `${status.session_id}:${status.requested_revision}:${status.state}`;
       if (key !== statusKey) {
         statusKey = key; stale = true;
+        client.refreshPurchases();
         if (!panel.hidden) void refresh();
       }
     },

@@ -12,6 +12,17 @@ deployed. The software stakes are low; keep the code, tooling and development pr
 - [CAD model conventions](docs/cad-model.md): native assembly structure, coordinates and geometry source mapping.
 - Follow Gert's latest decisions and this file when older design or Flow documents prescribe heavier machinery.
 
+## User experience
+
+- Before changing interaction behaviour, consult current primary UX/accessibility guidance applicable to the change.
+  Record the relevant sources and decisions; do not claim universal compliance from a few references.
+- Actions and shortcuts must be discoverable inside the app. Contextual menus show relevant action names and their
+  platform-specific shortcuts, with a visible menu trigger as well as pointer/keyboard invocation. Reuse shared command
+  definitions for menus, toolbar actions and key bindings. Preserve selection, normal writing and keyboard focus.
+- The Plan is a rich editor with one list type: numbered checkboxes, using hierarchical numbers such as `1`, `1.1`,
+  `1.2.1`. Do not offer task/bullet/numbered list choices. Items support multiline prose, tables and purchases.
+- [Planner interaction guidance](docs/planner-ux.md) records the current research and decisions.
+
 ## Validation
 
 ### CRITICAL: Do not create or run tests
