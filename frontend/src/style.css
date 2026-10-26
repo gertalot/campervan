@@ -1,4 +1,5 @@
 :root {
+  --piece-selection-colour: #ff39a0;
   color-scheme: dark;
   font-family: system-ui, sans-serif;
   font-size: 12px;
@@ -80,6 +81,12 @@ aside button:focus-visible, aside input:focus-visible, summary:focus-visible { o
   margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid #34373e; border-radius: 0; }
 #viewer .tcv_cad_toolbar > :not([data-campervan-control]) { display: none !important; }
 #viewer .tcv_cad_toolbar > [data-campervan-control] { display: inline-block !important; }
+#viewer .tcv_cad_toolbar > .cad-piece-controls { display: inline-flex !important; margin-left: 6px;
+  padding-left: 6px; border-left: 1px solid #737780; }
+#viewer .cad-piece-button { color: var(--tcv-font-color); cursor: pointer; }
+#viewer .cad-piece-button svg { display: block; width: 21px; height: 21px; margin: auto; }
+#viewer .cad-piece-button:disabled { opacity: 0.4; cursor: default; }
+#viewer .cad-piece-button:focus-visible { outline: 2px solid #8bb7e8; outline-offset: -2px; border-radius: 4px; }
 #viewer .tcv_cad_toolbar > :has(.tcv_button_reset),
 #viewer .tcv_cad_toolbar > :has(.tcv_button_distance) {
   margin-left: 6px; padding-left: 6px; border-left: 1px solid #737780;

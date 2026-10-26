@@ -126,16 +126,18 @@ def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
     height = p.platform_height_mm - p.slat_thickness_mm
     thickness = p.frame_thickness_mm
     closed_width = p.long_bench_width_mm + thickness
+    frame_rear = layout.slat_ys[1]
+    frame_length = layout.slat_ys[-2] + p.slat_width_mm - frame_rear
 
     frame = slide_mount_frame(
-        p.seat_length_mm,
+        frame_length,
         thickness,
         height,
         p.member_width_mm,
         p.drawer_mount_band_mm,
         p.inside_radius_mm,
     )
-    frame.location = Location((closed_width, 0, 0), (0, 0, 90))
+    frame.location = Location((closed_width, frame_rear, 0), (0, 0, 90))
     frame.label, frame.color = "Moving aisle frame", Color(0.88, 0.61, 0.25)
     strip = panel(p.sliding_strip_width_mm, layout.strip_front - layout.strip_rear, thickness)
     strip.location = Location((layout.strip_x, layout.strip_rear, height - thickness))

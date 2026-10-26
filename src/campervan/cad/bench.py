@@ -58,15 +58,15 @@ def build_long_bench(p: Parameters) -> Compound:
     aisle = slide_mount_frame(length, thickness, height, member, p.drawer_mount_band_mm, radius)
     place(relieve_aisle_frame(aisle, p, layout), "Aisle frame", width, 0, rotation=90)
 
-    end_width = width - internal_x - thickness
+    end_width = width - internal_x - 2 * thickness
     end_frame = frame_panel(
         end_width, thickness, height, [(member, end_width - member, -2 * radius, height - member)], radius
     )
-    place(end_frame, "Cab-end frame", internal_x, length - total)
+    place(end_frame, "Cab-end frame", internal_x + thickness, length - thickness)
 
     # This stationary bed support stays in place when the drawer module is removed.
     support = slide_mount_frame(
-        length - total, thickness, p.drawer_frame_height_mm, member, p.drawer_mount_band_mm, radius
+        length, thickness, p.drawer_frame_height_mm, member, p.drawer_mount_band_mm, radius
     )
     support += panel(member, thickness, height - p.drawer_frame_height_mm).moved(
         Location((0, 0, p.drawer_frame_height_mm))

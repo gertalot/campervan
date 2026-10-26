@@ -77,14 +77,14 @@ def build_seat(p: Parameters, name: str, x: float, offset: float, recline: float
     for side, support_x in (("Left", -width * 0.32), ("Right", width * 0.32)):
         outline = Wire.make_polygon(
             [
-                (support_x - 12, rear_y, 0),
+                (support_x - 12, rear_y, -p.floor_build_up_mm),
                 (support_x - 12, rear_y, rear_z),
                 (support_x - 12, front_y, front_z),
-                (support_x - 12, front_y, 0),
-                (support_x - 12, front_y - leg, 0),
+                (support_x - 12, front_y, -p.floor_build_up_mm),
+                (support_x - 12, front_y - leg, -p.floor_build_up_mm),
                 (support_x - 12, front_y - leg, front_z - rail),
                 (support_x - 12, rear_y + leg, rear_z - rail),
-                (support_x - 12, rear_y + leg, 0),
+                (support_x - 12, rear_y + leg, -p.floor_build_up_mm),
             ]
         )
         support = Solid.extrude(Face(outline), (24, 0, 0))
@@ -103,15 +103,16 @@ def build_cab(p: Parameters) -> Compound:
     if p.cab_seat_height_mm <= p.cab_seat_thickness_mm:
         raise ValueError("Cab seat height must leave room below its cushion.")
 
-    # Owner-confirmed: cab and cargo share one level floor.
+    # Cab and cargo vehicle floors share a level below the fitted plywood datum.
     front = rear + p.cab_length_mm
+    floor_z = -p.floor_build_up_mm
     floor = Face(
         Wire.make_polygon(
             [
-                (0, rear, 0),
-                (p.cargo_width_mm, rear, 0),
-                (centre + p.cab_front_width_mm / 2, front, 0),
-                (centre - p.cab_front_width_mm / 2, front, 0),
+                (0, rear, floor_z),
+                (p.cargo_width_mm, rear, floor_z),
+                (centre + p.cab_front_width_mm / 2, front, floor_z),
+                (centre - p.cab_front_width_mm / 2, front, floor_z),
             ]
         )
     )

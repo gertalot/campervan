@@ -1195,6 +1195,45 @@ class Parameters(BaseModel):
         description="0 faces the rear door; 90 turns the wide face along the van.",
         json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Solar panel bag"]},
     )
+    chilly_bin_width_mm: float = Field(
+        default=470.0, gt=0, title="Width",
+        description="Owner-measured closed bin width, excluding the carry handle.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_depth_mm: float = Field(
+        default=280.0, gt=0, title="Depth",
+        description="Owner-measured closed bin depth, excluding the carry handle.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_height_mm: float = Field(
+        default=410.0, gt=0, title="Height",
+        description="Owner-measured height including the closed lid, excluding the carry handle.",
+        json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_x_mm: float = Field(
+        default=750.0, ge=-1000, le=2500, title="Centre X",
+        description="Footprint centre across the van, from the left inner wall.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_y_mm: float = Field(
+        default=1050.0, ge=-1000, le=3000, title="Centre Y",
+        description="Footprint centre forward of the rear opening; initial aisle placement.",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_z_mm: float = Field(
+        default=0.0, ge=0, le=1300, title="Bottom above floor",
+        json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_yaw_deg: float = Field(
+        default=90.0, ge=-180, le=180, title="Rotation",
+        description="0 faces the wide red side toward the rear; 90 turns it along the van.",
+        json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chilly bin"]},
+    )
+    chilly_bin_handle_angle_deg: float = Field(
+        default=0.0, ge=0, le=135, title="Handle folded",
+        description="0 is upright; 135 folds forward beside the bin. Handle dimensions and travel are photo estimates.",
+        json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chilly bin", "Handle"]},
+    )
     chair_width_mm: float = Field(
         default=600.0,
         gt=0,

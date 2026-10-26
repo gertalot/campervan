@@ -55,6 +55,11 @@ class Positions(BaseModel):
     chair_2_y_mm: float = 600
     chair_2_z_mm: float = 0
     chair_2_yaw_deg: float = 90
+    chilly_bin_x_mm: float = 750
+    chilly_bin_y_mm: float = 1050
+    chilly_bin_z_mm: float = 0
+    chilly_bin_yaw_deg: float = 90
+    chilly_bin_handle_angle_deg: float = 0
 
 
 def build_app(

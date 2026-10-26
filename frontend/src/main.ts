@@ -7,7 +7,7 @@ import { setupMannequinControls } from './mannequin-controls';
 import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
 import { setupPlanner } from './planner';
-import { setupTabs } from './tabs';
+import { setupTabs, showTab } from './tabs';
 import { setupCutting } from './cutting';
 import './style.css';
 
@@ -45,7 +45,13 @@ const planning = new PlanningClient();
 setupTabs();
 setupPlanner(element('plan-panel'), planning);
 const materials = setupMaterials(planning);
-const cutting = setupCutting(element('cuts-panel'));
+const cutting = setupCutting(element('cuts-panel'), path => {
+  showTab('cad');
+  if (!viewer.focusPiece(path)) {
+    error.textContent = 'This piece is not in the displayed CAD model yet.'; error.hidden = false;
+  }
+});
+viewer.setPieceLink({ has: cutting.hasPart, show: path => { void cutting.showPart(path); } });
 void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 

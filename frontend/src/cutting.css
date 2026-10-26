@@ -55,8 +55,12 @@
 .cut-sheet-heading > span { color: #58616c; }
 .cut-sheet-svg { display: block; width: 100%; margin: 8px 0; }
 .cut-sheet-svg [data-part] { cursor: pointer; }
-.cut-sheet-svg [data-part]:focus path, .cut-sheet-svg .cut-selected path { stroke: #1456aa; stroke-width: 6px; }
+.cut-sheet-svg [data-part]:focus path { stroke: #1456aa; stroke-width: 6px; }
 .cut-sheet-svg [data-part]:hover path { stroke: #426a9b; stroke-width: 4px; }
+.cut-sheet-svg.has-selection [data-part]:not(.cut-selected) { opacity: 0.3; }
+.cut-sheet-svg [data-part].cut-selected > path,
+.cut-piece-card.cut-selected svg path { fill: var(--piece-selection-colour); stroke: #641235; stroke-width: 4px;
+  vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px #fff); }
 .cut-saw-lines { display: none; }
 .show-cuts .cut-saw-lines { display: block; }
 .cut-sheet > p { font-size: 11px; color: #58616c; }
@@ -86,7 +90,8 @@
 #cuts-panel .cut-parts button { padding: 0; border: 0; background: none; text-align: left; }
 .cut-parts td:nth-child(2) { white-space: nowrap; }
 .cut-warning { color: #ffc188; padding: 8px 12px; border-left: 3px solid currentColor; }
-.cut-inspector { width: min(560px, 95vw); max-height: 88vh; overflow: auto; color: #e4e9f0; background: #222a34;
+.cut-inspector { position: fixed; z-index: 40; top: 70px; bottom: auto; margin: 0;
+  width: min(560px, 95vw); max-height: calc(100vh - 90px); overflow: auto; color: #e4e9f0; background: #222a34;
   border: 1px solid #8699b0; border-radius: 8px; padding: 22px; }
 .cut-inspector::backdrop { background: #0008; }
 .cut-inspector h2 { padding-right: 55px; margin-bottom: 12px !important; }
@@ -95,7 +100,10 @@
 .cut-inspector .cut-piece-card { width: 100%; }
 .cut-inspector .cut-piece-card svg { height: 180px; }
 .cut-inspector-close { float: right; }
-.cut-selected { outline: 2px solid #9dcaff; outline-offset: -2px; }
+.cut-selected { outline: 4px solid var(--piece-selection-colour); outline-offset: 2px; }
+#cuts-panel .cut-piece-card.cut-selected { background: #49263b; border-color: #ff91ca; color: #fff; }
+#cuts-panel .cut-sheet-key button.cut-selected, #cuts-panel .cut-parts button.cut-selected {
+  background: var(--piece-selection-colour); color: #20101a; padding: 3px 6px; font-weight: 750; }
 @media (max-width: 720px) {
   #cuts-panel { padding: 12px 10px 40px; }
   .cut-page-header { align-items: start; }

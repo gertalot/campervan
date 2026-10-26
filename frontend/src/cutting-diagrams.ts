@@ -30,6 +30,7 @@ export function pieceGallery(parts: Part[], groups: Group[], select: (path: stri
   for (const batch of batches.values()) {
     const part = batch[0], group = groups.find(g => g.parts.some(p => p.path === part.path))!;
     const card = el('button'); card.type = 'button'; card.className = 'cut-piece-card'; card.dataset.part = part.path;
+    card.dataset.partPaths = JSON.stringify(batch.map(piece => piece.path));
     card.setAttribute('aria-label', `${fullName(part)}, ${batch.length} pieces, ${mm(part.length)} by ${mm(part.width)} mm`);
     card.onclick = () => select(part.path);
     const svg = document.createElementNS(ns, 'svg');

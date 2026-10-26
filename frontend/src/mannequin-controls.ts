@@ -1,4 +1,5 @@
 import { lyingPose, secondLyingPose, seatedPose, restoreMannequinPose, type MannequinPose } from './mannequin';
+import { createVisibilityButton, updateVisibilityButton } from './visibility';
 
 /** Browser-only pose controls: never send these through CAD regeneration. */
 function setupPoseControls(
@@ -14,12 +15,16 @@ function setupPoseControls(
   container.open = localStorage.getItem(`${storageKey}.collapsed`) !== 'true';
   container.addEventListener('toggle', () => localStorage.setItem(`${storageKey}.collapsed`, String(!container.open)));
   const summary = document.createElement('summary');
-  summary.textContent = defaults.mode === 'seated' ? 'Seated mannequin' : defaults.mode === 'lying' ? 'Lying mannequin' : 'Second lying mannequin';
+  const title = defaults.mode === 'seated' ? 'Seated mannequin' : defaults.mode === 'lying' ? 'Lying mannequin' : 'Second lying mannequin';
+  summary.textContent = title;
+  const eye = createVisibilityButton(title, () => { pose.visible = !pose.visible; update(); });
+  summary.append(eye);
   container.append(summary);
   const unit = (name: keyof MannequinPose) => ['x', 'y', 'z', 'compression'].includes(name)
     || (defaults.mode !== 'seated' && ['shoulder', 'elbow'].includes(name)) ? 'mm' : '°';
   function update() {
-      for (const [name, input] of inputs) {
+    updateVisibilityButton(eye, title, pose.visible ? 'shown' : 'hidden');
+    for (const [name, input] of inputs) {
       input.value = String(pose[name]);
       const output = outputs.get(name);
       if (output) output.value = `${Math.round(Number(pose[name]))}${unit(name)}`;
@@ -40,7 +45,7 @@ function setupPoseControls(
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = label;
-    button.addEventListener('click', () => { Object.assign(pose, angles); update(); });
+    button.addEventListener('click', () => { Object.assign(pose, angles, { visible: pose.visible }); update(); });
     presets.append(button);
   }
   container.append(presets);
@@ -128,7 +133,7 @@ function setupPoseControls(
   };
 }
 
-/** Independent mannequins share only the visibility checkbox. */
+/** The master checkbox masks each mannequin's saved visibility preference. */
 export function setupMannequinControls(
   container: HTMLDetailsElement, visible: HTMLInputElement, change: (pose: MannequinPose) => void,
 ) {
@@ -148,12 +153,12 @@ export function setupMannequinControls(
     container.append(group);
     return setupPoseControls(group, defaults, pose => {
       poses.set(pose.mode, pose);
-      change({ ...pose, visible: visible.checked });
+      change({ ...pose, visible: visible.checked && pose.visible });
     });
   });
   visible.addEventListener('change', () => {
     localStorage.setItem('campervan.mannequin.visible', String(visible.checked));
-    for (const pose of poses.values()) change({ ...pose, visible: visible.checked });
+    for (const pose of poses.values()) change({ ...pose, visible: visible.checked && pose.visible });
   });
   return { fitted: groups[0].fitted };
 }

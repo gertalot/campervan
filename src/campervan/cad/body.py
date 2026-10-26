@@ -35,7 +35,11 @@ WALL = Color(0.55, 0.62, 0.66, 0.32)
 def wheel_arch(p: Parameters, right: bool) -> Part:
     """Shared positioned wheel-house envelope for display and adjoining pillar trim."""
     depth = (p.cargo_width_mm - p.arch_gap_mm) / 2
-    block = Box(depth, p.arch_length_mm, p.arch_height_mm, align=(Align.MIN, Align.MIN, Align.MIN))
+    # Arch height is measured above the fitted floor. Add the floor build-up
+    # below it, preserving the crown and all furniture clearances above Z=0.
+    block = Box(
+        depth, p.arch_length_mm, p.arch_height_mm + p.floor_build_up_mm, align=(Align.MIN, Align.MIN, Align.MIN)
+    )
     arch = fillet(block.edges().filter_by(Axis.X).group_by(Axis.Z)[-1], p.arch_radius_mm)
     crown_edges = [
         edge for edge in arch.edges() if edge.bounding_box().size.X < 1e-6 and edge.bounding_box().min.Z > 1e-6
@@ -43,7 +47,9 @@ def wheel_arch(p: Parameters, right: bool) -> Part:
     arch = fillet(crown_edges, p.arch_crown_radius_mm)
     arch.color = Color(0.45, 0.49, 0.52, 0.32)
     arch.label = "Right wheel arch" if right else "Left wheel arch"
-    arch.location = Location((p.cargo_width_mm - depth if right else 0, p.arch_rear_offset_mm, 0))
+    arch.location = Location(
+        (p.cargo_width_mm - depth if right else 0, p.arch_rear_offset_mm, -p.floor_build_up_mm)
+    )
     return arch
 
 
@@ -456,8 +462,9 @@ def sliding_door(p: Parameters, front: float, right: bool) -> Compound:
     return door
 
 
-def floor_outline_wire(p: Parameters) -> Wire:
+def floor_outline_wire(p: Parameters, *, front_y: float | None = None) -> Wire:
     """Straight rear sheet edge and notches around the wheel-house footprints."""
+    front = p.body_length_mm if front_y is None else front_y
     left = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
     arch_inner = (p.cargo_width_mm - p.arch_gap_mm) / 2
     arch_rear, arch_front = p.arch_rear_offset_mm, p.arch_rear_offset_mm + p.arch_length_mm
@@ -470,8 +477,8 @@ def floor_outline_wire(p: Parameters) -> Wire:
         (p.cargo_width_mm - arch_inner, arch_rear, 0),
         (p.cargo_width_mm - arch_inner, arch_front, 0),
         (p.cargo_width_mm, arch_front, 0),
-        (p.cargo_width_mm, p.body_length_mm, 0),
-        (0, p.body_length_mm, 0),
+        (p.cargo_width_mm, front, 0),
+        (0, front, 0),
         (0, arch_front, 0),
         (arch_inner, arch_front, 0),
         (arch_inner, arch_rear, 0),
@@ -566,7 +573,10 @@ def rounded_rear_corner(p: Parameters, sections: list[list[Wire]], rear: list[Sh
 
 
 def build_floor_plywood(p: Parameters) -> Solid:
-    plywood = Solid.extrude(Face(floor_outline_wire(p)), (0, 0, -p.floor_ply_thickness_mm))
+    # Furniture is set forward from the rear opening; support the cross-bench feet
+    # even when their front edge extends beyond the nominal cargo-body boundary.
+    front = max(p.body_length_mm, p.furniture_rear_gap_mm + p.cargo_length_mm)
+    plywood = Solid.extrude(Face(floor_outline_wire(p, front_y=front)), (0, 0, -p.floor_ply_thickness_mm))
     plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
     return plywood
 

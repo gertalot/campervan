@@ -1,5 +1,6 @@
 import { request, type ModelStatus } from './api';
-import { onTab } from './tabs';
+import { onTab, showTab } from './tabs';
+import { createPlanDropdown } from './plan-dropdown';
 import { pieceGallery, sheetDrawing } from './cutting-diagrams';
 import { assembly, csv, download, el, fullName, isPlywood, materialName, mm, option, partColour, pieceKey } from './cutting-types';
 import type { Data, Grain, Group, Mode, Part, Result, StockOptions } from './cutting-types';
@@ -7,9 +8,12 @@ import './cutting.css';
 
 const methodNames: Record<Mode, string> = { straight: 'Straight saw cuts', nesting: 'Nested shapes' };
 
-export function setupCutting(host: HTMLElement) {
+export function setupCutting(host: HTMLElement, showInCad: (path: string) => void) {
   let data: Data | null = null, filter = 'all', loading = false, statusKey = '', modelSession = '', savingFailed = false;
   let pending = Promise.resolve();
+  let refreshPromise: Promise<void> | null = null, selectedPath: string | null = null, pointerX: number | null = null;
+  let returnSpot: { path: string; filter: string; scroll: number } | null = null;
+  const pieceMenu = createPlanDropdown();
   const starting = new Set<string>(), errors = new Map<string, string>(), attempted = new Set<string>();
   let progressLoading = false;
   const layoutHosts = new Map<string, HTMLElement>();
@@ -18,6 +22,59 @@ export function setupCutting(host: HTMLElement) {
   const content = el('div'); content.className = 'cut-content';
   const inspector = el('dialog'); inspector.className = 'cut-inspector'; inspector.setAttribute('aria-label', 'Wood piece details');
   inspector.addEventListener('click', event => { if (event.target === inspector) inspector.close(); });
+  function goToCad(path: string) {
+    returnSpot = { path, filter, scroll: host.scrollTop };
+    inspector.close(); showInCad(path);
+  }
+  function clearSelection() {
+    selectedPath = null; inspector.close();
+    markSelected();
+  }
+  function pieceAt(event: Event) {
+    return (event.target as Element).closest<HTMLElement | SVGElement>('[data-part]')?.dataset.part;
+  }
+  host.addEventListener('pointerdown', event => { pointerX = event.clientX; });
+  host.addEventListener('keydown', event => {
+    pointerX = null;
+    if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
+      const path = pieceAt(event);
+      if (path) { event.preventDefault(); openPieceMenu(path, event.target as HTMLElement); }
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || host.hidden || event.defaultPrevented || (!selectedPath && !inspector.open)) return;
+    // Menus dismiss themselves first. Selection also clears when a layout refresh
+    // has removed the focused piece and keyboard focus has returned to the body.
+    if ((event.target as Element).closest('[role="menu"]')) return;
+    event.preventDefault(); clearSelection();
+  }, true);
+  host.addEventListener('dblclick', event => {
+    const path = pieceAt(event);
+    if (path) { event.preventDefault(); goToCad(path); }
+  });
+  function openPieceMenu(path: string, trigger?: HTMLElement, x?: number, y?: number) {
+    pieceMenu.open({ label: 'Piece actions', trigger, x, y, items: [
+      { label: 'Show in 3D', group: 'piece', shortcut: 'Double-click', run: () => goToCad(path) },
+      { label: 'Piece details', group: 'piece', run: () => selectPart(path) },
+      { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape', run: clearSelection },
+    ] });
+  }
+  host.addEventListener('contextmenu', event => {
+    const path = pieceAt(event);
+    if (path) { event.preventDefault(); openPieceMenu(path, undefined, event.clientX, event.clientY); }
+  });
+  host.addEventListener('pointerover', event => {
+    const piece = (event.target as Element).closest<HTMLElement | SVGElement>('[data-part]');
+    if (piece && !piece.getAttribute('title')?.includes('Double-click')) {
+      piece.setAttribute('title', `${piece.getAttribute('title') ?? ''}\nDouble-click to show in 3D`.trim());
+      const title = piece.querySelector('title');
+      if (title && !title.textContent?.includes('Double-click')) title.textContent += '\nDouble-click to show in 3D';
+    }
+  });
+  document.addEventListener('pointerdown', event => {
+    if (inspector.open && !inspector.contains(event.target as Node)
+      && !(event.target as Element).closest('[data-part]')) inspector.close();
+  });
 
   const mode = () => data!.state.settings.algorithm;
   const resultKey = (g: Group) => `${g.key}:${mode()}`;
@@ -84,18 +141,23 @@ export function setupCutting(host: HTMLElement) {
     return settings;
   }
 
-  async function refresh() {
-    if (loading) return;
+  function refresh(): Promise<void> {
+    if (refreshPromise) return refreshPromise;
     loading = true;
-    try { await pending; data = await request<Data>('cutting'); render(); }
-    catch (error) { host.replaceChildren(feedback); message((error as Error).message); }
-    finally { loading = false; }
+    const scroll = host.scrollTop;
+    refreshPromise = (async () => {
+      try { await pending; data = await request<Data>('cutting'); render(); host.scrollTop = scroll; }
+      catch (error) { host.replaceChildren(feedback); message((error as Error).message); }
+      finally { loading = false; refreshPromise = null; }
+    })();
+    return refreshPromise;
   }
   function render() {
     if (!data) return;
     layoutHosts.clear(); host.replaceChildren();
     const header = el('div'); header.className = 'cut-page-header';
-    const title = el('div'); title.append(el('h2', 'Cut list'), el('p', `${data.groups.reduce((n, g) => n + g.parts.length, 0)} pieces from the van design · dimensions in mm`));
+    const title = el('div'); title.append(el('h2', 'Cut list'), el('p', `${data.groups.reduce((n, g) => n + g.parts.length, 0)} pieces from the van design · dimensions in mm`),
+      el('p', 'Click a piece for details · double-click to show it in 3D'));
     const actions = el('div'); actions.className = 'cut-page-actions';
     const print = el('button', 'Print'); print.type = 'button'; print.onclick = () => window.print();
     const exportList = el('button', 'Export cut list'); exportList.type = 'button'; exportList.onclick = exportCsv;
@@ -115,6 +177,7 @@ export function setupCutting(host: HTMLElement) {
     if (!data.current) message('These pieces are from the previous CAD model. The updated model is still loading.');
     if (filter === 'all') renderOverview();
     else { renderFocus(); startFocusedLayouts(); }
+    markSelected();
   }
 
   function renderOverview() {
@@ -140,12 +203,14 @@ export function setupCutting(host: HTMLElement) {
   function selectPart(path: string) {
     const g = data!.groups.find(g => g.parts.some(p => p.path === path));
     const part = g?.parts.find(p => p.path === path); if (!g || !part) return;
-    for (const node of host.querySelectorAll<HTMLElement | SVGElement>('[data-part]')) node.classList.toggle('cut-selected', node.dataset.part === path);
+    selectedPath = path; markSelected();
     inspector.replaceChildren();
     const close = el('button', 'Close'); close.type = 'button'; close.className = 'cut-inspector-close'; close.onclick = () => inspector.close();
     inspector.append(close, el('h2', fullName(part)), el('p', part.path.split(' / ').join(' › ')),
       pieceGallery([part], [g], () => {}), el('strong', `${mm(part.length)} × ${mm(part.width)} × ${mm(part.thickness)} mm`),
       el('p', materialName(g)));
+    const show = el('button', 'Show in 3D'); show.type = 'button'; show.onclick = () => goToCad(path);
+    show.title = 'Double-click a piece to show it in 3D'; inspector.append(show);
     const result = data!.state.results[resultKey(g)];
     const sheetIndex = result?.sheets.findIndex(s => s.parts.some(p => p.path === path)) ?? -1;
     if (sheetIndex >= 0) inspector.append(el('p', `${g.kind === 'timber' ? 'Timber length' : 'Sheet'} ${sheetIndex + 1}${isCurrent(g, result!) ? '' : ' · previous layout'}`));
@@ -160,7 +225,23 @@ export function setupCutting(host: HTMLElement) {
     focus.type = 'button'; focus.onclick = () => {
       inspector.close(); filter = isPlywood(g) ? `ply:${g.thickness}` : g.kind === 'timber' ? 'timber' : 'other'; render();
     }; inspector.append(focus);
-    if (!inspector.open) inspector.showModal();
+    inspector.style.width = pointerX === null ? 'min(560px, calc(100vw - 32px))' : 'min(560px, 44vw)';
+    inspector.style.left = pointerX !== null && pointerX > window.innerWidth / 2 ? '16px' : 'auto';
+    inspector.style.right = pointerX !== null && pointerX > window.innerWidth / 2 ? 'auto' : '16px';
+    const focused = document.activeElement as HTMLElement | null;
+    if (!inspector.open) inspector.show();
+    if (pointerX !== null) focused?.focus({ preventScroll: true });
+  }
+  function markSelected() {
+    for (const node of host.querySelectorAll<HTMLElement | SVGElement>('[data-part]')) {
+      node.classList.toggle('cut-selected', Boolean(selectedPath && represents(node, selectedPath)));
+    }
+    for (const svg of host.querySelectorAll('.cut-sheet-svg')) {
+      svg.classList.toggle('has-selection', Boolean(svg.querySelector('.cut-selected')));
+    }
+  }
+  function represents(node: HTMLElement | SVGElement, path: string) {
+    return node.dataset.part === path || (JSON.parse(node.dataset.partPaths ?? '[]') as string[]).includes(path);
   }
 
   function renderFocus() {
@@ -213,7 +294,7 @@ export function setupCutting(host: HTMLElement) {
     head.append(row); table.append(head); const body = el('tbody'); table.append(body);
     for (const part of g.parts) {
       const tr = el('tr'); tr.dataset.part = part.path;
-      const td = el('td'), name = el('button', fullName(part)); name.type = 'button'; name.onclick = () => selectPart(part.path);
+      const td = el('td'), name = el('button', fullName(part)); name.type = 'button'; name.dataset.part = part.path; name.onclick = () => selectPart(part.path);
       td.append(name); tr.append(td, el('td', `${mm(part.length)} × ${mm(part.width)}`), el('td', `${mm(part.thickness)} mm`));
       const orientation = el('td'), select = el('select'); select.setAttribute('aria-label', `Grain direction for ${fullName(part)}`);
       select.append(option('', 'Use global setting'), option('length', 'Along length'), option('width', 'Along width'), option('free', 'Either direction'));
@@ -301,6 +382,7 @@ export function setupCutting(host: HTMLElement) {
       sheets.append(card);
     });
     root.append(sheets);
+    markSelected();
   }
 
   function startFocusedLayouts() {
@@ -354,15 +436,31 @@ export function setupCutting(host: HTMLElement) {
     for (const g of filteredGroups()) for (const p of g.parts) rows.push([assembly(p), fullName(p), materialName(g), p.length, p.width, p.thickness, p.path]);
     download('campervan-cut-list.csv', csv(rows), 'text/csv;charset=utf-8');
   }
-  onTab(tab => { if (tab === 'cuts') void refresh(); });
+  void refresh();
+  onTab(tab => { if (tab === 'cuts') void refresh(); else { inspector.close(); pieceMenu.close(); } });
   return {
+    hasPart(path: string) { return Boolean(data?.groups.some(g => g.parts.some(p => p.path === path))); },
+    async showPart(path: string) {
+      showTab('cuts'); await refresh();
+      const group = data?.groups.find(g => g.parts.some(p => p.path === path)); if (!group) return;
+      const returning = returnSpot?.path === path ? returnSpot : null;
+      returnSpot = null;
+      filter = returning?.filter ?? (isPlywood(group) ? `ply:${group.thickness}` : group.kind === 'timber' ? 'timber' : 'other');
+      selectedPath = path; render(); markSelected();
+      const matches = [...host.querySelectorAll<HTMLElement | SVGElement>('[data-part]')].filter(n => represents(n, path));
+      const target = matches.find(n => n.closest('.cut-sheet')) ?? matches[0];
+      if (returning) host.scrollTop = returning.scroll;
+      else target?.scrollIntoView({ block: 'center' });
+      target?.focus({ preventScroll: true });
+      message(`${fullName(group.parts.find(p => p.path === path)!)}${target?.closest('.cut-sheet') ? '' : ' · sheet layout not available in this view'}`);
+    },
     onStatus(status: ModelStatus) {
       if (modelSession !== status.session_id) { modelSession = status.session_id; attempted.clear(); }
       if (data && !host.hidden && Object.values(data.jobs).some(job => job.state === 'running')) void refreshProgress();
       const key = `${status.session_id}:${status.requested_revision}:${status.state}`;
       if (key === statusKey) return; statusKey = key;
       if (data) data.current = status.state === 'ready';
-      if (!host.hidden) void refresh();
+      if (!host.hidden || status.state === 'ready') void refresh();
     },
   };
 }

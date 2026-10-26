@@ -147,8 +147,10 @@ The [Japanese 2017 NV200 body research](research/nv200/README.md) records the ac
 source limitations and a measurement plan. `body.py` builds an adjustable interior envelope using native edges, faces
 and lofted shells. These are reference surfaces without invented material thickness, not fabrication-ready bodywork.
 
-`cab.py` extends the floor forward from `body_length_mm`, retaining a common finished-floor datum. Its headliner
-starts at the cargo plywood's front edge (Y = 1660), then widens into rounded side returns over the cab. The centre
+`cab.py` extends the vehicle floor forward from `body_length_mm` at Z = −`floor_build_up_mm` (currently −18mm),
+level with the cargo vehicle floor below the fitted plywood. Seat and headliner dimensions use the Z = 0 datum.
+Seat supports extend down to the vehicle floor. Its headliner starts at the cargo ceiling plywood's front edge
+(Y = 1660), then widens into rounded side returns over the cab. The centre
 stays level unless a front drop is configured. Seat cushions retain the older Japanese 475 × 455mm reference sizes.
 Continuous highbacks have integrated headrests and rounded shoulders, matching Gert's photos. The approximate
 175mm pivot offsets and 10.437° reclines place the rear surface near Y = 1990 at Z = 490 and Y = 1920 at Z = 870.
@@ -229,10 +231,15 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   is not assigned an invented material. The floor has a straight rear edge at Y = 0 and cutouts following both
   wheel-arch base footprints. Its rear corners follow the pillars' straight sections and angled transitions.
   The rear-door opening's centre bow does not change the plywood outline.
+  Its front edge reaches the greater of the nominal body length and the cross-bench front including the furniture
+  setback (`cargo_length_mm + furniture_rear_gap_mm`): Y = 1960 at current dimensions. This supports the cab-end
+  cross-bench feet at Z = 0. The vehicle floor reference retains its nominal body boundary.
 - The 3mm ceiling sheet spans Y = 240–1660. Its underside is 1290 at centre and 1270 at its wall-side edges.
   Exposed side rails, rear header and three approximate bows are separate parts. The ceiling still uses concentric
   circular profiles for real sheet thickness. The bare roof estimate is 1347 above finished floor, with 55 crown.
-- Wheel arches remain approximate rounded 760 × 140 × 280 envelopes. Wall-side endpoints are at Y = 310–1070,
+- Wheel arches have an approximate 760 × 140 footprint and reach 280mm above the fitted floor. Their base reaches
+  the vehicle floor at Z = −`floor_build_up_mm`, currently −18mm, giving a total height of 298mm. Extending the base
+  preserves the crown profile and the furniture clearances above Z = 0. Wall-side endpoints are at Y = 310–1070,
   from direct measurements parallel to the centreline from the closed rear door beside the pillar. With the lower
   sliding opening at 1210, this leaves approximately 140mm ahead of the arch. The shorter 700–720 inner-side length
   is recorded but not separately shaped; the full footprint is a conservative clearance envelope. The exact
@@ -255,13 +262,17 @@ rounded opening cutters; X runs along each panel, Y through its thickness and Z 
 The long bench has a 600 × 1280 footprint. Its frame top is `platform height - slat thickness`, or 382 at the defaults.
 The aisle frame retains its 100-high slide mounting band. Wall-side openings reach the floor and clear the wheel arch;
 the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has an 18mm frame
-and no skin. The retained 4mm `long_bench_inset_mm` construction allowance preserves existing frame, guide and slat
+and no skin. The retained 4mm `long_bench_inset_mm` construction allowance preserves the wall-frame, guide and slat
 positions independently of the cross-bench skin thickness. Saved `wall_thickness_mm` values migrate to this inset.
-The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. The header spans
+The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. Its lower profile
+retains the independent 300mm frame height and now spans the full 1280mm bench length, matching the other supports'
+fore/aft endpoints. The guide ledges and tie strip retain their positions and need no additional cutouts. The header spans
 X = 168–582, bed-local Y = 0–18, Z = 322–382, leaving the drawer exit open.
-The long bench's cab-end frame starts at the same wall-side face, X = 150, instead of X = 25,
-opening its low storage channel beside the drawer. `drawer.drawer_support_x` shares this alignment with the drawer
-placement; it follows wheel-arch width and drawer clearance. The new fixed cross bench has separate recessed frames.
+The long bench's cab-end frame fits between the inner and aisle support frames, X = 168–582, and occupies local
+Y = 1262–1280. Its front face and the support endpoints sit flush against the cross-bench rear skin at Y = 1280.
+This moves the transverse frame 4mm forward and narrows it by 18mm to avoid overlapping the extended inner support.
+`drawer.drawer_support_x` shares the inner support alignment with the drawer placement; it follows wheel-arch width
+and drawer clearance. The fixed cross bench has separate recessed frames.
 
 `sliding_bed.py` ports `longSlatDimensions`, the long-bench branch of `slidingSlatAssembly`, `slidingBracketDimensions`,
 `slideAngleBracket` and `slidingBenchBrackets`. Eight fixed and seven moving slats alternate on an 85 pitch. Ordinary
@@ -273,7 +284,9 @@ Both ledges extend down to the adjoining frame top rails' underside:
 These deepened ledges supersede the original flat 18-thick Onshape strips.
 Fixed slats and guide ledges belong to Fixed frame, so its visibility toggle includes both.
 The moving aisle frame has a continuous bottom rail matching the fixed aisle frame's slide mounting band
-(100mm at defaults), with the same rounded openings.
+(100mm at defaults), with the same rounded openings. Its fore/aft ends align with the first and last moving slats:
+Y = 90–1190, giving a 1100mm-long frame with the current 1280mm bench and 80mm slats. These bounds derive from
+the slat layout; both 60mm end posts remain beneath the outer angle brackets. The fixed aisle frame remains full length.
 Slat thickness and stock width are shared by both benches and sit at the Long bench parameter level.
 The slats are reused 80mm stock: preserve their width instead of narrowing them to fit. The slat-gap parameter controls
 the long bench; cross-bench spacing is derived from its depth and the full stock width.
@@ -486,11 +499,23 @@ Bunnings product pages were checked on 20 October 2026: door plywood item 034510
 stay remains in the purchase list. Loading a project removes the superseded `cabinet-stays` selection and adds
 the `cabinet-chains` default, preventing the rejected stays from returning with saved project data.
 
-`gear.py` adds a separate Stored gear assembly for the owner's folded solar-panel bag (830 × 760 × 80mm)
-and two folding chairs (600 × 700 × 100mm each). These are owned reference objects, excluded from the cut list
+`gear.py` adds a separate Stored gear assembly for the owner's folded solar-panel bag (830 × 760 × 80mm),
+two folding chairs (600 × 700 × 100mm each), and a red-and-white chilly bin. These are owned reference objects, excluded from the cut list
 and material purchases. The chair shapes approximate the supplied photograph: bent tubular frames, blue fabric,
 wooden armrests and hinge fittings. All details stay inside the measured envelope; the bag's handle and webbing
 are illustrative. No unfolded chair mechanism is modelled.
+
+The chilly bin's measured closed envelope is 470mm wide × 280mm deep × 410mm high, excluding its handle. Rounded
+loft sections taper the red body towards four corner feet. Blind side handgrips and a recessed front panel follow
+the two owner photographs. A white rim, narrow lid seam, sloping rounded lid and raised top panel complete the
+closed bin. The pivot discs and arched carry handle project beyond the measured envelope; their dimensions are
+photo estimates. No internal capacity or lid-opening mechanism is modelled.
+
+Under Stored gear → Chilly bin, width/depth/height are editable dimensions. Footprint-centre X/Y, bottom elevation
+and yaw use the existing live pose controls. Handle → Handle folded rotates the handle around its side pivots:
+0° upright to an estimated 135° folded forward. The default centre is X=750, Y=1050, Z=0 with 90° yaw, for initial
+aisle placement. Native named groups provide individual visibility eyes and retain the Stored gear filter. These
+position and handle controls save with the project and move without regeneration; size edits regenerate normally.
 
 The bag starts upright across the rear gap, centred at X=750, Y=45, with its bottom at Z=0.
 The chairs start edge-on in the aisle, centred at X=520/640, Y=600, with their feet at Z=0; these are temporary
@@ -552,6 +577,10 @@ Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle
 Cabinet preferences live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's
 fixed/moving slats and the fixed cross-bench slats.
 Cushions covers both benches' foam groups; their sidebar eyes also work independently.
+Wheel arches has its own checkbox beside Vehicle. Its visibility is independent of the containing Vehicle references
+switch, so hiding Vehicle leaves the arches controlled by Wheel arches. Both arches' individual eye controls still
+work; changing Vehicle preserves their settings. The checkbox preference uses the existing saved visibility paths.
+Visible wheel arches have opaque faces and outlines and are excluded from See inside fading and click-through picking.
 Wooden floor controls the top-level Finished floor plywood part, outside Vehicle references. Its thickness parameter
 lives in its own matching group. The metal body floor and cab floor remain vehicle references; the plywood retains
 its existing See inside fade and remains excluded from the cutting list.
@@ -559,12 +588,19 @@ The native labelled checkbox follows the [WAI-ARIA checkbox pattern](https://www
 (consulted 26 October 2026): a visible label and standard Space-key toggling, using the existing Visibility fieldset.
 
 **See inside** adjusts vehicle opacity in the browser before the existing viewer paints each frame. Assembly paths
-assign walls, doors, pillars, rear corners and arches to their vehicle side; roofs and floors have vertical directions.
+assign walls, doors, pillars and rear corners to their vehicle side; roofs and floors have vertical directions.
+Perspective views calculate facing from each panel's transformed centre to the camera position. Orthographic views
+use the camera orientation because their rays are parallel. Using orientation for perspective views incorrectly began
+fading the ceiling when looking slightly down while the camera was still below it, switching off depth writing at
+almost full opacity and exposing the roof bows abruptly.
 Roof rails fade when either adjoining side faces the camera. `frontend/src/vehicle-fade.ts` keeps far-facing and
 edge-on panels opaque, then smoothly fades faces to 5% opacity as their side turns toward the camera, and outlines
 from 50% to 2%. Driver and passenger seats, including their supports, stay opaque from the sides, rear and above;
-they fade to 25% opacity only when viewed from the front. Opaque panels write depth so their interior surfaces hide
-exterior faces; side-window glass is tinted with 30% opacity (70% transparency), and the rear hatch glass is fully
+they fade to 25% opacity only when viewed from the front. Fully opaque panels use the opaque render pass and write
+depth so their interior surfaces hide exterior faces. Fading panels use the transparent pass without writing depth;
+opaque panels stay out of its camera-dependent sorting. This follows Three.js's
+[opaque/transparent rendering behaviour](https://threejs.org/docs/pages/Material.html).
+Side-window glass is tinted with 30% opacity (70% transparency), and the rear hatch glass is fully
 transparent. See inside further fades the side glass on the near side. Visibility states and furniture materials
 remain unchanged. The toggle defaults on and persists as `campervan.see-inside` in localStorage.
 New geometry reattaches the effect. Turning it off makes the vehicle body and outlines 100% opaque while preserving
@@ -618,8 +654,10 @@ is hidden during bed extension because it is not a lying-down pose.
 
 The **Mannequin** group contains **Seated mannequin**, **Lying mannequin** and **Second lying mannequin** controls
 and independent rig instances. Both lying people use the same measured body size, each fitted to its own pillow.
-Each posture persists independently; the single visibility checkbox gates all three. The seated instance shows only at
-0% bed extension, both lying instances only at 100%; none show during travel. The lying posture uses the measured rig,
+Each heading has the same eye control as CAD groups, with its own saved visibility preference. The main visibility
+checkbox gates all three while preserving those preferences. Reset posture preserves the instance's visibility.
+The seated instance shows only at 0% bed extension, enabled lying instances only at 100%; none show during travel.
+Hidden lying instances do not deform their pillow or contribute feet-outside warnings. The lying posture uses the measured rig,
 with extended legs, lightly crossed ankles and hands over the belly. It is visible at full bed extension only.
 Head position follows the front pillow; adjustable pillow compression deforms its displayed mesh and restores it when
 the person is hidden or seated. Contact fitting is approximate and needs visual inspection.

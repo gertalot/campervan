@@ -1,5 +1,6 @@
 const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
+  wheelArches: ['/Campervan/Vehicle references/Wheel arches'],
   woodenFloor: ['/Campervan/Finished floor plywood'],
   cabinet: ['/Campervan/Cabinet'],
   cabinetShelves: ['/Campervan/Cabinet/Shelves'],
@@ -16,14 +17,36 @@ const categories: Record<string, string[]> = {
 };
 
 interface VisibilityViewer {
-  setVisibility(rules: Record<string, boolean>): void;
+  setVisibility(rules: Record<string, boolean>, independentRoots: string[]): void;
   getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed';
+}
+
+export function updateVisibilityButton(button: HTMLButtonElement, title: string, state: 'shown' | 'hidden' | 'mixed') {
+  button.dataset.visibility = state;
+  button.setAttribute('aria-pressed', state === 'mixed' ? 'mixed' : String(state === 'shown'));
+  button.setAttribute('aria-label', `${state === 'shown' ? 'Hide' : 'Show'} ${title}`);
+  button.title = `${state === 'shown' ? 'Hide' : 'Show'} ${title}${state === 'mixed' ? ' (partly visible)' : ''}`;
+}
+
+export function createVisibilityButton(title: string, toggle: () => void) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'group-visibility';
+  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggle();
+  });
+  updateVisibilityButton(button, title, 'shown');
+  return button;
 }
 
 export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer) {
   const inputs = [...container.querySelectorAll<HTMLInputElement>('input[name]')];
   const groups = new Map<HTMLButtonElement, { path: string; title: string }>();
   const key = 'campervan.visibility.paths';
+  const independentRoots = categories.wheelArches;
   const rules: Record<string, boolean> = {
     '/Campervan/Vehicle references/Floor outline': false,
     '/Campervan/Vehicle references/Rear opening/Clear opening': false,
@@ -51,23 +74,21 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       input.indeterminate = enabled.some(Boolean) && !input.checked;
     }
     for (const [button, { path, title }] of groups) {
-      const state = viewer.getVisibility([path]);
-      button.dataset.visibility = state;
-      button.setAttribute('aria-pressed', state === 'mixed' ? 'mixed' : String(state === 'shown'));
-      button.setAttribute('aria-label', `${state === 'shown' ? 'Hide' : 'Show'} ${title}`);
-      button.title = `${state === 'shown' ? 'Hide' : 'Show'} ${title}${state === 'mixed' ? ' (partly visible)' : ''}`;
+      updateVisibilityButton(button, title, viewer.getVisibility([path]));
     }
   }
 
   function change(paths: string[], visible: boolean) {
     for (const path of paths) {
       for (const existing of Object.keys(rules)) {
-        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing)) delete rules[existing];
+        const independent = independentRoots.some(root => root.startsWith(`${path}/`)
+          && (existing === root || existing.startsWith(`${root}/`)));
+        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing) && !independent) delete rules[existing];
       }
       rules[path] = visible;
     }
     localStorage.setItem(key, JSON.stringify(rules));
-    viewer.setVisibility(rules);
+    viewer.setVisibility(rules, independentRoots);
     refresh();
   }
 
@@ -77,21 +98,15 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
 
   return {
     restore() {
-      viewer.setVisibility(rules);
+      viewer.setVisibility(rules, independentRoots);
       refresh();
     },
     resetGroups() { groups.clear(); },
     addGroup(heading: HTMLElement, path: string, title: string) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'group-visibility';
-      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg>';
-      groups.set(button, { path, title });
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
+      const button = createVisibilityButton(title, () => {
         change([path], rules[path] === false);
       });
+      groups.set(button, { path, title });
       heading.append(button);
       refresh();
     },

@@ -63,6 +63,9 @@ The browser remembers your camera view, slider positions and visibility choices 
 Use the viewer toolbar to reset or refit the camera when needed.
 
 The viewer has a minimal display/measurement toolbar, a ViewCube at the top right and an XYZ indicator.
+**Stored gear → Chilly bin** contains the red-and-white 470 × 280 × 410mm bin (excluding handle). Adjust its size,
+centre X/Y, elevation and rotation there; **Handle → Handle folded** moves the photo-based carry handle live.
+Its visibility follows the Stored gear checkbox and its own group eye.
 Click a cube face, edge or corner to select a view; its four top corners give the four upright isometric views.
 Clicks rotate at 360°/s; drag the cube to orbit directly. View changes preserve zoom and viewing centre.
 Dragging in the main viewer also keeps Z upright, so the vehicle does not roll onto its side.
@@ -106,7 +109,9 @@ Expand **Mannequin** for a poseable human sized to 178cm with an 80cm inseam, 40
 arm angles have live sliders. Position is measured at the hip joint. Ankles compensate to keep the feet flat;
 changing leg angles adjusts hip height to retain floor contact. Changing hip height solves the leg angles instead.
 The seat cushion dents under the person; **Foam compression** is an estimate, adjustable in millimetres.
-**Visibility → Mannequin** toggles all three mannequins. Each nested control group saves its posture independently.
+**Visibility → Mannequin** toggles all three mannequins. The eye beside each nested mannequin heading independently
+shows or hides that person and saves the choice alongside its posture. Turning the main checkbox off and on retains
+those individual choices; resetting a posture also retains its visibility.
 The lying controls adjust position offsets, rotation, back, head, hip/knee bend and hand position live.
 **Lying mannequin** and **Second lying mannequin** show two same-size people on their respective pillows automatically when the bed is fully extended, with the head on the front pillow, ankles lightly
 crossed and hands over the belly. **Pillow compression** adjusts head support directly in the browser.
@@ -179,7 +184,7 @@ The 3mm plywood follows the bows' shallow underside curve. Cabinet height and th
 
 **Vehicle references → Cab** contains an estimated cab floor, driver/passenger seats and headliner. Adjust the floor
 length/width, shared seat sizes, individual seat positions/reclines and headliner profile in those groups. Cab and
-cargo floors are one level. The driver
+cargo vehicle floors are one level, currently 18mm below the fitted plywood surface. The driver
 is on the right. Each group can be hidden independently. Cab dimensions are provisional; see the
 [cab research and measurement notes](docs/research/nv200/cab.md).
 
@@ -292,6 +297,16 @@ browser Back/Forward restore that view. **Cut list** has its own `/cuts` URL.
 and Floor. Identical timber cuts share a drawing with a quantity; selecting one lists the matching CAD pieces.
 Select a plywood thickness for its sheet layouts and detailed cut list. **Timber** and **Other sheet materials**
 show the remaining stock types. Each sheet heading gives its material, thickness, size and sheet number.
+
+Double-click a cutting piece to show it in CAD. The camera frames its current position and highlights it in magenta,
+including when other parts obstruct it. Both views keep the highlight until selection is cleared or another piece
+is selected. Press **Esc** to restore normal colours. Double-click wood in CAD to reveal its material
+and sheet in the cut list. Returning to the same piece preserves the previous cut-list filter and scroll position.
+Single-click opens non-modal piece details with a **Show in 3D** button. Two icons in the existing CAD toolbar provide
+**Show in cut list** and **Clear selection**, with action names and shortcuts in their tooltips. Right-click opens
+the same commands. Clicking empty CAD space also clears selection.
+With **See inside**, the near-side faded vehicle surfaces are skipped during picking, so interior wood can be selected.
+Modifier double-click gestures retain the installed viewer's behaviour. Pieces without cutting entries stay in CAD.
 
 **Cutting settings** applies to the whole project: choose **Straight saw cuts** or **Nested shapes**, set blade
 kerf/tool width, edge trim and default grain direction. Stock sizes/offcuts and individual grain overrides remain

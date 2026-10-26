@@ -5,6 +5,7 @@ import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPo
 import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
+import { createViewerPieces, type PieceViewer } from './viewer-pieces';
 import { Box3, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
 
@@ -74,6 +75,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const mannequinPoses = { seated: { ...seatedPose }, lying: { ...lyingPose }, 'lying-second': { ...secondLyingPose } };
   let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
   const vehicleFade = createVehicleFade();
+  const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
+    cancelCameraAnimation, saveCamera);
   let pillows = createPillows();
   if (import.meta.hot) import.meta.hot.accept('./pillows', module => {
     if (!module || !viewer?.ready) return;
@@ -116,8 +119,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         const fitted = model.lie({ ...pose, visible: pose.visible && bed === 100 },
           mattress, new Box3().setFromObject(pillow));
         model.attach(viewer.rendered.scene);
-        if (model.root.visible) pillows.supportHead(fitted.head, first);
-        feetOutside ||= fitted.feet.min.y < mattress.min.y;
+        if (model.root.visible) {
+          pillows.supportHead(fitted.head, first);
+          feetOutside ||= fitted.feet.min.y < mattress.min.y;
+        }
       }
       onMannequinStatus(feetOutside ? 'Feet extend beyond the mattress.' : '');
       viewer.update(true, false);
@@ -261,7 +266,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           const update = this.update.bind(this);
           this.update = (...updateArgs: any[]) => {
             if (this.ready) {
-              if (seeInside) vehicleFade.update(this.getCameraQuaternion());
+              if (seeInside) vehicleFade.update(this.getCameraQuaternion(),
+                this.getOrtho() ? undefined : this.getCameraPosition());
               else vehicleFade.setExteriorOpacity();
             }
             update(...updateArgs);
@@ -325,6 +331,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             rendering = true;
             // OCP disposes its old scene when replacing geometry; keep the independent human rig.
             if (message.type === 'data') {
+              pieces.clear();
               vehicleFade.clear();
               Object.values(mannequins).forEach(model => model.root.removeFromParent());
               seatCushion?.dispose();
@@ -334,11 +341,23 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             finally { rendering = false; }
             if (message.type === 'data') {
               vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
+              const picker = (viewer as unknown as PieceViewer).idPicker;
+              if (picker) {
+                const pick = picker.pickAt.bind(picker);
+                let pickingVersion = -1;
+                picker.pickAt = (x, y, options) => {
+                  if (pickingVersion !== vehicleFade.pickingVersion) {
+                    picker.setDirty(); pickingVersion = vehicleFade.pickingVersion;
+                  }
+                  return vehicleFade.withPicking(() => pick(x, y, options));
+                };
+              }
               pillows.attach(viewer!.rendered.nestedGroup.groups);
               pillows.pose(positions.bed_extension_percent ?? 0);
               motions = {};
               bases.clear();
               trimToolbar();
+              pieces.attach();
               page.resize();
               if (camera && viewer?.ready) {
                 const projection = viewer.rendered.camera.camera;
@@ -367,6 +386,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       socket.onclose = () => onError('CAD viewer connection closed. Refresh after restarting make viewer.');
     },
     setPosition(name: string, percent: number) { positions[name] = percent; move(); },
+    setPieceLink: pieces.setLink,
+    focusPiece: pieces.focus,
     setSeeInside(enabled: boolean) {
       seeInside = enabled;
       viewer?.update(true, false);
@@ -389,13 +410,18 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       if (!visible.length || visible.every(Boolean)) return 'shown';
       return visible.some(Boolean) ? 'mixed' : 'hidden';
     },
-    setVisibility(rules: Record<string, boolean>) {
+    setVisibility(rules: Record<string, boolean>, independentRoots: string[] = []) {
       if (!viewer?.ready) return;
       const states: Record<string, number[]> = {};
       const hidden = Object.keys(rules).filter(path => !rules[path]);
       for (const [path, state] of Object.entries(viewer.getStates())) {
-        // Every containing assembly and content filter must permit visibility.
-        const visible = !hidden.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+        // Independent references retain their own visibility when a containing
+        // assembly is hidden. Their own switches and descendant filters still apply.
+        const independent = independentRoots.find(root => path === root || path.startsWith(`${root}/`));
+        const visible = !hidden.some(prefix => {
+          if (independent?.startsWith(`${prefix}/`)) return false;
+          return path === prefix || path.startsWith(`${prefix}/`);
+        });
         states[path] = state.map(value => value === 3 ? 3 : Number(visible));
       }
       viewer.setStates(states);
