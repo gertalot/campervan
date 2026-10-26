@@ -1,0 +1,122 @@
+#cuts-panel { position: absolute; inset: 0; overflow: auto; padding: 18px 22px 50px; background: #1b1d21; }
+#cuts-panel[hidden] { display: none; }
+#cuts-panel h2 { font-size: 20px; color: #edf0f5; margin: 0; }
+#cuts-panel h3 { font-size: 16px; color: #e4e9ef; margin: 0; }
+#cuts-panel h4 { font-size: 13px; color: #e4e9ef; margin: 10px 0; }
+#cuts-panel p { margin: 6px 0; }
+#cuts-panel small { display: block; color: #adb9c8; }
+#cuts-panel button, #cuts-panel select, #cuts-panel input { font: inherit; color: inherit; background: #272d35;
+  border: 1px solid #536071; border-radius: 5px; padding: 6px 10px; min-height: 32px; }
+#cuts-panel button { cursor: pointer; }
+#cuts-panel button:hover { background: #33445a; }
+#cuts-panel button:disabled, #cuts-panel input:disabled, #cuts-panel select:disabled { opacity: .5; cursor: default; }
+#cuts-panel :focus-visible, header nav :focus-visible { outline: 2px solid #b0d5ff; outline-offset: 3px; }
+.cut-page-header { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 10px; }
+.cut-page-header p { color: #b4c0cf; }
+.cut-page-actions { display: flex; gap: 8px; }
+.cut-global-settings { padding: 7px 0 10px; border-bottom: 1px solid #394351; }
+.cut-global-settings > summary { color: #b7c9dd; cursor: pointer; width: fit-content; }
+.cut-global-settings p { color: #b4c0cf; }
+.cut-settings-fields { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 10px; }
+.cut-settings-fields label, .cut-stock label { display: flex; flex-direction: column; gap: 5px; color: #b9c5d4; }
+.cut-settings-fields input { width: 130px; }
+.cut-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; }
+#cuts-panel .cut-filters button { border-radius: 18px; padding: 5px 13px; background: transparent; }
+#cuts-panel .cut-filters button[aria-pressed=true] { background: #354f6b; border-color: #a6c8eb; color: #fff; }
+.cut-feedback { color: #b3d4f5; }
+.cut-feedback[hidden] { display: none; }
+.cut-overview { display: flex; flex-direction: column; gap: 14px; }
+.cut-assembly { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 14px;
+  background: #23282f; border: 1px solid #3c4652; border-radius: 8px; padding: 12px; }
+.cut-assembly > .cut-section-heading { display: block; margin: 5px 0 0; }
+.cut-assembly > .cut-section-heading > span { display: block; margin-top: 5px; }
+.cut-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.cut-section-heading > span { color: #b6c1cd; white-space: nowrap; }
+.cut-assembly h3::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+  background: var(--part-colour); margin-right: 8px; }
+.cut-piece-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 9px; }
+#cuts-panel .cut-piece-card { min-width: 0; text-align: left; display: flex; flex-direction: column; align-items: stretch;
+  gap: 3px; background: #1e2329; border-color: #3e4957; padding: 10px; }
+#cuts-panel .cut-piece-card:hover { border-color: #b4d1f0; background: #293647; }
+.cut-piece-card svg { display: block; width: 100%; height: 90px; }
+.cut-piece-card strong { font-weight: 550; font-size: 12px; line-height: 1.3; }
+.cut-piece-card strong span { color: #fff; font-weight: 750; }
+.cut-piece-card > span { font-size: 11px; color: #c2cbd7; }
+.cut-piece-card small { font-size: 10px; }
+.cut-content > p { color: #b9c4d1; margin-top: 16px !important; }
+.cut-material { padding-bottom: 26px; margin-bottom: 22px; border-bottom: 1px solid #424c59; }
+.cut-material:last-child { border: none; }
+.cut-layout-status { display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  color: #b4c3d4; margin-bottom: 12px; }
+.cut-sheets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(650px, 100%), 1fr)); gap: 16px; align-items: start; }
+.cut-sheet { min-width: 0; border: 1px solid #59636e; border-radius: 7px; padding: 12px; background: #eeeae1; color: #29333f; }
+#cuts-panel .cut-sheet h4 { color: #24303b; margin: 0; font-size: 14px; }
+.cut-sheet-heading { display: flex; flex-direction: column; gap: 4px; }
+.cut-sheet-heading > span { color: #58616c; }
+.cut-sheet-svg { display: block; width: 100%; margin: 8px 0; }
+.cut-sheet-svg [data-part] { cursor: pointer; }
+.cut-sheet-svg [data-part]:focus path, .cut-sheet-svg .cut-selected path { stroke: #1456aa; stroke-width: 6px; }
+.cut-sheet-svg [data-part]:hover path { stroke: #426a9b; stroke-width: 4px; }
+.cut-saw-lines { display: none; }
+.show-cuts .cut-saw-lines { display: block; }
+.cut-sheet > p { font-size: 11px; color: #58616c; }
+.cut-sheet-key { list-style: none; padding: 0; margin: 12px 0 0; display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); column-gap: 18px; }
+.cut-sheet-key li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 5px 0; border-top: 1px solid #c8c8c0; font-size: 11px; }
+#cuts-panel .cut-sheet-key button { background: transparent; border: 0; color: #253343; min-height: 0;
+  padding: 0; text-align: left; font-size: 11px; line-height: 1.4; }
+#cuts-panel .cut-sheet-key button::before { content: ''; display: inline-block; width: 8px; height: 8px;
+  background: var(--part-colour); border: 1px solid #72808e; margin-right: 6px; }
+.cut-sheet-key li > span { white-space: nowrap; color: #5b6470; }
+.cut-sheet-actions { display: flex; gap: 8px; margin-top: 12px; }
+#cuts-panel .cut-sheet-actions button { background: transparent; color: #354455; border-color: #9ea7b0; min-height: 28px; font-size: 11px; }
+.cut-sequence { margin-top: 12px; font-size: 11px; }
+.cut-sequence summary, .cut-stock > summary, .cut-detail-list > summary { cursor: pointer; }
+.cut-sequence ol { padding-left: 20px; }
+.cut-sequence li { padding: 3px 0; }
+.cut-stock { margin: 14px 0 18px; padding: 10px 0; border-top: 1px solid #3c4652; border-bottom: 1px solid #3c4652; }
+.cut-stock-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 14px 0; }
+.cut-stock-row input { width: 135px; }
+.cut-stock-row > strong { align-self: center; min-width: 90px; }
+.cut-detail-list { margin-top: 14px; }
+.cut-parts { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.cut-parts th, .cut-parts td { padding: 8px; text-align: left; border-bottom: 1px solid #414c59; }
+.cut-parts th { color: #b7c6d7; }
+#cuts-panel .cut-parts button { padding: 0; border: 0; background: none; text-align: left; }
+.cut-parts td:nth-child(2) { white-space: nowrap; }
+.cut-warning { color: #ffc188; padding: 8px 12px; border-left: 3px solid currentColor; }
+.cut-inspector { width: min(560px, 95vw); max-height: 88vh; overflow: auto; color: #e4e9f0; background: #222a34;
+  border: 1px solid #8699b0; border-radius: 8px; padding: 22px; }
+.cut-inspector::backdrop { background: #0008; }
+.cut-inspector h2 { padding-right: 55px; margin-bottom: 12px !important; }
+.cut-inspector > p { color: #b6c3d3; margin: 12px 0 !important; }
+.cut-inspector .cut-piece-gallery { display: block; margin: 18px 0; }
+.cut-inspector .cut-piece-card { width: 100%; }
+.cut-inspector .cut-piece-card svg { height: 180px; }
+.cut-inspector-close { float: right; }
+.cut-selected { outline: 2px solid #9dcaff; outline-offset: -2px; }
+@media (max-width: 720px) {
+  #cuts-panel { padding: 12px 10px 40px; }
+  .cut-page-header { align-items: start; }
+  .cut-page-actions { flex-direction: column; }
+  .cut-piece-gallery { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .cut-assembly { grid-template-columns: minmax(0, 1fr); }
+  .cut-parts { display: block; overflow-x: auto; }
+}
+@media print {
+  html:has(#cuts-tab[aria-selected="true"]), body:has(#cuts-tab[aria-selected="true"]) {
+    height: auto; overflow: visible; background: white; color: black; }
+  body:has(#cuts-tab[aria-selected="true"]), body:has(#cuts-tab[aria-selected="true"]) main { display: block; }
+  body:has(#cuts-tab[aria-selected="true"]) > header, body:has(#cuts-tab[aria-selected="true"]) #cad-panel,
+  #cuts-panel .cut-global-settings, #cuts-panel .cut-page-actions, #cuts-panel .cut-filters, #cuts-panel .cut-stock,
+  #cuts-panel button:not(.cut-piece-card), #cuts-panel select, #cuts-panel .cut-feedback, #cuts-panel dialog { display: none !important; }
+  #cuts-panel { position: static; overflow: visible; padding: 0; color: black; background: white; }
+  #cuts-panel h2, #cuts-panel h3, #cuts-panel h4, #cuts-panel small, #cuts-panel p { color: black; }
+  .cut-assembly, .cut-sheet, #cuts-panel .cut-piece-card { color: black; background: white; break-inside: avoid; }
+  .cut-overview, .cut-sheets { display: block; }
+  .cut-assembly, .cut-sheet { margin-bottom: 14px; }
+  #cuts-panel .cut-sheet-key button { display: block !important; }
+  .cut-sheet-key li > span { color: black; }
+  .cut-parts tr { break-inside: avoid; }
+}

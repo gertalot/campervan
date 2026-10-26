@@ -70,7 +70,7 @@ seats and breaking the bed-to-seat measurement.
 | Ceiling plywood rear position / length | 240 / 1420 | Y = 240–1660; rear-opening datum interpretation remains provisional. |
 | Ceiling underside above fitted floor, wall / centre | 1270 / 1290, derived from mattress clearances | 1269.994 / 1290. |
 | Ceiling plywood thickness | 3 | 3, normal to its curved surface. |
-| Open door edge from front pillar | 680 | 680 when fully open. |
+| Open door edge from front pillar | Earlier measurement about 680; owner reconfirmed opening overlap on 2026-10-26 | Provisional 620mm when fully open, leaving 60mm overlap across the 680mm lower opening. Exact overlap needs measuring. |
 | Open door inside / outside relative to outer pillar | 60 / 160, derived from 170/270 minus 110 | 60 / 160. Owner reconfirmed approximately 100mm door thickness on 2026-10-19; exterior is now 60mm outside the measured inner side wall, with 40mm inward pillar intrusion. |
 
 The former rear-corner mismatch is corrected: the corner loft and hatch now share the measured side/header

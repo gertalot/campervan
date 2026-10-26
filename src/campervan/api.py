@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Annotated, Any, cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from campervan.coordinator import Coordinator, ModelStatus, Regenerate
+from campervan.cutting import effective_options, source_key, stock_groups
+from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
 from campervan.materials import PROJECT_PATH, ROLES, MaterialUpdate, catalogue, resolve
 from campervan.parameter_fit import FitError, fit_parameters, parameter_constraints
 from campervan.parameters import Parameters, parameter_schema
@@ -28,11 +30,6 @@ class ParameterResponse(BaseModel):
     viewer_url: str
     errors: dict[str, str] = Field(default_factory=dict)
     adjustments: dict[str, str] = Field(default_factory=dict)
-
-
-class MutationResponse(BaseModel):
-    session_id: str
-    requested_revision: int
 
 
 class Positions(BaseModel):
@@ -92,6 +89,14 @@ def build_app(
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None
     assets = Path(package.origin).parent / "server" / "static"
+
+    @app.get("/viewer-assets/js/shared-renderer.js", include_in_schema=False)
+    async def shared_renderer() -> Response:
+        # The pinned OCP bundle includes the complete THREE namespace. Expose it
+        # from this same module so app meshes and GLTFLoader share its constructors.
+        source = (assets / "js" / "three-cad-viewer.esm.js").read_text()
+        return Response(source + "\nexport { THREE as sharedThree };\n", media_type="text/javascript")
+
     app.mount("/viewer-assets", StaticFiles(directory=assets), name="viewer-assets")
 
     def get_coordinator(request: Request) -> Coordinator:
@@ -138,10 +143,10 @@ def build_app(
             update={"errors": errors, "adjustments": adjustments}
         )
 
-    @app.put("/api/v1/parameters", status_code=202, response_model=MutationResponse)
-    async def put_parameters(parameters: Parameters, coordinator: CurrentCoordinator) -> MutationResponse:
-        revision = await coordinator.accept(parameters)
-        return MutationResponse(session_id=coordinator.session_id, requested_revision=revision)
+    @app.put("/api/v1/parameters", status_code=202, response_model=ModelStatus)
+    async def put_parameters(parameters: Parameters, coordinator: CurrentCoordinator) -> ModelStatus:
+        await coordinator.accept(parameters)
+        return coordinator.status()
 
     @app.get("/api/v1/materials")
     async def get_materials(coordinator: CurrentCoordinator) -> dict[str, object]:
@@ -156,8 +161,57 @@ def build_app(
             "requested_revision": status.requested_revision,
         }
 
-    @app.put("/api/v1/materials", status_code=202, response_model=MutationResponse)
-    async def put_materials(update: MaterialUpdate, coordinator: CurrentCoordinator) -> MutationResponse:
+    def cutting_data(coordinator: Coordinator) -> dict:
+        groups = stock_groups(coordinator.cuts, coordinator.materials)
+        sources = {}
+        for group in groups:
+            options = effective_options(group, coordinator.cutting.settings, coordinator.cutting.options.get(group["key"]))
+            sources[group["key"]] = source_key(group, options)
+        return {"groups": groups, "sources": sources, "state": coordinator.cutting.model_dump(),
+                "jobs": coordinator.cutting_jobs,
+                "current": coordinator.cuts_revision == coordinator.status().requested_revision}
+
+    @app.get("/api/v1/cutting")
+    async def get_cutting(coordinator: CurrentCoordinator) -> dict:
+        return cutting_data(coordinator)
+
+    def cutting_group(key: str, coordinator: Coordinator) -> dict:
+        group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials)
+                      if g["key"] == key), None)
+        if group is None:
+            raise HTTPException(422, "This material is no longer in the cut list.")
+        return group
+
+    @app.put("/api/v1/cutting/settings")
+    async def put_cutting_settings(settings: CuttingSettings, coordinator: CurrentCoordinator) -> dict:
+        await coordinator.stop_cutting()
+        coordinator.cutting.settings = settings
+        coordinator.save_cutting()
+        return cutting_data(coordinator)
+
+    @app.put("/api/v1/cutting/options")
+    async def put_cutting_options(update: StockUpdate, coordinator: CurrentCoordinator) -> dict:
+        cutting_group(update.group, coordinator)
+        await coordinator.stop_cutting(update.group)
+        coordinator.cutting.options[update.group] = update.options
+        coordinator.save_cutting()
+        return cutting_data(coordinator)
+
+    @app.post("/api/v1/cutting/layout", status_code=202)
+    async def generate_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
+        if coordinator.cuts_revision != coordinator.status().requested_revision:
+            raise HTTPException(409, "The cut list is waiting for the current CAD model. Generate after it finishes.")
+        group = cutting_group(update.group, coordinator)
+        await coordinator.start_cutting(group)
+        return cutting_data(coordinator)
+
+    @app.post("/api/v1/cutting/stop")
+    async def stop_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
+        await coordinator.stop_cutting(update.group)
+        return cutting_data(coordinator)
+
+    @app.put("/api/v1/materials", status_code=202, response_model=ModelStatus)
+    async def put_materials(update: MaterialUpdate, coordinator: CurrentCoordinator) -> ModelStatus:
         role = next((role for role in ROLES if role.id == update.role), None)
         if role is None:
             raise HTTPException(422, "Unknown material role")
@@ -166,13 +220,17 @@ def build_app(
         values = coordinator.parameters.model_dump()
         values.update({role.fields[key]: value for key, value in update.custom.items()})
         parameters = Parameters.model_validate(values)
-        revision = await coordinator.accept(parameters, coordinator.materials | {role.id: update.selection})
-        return MutationResponse(session_id=coordinator.session_id, requested_revision=revision)
+        await coordinator.accept(parameters, coordinator.materials | {role.id: update.selection})
+        return coordinator.status()
 
-    @app.post("/api/v1/model/regenerate", status_code=202, response_model=MutationResponse)
-    async def regenerate(coordinator: CurrentCoordinator) -> MutationResponse:
-        revision = await coordinator.accept()
-        return MutationResponse(session_id=coordinator.session_id, requested_revision=revision)
+    @app.post("/api/v1/model/load", response_model=ModelStatus)
+    async def load_model(coordinator: CurrentCoordinator) -> ModelStatus:
+        return await coordinator.load()
+
+    @app.post("/api/v1/model/regenerate", status_code=202, response_model=ModelStatus)
+    async def regenerate(coordinator: CurrentCoordinator) -> ModelStatus:
+        await coordinator.accept(force=True)
+        return coordinator.status()
 
     @app.patch("/api/v1/model/position", response_model=Positions)
     async def set_position(position: Positions, coordinator: CurrentCoordinator) -> Positions:
@@ -196,6 +254,7 @@ def create_app() -> FastAPI:
 
         @app.get("/cad", include_in_schema=False)
         @app.get("/plan", include_in_schema=False)
+        @app.get("/cuts", include_in_schema=False)
         @app.get("/bom", include_in_schema=False)
         @app.get("/bom/{material}", include_in_schema=False)
         async def frontend_view() -> FileResponse:

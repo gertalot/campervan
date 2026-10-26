@@ -53,7 +53,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
     def backup(request: Request) -> Backup:
         current = coordinator(request)
         return Backup(
-            planning=read(), project=Project(parameters=current.parameters, materials=current.materials),
+            planning=read(), project=Project(parameters=current.parameters, materials=current.materials, cutting=current.cutting),
             products=catalogue(),
         )
 
@@ -127,7 +127,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
         current = coordinator(request)
         return Backup(
             planning=parse_document(json.loads(store.previous.read_text())),
-            project=Project(parameters=current.parameters, materials=current.materials), products=catalogue(),
+            project=Project(parameters=current.parameters, materials=current.materials, cutting=current.cutting), products=catalogue(),
         )
 
     @router.post("/planning/restore")
@@ -158,20 +158,24 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
                     or products[key].sale_unit != snapshots[key].sale_unit):
                 raise HTTPException(422, f"Product {key} is missing or has changed dimensions; reconcile it before restoring.")
         parameters, _ = fit_parameters(resolve(saved.project.parameters, saved.project.materials))
-        project = Project(parameters=parameters, materials=saved.project.materials)
+        project = Project(parameters=parameters, materials=saved.project.materials, cutting=saved.project.cutting)
         restored = saved.planning.model_copy(deep=True)
         restored.revision = max(revision, restored.revision) + 1
         old_plan = store.path.read_bytes() if store.path.exists() else None
         old_project = project_path.read_bytes() if project_path.exists() else None
         changed = project.parameters != current.parameters or project.materials != current.materials
+        old_cutting = current.cutting
+        await current.stop_cutting()
         try:
             store.write(restored, backup=valid_current)
+            current.cutting = project.cutting
             if changed:
                 # accept saves before changing live state; it schedules regeneration without yielding.
                 await current.accept(project.parameters, project.materials)
             else:
                 save_project(project, project_path)
         except OSError:
+            current.cutting = old_cutting
             for path, content in ((project_path, old_project), (store.path, old_plan)):
                 if content is None:
                     path.unlink(missing_ok=True)

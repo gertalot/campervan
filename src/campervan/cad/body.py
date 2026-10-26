@@ -22,6 +22,7 @@ from build123d import (
     Shell,
     Solid,
     ThreePointArc,
+    Vector,
     Wire,
     fillet,
 )
@@ -279,18 +280,21 @@ def side_aperture(p: Parameters, front: float) -> Wire:
 
 def side_pillar(p: Parameters, front: float, right: bool, *, rear: bool = True) -> Part:
     """Solid door posts sharing the wall taper and rounded aperture returns."""
-    body = body_space(p)
     cut = Solid.extrude(Face(side_aperture(p, front)), (p.cargo_width_mm + 2, 0, 0))
-    width = p.side_pillar_intrusion_mm if rear else p.front_pillar_intrusion_mm
-    # Intersect a shifted copy of the actual wall profile to follow its transverse taper.
-    inward = body.moved(Location((-width if right else width, 0, 0)))
-    strip = body - inward
     if rear:
+        body = body_space(p)
+        # Retain the measured inward return and its wheel-house clearance.
+        inward = body.moved(Location((-p.side_pillar_intrusion_mm if right else p.side_pillar_intrusion_mm, 0, 0)))
+        strip = body - inward
         end = front - p.side_opening_width_mm
         start = end - p.side_pillar_width_mm
     else:
         start = front - p.side_opening_radius_mm
-        end = p.body_length_mm
+        end = front + p.front_pillar_width_mm
+        # Continue the wall profile into the cab: body_space ends at the cargo boundary.
+        strip = side_wall_blank(p, start, end - start, p.front_pillar_intrusion_mm)
+        if right:
+            strip = strip.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
     slab = Box(p.cargo_width_mm, end - start, p.side_opening_height_mm, align=(Align.MIN, Align.MIN, Align.MIN)).moved(
         Location((0, start, 0))
     )
@@ -529,6 +533,44 @@ def rear_hatch(p: Parameters) -> Compound:
     return Compound(label="Closed hatch", children=[metal, glass])
 
 
+def rounded_rear_corner(p: Parameters, sections: list[list[Wire]], rear: list[Shell]) -> Part:
+    """Rounded exterior with the original angular interior and rear seal retained."""
+    solids = []
+    depth = side_wall_depth(p)
+    handle = (p.rear_corner_radius_mm - p.rear_corner_straight_mm) / 3
+    for i in (0, 1):
+        curves = [station[i].edges()[0].geom_adaptor().Bezier() for station in sections]
+        poles = []
+        for j in range(1, 5):
+            a = Vector(curves[0].Pole(j)) + Vector(-depth, 0, 0)
+            b = Vector(curves[-1].Pole(j)) + Vector(-depth, 0, 0)
+            # Tangent to the rear face at one end and the straight side wall at the other.
+            poles.append([a, Vector(b.X, a.Y, a.Z), Vector(b.X, b.Y - handle, b.Z), b])
+        outside = Face.make_bezier_surface(poles)
+        ends = [Face.extrude(station[i].edges()[0], (-depth, 0, 0)) for station in (sections[0], sections[-1])]
+        caps = []
+        for j, row in ((1, poles[0]), (4, poles[-1])):
+            a, corner, b = (Vector(curve.Pole(j)) for curve in curves)
+            boundary = Wire(
+                [
+                    Edge.make_line(a, corner),
+                    Edge.make_line(corner, b),
+                    Edge.make_line(b, row[-1]),
+                    Bezier(*row).edge().reversed(),
+                    Edge.make_line(row[0], a),
+                ]
+            )
+            caps.append(Face.make_surface(boundary))
+        solids.append(Solid(Shell([*rear[i].faces(), outside, *ends, *caps])))
+    return Part(solids[0].fuse(solids[1]).solids(), color=WALL)
+
+
+def build_floor_plywood(p: Parameters) -> Solid:
+    plywood = Solid.extrude(Face(floor_outline_wire(p)), (0, 0, -p.floor_ply_thickness_mm))
+    plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
+    return plywood
+
+
 def build_body(p: Parameters) -> list[Compound]:
     sections = rear_sections(p)
     # Loft normals oppose extrusion normals for this section order. Keep all
@@ -537,20 +579,13 @@ def build_body(p: Parameters) -> list[Compound]:
     main = [
         Face.extrude(section.edges()[0], (0, p.body_length_mm - p.rear_corner_radius_mm, 0)) for section in sections[-1]
     ]
+    left_corner = rounded_rear_corner(p, sections, rear)
+    left_corner.label = "Left rear corner"
+    right_corner = left_corner.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+    right_corner.label = "Right rear corner"
     corners = Compound(
         label="Rear corners",
-        children=[
-            Part(
-                [Solid.extrude(face, (-side_wall_depth(p), 0, 0)) for i in (0, 1) for face in rear[i].faces()],
-                label="Left rear corner",
-                color=WALL,
-            ),
-            Part(
-                [Solid.extrude(face, (side_wall_depth(p), 0, 0)) for i in (4, 5) for face in rear[i].faces()],
-                label="Right rear corner",
-                color=WALL,
-            ),
-        ],
+        children=[left_corner, right_corner],
     )
     walls, doors = [], []
     for name, offset, right in (
@@ -576,7 +611,16 @@ def build_body(p: Parameters) -> list[Compound]:
             )
         )
         doors.append(sliding_door(p, front, right))
-    roof = Compound([main[2], main[3], rear[2], rear[3]], label="Bare roof", color=Color(0.67, 0.71, 0.75, 0.2))
+    roof_solids = [
+        Solid.extrude(face, (0, 0, p.roof_skin_thickness_mm))
+        for surface in (main[2], main[3], rear[2], rear[3])
+        for face in surface.faces()
+    ]
+    roof = Part(
+        roof_solids[0].fuse(*roof_solids[1:]).solids(),
+        label="Bare roof",
+        color=Color(0.67, 0.71, 0.75, 0.2),
+    )
     bows, ceiling = build_ceiling(p)
     rails = roof_rails(p)
     header_slab = Box(p.cargo_width_mm, p.ceiling_rear_y_mm, p.body_height_mm, align=(Align.MIN, Align.MIN, Align.MIN))
@@ -591,8 +635,6 @@ def build_body(p: Parameters) -> list[Compound]:
     surround = Shell.make_loft([aperture, rear_aperture(p, 20)], ruled=True)
     hatch = rear_hatch(p)
     floor = Face(floor_outline_wire(p))
-    plywood = Solid.extrude(floor, (0, 0, -p.floor_ply_thickness_mm))
-    plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
     metal = floor.moved(Location((0, 0, -p.floor_build_up_mm)))
     metal.label, metal.color = "Vehicle floor", WALL
     return [
@@ -607,6 +649,6 @@ def build_body(p: Parameters) -> list[Compound]:
                 hatch,
             ],
         ),
-        Compound(label="Body floor", children=[metal, plywood]),
+        Compound(label="Body floor", children=[metal]),
         Compound(label="Sliding doors", children=doors),
     ]

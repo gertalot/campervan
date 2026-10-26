@@ -34,6 +34,13 @@ shows errors beside the affected input and disables Apply for an invalid draft; 
 This covers the platform-height dependency chain, not every possible geometry constraint. Geometry checks remain
 necessary for other combinations. Geometry code does not call the API or viewer.
 
+The worker captures a complete OCP display payload, exact measurement geometry, motion tracks and cut list in one
+bundle. The coordinator saves it atomically to `.local/model-cache.json` after construction and replays it when the
+browser connects. Reuse depends on resolved geometry dimensions, CAD/publishing source and CAD/viewer library versions.
+Pose controls are excluded from that fingerprint; recorded motion tracks retain the bundle's construction pose so
+the browser can apply current slider positions. Unchanged Apply reuses the bundle; explicit Regenerate forces a build.
+Failed construction retains the previous bundle, with status and cut-list revisions indicating that it is older.
+
 Use native `Compound(label=..., children=...)` assemblies. Keep each physical part separate and use named subassemblies
 for parts that belong or move together. Build reusable parts at a local origin and place them using `Location`.
 Keep labels consistent across regeneration. Add modules and groups as actual components arrive; do not prebuild a
@@ -83,6 +90,7 @@ Campervan
 │       │   ├── Driver seat
 │       │   └── Passenger seat
 │       └── Headliner
+├── Finished floor plywood
 ├── Long bench
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
@@ -157,7 +165,9 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   The lower rear-pillar return is trimmed against the same positioned wheel-house solid used for display, so
   it meets the rounded arch without overlapping it. `body.wheel_arch` owns that shared envelope.
   Front pillars behind the cab doors are solid profiles with the same wall taper and rounded opening returns.
-  Their inward depth is separately adjustable (40mm estimate); their fore–aft width follows each opening's cab-end setback.
+  Their inward depth is separately adjustable (40mm estimate). **Front pillar fore–aft width** extends them 100mm
+  toward the cab from the front edge of each sliding opening, including beyond the cargo-body boundary. Their
+  exterior follows the same closed-door outer wall profile; rounded opening returns remain behind that front edge.
   Roof-side rails follow this curved wall with an adjustable 20mm inward-depth estimate, capped at the ceiling's
   lateral edge. They do not fill the entire shoulder-width box: that former shape projected too far inward at its
   lower edge compared with the owner's photographs. The 20mm depth remains an estimate, not a new measurement.
@@ -173,13 +183,18 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   no raised band projects into the cabin. Its outer surface shares the rest of the side panel's exterior profile.
   Width, height and recess depth are adjustable under Side walls. Both window types share `window_recess`,
   rounded-corner cutters and the surround-width setting. Furniture fitting continues to use the measured inner wall.
-- Rear corners have a 60mm straight section followed by an angled transition ending at Y = 200. The original
+- Rear corners retain a 60mm straight interior section followed by an angled interior transition ending at Y = 200.
+  Their separate exterior is a smooth cubic surface, tangent to the rear face and straight side wall. The closed
+  solid joins that rounded skin to the angular inner faces and keeps the rear seal and cabinet-fitting volume.
+  The original
   `rear_corner_radius_mm` identifier is retained for saved parameters, but its control is **Corner transition depth**.
   This implemented extent still needs reconciling with the owner's clarification of 60 straight plus 200 flared;
   see the [dimension audit](research/nv200/dimension-audit.md) for the distinct rear-door/opening references.
   Their rear side/header edges now come directly from the measured aperture used by the hatch, rather than a
   separate scaled wall profile. Both visible surfaces and the cabinet-fitting volume use these same sections.
   The curved rear end of the fitting solid is explicitly capped; a planar-ended solid loft cannot represent it.
+- The bare roof is a closed solid with **Roof thickness** defaulting to 10mm vertically above its existing inner
+  profile. Main and rear roof skins are joined; bow, plywood ceiling and cabinet clearances retain their inner datums.
 - The closed rear hatch retains its measured inner surface (130mm behind the bed at the centreline, Z = 390).
   Its estimated 38mm depth extends outward from that surface. Rounded trapezoidal glass is estimated at 1000mm
   bottom width, 940mm top width and 450mm height, with its top 100mm below the opening crown. The glass follows
@@ -197,7 +212,9 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   edge tangentially rather than forming a sharp S-step. The pillar is 180 wide below, 120 just above the lower
   curve, and 100 below the rounded roof return. Their tops
   are at 1170 above finished floor; lower sill offset is provisionally zero. Fore edges are independently adjustable.
-  Open-door envelopes leave 680 to the front pillars and their inner faces sit approximately 60 outside the body.
+  Open-door envelopes leave a provisional 620mm to the front pillars, retaining 60mm overlap across the rear of the
+  680mm lower openings at 0% closed. **Open clear width** controls this distance for both doors. The owner confirmed
+  the overlap; its amount needs measuring. Their inner faces sit approximately 60mm outside the body.
   Door thickness is owner-measured at approximately 100mm: closed outer faces follow the new exterior wall profile,
   and closed inner faces follow the pillars. The complete curved
   envelopes fit the aperture outline and retain the body taper throughout their travel. The shared door-closing
@@ -302,9 +319,12 @@ Old project fields and material selections for the removed deck, divider, lid, b
 
 `cabinet.py` builds the left-side cabinet in furniture-local coordinates, before the common mirror/placement.
 Its closed-door footprint starts at X = 1070, Y = 0–1000, narrowed by the vehicle envelope and wall support. With the
-100mm rear gap it spans vehicle Y = 100–1100. Length changes preserve the rear end. The centre partition starts at
-`cabinet_rear_bay_length_mm` (650mm), measured directly from the open rear end; the forward bay is 326mm clear
-at defaults, between the single 12mm centre and cab-end panels. The cab end's outer face stays at Y = 1000.
+100mm rear gap it spans vehicle Y = 100–1100, restoring the original cabinet length. Length changes preserve the
+rear end. The centre partition starts at `cabinet_rear_bay_length_mm` (560mm), measured from the open rear end,
+following the requested 90mm rearward move. The owned folded chairs measure 600 × 700 × 100mm; their placement is
+shown by the Stored gear live positions, with an open rear entrance. The forward bay uses the remaining space.
+Rear upper shelves have 548mm clear length between panels, and the forward bay has 416mm clear length.
+The cab end's outer face is at local Y = 1000, vehicle Y = 1100.
 
 `cabinet_frame_thickness_mm` supplies the solid partitions, aisle frame, rear rails and rear upright from the same
 sourced 12mm Tigerply stock; the bed retains its 18mm stock. The aisle frame retains its rounded openings and door
@@ -327,14 +347,15 @@ The lowest rear shelf supports start at `cabinet_rear_storage_height_mm` (730mm)
 The upper rear shelf and three forward shelves remain. Shelf and door heights, front rail retaining lips and the
 closed doors' 1070mm bed envelope are unchanged by the partition conversion.
 
-The wall-side support is a separate `Wall supports` group: seven straight 12 × 60mm plywood rails and one narrow
-transverse rear upright. Each bay has a top rail; the rear bay has two shelf rails and the forward bay three.
+The wall-side support is a separate `Wall supports` group: eight straight 12 × 60mm plywood rails and one narrow
+transverse rear upright. Each bay has a top rail and matching lower, middle and upper rails.
 Rails butt into the centre/cab-end partitions and rear upright rather than fastening to the vehicle. Each rail
 is vertical rectangular stock, set inboard of the lining over its full height; higher rails sit further inward.
-There is no low rail through the rear chair compartment and no broad wall-side frame or continuous support plane.
+The rear lower crossbeam joins the rear upright to the centre partition at the forward bay's lower-rail height.
+The rear chair compartment has no shelf at this level.
 The lowest forward rail follows the raised shelf and clears the wheel arch by at least 3mm.
 Its top is `cabinet_lower_rail_top_mm`: platform + foam + shelf clearance + member width − ledge height − shelf thickness.
-The rear aisle frame has the same extra crossbeam but no matching shelf or wall rail inside the chair compartment.
+The rear aisle frame has the same extra crossbeam; the wall-side rail now matches its height.
 
 The rear upright stands on the floor immediately ahead of the rear pillar, at the start of the back lining.
 It is a 12mm transverse plywood strip, nominally 60mm wide across X at each height, with its profile approximating
@@ -344,13 +365,15 @@ The old `cabinet_frame_step_height_mm` parameter is retained for saved projects,
 height**: the upper shelf rail remains halfway between this reference and the cabinet top.
 
 The five 12mm shelves form a bonded assembly: glue shelves onto their ledges and glue ledges continuously to the
-partitions, aisle frame and rear rails. The separate `Rail joint blocks` group contains fourteen vertical pine
+partitions, aisle frame and rear rails. The separate `Rail joint blocks` group contains sixteen vertical pine
 blocks, one at each rail end, with a full rail-height face against the rail and an adjacent face against the
 upright or partition. They use the same ready-made 18 × 18mm stock and are 60mm tall at defaults. Glue both faces;
 predrill assembly screws through the plywood faces into the blocks, staggering perpendicular screws.
 The five shelves have local corner notches around the blocks; transverse ledges stop 18mm short of the rail
 face and wall ledges fit between the blocks. The blocks replace the two former 30mm wall corner cleats.
-Two 60mm-high aisle cleats remain above the lowest forward shelf. The rear rail joint blocks remain above the chair bay's 730mm clear height. Glue layers and assembly screws are not modelled. The BoM includes an initial 250ml bottle
+Two 60mm-high aisle cleats remain above the lowest forward shelf. The rear lower rail has matching end blocks;
+the other rear rail blocks remain above the chair bay's 730mm clear height. Glue layers and assembly screws are not
+modelled. The BoM includes an initial 250ml bottle
 of Selleys Aquadhere Exterior PVA from Bunnings NZ. Use close-fitting bare-wood joints and clamp while curing;
 leave unstressed for 24 hours. This adhesive is for furniture joints, not vehicle anchorage.
 
@@ -390,20 +413,24 @@ The partitions follow the fitting volume rather than the former two broad suppor
 sheet is excluded from the carcass fitting volume.
 Thickness comes from the selected product; clearance has its own Cabinet / Back lining control and visibility eye.
 The Visibility section also has a Cabinet backing checkbox; its saved preference survives hiding/showing the cabinet.
+Cabinet shelves independently filters `/Campervan/Cabinet/Shelves`, covering all five shelf panels without their
+support ledges. Like Cabinet backing, its saved setting survives Cabinet toggles; hiding Cabinet hides both.
+It uses the same native labelled checkbox and keyboard behaviour described in the visibility guidance below.
 The BOM records the sheet separately from plywood and uses its developed centre-curve length for the cut rectangle,
 not the curved part's bounding-box depth. Confirm flute orientation and physical fit before cutting.
 There is no top panel. Shelf fasteners are not modelled.
 
 `cabinet_doors.py` makes nine 9mm plywood overlay doors. The four upper shelf openings each have a
 bottom-hinged flap, intended to stop horizontally on two short chain restraints. The front bottom door retains its vertical hinge; its above-bed neighbour is bottom-hinged, with separate live controls. All edges overlap the openings by
-15mm, with 12mm plan corner radii and 2mm face roundovers. The four original upper flaps retain their dimensions.
+15mm, with 12mm plan corner radii and 2mm face roundovers. The four upper flaps follow their respective bay widths.
 The rear storage has an opposed bottom pair and one full-width bottom-hinged flap above the raised shelf rail. The aisle crossbeam divides
 access without adding a shelf or rear crossbar. The rear chair-loading entrance remains 730mm high.
 
 `cabinet_mattress_clearance_mm` places the front lower shelf top 10mm above the uncompressed mattress. At the
 saved platform height 390mm and foam thickness 100mm, the shelf top is 500mm, the beam spans 470–530mm, and the
 above-bed doors begin at 515mm. Clear access openings above that beam are 200mm high. The two front lower doors
-are 284 × 440mm and 284 × 230mm; the bottom rear storage leaves are 297 × 440mm and the merged above-bed flap is 596 × 230mm.
+are 374 × 440mm and 374 × 230mm; the bottom rear storage leaves are 252 × 440mm and the merged above-bed flap is
+506 × 230mm.
 These dimensions follow bed height, foam, clearance, stock sizes and overlay instead of fixed elevations.
 
 The closed door fronts stay at X = `bed_width_mm` (1070mm), and backs at X = 1079. The aisle frame starts at
@@ -513,10 +540,15 @@ requesting regeneration. New geometry receives the latest selected positions.
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
 
-Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Slats, Cushions and Cabinet preferences
-live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's fixed/moving slats
-and the fixed cross-bench slats.
+Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Wooden floor, Slats, Cushions and
+Cabinet preferences live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's
+fixed/moving slats and the fixed cross-bench slats.
 Cushions covers both benches' foam groups; their sidebar eyes also work independently.
+Wooden floor controls the top-level Finished floor plywood part, outside Vehicle references. Its thickness parameter
+lives in its own matching group. The metal body floor and cab floor remain vehicle references; the plywood retains
+its existing See inside fade and remains excluded from the cutting list.
+The native labelled checkbox follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)
+(consulted 26 October 2026): a visible label and standard Space-key toggling, using the existing Visibility fieldset.
 
 **See inside** adjusts vehicle opacity in the browser before the existing viewer paints each frame. Assembly paths
 assign walls, doors, pillars, rear corners and arches to their vehicle side; roofs and floors have vertical directions.
@@ -524,10 +556,13 @@ Roof rails fade when either adjoining side faces the camera. `frontend/src/vehic
 edge-on panels opaque, then smoothly fades faces to 5% opacity as their side turns toward the camera, and outlines
 from 50% to 2%. Driver and passenger seats, including their supports, stay opaque from the sides, rear and above;
 they fade to 25% opacity only when viewed from the front. Opaque panels write depth so their interior surfaces hide
-exterior faces; window glass retains its original low opacity on the far side. Visibility states and furniture materials
+exterior faces; side-window glass is tinted with 30% opacity (70% transparency), and the rear hatch glass is fully
+transparent. See inside further fades the side glass on the near side. Visibility states and furniture materials
 remain unchanged. The toggle defaults on and persists as `campervan.see-inside` in localStorage.
-New geometry reattaches the effect; turning it off restores ordinary OCP transparency. Camera movement requires
-no regeneration, API request or separate animation loop for this effect.
+New geometry reattaches the effect. Turning it off makes the vehicle body and outlines 100% opaque while preserving
+the side-window tint and clear rear glass; solid faces write depth. This is reapplied before each render so refreshes,
+regenerated geometry and the OCP transparency control retain the selected See inside behaviour. Camera movement requires no regeneration,
+API request or separate animation loop for this effect.
 
 The cushion check verifies the five daytime bounds, full-bed coverage and no foam overlap at either endpoint.
 It samples backrest turning and descent and compares live poses with regenerated CAD.
@@ -587,15 +622,24 @@ the lying posture uses its own storage key. Metadata refreshes reattach the same
 Lying sliders adjust pillow-relative X/Y/Z offsets, body rotation, back lift/curvature, head tilt, hip/knee bend and
 hand position above/along the belly. Reset posture restores only that instance.
 Controls act directly on viewer geometry, persist in browser storage and do not regenerate CAD. The rig is detached
-before OCP disposes its old scene and reattached afterwards. OCP bundles Three.js r184; the GLTF loader uses the matching
-pinned npm version. Human geometry and material are allocated through OCP's constructors to keep numeric resource IDs
-unique. No second canvas or render loop is used. The mannequin is not included in build123d assemblies or CAD exports.
+before OCP disposes its old scene and reattached afterwards. OCP bundles Three.js r184. FastAPI's
+`/viewer-assets/js/shared-renderer.js` serves that locked bundle with its existing `THREE` namespace exported.
+`frontend/src/renderer.ts` loads it once and supplies the app's Three.js constructors. Vite aliases bare `three`
+imports to this module, including those inside the matching npm GLTFLoader and its utilities; dependency optimisation
+excludes `three` so it cannot embed another runtime. The npm package supplies addon sources and TypeScript types.
+The local Chrome build targets ES2022 for the renderer module's top-level await. App and OCP objects share constructors
+and resource IDs. No second canvas or render loop is used. The mannequin is not included in CAD assemblies or exports.
 
 ## Materials and bill of materials
 
 The CAD and Bill of materials tabs share the same model. Switching tabs leaves the viewer mounted at its existing
 size so camera, visibility and live positions survive. The BOM groups uses by resolved supplier product ID,
 with one price and availability record per product. Unspecified custom stock remains separate by role.
+The Cut list overview draws furniture cutting parts and the floor plywood by assembly, using CAD names.
+Plywood-thickness filters show material-specific layouts. `cutting_models.py` owns global algorithm/kerf/trim/grain,
+per-material stock and saved results. The coordinator owns native solver subprocesses through `cutting_worker.py`,
+receives improving layouts, and saves them with the project. Searches have no time limit; the page labels minimum
+stock count as proven only when the solver reports it. Source fingerprints identify previous layouts after edits.
 Each product expands into component uses and a combined cut list grouped by dimensions. Hardware quantities are
 summed across unowned uses before rounding up to purchase packs. Sheet areas and timber lengths are combined,
 but purchase counts still require a cutting layout. Sidebar links retain their role-based URLs and expand the

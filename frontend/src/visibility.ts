@@ -1,6 +1,8 @@
 const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
+  woodenFloor: ['/Campervan/Finished floor plywood'],
   cabinet: ['/Campervan/Cabinet'],
+  cabinetShelves: ['/Campervan/Cabinet/Shelves'],
   cabinetBacking: ['/Campervan/Cabinet/Back lining'],
   storedGear: ['/Campervan/Stored gear'],
   longBench: ['/Campervan/Long bench'],

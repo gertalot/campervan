@@ -1,15 +1,19 @@
 """Cutting envelopes from assembly leaves, independent of placement and display state."""
 
 from typing import Any
+import logging
 
 from build123d import Location, Shape
 
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
+from campervan.cad.cut_profiles import flat_profile
 
 
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
+    if name == "finished floor plywood":
+        return "floor"
     if name.startswith("point latch"):
         return "cabinet-catches"
     if name.endswith("strike block"):
@@ -48,7 +52,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
 
     def visit(part: Shape[Any], path: tuple[str, ...]) -> None:
         path = (*path, part.label)
-        if "Vehicle references" in path or "Cushions" in path or "Stored gear" in path:
+        if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear")):
             return
         if "Latch strikes" in path:
             return  # Supplied with the purchased Point latches.
@@ -61,6 +65,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         size = part.located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
+        profile = {}
         if material == "cabinet-back":
             from campervan.cad.cabinet import cabinet_back_profile
 
@@ -69,6 +74,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             )
             length, width = sorted((round(centre.length, 2), round(size.Y, 2)), reverse=True)
             thickness = parameters.cabinet_back_thickness_mm
+            profile = {"profile_note": "Developed rectangular blank. Transfer the wheel-arch notch from a van template; confirm flute direction."}
         elif material == "slides":
             # The fixed, intermediate and moving leaves describe the same two purchased slides.
             if "Fixed" not in path:
@@ -94,8 +100,14 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             for section in (width, thickness):
                 dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
             length = round(dimensions[0], 2)
+        if material in {"floor", "frames", "cabinet-frames", "skins", "shelves", "drawer", "cabinet-doors", "guides"}:
+            try:
+                profile = flat_profile(part)
+            except (ValueError, RuntimeError, IndexError) as error:
+                logging.getLogger(__name__).warning("Cutting profile for %s: %s", part.label, error)
+                profile = {"profile_note": f"Rectangle only: CAD outline extraction failed ({error}). Transfer the profile before cutting."}
         cuts.append(
-            CutPart(path=" / ".join(path[1:]), material=material, length=length, width=width, thickness=thickness)
+            CutPart(path=" / ".join(path[1:]), material=material, length=length, width=width, thickness=thickness, **profile)
         )
 
     visit(model, ())

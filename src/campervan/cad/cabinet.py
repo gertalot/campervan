@@ -187,8 +187,9 @@ def build_cabinet(p: Parameters) -> Compound:
     rail_blocks = []
     rail_faces: dict[tuple[str, float], float] = {}
     rail_names = {lower_rail: "lower", storage_rail: "middle", upper_rail: "upper", height: "top"}
+    # Both bays have a lower wall crossbeam; the rear chair bay has no shelf at that level.
     for bay_name, start, end, rail_levels in (
-        ("Rear", back_start + thickness, middle_y, (*rear_shelf_levels, height)),
+        ("Rear", back_start + thickness, middle_y, (*shelf_levels, height)),
         ("Cab-end", middle_y + thickness, length - thickness, (*shelf_levels, height)),
     ):
         if end <= start:

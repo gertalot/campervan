@@ -11,6 +11,7 @@
       <button id="cad-tab" aria-controls="cad-panel" aria-pressed="true">CAD</button>
       <button id="bom-tab" aria-controls="bom-panel" aria-pressed="false">Bill of materials</button>
       <button id="plan-tab" aria-controls="plan-panel" aria-pressed="false">Plan</button>
+      <button id="cuts-tab" aria-controls="cuts-panel" aria-pressed="false">Cut list</button>
     </nav><p id="status" role="status" aria-live="polite" aria-atomic="true">Connecting…</p></header>
     <main id="workspace">
     <section id="cad-panel" aria-label="CAD">
@@ -19,9 +20,11 @@
         <fieldset id="visibility">
           <legend>Visibility</legend>
           <label><input type="checkbox" name="vehicle" checked /> Vehicle</label>
+          <label><input type="checkbox" name="woodenFloor" checked /> Wooden floor</label>
           <label><input type="checkbox" name="slats" checked /> Slats</label>
           <label><input type="checkbox" name="cushions" checked /> Cushions</label>
           <label><input type="checkbox" name="cabinet" checked /> Cabinet</label>
+          <label><input type="checkbox" name="cabinetShelves" checked /> Cabinet shelves</label>
           <label><input type="checkbox" name="cabinetBacking" checked /> Cabinet backing</label>
           <label><input type="checkbox" name="storedGear" checked /> Stored gear</label>
           <label><input type="checkbox" name="longBench" checked /> Long bench</label>
@@ -48,6 +51,7 @@
     </section>
     <section id="plan-panel" aria-label="Conversion plan" hidden></section>
     <section id="bom-panel" aria-label="Bill of materials" hidden></section>
+    <section id="cuts-panel" aria-label="Cut list and layouts" hidden></section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

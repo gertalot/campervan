@@ -229,7 +229,7 @@ export function setupMaterials(client: PlanningClient) {
   return {
     show: (role?: string) => showTab('bom', role),
     onStatus(status: ModelStatus) {
-      modelError = status.error ? `Regeneration failed: ${status.error.message}` : '';
+      modelError = status.error ? `Model update failed: ${status.error.message}` : '';
       const key = `${status.session_id}:${status.requested_revision}:${status.state}`;
       if (key !== statusKey) {
         statusKey = key; stale = true;

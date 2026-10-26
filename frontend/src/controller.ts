@@ -1,4 +1,4 @@
-import type { Api, FieldMetadata, ModelStatus, MutationResponse, ParameterResponse, Parameters } from './api';
+import type { Api, FieldMetadata, ModelStatus, ParameterResponse, Parameters } from './api';
 
 export interface View {
   setMetadata(metadata: Record<string, FieldMetadata>): void;
@@ -41,7 +41,9 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     }
     current = status;
     view.setStatus(status);
-    view.setError(inputError ?? (status.error ? `Regeneration failed: ${status.error.message}` : null));
+    const previous = status.published_revision !== null && status.published_revision !== status.requested_revision;
+    view.setError(inputError ?? (status.error
+      ? `Model update failed: ${status.error.message}${previous ? ' Showing the previous model.' : ''}` : null));
   }
   function schedule(delay = current?.state === 'regenerating' ? 500 : 2000) {
     clock.clearTimeout(timer);
@@ -50,7 +52,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   function showError(error: unknown) {
     view.setError(error instanceof Error ? error.message : String(error));
   }
-  async function request(operation: () => Promise<MutationResponse>) {
+  async function request(operation: () => Promise<ModelStatus>) {
     if (!running) return false;
     try {
       const accepted = await operation();
@@ -60,8 +62,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
         // The next poll reloads parameters before displaying this session's revisions.
         session = null;
       } else {
-        show({ ...accepted, published_revision: current?.published_revision ?? null,
-          state: 'regenerating', error: null });
+        show(accepted);
       }
       schedule();
       return true;
@@ -125,13 +126,12 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
           .filter(([name, value]) => data.parameters[name] !== value)
           .map(([name, value]) => api.setPosition(name, value)));
         session = data.session_id;
-        status = await api.getStatus();
+        status = await api.loadModel();
         if (!running || status.session_id !== session) return;
         show(status);
         const draft = Object.fromEntries(Object.entries({ ...data.parameters, ...positions })
           .map(([name, value]) => [name, String(value)]));
-        const valid = await preview(draft);
-        if (valid && status.state !== 'regenerating') await request(() => api.regenerate());
+        await preview(draft);
       } else show(status);
     } catch (error) { failed = true; showError(error); }
     finally {

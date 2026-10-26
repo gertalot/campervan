@@ -200,6 +200,14 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Side rails"]},
     )
 
+    roof_skin_thickness_mm: float = Field(
+        default=10.0,
+        gt=0,
+        title="Roof thickness",
+        description="Vertical thickness above the existing inner roof profile.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Roof", "Bare roof"]},
+    )
+
     roof_bow_depth_mm: float = Field(
         default=54.0,
         gt=0,
@@ -419,7 +427,7 @@ class Parameters(BaseModel):
         ge=0,
         title="Floor plywood",
         description="Owner reports 11–12mm; use 12mm within the 18mm total build-up.",
-        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+        json_schema_extra={"unit": "mm", "group": ["Finished floor plywood"]},
     )
 
     rear_corner_straight_mm: float = Field(
@@ -560,6 +568,14 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
     )
 
+    front_pillar_width_mm: float = Field(
+        default=100.0,
+        gt=0,
+        title="Front pillar fore–aft width",
+        description="Extends toward the cab from the front edge of each sliding-door opening.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Side walls"]},
+    )
+
     ceiling_rear_y_mm: float = Field(
         default=240.0,
         ge=0,
@@ -577,10 +593,13 @@ class Parameters(BaseModel):
     )
 
     side_door_clear_width_mm: float = Field(
-        default=680.0,
+        default=620.0,
         ge=0,
         title="Open clear width",
-        description="Measured front pillar to the edge of the open sliding door.",
+        description=(
+            "Front pillar to the leading edge of the fully open door. Smaller values increase overlap. "
+            "Default 620mm leaves a provisional 60mm overlap across the 680mm lower opening."
+        ),
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Sliding doors"]},
     )
 
@@ -1033,7 +1052,10 @@ class Parameters(BaseModel):
         default=1000.0,
         gt=0,
         title="Length",
-        description="Along the van from the furniture rear gap. Default ends at the sliding door's rear edge.",
+        description=(
+            "Along the van from the furniture rear gap. "
+            "Original 1000mm cabinet length puts its cab-end panel 1100mm from the rear pillar datum."
+        ),
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
@@ -1046,10 +1068,10 @@ class Parameters(BaseModel):
     )
 
     cabinet_rear_bay_length_mm: float = Field(
-        default=650.0,
+        default=560.0,
         gt=0,
         title="Rear storage bay length",
-        description="Clear length from the open rear end to the centre support; the forward bay uses the remainder.",
+        description="Rear end to centre divider. The forward bay uses the remainder of the cabinet length.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 

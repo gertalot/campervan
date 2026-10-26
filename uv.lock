@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.13.*"
 
 [[package]]
@@ -135,6 +135,7 @@ dependencies = [
     { name = "build123d" },
     { name = "fastapi" },
     { name = "ocp-viewer" },
+    { name = "packingsolver" },
     { name = "pydantic" },
     { name = "uvicorn" },
 ]
@@ -153,6 +154,7 @@ requires-dist = [
     { name = "build123d", specifier = "==0.13.0" },
     { name = "fastapi", specifier = ">=0.115,<1" },
     { name = "ocp-viewer", specifier = "==1.2.0" },
+    { name = "packingsolver", specifier = "==0.1.1229" },
     { name = "pydantic", specifier = ">=2,<3" },
     { name = "uvicorn", specifier = ">=0.30,<1" },
 ]
@@ -703,6 +705,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79", size = 313412, upload-time = "2026-08-04T18:15:28.737Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c", size = 129956, upload-time = "2026-08-04T18:15:27.159Z" },
+]
+
+[[package]]
+name = "packingsolver"
+version = "0.1.1229"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/67/0aaca4d5b344be762cff6bce5c69ec56e63c31750f2315a8fd5c3dd365e1/packingsolver-0.1.1229.tar.gz", hash = "sha256:62cac72de1c085b7a4264989bbee20661bd7ff17b34ba31f8a1f7aff9ed3e332", size = 946511, upload-time = "2026-10-25T18:55:18.396Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/97/9b7eaff038fa4f376f338c9e6b25fbb20c195c39acf6a855d8362bffc9e4/packingsolver-0.1.1229-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:3c671f237a2e90cace5760f8a97b3a40d3b3ce08d40e091a7cf891792b88d791", size = 4425066, upload-time = "2026-10-25T18:55:06.971Z" },
+    { url = "https://files.pythonhosted.org/packages/71/03/bc81fa59019cc782fdb86873ec46826713e23803f56b9bb27e7b035c8f4a/packingsolver-0.1.1229-cp312-abi3-macosx_11_0_x86_64.whl", hash = "sha256:e1007ca3f2147271c6a1fec5a9d2f86e4d654094c2febfad77189db113488c0f", size = 5013728, upload-time = "2026-10-25T18:55:09.007Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/8f/e86f5822dac5afa0a9c8f3c85125359cb37de0cb15693cfac50c4a031f9f/packingsolver-0.1.1229-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e9e16e4773c3b93f331343e2bd373e4f9bac28ed99693f6af708f0ea68570e7a", size = 5565604, upload-time = "2026-10-25T18:55:10.837Z" },
+    { url = "https://files.pythonhosted.org/packages/63/35/cba33eaecff3332745661d7cc5957444fa285b388fad8ba8d8955918dc77/packingsolver-0.1.1229-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7e70c571a5ba3d4b7b63ad1ba8fa76675028701dd157bc62f898dda62db6f721", size = 6071401, upload-time = "2026-10-25T18:55:12.709Z" },
+    { url = "https://files.pythonhosted.org/packages/36/f0/572c585c62a1ff6d1d6c2ed8135d831d7726450dc65aeb5a2d317838ba5a/packingsolver-0.1.1229-cp312-abi3-win32.whl", hash = "sha256:3aabf36280f5e23c6ae3bbcbbc4033197a61d4f8dac1e4db96406795d0302e67", size = 3815100, upload-time = "2026-10-25T18:55:14.668Z" },
+    { url = "https://files.pythonhosted.org/packages/69/93/9a47010c128e9b4cbad33cdc49771f0cb56495becafb005c5973a1c758f8/packingsolver-0.1.1229-cp312-abi3-win_amd64.whl", hash = "sha256:0259a24bd5237c12bc3226d98cd966aef62148e0743f54f1a1e0dcb750dac0db", size = 4166694, upload-time = "2026-10-25T18:55:16.576Z" },
 ]
 
 [[package]]

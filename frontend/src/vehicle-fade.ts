@@ -5,8 +5,6 @@ interface CadGroup extends Object3D {
   front?: { material: Material };
   back?: { material: Material };
   edges?: { material: Material };
-  setTransparent(flag: boolean): void;
-  transparent: boolean;
 }
 
 const left: Direction = [-1, 0, 0], right: Direction = [1, 0, 0];
@@ -14,6 +12,7 @@ const front: Direction = [0, 1, 0], rear: Direction = [0, -1, 0];
 const roof: Direction = [0, 0, 1], floor: Direction = [0, 0, -1];
 
 function directions(path: string): Direction[] {
+  if (path === '/Campervan/Finished floor plywood') return [floor];
   const prefix = '/Campervan/Vehicle references/';
   if (!path.startsWith(prefix)) return [];
   const part = path.slice(prefix.length);
@@ -33,23 +32,21 @@ function directions(path: string): Direction[] {
 
 /** Fade vehicle sides, without touching visibility, geometry, or furniture materials. */
 export function createVehicleFade() {
-  type Entry = { group: CadGroup; directions: Direction[]; maxOpacity: number; fadeAmount: number; materials: {
-    material: Material; edge: boolean; opacity: number; transparent: boolean; depthWrite: boolean;
+  type Entry = { directions: Direction[]; maxOpacity: number; fadeAmount: number; materials: {
+    material: Material; edge: boolean;
   }[] };
   let entries: Entry[] = [];
   const towardCamera = new Vector3();
   const rotation = new Quaternion();
 
-  function restore() {
-    for (const { group, materials } of entries) {
-      for (const { material, opacity, transparent, depthWrite } of materials) {
-        material.opacity = opacity;
-        material.transparent = transparent;
-        material.depthWrite = depthWrite;
-        material.needsUpdate = true;
+  function setExteriorOpacity() {
+    for (const { materials, maxOpacity } of entries) {
+      for (const { material, edge } of materials) {
+        material.opacity = edge ? 1 : maxOpacity;
+        const transparent = material.opacity < 1;
+        if (material.transparent !== transparent) { material.transparent = transparent; material.needsUpdate = true; }
+        material.depthWrite = !edge && !transparent;
       }
-      // Respect the OCP transparency toolbar's current setting, including changes while fading.
-      group.setTransparent(group.transparent);
     }
   }
 
@@ -64,16 +61,17 @@ export function createVehicleFade() {
         for (const [mesh, edge] of [[group.front, false], [group.back, false], [group.edges, true]] as const) {
           if (!mesh) continue;
           const { material } = mesh;
-          materials.push({ material, edge, opacity: material.opacity,
-            transparent: material.transparent, depthWrite: material.depthWrite });
+          materials.push({ material, edge });
         }
-        if (materials.length) entries.push({ group, directions: normals, materials,
+        const glass = path.endsWith('/Window glass');
+        const rearGlass = glass && path.startsWith('/Campervan/Vehicle references/Rear opening/');
+        if (materials.length) entries.push({ directions: normals, materials,
           fadeAmount: path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
-          maxOpacity: path.endsWith('/Window glass') ? group.front?.material.opacity ?? 0.12 : 1 });
+          maxOpacity: rearGlass ? 0 : glass ? 0.3 : 1 });
       }
     },
     clear() { entries = []; },
-    restore,
+    setExteriorOpacity,
     update(quaternion: number[]) {
       // Camera local +Z points toward the observer in both orthographic and perspective views.
       towardCamera.set(0, 0, 1).applyQuaternion(rotation.fromArray(quaternion));

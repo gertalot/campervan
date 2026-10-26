@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from campervan.cutting_models import CuttingState
 from campervan.parameters import Parameters, default_parameters
 
 CATALOGUE_PATH = Path(__file__).with_name("materials.json")
@@ -38,6 +39,10 @@ class MaterialRole(BaseModel):
 
 
 ROLES = [
+    MaterialRole(
+        id="floor", name="Floor plywood", kind="sheet", fields={"thickness": "floor_ply_thickness_mm"},
+        note="The CAD floor is currently one panel. Its sheet size and division into separate panels still need specifying.",
+    ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
         id="cabinet-frames",
@@ -227,6 +232,10 @@ class CutPart(BaseModel):
     length: float
     width: float
     thickness: float
+    outline: list[tuple[float, float]] = Field(default_factory=list)
+    holes: list[list[tuple[float, float]]] = Field(default_factory=list)
+    profile_note: str = ""
+    profile_axes: str = ""
 
 
 def default_selections() -> dict[str, Selection]:
@@ -238,6 +247,7 @@ def default_selections() -> dict[str, Selection]:
 class Project(BaseModel):
     parameters: Parameters = Field(default_factory=default_parameters)
     materials: dict[str, Selection] = Field(default_factory=default_selections)
+    cutting: CuttingState = Field(default_factory=CuttingState)
 
 
 def catalogue() -> list[Product]:

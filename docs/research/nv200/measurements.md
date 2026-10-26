@@ -86,6 +86,10 @@ and a 140mm gap ahead of the wall-side wheel arch (1210 − 1070). Use these dir
 previous 1100 rear-opening position and 740 lower width. The earlier 680mm open-door access remains recorded;
 the measurements no longer imply a 60mm overlap at mattress height.
 
+On 2026-10-26, Gert reconfirmed that the fully open sliding doors overlap the rear of the openings and requested this
+in the drawing. The CAD uses a provisional 60mm overlap at the lower opening, giving 620mm open access across its
+680mm width. **Open clear width** controls the open-door position. The overlap amount needs a direct measurement.
+
 The 900mm rear pillar/side-wall junction to opening measurement now implies a junction at 310 relative to the
 closed-door reference, rather than the earlier inferred 200. This conflicts with the previous rear arch gap
 and is not used to relocate the rear corner without reconciling the surfaces. The direct arch measurements

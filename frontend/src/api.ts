@@ -31,8 +31,9 @@ export interface Api {
   getParameters(): Promise<ParameterResponse>;
   previewParameters(parameters: Parameters): Promise<ParameterResponse>;
   getStatus(): Promise<ModelStatus>;
-  putParameters(parameters: Parameters): Promise<MutationResponse>;
-  regenerate(): Promise<MutationResponse>;
+  putParameters(parameters: Parameters): Promise<ModelStatus>;
+  loadModel(): Promise<ModelStatus>;
+  regenerate(): Promise<ModelStatus>;
   setPosition(name: string, percent: number): Promise<Parameters>;
 }
 export class ApiError extends Error {
@@ -60,8 +61,9 @@ export async function request<T>(path: string, method = 'GET', body?: unknown): 
 export const getParameters = () => request<ParameterResponse>('parameters');
 export const previewParameters = (parameters: Parameters) => request<ParameterResponse>('parameters/preview', 'POST', parameters);
 export const getStatus = () => request<ModelStatus>('model/status');
-export const putParameters = (parameters: Parameters) => request<MutationResponse>('parameters', 'PUT', parameters);
-export const regenerate = () => request<MutationResponse>('model/regenerate', 'POST');
+export const putParameters = (parameters: Parameters) => request<ModelStatus>('parameters', 'PUT', parameters);
+export const loadModel = () => request<ModelStatus>('model/load', 'POST');
+export const regenerate = () => request<ModelStatus>('model/regenerate', 'POST');
 export const setPosition = (name: string, percent: number) => request<Parameters>(
   'model/position', 'PATCH', { [name]: percent },
 );

@@ -48,7 +48,8 @@ make chrome
 
 Open **http://127.0.0.1:5173**.
 
-The page automatically regenerates the model on opening. Edit dimensions in the sidebar and click **Apply**.
+The page loads the saved model on opening. It builds geometry if there is no matching saved model.
+Edit dimensions in the sidebar and click **Apply**; unchanged dimensions reuse the saved model.
 Bed-height limits update while editing and explain which part prevents a lower or higher platform. Drawer and support
 heights reduce automatically if needed; the sidebar shows those adjustments. Invalid drafts cannot be applied and are
 not saved or sent to CAD. Stock sizes and measured vehicle dimensions remain unchanged.
@@ -57,7 +58,7 @@ Click a group's eye icon to show or hide its geometry without regeneration. Visi
 the eye icons and category checkboxes reflect partial visibility when only some children are shown.
 The floor reference rectangle and rear-door opening wire are hidden by default.
 Drag the sidebar's right edge to resize it; the browser remembers its width too.
-Use **Regenerate** to retry after an error.
+Use **Regenerate** to force a fresh build or retry after an error.
 The browser remembers your camera view, slider positions and visibility choices across regeneration and page reloads.
 Use the viewer toolbar to reset or refit the camera when needed.
 
@@ -68,17 +69,25 @@ Dragging in the main viewer also keeps Z upright, so the vehicle does not roll o
 Dragging, zooming or another click interrupts the rotation. There is no splash model or Tools/Info panel.
 Vehicle references use the measured door openings, rear pillars, fitted floor and ceiling, plus approximate wheel
 arches and cab geometry. Open sliding-door envelopes and a closed hatch inner surface show storage clearances. Use the group eyes to hide the walls or roof while working inside.
+The bare roof is a 10mm-thick solid. Rear corners have rounded exteriors and retain their angular interior returns.
+Front sliding-door pillars extend 100mm toward the cab; adjust their fore–aft width under **Vehicle references → Side walls**.
 Body length is independent of furniture layout length. Width is shared. Profile controls and door positions are editable
 under **Vehicle references**; their tooltips identify estimates. See the [NV200 research](docs/research/nv200/README.md)
 for sources and the measurements needed to check the fit against the van.
+Uncheck **See inside** to make the vehicle body fully opaque. Side windows remain tinted and 70% transparent;
+the rear window is clear.
 The long bench contains separate fixed plywood frames, a cab-end skin and a rear header. Its dimensions and construction
 thicknesses are editable in the sidebar. Platform height includes the allowance for slats above the frame.
 Live controls sit at the top of the sidebar, outside the collapsible dimension groups.
-The **Vehicle**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes show or hide those
-categories without regeneration. Assembly switches and content filters work together: showing a bench keeps disabled
-slats/cushions hidden, and enabling slats/cushions never reveals a hidden bench. Checkboxes retain their own settings.
+The **Vehicle**, **Wooden floor**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes
+show or hide those categories without regeneration. Assembly switches and content filters work together: showing a
+bench keeps disabled slats/cushions hidden, and enabling slats/cushions never reveals a hidden bench. Checkboxes retain
+their own settings.
 Slats includes the long bench's fixed/moving slats and the fixed cross-bench slats.
 Visibility preferences are saved in the browser and reapplied after regeneration.
+**Wooden floor** controls the finished plywood independently of **Vehicle**, which retains the metal floor and cab.
+**Cabinet shelves** toggles all five shelf panels, leaving their support ledges visible. Its setting is saved and
+retained when hiding/showing **Cabinet**; the Cabinet switch still hides the entire cabinet.
 **Doors closed (%)** slides both doors forward, then pulls them inward over the final 15%.
 Zero is fully open; 100 is closed. The control animates instantly and retains its position.
 **Long bench conversion (%)** runs through three stages: 0–40 extends its frame, 40–80 repositions its seat and
@@ -115,19 +124,20 @@ The two support frames run fore/aft. Four long slats run across the van, with th
 at the bench edges, matching the previous extended cross bench. At defaults, 80mm slats have 86⅔mm clear gaps
 within the 580mm depth; the junction to the extended long bench retains its 90mm gap. Toilet/tray hardware and
 fixing details remain unmodelled.
-The left-side **Cabinet** uses 12mm plywood for its solid centre/cab-end partitions, aisle frame, seven separate
+The left-side **Cabinet** uses 12mm plywood for its solid centre/cab-end partitions, aisle frame, eight separate
 rear rails and narrow transverse rear upright, independently of the bed's 18mm frames. The rails and upright
 are under **Cabinet → Wall supports**. There are no cabinet skins, broad wall-side frames or bottom panel.
-The rear bay has two shelves above a 650mm-deep, 730mm-high chair compartment with a clear rear entrance.
+The rear bay has two shelves above a 560mm-deep, 730mm-high chair compartment with a clear rear entrance.
 Above that entrance, a 12mm **Rear upper panel** closes the two shelf compartments at the cabinet's rear edge.
 Its bottom follows **Rear storage clear height**, its top follows the ceiling, and its outer edge is scribed to the body.
-The forward bay has three shelves and 326mm clear length at defaults. The van floor serves as the bottom.
+The forward bay has three shelves and 416mm clear length at defaults.
+The cabinet retains its original 1000mm length, ending 1100mm from the rear pillar datum. The van floor serves as the bottom.
 The rear upright stands ahead of the rear pillar; its narrow plywood profile and the partitions will need
 physical templates from the real van. Straight rear rails sit progressively inward at higher levels and join
 the cabinet's partitions/upright. They are not fastened to the vehicle wall. The solid centre partition has a
 wheel-arch notch and reaches the floor inside the arch. Shelves are notched around the rear upright.
 All five shelves are intended to be glued to their pine ledges, with ledges bonded to the supporting panels/rails.
-Fourteen vertical pine blocks reinforce both ends of every rear rail, under **Cabinet → Rail joint blocks**.
+Sixteen vertical pine blocks reinforce both ends of every wall rail, under **Cabinet → Rail joint blocks**.
 They are 18 × 18 × 60mm at defaults, with two adjacent faces glued to the rail and its upright/partition.
 Shelf corners are notched and adjoining ledges shortened around them. Two aisle corner cleats remain in the forward bay.
 Ledges, joint blocks, cleats and latch blocks use ready-made
@@ -171,10 +181,16 @@ is on the right. Each group can be hidden independently. Cab dimensions are prov
 [cab research and measurement notes](docs/research/nv200/cab.md).
 
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
-model with the selected parameters. Backend changes reload the API, reset dimensions to defaults and automatically
-regenerate with your saved slider positions. Frontend changes trigger Vite updates or a page reload.
-Dimensions are kept in API memory; camera, slider and visibility preferences are kept in browser storage.
-Failed regeneration displays an error and leaves the last successful model visible.
+model with the selected parameters. Backend changes reload the API and restore the saved project. Frontend changes
+trigger Vite updates or a page reload. Matching geometry is reused across page reloads and API restarts.
+Dimensions and material selections are saved in `.local/project.json`; camera, slider and visibility preferences
+are kept in browser storage.
+
+The last complete CAD result is saved in `.local/model-cache.json`: viewer geometry, exact measurement shapes,
+motion tracks and the cut list. Its fingerprint includes geometry dimensions, CAD/publishing source and installed
+CAD/viewer library versions. Changed inputs rebuild it; live pose sliders do not. The cache is local, ignored by git
+and recreated if missing or unreadable. Failed construction keeps the previous saved model and identifies it as
+**Previous model** while showing the error.
 
 Press Ctrl-C in each terminal to stop.
 
@@ -256,8 +272,8 @@ listed prices exclude freight. Each supplier product appears once, combining req
 Material dimensions in the CAD sidebar open that product and highlight the relevant component use.
 
 Expand a product using its arrow to see **Used by** and the **Combined cut list**. Identical cut sizes are grouped
-across components; expand a size to see its part locations. Sheet and timber purchase counts need a
-cutting layout that allows for kerf, grain and waste. Hardware pack counts come from the model; the three stages
+across components; expand a size to see its part locations. Use **Cut list** for sheet and timber layouts
+allowing for kerf, grain and waste. Hardware pack counts come from the model; the three stages
 of each drawer slide count as one purchased slide. Shelves and drawer share the same 12mm plywood product.
 
 Tell Codex when you want a product sourced or changed. Selected stock dimensions drive the model automatically:
@@ -267,7 +283,34 @@ Sheet sizes and timber lengths define stock to cut; they do not change the furni
 measured overrides persist with parameters in `.local/project.json` and can be updated through the materials API.
 Camera and visibility stay intact when switching tabs.
 The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`, `/plan`), so reloads, bookmarks and
-browser Back/Forward restore that view.
+browser Back/Forward restore that view. **Cut list** has its own `/cuts` URL.
+
+**Cut list** opens with **All pieces**: named flat drawings grouped by Long bench, Cross bench, Cabinet, Drawer
+and Floor. Identical timber cuts share a drawing with a quantity; selecting one lists the matching CAD pieces.
+Select a plywood thickness for its sheet layouts and detailed cut list. **Timber** and **Other sheet materials**
+show the remaining stock types. Each sheet heading gives its material, thickness, size and sheet number.
+
+**Cutting settings** applies to the whole project: choose **Straight saw cuts** or **Nested shapes**, set blade
+kerf/tool width, edge trim and default grain direction. Stock sizes/offcuts and individual grain overrides remain
+under their material. New settings use zero edge trim; any selected trim is labelled and hatched in the drawing.
+Custom stock, including the existing slats and floor plywood, needs dimensions confirmed before arranging it.
+The floor currently has one CAD panel; its eventual division into separate panels remains a design task.
+
+Selecting a thickness starts its layout search in the background. The solver has no time limit and publishes
+improving results while the page stays usable. Solver processes run at lower CPU priority and alternate 100ms of
+search with 100ms paused, sharing the same cycle across materials. This targets half of unrestricted sustained CPU
+use; CPU can still spike during the running intervals. Pausing preserves the search state.
+**Minimum stock count proven** appears only when the solver reports
+a proof; otherwise the page reports **Best layout found**. One stock size minimises stock pieces; mixed full
+stock/offcuts minimise full stock pieces with a small cost for each offcut. **Stop optimisation** retains the best
+saved layout. Geometry/settings changes stop old searches and identify their saved layouts as previous results.
+Settings and both methods' results persist in `.local/project.json` and the JSON project backup.
+
+Straight saw cuts produce rectangular blanks and an expandable cut sequence. Nested shapes use profiles sampled to
+0.1mm with another 0.2mm of spacing between them. Cut items nested inside holes before their surrounding frames.
+Blind pockets and edge finishing need separate operations. The curved cabinet backing uses a developed rectangular
+blank; transfer its wheel-arch notch from a van template. Timber uses crosscuts in either mode. Hardware is excluded.
+**Save drawing** exports a sheet as SVG. **Export cut list** and **Print** use the current overview or thickness filter.
 
 Two dark-grey 600 × 400 × 200mm pillows share the long-bench conversion control. In day mode they are propped at 45°:
 the rear pillow sits diagonally in the rear-door/backrest corner and the front pillow sits toward the right sliding door; in bed mode they lie side by side at the cab end, each remaining 600mm wide across the bed.

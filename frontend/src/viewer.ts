@@ -6,6 +6,7 @@ import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
 import { Box3, type Object3D, type Scene } from 'three';
+import * as library from './renderer';
 
 type Axis = 'x' | 'y' | 'z';
 interface Track {
@@ -249,11 +250,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       });
       document.head.append(css);
       // Serve JS and CSS from the locked Python package, keeping both halves compatible.
-      const rendererUrl = '/viewer-assets/js/three-cad-viewer.esm.js';
       const coreUrl = '/viewer-assets/js/ocp-viewer-core/index.js';
-      const [library, core] = await Promise.all([
-        import(/* @vite-ignore */ rendererUrl), import(/* @vite-ignore */ coreUrl), styles,
-      ]);
+      const [core] = await Promise.all([import(/* @vite-ignore */ coreUrl), styles]);
       // createPage accepts the Viewer constructor; capture its instance while reusing
       // OCP's geometry loading and measurement messages.
       class HostedViewer extends library.Viewer {
@@ -262,7 +260,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           viewer = this as unknown as CadViewer;
           const update = this.update.bind(this);
           this.update = (...updateArgs: any[]) => {
-            if (this.ready && seeInside) vehicleFade.update(this.getCameraQuaternion());
+            if (this.ready) {
+              if (seeInside) vehicleFade.update(this.getCameraQuaternion());
+              else vehicleFade.setExteriorOpacity();
+            }
             update(...updateArgs);
             if (this.ready) cube?.update(this.getCameraQuaternion());
           };
@@ -368,7 +369,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     setPosition(name: string, percent: number) { positions[name] = percent; move(); },
     setSeeInside(enabled: boolean) {
       seeInside = enabled;
-      if (!enabled) vehicleFade.restore();
       viewer?.update(true, false);
     },
     setMannequinPose(pose: MannequinPose) {

@@ -8,6 +8,7 @@ import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
 import { setupPlanner } from './planner';
 import { setupTabs } from './tabs';
+import { setupCutting } from './cutting';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -44,6 +45,7 @@ const planning = new PlanningClient();
 setupTabs();
 setupPlanner(element('plan-panel'), planning);
 const materials = setupMaterials(planning);
+const cutting = setupCutting(element('cuts-panel'));
 void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
@@ -183,13 +185,15 @@ const controller = createController(api, {
   },
   setStatus(model) {
     materials.onStatus(model);
+    cutting.onStatus(model);
     const labels = {
-      idle: 'Ready',
+      idle: 'Loading model…',
       regenerating: 'Regenerating…',
       ready: 'Ready',
-      failed: 'Regeneration failed',
+      failed: 'Model update failed',
     };
-    status.textContent = labels[model.state];
+    const previous = model.published_revision !== null && model.published_revision !== model.requested_revision;
+    status.textContent = labels[model.state] + (previous ? ' · Previous model' : '');
     status.dataset.state = model.state;
   },
   setError(message) {
