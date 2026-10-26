@@ -8,6 +8,7 @@ from build123d import Color, Compound, Face, Location, Part, Polyline, ThreePoin
 from campervan.cad.bed_motion import bed_offset
 from campervan.cad.drawer import drawer_support_x
 from campervan.cad.panels import panel, slide_mount_frame
+from campervan.cad.table import MOVING_FRAME_CAB_TRIM
 from campervan.parameters import Parameters
 
 
@@ -127,7 +128,7 @@ def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
     thickness = p.frame_thickness_mm
     closed_width = p.long_bench_width_mm + thickness
     frame_rear = layout.slat_ys[1]
-    frame_length = layout.slat_ys[-2] + p.slat_width_mm - frame_rear
+    frame_length = layout.slat_ys[-2] + p.slat_width_mm - frame_rear - MOVING_FRAME_CAB_TRIM
 
     frame = slide_mount_frame(
         frame_length,

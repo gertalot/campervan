@@ -26,7 +26,8 @@ def frame_panel(
 
 
 def slide_mount_frame(
-    length: float, thickness: float, height: float, member: float, band: float, radius: float
+    length: float, thickness: float, height: float, member: float, band: float, radius: float,
+    *, cab_end_width: float | None = None,
 ) -> Part:
     """Two openings above a continuous rail mounting band."""
     bay = (length - 3 * member) / 2
@@ -34,6 +35,7 @@ def slide_mount_frame(
         length,
         thickness,
         height,
-        [(start, start + bay, band, height - member) for start in (member, 2 * member + bay)],
+        [(member, member + bay, band, height - member),
+         (2 * member + bay, length - (cab_end_width if cab_end_width is not None else member), band, height - member)],
         radius,
     )

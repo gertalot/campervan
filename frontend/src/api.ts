@@ -5,6 +5,7 @@ export interface FieldMetadata {
   unit: string;
   group: string[];
   control?: 'position';
+  options?: { value: number; label: string }[];
   material?: string;
   description?: string;
   reason?: string;

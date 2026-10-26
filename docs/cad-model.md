@@ -742,3 +742,13 @@ and overhang by 15mm each side at the 1070mm bed width.
 The long-bench slider moves both pillows without changing their width or requiring regeneration.
 CAD supplies visibility anchors only. Pillow geometry, support contact, rotations and conversion poses are owned by
 frontend/src/pillows.ts and update in the browser without CAD regeneration.
+
+`Laptop table` is a furniture-local assembly from `cad/table.py`, mirrored with the benches and cabinet. It contains
+`Bench mount` and `Cabinet mount` display groups for one physical table. Each has separate live height, arm swivel
+and tabletop rotation controls. The Show table selector changes group visibility without regeneration. Stowed (TBD)
+reserves a third state and hides both mounted versions until its physical storage arrangement is designed.
+The bench mount has a 92mm post and one 18mm spacer flush with the retracted moving frame. That moving frame is
+trimmed 5mm at its cab end, leaving 3mm beside the mounting post throughout sideways travel. Slats stay unchanged.
+The cut list counts the 600 × 360 × 18mm top once, plus both mounts' backing pieces. The top and most backing pieces
+share frame plywood sheets; the cabinet mount also uses one 9mm shim. There is one kit plus an extra fixed bracket.
+Dimensions and mounting limitations are recorded in [Lagun table](research/lagun-table.md).

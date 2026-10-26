@@ -8,13 +8,15 @@ from campervan.cad.cabinet import build_cabinet
 from campervan.cad.cross_bench import build_cross_bench
 from campervan.cad.gear import build_stored_gear
 from campervan.cad.mirror import mirror_assembly
+from campervan.cad.table import build_laptop_table
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
 
 
 def build_campervan(parameters: Parameters) -> Compound:
     placement = Location((parameters.cargo_width_mm, parameters.furniture_rear_gap_mm, 0))
-    furniture = [build_long_bench(parameters), build_cross_bench(parameters), build_cabinet(parameters)]
+    furniture = [build_long_bench(parameters), build_cross_bench(parameters), build_cabinet(parameters),
+                 build_laptop_table(parameters)]
     return Compound(
         label="Campervan",
         children=[

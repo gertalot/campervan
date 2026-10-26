@@ -45,6 +45,20 @@ ROLES = [
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
+        id="table-plywood", name="Laptop tabletop plywood", kind="sheet",
+        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="tigerply-18",
+        note="600 × 360mm solid top; share the 18mm sheets with the bench frames. Mount backing also uses frame plywood.",
+    ),
+    MaterialRole(
+        id="lagun", name="Lagun swivel table leg", kind="hardware", fields={}, quantity=1,
+        note="One 500mm single-arm kit with standard 92 × 170mm bracket. Both CAD mount positions use this one kit. "
+             "Confirm bolt lengths and backing against the physical furniture before drilling.",
+    ),
+    MaterialRole(
+        id="lagun-second-bracket", name="Second Lagun mounting bracket", kind="hardware", fields={}, quantity=1,
+        note="Additional standard 92 × 170mm bracket for the second mounting location. One table moves between the mounts.",
+    ),
+    MaterialRole(
         id="cabinet-frames",
         name="Cabinet structure plywood",
         kind="sheet",
@@ -79,6 +93,7 @@ ROLES = [
 for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
+        "table-plywood": "tigerply-18",
         "cabinet-frames": "tigerply-12",
         "skins": "tigerply-okoume-9",
         "shelves": "tigerply-12",

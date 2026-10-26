@@ -29,6 +29,52 @@ RETIRED_PARAMETERS = frozenset(
 class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
 
+    table_mount: float = Field(
+        default=0, ge=0, le=2, multiple_of=1, title="Show table",
+        description="Switch instantly between table poses. The stored position is still to be designed.",
+        json_schema_extra={"unit": "", "group": ["Laptop table"], "control": "position", "options": [
+            {"value": 0, "label": "Bench mount"}, {"value": 1, "label": "Cabinet mount"},
+            {"value": 2, "label": "Stowed (TBD)"},
+        ]},
+    )
+    table_height_mm: float = Field(
+        default=700, ge=620, le=780, title="Tabletop height",
+        description="Top surface above the wooden floor. Range retains the upright through the mounting bracket.",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Bench mount"], "control": "position"},
+    )
+    table_arm_swivel_deg: float = Field(
+        default=180, ge=0, le=360, title="Arm swivel",
+        json_schema_extra={"unit": "°", "group": ["Laptop table", "Bench mount"], "control": "position"},
+    )
+    table_top_rotation_deg: float = Field(
+        default=0, ge=0, le=360, title="Tabletop rotation",
+        json_schema_extra={"unit": "°", "group": ["Laptop table", "Bench mount"], "control": "position"},
+    )
+    cabinet_table_height_mm: float = Field(
+        default=700, ge=620, le=780, title="Tabletop height",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    )
+    cabinet_table_arm_swivel_deg: float = Field(
+        default=180, ge=0, le=360, title="Arm swivel",
+        json_schema_extra={"unit": "°", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    )
+    cabinet_table_top_rotation_deg: float = Field(
+        default=0, ge=0, le=360, title="Tabletop rotation",
+        json_schema_extra={"unit": "°", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    )
+    table_length_mm: float = Field(
+        default=600, ge=200, title="Tabletop length",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
+    )
+    table_depth_mm: float = Field(
+        default=360, ge=240, title="Tabletop depth",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
+    )
+    table_ply_thickness_mm: float = Field(
+        default=18, gt=0, le=25, title="Tabletop plywood",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
+    )
+
     cargo_width_mm: float = Field(
         default=1500.0,
         gt=0,

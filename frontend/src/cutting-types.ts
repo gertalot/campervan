@@ -46,6 +46,7 @@ export const materialName = (group: Group) => group.kind === 'timber'
 export const isPlywood = (group: Group) => group.kind === 'sheet' && /plywood/i.test(group.name);
 export const colours: Record<string, string> = {
   'Long bench': '#a8c8e7', 'Cross bench': '#afd0b0', Cabinet: '#edc88c', Drawer: '#c8b6df',
+  'Laptop table': '#d9b394',
 };
 export const partColour = (part: Pick<Part, 'path'>) => colours[assembly(part)] ?? '#ccc4ac';
 export const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => {

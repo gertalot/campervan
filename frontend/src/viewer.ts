@@ -19,7 +19,7 @@ interface Vector { x: number; y: number; z: number }
 interface CameraState {
   position: number[]; quaternion: number[]; target: number[]; zoom: number; ortho: boolean; viewHeight?: number;
 }
-interface SceneGroup { position: Vector; rotation: Vector; updateMatrixWorld(force: boolean): void }
+interface SceneGroup { position: Vector; rotation: Vector; visible: boolean; updateMatrixWorld(force: boolean): void }
 interface CameraQuaternion {
   toArray(): number[];
   clone(): CameraQuaternion;
@@ -216,6 +216,16 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     setDirection([Math.cos(azimuth) * Math.cos(elevation), Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation)], false);
   }
 
+  function showTables() {
+    if (!viewer?.ready) return;
+    const selected = positions.table_mount ?? motions.table_mount?.position ?? 0;
+    for (const [index, name] of ['Bench mount', 'Cabinet mount'].entries()) {
+      const group = viewer.rendered.nestedGroup.groups[`/Campervan/Laptop table/${name}`];
+      if (group) group.visible = selected === index;
+    }
+    (viewer as unknown as PieceViewer).idPicker?.setDirty();
+  }
+
   function move() {
     if (!viewer?.ready) return;
     for (const [name, motion] of Object.entries(motions)) {
@@ -240,6 +250,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       }
     }
     pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    showTables();
     showMannequin();
     viewer.update(true, true);
   }
@@ -369,6 +380,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
               }
               saveCamera();
               onModel();
+              showTables();
               showMannequin();
             }
           }
@@ -385,7 +397,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       });
       socket.onclose = () => onError('CAD viewer connection closed. Refresh after restarting make viewer.');
     },
-    setPosition(name: string, percent: number) { positions[name] = percent; move(); },
+    setPosition(name: string, percent: number) {
+      if (name === 'table_mount' && positions[name] !== percent) pieces.clear();
+      positions[name] = percent; move();
+    },
     setPieceLink: pieces.setLink,
     focusPiece: pieces.focus,
     setSeeInside(enabled: boolean) {
@@ -425,6 +440,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         states[path] = state.map(value => value === 3 ? 3 : Number(visible));
       }
       viewer.setStates(states);
+      showTables();
+      viewer.update(true, true);
     },
   };
 }

@@ -1,7 +1,7 @@
 import * as api from './api';
 import { createController } from './controller';
 import { setupSidebarResize } from './sidebar';
-import { setupVisibility } from './visibility';
+import { setupVisibility, createVisibilityButton, updateVisibilityButton } from './visibility';
 import { createCadViewer } from './viewer';
 import { setupMannequinControls } from './mannequin-controls';
 import { setupMaterials } from './materials';
@@ -19,7 +19,15 @@ function element<T extends HTMLElement>(id: string): T {
 const form = element<HTMLFormElement>('parameters');
 const fields = element('fields');
 const liveControls = element('live-controls');
-const inputs = new Map<string, HTMLInputElement>();
+const inputs = new Map<string, HTMLInputElement | HTMLSelectElement>();
+const tableGroups = ['Bench mount', 'Cabinet mount', 'Stowed (TBD)'];
+const tableEyes = new Map<number, HTMLButtonElement>();
+function refreshTableEyes() {
+  const selected = Number(inputs.get('table_mount')?.value ?? 0);
+  for (const [index, button] of tableEyes) {
+    updateVisibilityButton(button, tableGroups[index], selected === index ? 'shown' : 'hidden');
+  }
+}
 const status = element('status');
 const error = element('error');
 const viewer = createCadViewer(element('viewer'), () => visibility.restore(), message => {
@@ -47,6 +55,12 @@ setupPlanner(element('plan-panel'), planning);
 const materials = setupMaterials(planning);
 const cutting = setupCutting(element('cuts-panel'), path => {
   showTab('cad');
+  if (path.startsWith('Laptop table / ')) {
+    if (path.endsWith(' / Laptop tabletop') && Number(inputs.get('table_mount')?.value) === 1) {
+      path = path.replace('Laptop table / Bench mount /', 'Laptop table / Cabinet mount /');
+    }
+    void controller.savePosition('table_mount', path.startsWith('Laptop table / Cabinet mount /') ? 1 : 0);
+  }
   if (!viewer.focusPiece(path)) {
     error.textContent = 'This piece is not in the displayed CAD model yet.'; error.hidden = false;
   }
@@ -61,6 +75,7 @@ const controller = createController(api, {
     fields.replaceChildren();
     liveControls.replaceChildren();
     inputs.clear();
+    tableEyes.clear();
     const groups = new Map<string, HTMLDetailsElement>();
     function groupFor(groupPath: string[], parent: HTMLElement, cadVisibility = true): HTMLElement {
       for (let depth = 0; depth < groupPath.length; depth++) {
@@ -82,7 +97,17 @@ const controller = createController(api, {
           });
           const heading = document.createElement('summary');
           heading.textContent = title;
-          if (cadVisibility) visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
+          const tableIndex = groupPath[0] === 'Laptop table' && depth === 1 ? tableGroups.indexOf(title) : -1;
+          if (tableIndex >= 0) {
+            const eye = createVisibilityButton(title, () => {
+              const current = Number(inputs.get('table_mount')?.value ?? 0);
+              void controller.savePosition('table_mount', current === tableIndex ? 2 : tableIndex);
+            });
+            tableEyes.set(tableIndex, eye);
+            heading.append(eye);
+          } else if (cadVisibility) {
+            visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
+          }
           group.append(heading);
           parent.append(group);
           groups.set(path, group);
@@ -92,21 +117,26 @@ const controller = createController(api, {
       return parent;
     }
     for (const [name, field] of Object.entries(metadata)) {
-      const topLevelControl = field.control === 'position' && field.group[0] !== 'Stored gear';
+      const topLevelControl = field.control === 'position' && !['Stored gear', 'Laptop table'].includes(field.group[0]);
       const parent = groupFor(topLevelControl ? [] : field.group, topLevelControl ? liveControls : fields);
       const row = document.createElement('div');
       row.className = 'parameter-row';
       const label = document.createElement('label');
       label.htmlFor = name;
       label.textContent = field.title;
-      const input = document.createElement('input');
+      const input = field.options ? document.createElement('select') : document.createElement('input');
       input.id = name;
       input.name = name;
-      input.type = field.control === 'position' ? 'range' : 'number';
-      input.step = field.control === 'position' ? (field.unit === '%' ? '0.1' : '1') : 'any';
-      input.autocomplete = 'off';
-      input.placeholder = String(field.default);
-      if (field.material) {
+      if (input instanceof HTMLInputElement) {
+        input.type = field.control === 'position' ? 'range' : 'number';
+        input.step = field.control === 'position' ? (field.unit === '%' ? '0.1' : '1') : 'any';
+        input.autocomplete = 'off';
+        input.placeholder = String(field.default);
+      } else {
+        for (const option of field.options!) input.add(new Option(option.label, String(option.value)));
+        row.classList.add('choice-row');
+      }
+      if (field.material && input instanceof HTMLInputElement) {
         input.readOnly = true;
         input.addEventListener('click', () => materials.show(field.material));
         label.title = 'Edit stock dimensions in Bill of materials';
@@ -122,20 +152,28 @@ const controller = createController(api, {
       else if (field.maximum !== undefined) bounds.push(`at most ${field.maximum}`);
       const minimum = field.minimum ?? field.exclusiveMinimum;
       const maximum = field.maximum ?? field.exclusiveMaximum;
-      if (minimum !== undefined) input.min = String(minimum);
-      if (maximum !== undefined) input.max = String(maximum);
+      if (input instanceof HTMLInputElement) {
+        if (minimum !== undefined) input.min = String(minimum);
+        if (maximum !== undefined) input.max = String(maximum);
+      }
       const tooltip = [field.description, `Default: ${field.default} ${field.unit}.`,
         bounds.length ? `${bounds.join(', ')} ${field.unit}.` : ''].filter(Boolean).join(' ');
       label.title = `${field.title}. ${tooltip}`;
       input.title = label.title;
       if (field.control === 'position') {
-        row.classList.add('position-row');
-        const value = document.createElement('output');
-        value.htmlFor = name;
-        value.id = `${name}-value`;
-        row.append(label, value, input);
-        input.addEventListener('input', () => controller.previewPosition(name, input.valueAsNumber));
-        input.addEventListener('change', () => { void controller.savePosition(name, input.valueAsNumber); });
+        input.dataset.livePosition = 'true';
+        if (field.options) {
+          row.classList.add('choice-row');
+          row.append(label, input);
+        } else {
+          row.classList.add('position-row');
+          const value = document.createElement('output');
+          value.htmlFor = name;
+          value.id = `${name}-value`;
+          row.append(label, value, input);
+        }
+        input.addEventListener('input', () => controller.previewPosition(name, Number(input.value)));
+        input.addEventListener('change', () => { void controller.savePosition(name, Number(input.value)); });
       } else {
         const hint = document.createElement('small');
         hint.id = `${name}-constraint`;
@@ -147,12 +185,17 @@ const controller = createController(api, {
       parent.append(row);
       inputs.set(name, input);
     }
+    const stored = groupFor(['Laptop table', 'Stowed (TBD)'], fields);
+    const hint = document.createElement('p');
+    hint.className = 'dimension-hint';
+    hint.textContent = 'Storage position and controls to be defined. Selecting this hides both mounted tables.';
+    stored.append(hint);
     // Reattach the same live controls after metadata refreshes, preserving pose and listeners.
     fields.append(seatedMannequin);
   },
   setConstraints(metadata, errors, adjustments, parameters) {
     for (const [name, input] of inputs) {
-      if (input.type === 'range') continue;
+      if (!(input instanceof HTMLInputElement) || metadata[name].control === 'position') continue;
       const field = metadata[name];
       const minimum = field.minimum ?? field.exclusiveMinimum;
       const maximum = field.maximum ?? field.exclusiveMaximum;
@@ -174,11 +217,12 @@ const controller = createController(api, {
   },
   setParameters(parameters, reset) {
     for (const [name, input] of inputs) {
-      if (dirty && !reset && !input.readOnly) continue;
+      if (dirty && !reset && !(input instanceof HTMLInputElement && input.readOnly)) continue;
       input.value = String(parameters[name]);
       const output = document.getElementById(`${name}-value`);
       if (output) output.textContent = input.value;
     }
+    refreshTableEyes();
     if (reset) dirty = false;
   },
   setViewerUrl: url => viewer.connect(url),
@@ -188,6 +232,7 @@ const controller = createController(api, {
     const output = document.getElementById(`${name}-value`);
     if (output) output.textContent = String(percent);
     viewer.setPosition(name, percent);
+    if (name === 'table_mount') refreshTableEyes();
   },
   setStatus(model) {
     materials.onStatus(model);
@@ -214,7 +259,8 @@ const controller = createController(api, {
 const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name, input.value]));
 let previewTimer: number;
 form.addEventListener('input', event => {
-  if ((event.target as HTMLInputElement).type === 'range') return;
+  const target = event.target as HTMLElement;
+  if (target.dataset.livePosition === 'true') return;
   dirty = true;
   window.clearTimeout(previewTimer);
   previewTimer = window.setTimeout(() => { void controller.preview(draftValues()); }, 180);

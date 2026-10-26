@@ -186,7 +186,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const groups = new Map<string, Part[]>();
     for (const part of parts) groups.set(assembly(part), [...(groups.get(assembly(part)) ?? []), part]);
     const overview = el('div'); overview.className = 'cut-overview';
-    const order = ['Long bench', 'Cross bench', 'Cabinet', 'Drawer', 'Floor'];
+    const order = ['Long bench', 'Cross bench', 'Cabinet', 'Drawer', 'Laptop table', 'Floor'];
     for (const [name, pieces] of [...groups].sort(([a], [b]) => order.indexOf(a) - order.indexOf(b))) {
       const section = el('section'); section.className = 'cut-assembly';
       const heading = el('div'); heading.className = 'cut-section-heading';

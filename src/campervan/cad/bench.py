@@ -8,6 +8,7 @@ from campervan.cad.cushions import build_cushions
 from campervan.cad.drawer import build_rear_drawer, drawer_support_x
 from campervan.cad.panels import frame_panel, panel, slide_mount_frame
 from campervan.cad.sliding_bed import build_bed_slats, build_sliding_bed, long_bed_layout, relieve_aisle_frame
+from campervan.cad.table import LAGUN_BRACKET_WIDTH, MOVING_FRAME_CAB_TRIM
 from campervan.parameters import Parameters
 
 
@@ -55,7 +56,13 @@ def build_long_bench(p: Parameters) -> Compound:
     ]
     wall = frame_panel(length - setback, thickness, height, wall_openings, radius)
     place(wall, "Wall-side frame", total, setback, rotation=90)
-    aisle = slide_mount_frame(length, thickness, height, member, p.drawer_mount_band_mm, radius)
+    # Widen only the cab-end post; the middle post and slat layout stay at their datums.
+    mount_start = length - LAGUN_BRACKET_WIDTH
+    moving_end = layout.slat_ys[-2] + p.slat_width_mm - MOVING_FRAME_CAB_TRIM
+    if moving_end >= mount_start:
+        raise ValueError("The moving bed frame must end before the 92mm table mounting post.")
+    aisle = slide_mount_frame(length, thickness, height, member, p.drawer_mount_band_mm, radius,
+                              cab_end_width=LAGUN_BRACKET_WIDTH)
     place(relieve_aisle_frame(aisle, p, layout), "Aisle frame", width, 0, rotation=90)
 
     end_width = width - internal_x - 2 * thickness

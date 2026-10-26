@@ -12,6 +12,10 @@ from campervan.cad.cut_profiles import flat_profile
 
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
+    if "Laptop table" in path:
+        if name == "thin cabinet spacer":
+            return "skins"
+        return "table-plywood" if name == "laptop tabletop" else "frames"
     if name == "finished floor plywood":
         return "floor"
     if name.startswith("point latch"):
@@ -52,7 +56,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
 
     def visit(part: Shape[Any], path: tuple[str, ...]) -> None:
         path = (*path, part.label)
-        if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear")):
+        if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
         if "Latch strikes" in path:
             return  # Supplied with the purchased Point latches.
@@ -60,6 +64,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             for child in part.children:
                 visit(child, path)
             return
+        if "Laptop table" in path and "Cabinet mount" in path and part.label == "Laptop tabletop":
+            return  # This is another display pose of the same physical tabletop.
         # Each leaf retains its construction geometry. Remove its local placement;
         # ancestor transforms (bed motion, lid hinge, mirroring) do not change stock sizes.
         size = part.located(Location()).bounding_box().size
@@ -100,7 +106,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             for section in (width, thickness):
                 dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
             length = round(dimensions[0], 2)
-        if material in {"floor", "frames", "cabinet-frames", "skins", "shelves", "drawer", "cabinet-doors", "guides"}:
+        if material in {"floor", "frames", "cabinet-frames", "skins", "shelves", "drawer", "cabinet-doors", "guides", "table-plywood"}:
             try:
                 profile = flat_profile(part)
             except (ValueError, RuntimeError, IndexError) as error:

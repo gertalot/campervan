@@ -35,6 +35,14 @@ class ParameterResponse(BaseModel):
 class Positions(BaseModel):
     """Live pose controls, updated without regenerating geometry."""
 
+    table_mount: float = Field(default=0, ge=0, le=2, multiple_of=1, allow_inf_nan=False)
+    table_height_mm: float = Field(default=700, ge=620, le=780, allow_inf_nan=False)
+    table_arm_swivel_deg: float = Field(default=180, ge=0, le=360, allow_inf_nan=False)
+    table_top_rotation_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
+    cabinet_table_height_mm: float = Field(default=700, ge=620, le=780, allow_inf_nan=False)
+    cabinet_table_arm_swivel_deg: float = Field(default=180, ge=0, le=360, allow_inf_nan=False)
+    cabinet_table_top_rotation_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
+
     bed_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     drawer_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     doors_close_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)

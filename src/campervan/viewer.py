@@ -72,6 +72,7 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
     from campervan.cad.cabinet_doors import cabinet_door_motions
     from campervan.cad.cushions import cushion_motion_tracks
     from campervan.cad.gear import gear_motions
+    from campervan.cad.table import table_motions
     from campervan.cad.mirror import mirror_motion_tracks
     from campervan.cad.sliding_bed import long_bed_layout
 
@@ -81,6 +82,7 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
         "type": "campervan_motion",
         "motions": {
             **gear_motions(parameters),
+            **table_motions(parameters),
             **cabinet_door_motions(parameters),
             "doors_close_percent": {
                 "position": parameters.doors_close_percent,

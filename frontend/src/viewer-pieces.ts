@@ -20,7 +20,13 @@ export interface PieceViewer {
   update(change: boolean, controls?: boolean): void;
 }
 type Link = { has(path: string): boolean; show(path: string): void };
-const cutPath = (path: string) => path.replace(/^\/Campervan\//, '').split('/').join(' / ');
+const cutPath = (path: string) => {
+  // Both displayed tabletops link to the one physical cutting piece.
+  if (path.endsWith('/Laptop tabletop')) {
+    path = path.replace('/Laptop table/Cabinet mount/', '/Laptop table/Bench mount/');
+  }
+  return path.replace(/^\/Campervan\//, '').split('/').join(' / ');
+};
 const cadPath = (path: string) => '/Campervan/' + path.split(' / ').join('/');
 
 export function createViewerPieces(container: HTMLElement, getViewer: () => PieceViewer | undefined,
