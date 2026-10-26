@@ -98,6 +98,22 @@ export function sheetDrawing(sheet: Sheet, group: Group, result: Result, index: 
       svg.append(node('rect', { x, y, width: w, height: h, fill: `url(#${patternId})` }));
     }
   }
+  const offcut = result.best_offcut;
+  if (offcut?.sheet === index) {
+    const g = node('g', { 'pointer-events': 'none' });
+    g.append(node('rect', { x: offcut.x, y: offcut.y, width: offcut.length, height: offcut.width,
+      fill: '#dae5d2', stroke: '#607954', 'stroke-width': 2, 'stroke-dasharray': '10 6' }));
+    g.append(node('title', {}, `Offcut · ${mm(offcut.length)} × ${mm(offcut.width)} mm`));
+    const vertical = offcut.width > offcut.length;
+    const x = offcut.x + offcut.length / 2, y = offcut.y + offcut.width / 2;
+    if (Math.min(offcut.length, offcut.width) > font * 2 && Math.max(offcut.length, offcut.width) > font * 15) {
+      g.append(node('text', { x, y, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        'font-family': 'system-ui,sans-serif', 'font-size': font, fill: '#425737',
+        transform: vertical ? `rotate(-90 ${x} ${y})` : '' },
+      `Offcut · ${mm(offcut.length)} × ${mm(offcut.width)} mm`));
+    }
+    svg.append(g);
+  }
   for (const placement of sheet.parts) {
     const part = result.parts.find(p => p.path === placement.path)!;
     const g = node('g'); interactive(g, part, select);

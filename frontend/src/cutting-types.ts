@@ -20,6 +20,9 @@ export interface Result {
   mode: Mode; source: string; created: string; options: Options; name: string; parts: Part[]; sheets: Sheet[];
   unplaced: string[]; stock_area: number; blank_area: number; profile_area: number;
   full_stock_count: number; offcut_count: number; estimated_cost: number | null; optimal?: boolean; objective?: string;
+  stock_count_optimal?: boolean; optimises_offcuts?: boolean;
+  best_offcut?: { sheet: number; x: number; y: number; length: number; width: number;
+    area: number; perimeter_area_ratio: number } | null;
   profile_allowance: number;
 }
 export interface Data {

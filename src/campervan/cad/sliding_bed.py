@@ -23,7 +23,7 @@ class BedLayout:
 
 
 def long_bed_layout(p: Parameters) -> BedLayout:
-    wall_inner = p.wall_thickness_mm + p.frame_thickness_mm
+    wall_inner = p.long_bench_inset_mm + p.frame_thickness_mm
     travel = p.bed_width_mm - p.long_bench_width_mm - p.frame_thickness_mm
     strip_x = p.long_bench_width_mm - p.frame_thickness_mm - p.sliding_strip_width_mm - travel
     # The rear guide also clears the internal drawer-support post, whose length
@@ -111,7 +111,7 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
 
     for i in range(1 if moving else 0, len(layout.slat_ys), 2):
         y = layout.slat_ys[i]
-        start = p.wall_thickness_mm
+        start = p.long_bench_inset_mm
         if not moving and y < layout.rear_ledge_y:
             start = drawer_support_x(p)
         slat = panel(closed_width - start, p.slat_width_mm, p.slat_thickness_mm)

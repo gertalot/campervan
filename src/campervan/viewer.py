@@ -116,11 +116,11 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
                     [
                         {"path": f"{drawer}/Tray", "axis": "y", "travel": -parameters.slide_travel_mm},
                         {
-                            "path": f"{drawer}/Rails/Intermediate",
+                            "path": f"{drawer}/Drawer sliders/Intermediate",
                             "axis": "y",
                             "travel": -parameters.slide_travel_mm / 2,
                         },
-                        {"path": f"{drawer}/Rails/Moving", "axis": "y", "travel": -parameters.slide_travel_mm},
+                        {"path": f"{drawer}/Drawer sliders/Moving", "axis": "y", "travel": -parameters.slide_travel_mm},
                     ]
                 ),
             },

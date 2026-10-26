@@ -28,7 +28,7 @@ def material_for(path: tuple[str, ...]) -> str:
         return "cabinet-frames"
     if "Angle brackets" in path:
         return "brackets"
-    if "Rear drawer" in path and "Rails" in path:
+    if "Rear drawer" in path and "Drawer sliders" in path:
         return "slides"
     if "Guide ledges" in path:
         return "guides"

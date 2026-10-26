@@ -15,7 +15,7 @@ from campervan.parameters import Parameters
 from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
-from campervan.cutting import effective_options, source_key
+from campervan.cutting import effective_options, layout_score, source_key
 from campervan.cutting_worker import solve_layout
 
 Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
@@ -90,10 +90,7 @@ class Coordinator:
                 if result := event.get("result"):
                     previous = self.cutting.results.get(key)
                     if previous and previous["source"] == result["source"]:
-                        def score(candidate):
-                            return (len(candidate["unplaced"]), candidate["full_stock_count"],
-                                    candidate["offcut_count"], candidate["stock_area"])
-                        if score(result) > score(previous):
+                        if layout_score(result) > layout_score(previous):
                             continue
                     self.cutting.results[key] = result
                     self.save_cutting()

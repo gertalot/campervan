@@ -12,7 +12,7 @@ def build_cross_bench(p: Parameters) -> Compound:
     width = p.bed_width_mm
     rear, front = p.seat_length_mm, p.cargo_length_mm
     length = front - rear
-    overhang, thickness, skin = p.cross_bench_overhang_mm, p.frame_thickness_mm, p.wall_thickness_mm
+    overhang, thickness, skin = p.cross_bench_overhang_mm, p.frame_thickness_mm, p.cross_bench_skin_thickness_mm
     span = length - skin
     height = p.platform_height_mm - p.slat_thickness_mm
     member, radius = p.member_width_mm, p.inside_radius_mm

@@ -191,10 +191,10 @@
     "checked": "2026-10-18"
   },
   {
-    "id": "instantpanel-1200",
-    "name": "1200mm full-extension slides · 53 × 19mm",
+    "id": "instantpanel-locking-1200",
+    "name": "1200mm locking drawer sliders · 53 × 19mm",
     "supplier": "Instant Panel NZ",
-    "url": "https://instantpanel.co.nz/product/drawer-slides-1200mm-x-53mm-heavy-duty-runners.html",
+    "url": "https://instantpanel.co.nz/product/drawer-slides-1200mm-x-53mm-with-lock-heavy-duty-runners.html",
     "kind": "hardware",
     "dimensions": {
       "length": 1200,
@@ -202,12 +202,12 @@
       "thickness": 19,
       "travel": 1215
     },
-    "price_nzd": 179.99,
+    "price_nzd": 194.99,
     "sale_unit": "pair",
     "pack_quantity": 2,
-    "specification": "SKU 10536. Non-locking; 2415mm fully extended, 61kg rated pair. 19 ± 0.5mm side clearance. Flat-head M5 fixings not included.",
+    "specification": "SKU 10632. Locks fully closed and fully open; 2415mm fully extended, 61kg rated pair. 19 ± 0.5mm side clearance. 45mm locking levers need 50mm operating clearance toward the rear doors. Flat-head M5 fixings not included.",
     "availability": "Orderable online · stock quantity / dispatch not stated",
-    "checked": "2026-10-17"
+    "checked": "2026-10-26"
   },
   {
     "id": "taskmaster-610",

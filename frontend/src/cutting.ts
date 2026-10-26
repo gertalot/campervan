@@ -239,9 +239,13 @@ export function setupCutting(host: HTMLElement) {
       else void generate(g);
     };
     regenerate.disabled = !data!.current || (!g.stock_sourced && !groupOptions(g).confirmed);
+    const countProven = result && (result.stock_count_optimal ?? result.optimal) && !result.unplaced.length;
     const state = !result ? running ? 'Finding a layout…' : 'Sheet layout not calculated yet'
       : !isCurrent(g, result) ? 'Previous layout · cutting settings or design changed'
-      : running ? 'Improving this layout…' : result.optimal && !result.unplaced.length ? 'Minimum stock count proven' : 'Best layout found';
+      : running ? result.optimises_offcuts && countProven ? 'Minimum sheet count proven · improving offcuts…'
+        : 'Improving this layout…'
+      : countProven ? result.optimises_offcuts ? 'Minimum sheet count proven · best offcut found'
+        : 'Minimum stock count proven' : 'Best layout found';
     status.append(el('span', state), regenerate); root.append(status);
     if (!g.stock_sourced && !groupOptions(g).confirmed) root.append(el('p', 'Choose the available stock sizes below to calculate a layout.'));
     if (errors.has(key)) { const error = el('p', errors.get(key)!); error.className = 'cut-warning'; root.append(error); }
@@ -249,6 +253,10 @@ export function setupCutting(host: HTMLElement) {
       const error = el('p', data!.jobs[key].error!); error.className = 'cut-warning'; root.append(error);
     }
     if (!result) return;
+    if (result.best_offcut) {
+      const offcut = result.best_offcut;
+      root.append(el('p', `Best rectangular offcut: ${mm(offcut.length)} × ${mm(offcut.width)} mm · sheet ${offcut.sheet + 1}`));
+    }
     if (result.unplaced.length) {
       const unplaced = result.parts.filter(p => result.unplaced.includes(p.id));
       const warning = el('p', `${unplaced.length} pieces still need placing: ${unplaced.map(fullName).join(', ')}`);
@@ -287,7 +295,8 @@ export function setupCutting(host: HTMLElement) {
         for (const [x1, y1, x2, y2] of sheet.cuts) list.append(el('li', x1 === x2
           ? `Crosscut at length ${mm(x1)} mm, across width coordinates ${mm(y1)}–${mm(y2)} mm.`
           : `Rip at width ${mm(y1)} mm, along length coordinates ${mm(x1)}–${mm(x2)} mm.`));
-        sequence.append(el('p', 'Coordinates start at the top-left corner. Lines mark finished edges; keep the blade on the waste side.'), list); card.append(sequence);
+        sequence.append(el('p', 'Straight cuts separate rectangular blanks. Cut curves, openings and notches afterwards.'),
+          el('p', 'Coordinates start at the top-left corner. Lines mark finished edges; keep the blade on the waste side.'), list); card.append(sequence);
       }
       sheets.append(card);
     });

@@ -76,7 +76,7 @@ under **Vehicle references**; their tooltips identify estimates. See the [NV200 
 for sources and the measurements needed to check the fit against the van.
 Uncheck **See inside** to make the vehicle body fully opaque. Side windows remain tinted and 70% transparent;
 the rear window is clear.
-The long bench contains separate fixed plywood frames, a cab-end skin and a rear header. Its dimensions and construction
+The long bench contains separate fixed plywood frames and a rear header. Its dimensions and construction
 thicknesses are editable in the sidebar. Platform height includes the allowance for slats above the frame.
 Live controls sit at the top of the sidebar, outside the collapsible dimension groups.
 The **Vehicle**, **Wooden floor**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes
@@ -113,11 +113,14 @@ crossed and hands over the belly. **Pillow compression** adjusts head support di
 The seated preview is hidden while extending the bed. Other body proportions and foam deformation are estimates;
 the mannequin is a visual fit reference and is not part of CAD exports.
 
-The rear drawer has five 12mm plywood panels and simplified three-stage rails on each side. Its dimensions are under
-**Long bench → Rear drawer**. Rails and bed brackets are provisional hardware envelopes.
+The rear drawer has 1200mm-long 12mm plywood sides, full-width end caps and a 1200 × 352mm bottom. Its overall
+length is 1224mm. It uses 1200mm drawer sliders that lock fully closed and fully open, with their levers projecting
+toward the rear doors. Its dimensions are under **Long bench → Rear drawer**. Drawer sliders and bed brackets use
+simplified hardware envelopes.
 The fixed cross bench behind the cab is two open-legged plywood support frames, with slats screwed directly
-across their top rails. The existing aft skin spans between the rear legs of the two frames. There is no slide-out,
-divider, deck, hinged lid, stop hardware or cab-end skin. Its footprint remains the fully extended bed width by the
+across their top rails. A 9mm plywood aft skin spans between the rear legs of the two frames, sharing stock with the
+cabinet doors. There is no slide-out, divider, deck, hinged lid, stop hardware or cab-end skin.
+Its footprint remains the fully extended bed width by the
 remaining cargo length. **Cross bench → Fixed frame → Aisle slat overhang / foot recess** defaults to 200mm
 at the aisle end. The wall-side support follows the internal drawer support, giving 150mm overhang at defaults.
 The two support frames run fore/aft. Four long slats run across the van, with the first and last
@@ -300,9 +303,12 @@ Selecting a thickness starts its layout search in the background. The solver has
 improving results while the page stays usable. Solver processes run at lower CPU priority and alternate 100ms of
 search with 100ms paused, sharing the same cycle across materials. This targets half of unrestricted sustained CPU
 use; CPU can still spike during the running intervals. Pausing preserves the search state.
-**Minimum stock count proven** appears only when the solver reports
-a proof; otherwise the page reports **Best layout found**. One stock size minimises stock pieces; mixed full
-stock/offcuts minimise full stock pieces with a small cost for each offcut. **Stop optimisation** retains the best
+For straight-cut plywood with one stock size, the solver searches for fewer sheets and a larger rectangular
+leftover. Saved candidates are ranked by sheet count, then the best rectangular offcut's area/perimeter ratio,
+then the number of blank-separating saw cuts. The best offcut is marked on its sheet. This ranks candidates the
+native solver finds; it does not prove a global optimum for the ratio or cut count. **Minimum sheet count proven**
+refers only to sheet count. Nesting and timber minimise stock pieces; mixed full stock/offcuts minimise full
+stock pieces with a small cost for each offcut. **Stop optimisation** retains the best
 saved layout. Geometry/settings changes stop old searches and identify their saved layouts as previous results.
 Settings and both methods' results persist in `.local/project.json` and the JSON project backup.
 

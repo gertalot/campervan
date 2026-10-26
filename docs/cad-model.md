@@ -96,7 +96,6 @@ Campervan
 │   │   ├── Wall-side frame
 │   │   ├── Aisle frame
 │   │   ├── Cab-end frame
-│   │   ├── Cab-end skin
 │   │   ├── Internal drawer-support frame
 │   │   ├── Rear header
 │   │   ├── Fixed slats
@@ -109,7 +108,7 @@ Campervan
 │   │       └── Angle brackets
 │   ├── Rear drawer
 │   │   ├── Tray (five plywood panels)
-│   │   └── Rails
+│   │   └── Drawer sliders
 │   │       ├── Fixed (left and right)
 │   │       ├── Intermediate (left and right)
 │   │       └── Moving (left and right)
@@ -255,10 +254,12 @@ rounded opening cutters; X runs along each panel, Y through its thickness and Z 
 
 The long bench has a 600 × 1280 footprint. Its frame top is `platform height - slat thickness`, or 382 at the defaults.
 The aisle frame retains its 100-high slide mounting band. Wall-side openings reach the floor and clear the wheel arch;
-the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has separate 18-thick frame and 4-thick skin.
+the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has an 18mm frame
+and no skin. The retained 4mm `long_bench_inset_mm` construction allowance preserves existing frame, guide and slat
+positions independently of the cross-bench skin thickness. Saved `wall_thickness_mm` values migrate to this inset.
 The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. The header spans
 X = 168–582, bed-local Y = 0–18, Z = 322–382, leaving the drawer exit open.
-The long bench's cab-end frame/skin starts at the same wall-side face, X = 150, instead of X = 25,
+The long bench's cab-end frame starts at the same wall-side face, X = 150, instead of X = 25,
 opening its low storage channel beside the drawer. `drawer.drawer_support_x` shares this alignment with the drawer
 placement; it follows wheel-arch width and drawer clearance. The new fixed cross bench has separate recessed frames.
 
@@ -288,11 +289,17 @@ group; use `global_location` when checking individual children in world coordina
 `bed_motion.py` supplies the shared stages and frame offsets for CAD and viewer keyframes: the frames extend over
 0–40%, cushions reposition over 40–80%, and backrests lower over 80–100%. Frames stay extended through both cushion stages.
 
-`drawer.py` adds the five-part 12mm plywood tray: 376 × 1250 × 290mm, X = 187–563, Y = 0–1250, Z = 10–300.
-Its bottom fits inside the walls, flush underneath. The open sides retain a 90mm lower band and 60mm end uprights.
-The rear face is flush with Y = 0. The tray travels 1215mm toward negative Y. Each 19mm rail gap contains three
-simplified 1200 × 53mm envelopes; intermediate stages move half the tray distance. Rear drawer contains the tray and
-rails. Its stationary internal support belongs to the bed's Fixed frame alongside the aisle frame and rear header,
+`drawer.py` adds the five-part 12mm plywood tray: 376 × 1224 × 290mm, X = 187–563, Y = 0–1224, Z = 10–300.
+Both 1200 × 290mm sides run Y=12–1212. The 376 × 290mm end panels cap their ends at Y=0–12 and Y=1212–1224;
+the 1200 × 352mm bottom fits between the panels, flush underneath. Internal length is 1200mm, 26mm shorter than
+the previous drawer. The open sides retain a 90mm lower band and 60mm end uprights.
+The rear face is flush with Y = 0. The tray travels 1215mm toward negative Y. Each 19mm mounting gap contains three
+simplified 1200 × 53mm drawer-slider envelopes aligned at Y=12–1212; intermediate stages move half the tray distance.
+The selected Instant Panel SKU 10632 drawer sliders lock fully closed and fully open. Their 45mm levers project
+toward the rear doors; reserve 50mm operating clearance from the slider front. Lever geometry remains outside the
+simplified envelopes. The former `drawer_rear_setback_mm` parameter is retired when loading saved projects.
+Rear drawer contains the tray and the `Drawer sliders` assembly. Its stationary internal support belongs to the
+bed's Fixed frame alongside the aisle frame and rear header,
 so hiding or omitting the drawer leaves the bed supports in place.
 
 `cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
@@ -302,8 +309,9 @@ cab-end skin, hinged lid, brackets or stop plates.
 
 `cross_bench_overhang_mm` defaults to 200mm at the aisle slat ends. The wall-side frame aligns with the internal
 drawer-support frame at X = 150–168, following the shared `Parameters.drawer_support_x_mm` datum;
-the aisle frame occupies X = 852–870. Both run Y = 1284–1860. The aft 4mm skin bridges between the two rear legs,
-covering X = 150–870, Y = 1280–1284 from floor to rail top. The space between frames is unobstructed;
+the aisle frame occupies X = 852–870. Both run Y = 1289–1860. The aft 9mm skin bridges between the two rear legs,
+covering X = 150–870, Y = 1280–1289 from floor to rail top. Its thickness uses the independent
+`cross_bench_skin_thickness_mm` parameter. The space between frames is unobstructed;
 toilet/tray hardware and slat/frame fixing details remain unmodelled. The skin is intended to brace the two rear legs
 when properly attached; the CAD geometry does not establish load capacity.
 
@@ -682,8 +690,10 @@ Cabinet partitions and frames use their own 12mm role, sharing sheets with shelv
 The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
 Both cabinet batten section dimensions come from the selected timber product, with measured overrides.
 
-Skin panels use 4mm Tigerply Okoume-faced poplar-core plywood (Bunnings special order). The selected sheet thickness
-sets `wall_thickness_mm` for the bed and bench partition skins; shelves, lids and frames keep their own stock.
+The cross-bench rear skin shares 9mm Tigerply Okoume-faced poplar-core plywood with the cabinet doors. Its material
+role retains the `skins` ID and sets `cross_bench_skin_thickness_mm`. Projects selecting the former 4mm special-order
+skin product migrate to the 9mm product. The long bench has no cab-end skin. Slat and long-bench frame positions use
+their retained construction inset rather than skin thickness.
 
 
 Sleeping pillows use the CC0 Poly Haven Throw Pillows 01 mesh (source/license beside frontend/src/pillow-mesh.json).

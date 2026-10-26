@@ -15,9 +15,9 @@ def build_long_bench(p: Parameters) -> Compound:
     layout = long_bed_layout(p)
     width, length = p.long_bench_width_mm, p.seat_length_mm
     height = p.platform_height_mm - p.slat_thickness_mm
-    thickness, skin = p.frame_thickness_mm, p.wall_thickness_mm
+    thickness = p.frame_thickness_mm
     member, radius = p.member_width_mm, p.inside_radius_mm
-    total = thickness + skin
+    total = thickness + p.long_bench_inset_mm
     # Build in bed-local coordinates; vehicle references stay at the rear-door datum.
     setback = max(0, p.rear_corner_radius_mm + p.rear_corner_allowance_mm - p.furniture_rear_gap_mm)
     arch_rear = p.arch_rear_offset_mm - p.furniture_rear_gap_mm
@@ -63,8 +63,6 @@ def build_long_bench(p: Parameters) -> Compound:
         end_width, thickness, height, [(member, end_width - member, -2 * radius, height - member)], radius
     )
     place(end_frame, "Cab-end frame", internal_x, length - total)
-    place(panel(end_width, skin, height), "Cab-end skin", internal_x, length - skin)
-    parts[-1].color = Color(0.75, 0.66, 0.49)
 
     # This stationary bed support stays in place when the drawer module is removed.
     support = slide_mount_frame(

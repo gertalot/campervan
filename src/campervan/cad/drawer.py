@@ -1,4 +1,4 @@
-"""Rear storage tray and simplified rail envelopes from nv200-interior.fs."""
+"""Capped-end rear drawer and simplified telescoping drawer sliders."""
 
 from build123d import Color, Compound, Location, Part
 
@@ -17,21 +17,24 @@ def build_rear_drawer(p: Parameters) -> Compound:
     left += p.slide_thickness_mm
     right = p.long_bench_width_mm - p.frame_thickness_mm - p.slide_thickness_mm
     width = right - left
-    length = p.drawer_length_mm + p.drawer_rear_setback_mm
+    side_length = p.drawer_length_mm
+    length = side_length + 2 * ply
     bottom = p.drawer_floor_clearance_mm
     height = p.drawer_height_mm
     shift = p.slide_travel_mm * p.drawer_extension_percent / 100
     header_bottom = p.platform_height_mm - p.slat_thickness_mm - p.member_width_mm
     if width <= 2 * ply or p.drawer_side_band_mm <= ply or height <= p.drawer_side_band_mm + p.inside_radius_mm:
         raise ValueError("Drawer dimensions leave insufficient room inside the tray or its open sides.")
-    if length >= p.seat_length_mm - p.frame_thickness_mm - p.wall_thickness_mm:
+    if side_length <= 2 * p.member_width_mm + 2 * p.inside_radius_mm:
+        raise ValueError("Drawer sides need room for the end uprights and rounded opening.")
+    if length >= p.seat_length_mm - p.frame_thickness_mm - p.long_bench_inset_mm:
         raise ValueError("Closed drawer must clear the cab-end frame.")
     if bottom + height >= header_bottom:
         raise ValueError("Drawer must fit below the rear header.")
     if bottom + ply + p.slide_height_mm > min(p.drawer_mount_band_mm, bottom + p.drawer_side_band_mm):
-        raise ValueError("Drawer rails must fit on both continuous mounting bands.")
+        raise ValueError("Drawer sliders must fit on both continuous mounting bands.")
     if not p.drawer_length_mm <= p.slide_travel_mm < 2 * p.drawer_length_mm:
-        raise ValueError("Rail travel must provide full extension while retaining telescoping overlap.")
+        raise ValueError("Drawer slider travel must provide full extension while retaining telescoping overlap.")
 
     pieces: list[Part] = []
 
@@ -40,32 +43,34 @@ def build_rear_drawer(p: Parameters) -> Compound:
         part.location = Location((x, y, z), (0, 0, rotation))
         pieces.append(part)
 
-    place(panel(width - 2 * ply, length - 2 * ply, ply), "Bottom", left + ply, ply, bottom)
+    place(panel(width - 2 * ply, side_length, ply), "Bottom", left + ply, ply, bottom)
     for name, x in (("Wall-side panel", left), ("Aisle-side panel", right - ply)):
         side = frame_panel(
-            length,
+            side_length,
             ply,
             height,
-            [(p.member_width_mm, length - p.member_width_mm, p.drawer_side_band_mm, height + 2 * p.inside_radius_mm)],
+            [(p.member_width_mm, side_length - p.member_width_mm,
+              p.drawer_side_band_mm, height + 2 * p.inside_radius_mm)],
             p.inside_radius_mm,
         )
-        place(side, name, x + ply, 0, bottom, rotation=90)
-    place(panel(width - 2 * ply, ply, height), "Rear end panel", left + ply, 0, bottom)
-    place(panel(width - 2 * ply, ply, height), "Cab-facing end panel", left + ply, length - ply, bottom)
+        place(side, name, x + ply, ply, bottom, rotation=90)
+    place(panel(width, ply, height), "Rear end panel", left, 0, bottom)
+    place(panel(width, ply, height), "Cab-facing end panel", left, length - ply, bottom)
     tray = Compound(label="Tray", children=pieces)
     tray.location = Location((0, -shift, 0))
 
     stages = []
     for stage, name in enumerate(("Fixed", "Intermediate", "Moving")):
-        rails = []
+        sliders = []
         for side_index, gap_start in ((0, left - p.slide_thickness_mm), (1, right)):
             x = gap_start + (stage if side_index == 0 else 2 - stage) * p.slide_thickness_mm / 3
-            rail = panel(p.slide_thickness_mm / 3, p.drawer_length_mm, p.slide_height_mm)
-            rail.label = "Left rail" if side_index == 0 else "Right rail"
-            rail.color = Color(0.52, 0.56, 0.60)
-            rail.location = Location((x, p.drawer_rear_setback_mm, bottom + ply))
-            rails.append(rail)
-        group = Compound(label=name, children=rails)
+            slider = panel(p.slide_thickness_mm / 3, p.drawer_length_mm, p.slide_height_mm)
+            slider.label = "Left drawer slider" if side_index == 0 else "Right drawer slider"
+            slider.color = Color(0.52, 0.56, 0.60)
+            # Align with the side panels. Locking levers project toward the rear doors.
+            slider.location = Location((x, ply, bottom + ply))
+            sliders.append(slider)
+        group = Compound(label=name, children=sliders)
         group.location = Location((0, -shift * stage / 2, 0))
         stages.append(group)
-    return Compound(label="Rear drawer", children=[tray, Compound(label="Rails", children=stages)])
+    return Compound(label="Rear drawer", children=[tray, Compound(label="Drawer sliders", children=stages)])

@@ -4,7 +4,7 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-RETIRED_CROSS_BENCH_FIELDS = frozenset(
+RETIRED_PARAMETERS = frozenset(
     {
         "cross_toilet_bay_depth_mm",
         "cross_deck_thickness_mm",
@@ -21,6 +21,7 @@ RETIRED_CROSS_BENCH_FIELDS = frozenset(
         "cross_lid_open_percent",
         "cross_bed_extension_percent",
         "cab_backrest_length_mm",
+        "drawer_rear_setback_mm",
     }
 )
 
@@ -735,11 +736,12 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Wall-side frame"]},
     )
 
-    wall_thickness_mm: float = Field(
+    long_bench_inset_mm: float = Field(
         default=4.0,
         gt=0,
-        title="Skin thickness",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Cab-end skin"]},
+        title="Construction inset",
+        description="Retained wall-side and cab-end layout allowance, independent of cross-bench skin thickness.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame"]},
     )
 
     drawer_frame_height_mm: float = Field(
@@ -901,36 +903,30 @@ class Parameters(BaseModel):
     drawer_length_mm: float = Field(
         default=1200.0,
         gt=0,
-        title="Closed rail length",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Rails"]},
-    )
-
-    drawer_rear_setback_mm: float = Field(
-        default=50.0,
-        ge=50,
-        title="Rear allowance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Rails"]},
+        title="Closed drawer slider length",
+        description="Also sets the drawer side length; the two end panels cap the sides.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
     )
 
     slide_thickness_mm: float = Field(
         default=19.0,
         gt=0,
         title="Mounting gap",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Rails"]},
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
     )
 
     slide_height_mm: float = Field(
         default=53.0,
         gt=0,
-        title="Rail height",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Rails"]},
+        title="Drawer slider height",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
     )
 
     slide_travel_mm: float = Field(
         default=1215.0,
         gt=0,
         title="Travel",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Rails"]},
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
     )
 
     drawer_extension_percent: float = Field(
@@ -939,6 +935,13 @@ class Parameters(BaseModel):
         le=100,
         title="Drawer extension (%)",
         json_schema_extra={"unit": "%", "group": ["Long bench", "Rear drawer"], "control": "position"},
+    )
+
+    cross_bench_skin_thickness_mm: float = Field(
+        default=9.0,
+        gt=0,
+        title="Rear skin thickness",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Rear skin"]},
     )
 
     cross_bench_overhang_mm: float = Field(
@@ -1283,17 +1286,22 @@ class Parameters(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def discard_retired_cross_bench_fields(cls, data: object) -> object:
-        """Read saved sliding-bench projects without retaining obsolete controls."""
+    def migrate_saved_parameters(cls, data: object) -> object:
+        """Preserve construction datums while retiring superseded controls."""
         if isinstance(data, dict):
-            return {name: value for name, value in data.items() if name not in RETIRED_CROSS_BENCH_FIELDS}
+            data = {name: value for name, value in data.items() if name not in RETIRED_PARAMETERS}
+            # The removed cab-end skin also supplied these long-bench layout offsets.
+            # Preserve the slats, guides and frame positions when reading older projects.
+            if "wall_thickness_mm" in data:
+                data.setdefault("long_bench_inset_mm", data.pop("wall_thickness_mm"))
+            return data
         return data
 
     @model_validator(mode="after")
     def check_geometry(self) -> Self:
         if (
             self.bed_width_mm - self.cross_bench_overhang_mm - self.drawer_support_x_mm <= 2 * self.frame_thickness_mm
-            or self.cargo_length_mm - self.seat_length_mm - self.wall_thickness_mm
+            or self.cargo_length_mm - self.seat_length_mm - self.cross_bench_skin_thickness_mm
             <= 2 * self.member_width_mm + 2 * self.inside_radius_mm
         ):
             raise ValueError("Cross-bench overhang must leave room for two support frames and their rounded openings.")

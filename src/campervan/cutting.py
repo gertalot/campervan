@@ -43,13 +43,21 @@ def stock_groups(cuts: list[CutPart], selections: dict[str, Selection]) -> list[
 
 
 def source_key(group: dict, options: CuttingOptions) -> str:
-    payload = {"version": 2, "group": group, "options": options.model_dump()}
+    payload = {"version": 3, "group": group, "options": options.model_dump()}
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
 def effective_options(group: dict, settings: CuttingSettings, stock: StockOptions | None) -> CuttingOptions:
     selected = stock or StockOptions(stock=group["stock"])
     return CuttingOptions(**selected.model_dump(), **settings.model_dump(exclude={"algorithm"}))
+
+
+def layout_score(result: dict) -> tuple:
+    """Rank candidates by stock use, offcut area/perimeter, then saw-cut count."""
+    offcut = result.get("best_offcut")
+    return (len(result["unplaced"]), result["full_stock_count"], result["offcut_count"], result["stock_area"],
+            offcut["perimeter_area_ratio"] if offcut else float("inf"),
+            sum(len(sheet["cuts"]) for sheet in result["sheets"]))
 
 
 def rectangle(length: float, width: float) -> list[list[float]]:
@@ -86,7 +94,8 @@ def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable
     parts = group["parts"]
     grains = ["length" if timber else options.orientations.get(p["path"], options.grain) for p in parts]
     instance_data: dict = {
-        "objective": "variable-sized-bin-packing" if len(stocks) > 1 else "bin-packing",
+        "objective": ("variable-sized-bin-packing" if len(stocks) > 1 else
+                      "bin-packing-with-leftovers" if not nesting and not timber else "bin-packing"),
         "bin_types": [], "item_types": [],
     }
     if nesting:
@@ -206,10 +215,24 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) 
     blank_area = sum(p["length"] * p["width"] for p in used_parts)
     profile_area = sum(polygon_area(p["outline"] or rectangle(p["length"], p["width"]))
                        - sum(polygon_area(h) for h in p["holes"]) for p in used_parts)
+    unplaced = [p["id"] for p in parts if p["id"] not in placed]
+    offcuts = [
+        {"sheet": index, "x": x, "y": y, "length": length, "width": width,
+         "area": length * width, "perimeter_area_ratio": 2 * (length + width) / (length * width)}
+        for index, sheet in enumerate(sheets) for x, y, length, width in sheet["remnants"]
+        if length > 0 and width > 0
+    ]
+    best_offcut = min(offcuts, key=lambda offcut: (offcut["perimeter_area_ratio"], -offcut["area"]), default=None)
+    optimise_offcuts = not nesting and group["kind"] != "timber" and len(stocks) == 1
+    stock_count_optimal = output.is_proven_optimal()
+    if optimise_offcuts and not unplaced and sheets:
+        usable_area = (stocks[0]["length"] - 2 * options.trim) * (stocks[0]["width"] - 2 * trim_y)
+        lower_bound = max(ceil(blank_area / usable_area), output.bin_packing_bound)
+        stock_count_optimal = len(sheets) == lower_bound
     return {
         "mode": mode, "source": source_key(group, options), "created": datetime.now(UTC).isoformat(),
         "options": options.model_dump(), "name": group["name"], "parts": parts, "sheets": sheets,
-        "unplaced": [p["id"] for p in parts if p["id"] not in placed],
+        "unplaced": unplaced,
         "stock_area": stock_area, "blank_area": blank_area, "profile_area": profile_area,
         "full_stock_count": sum(not s["stock"]["offcut"] for s in sheets),
         "offcut_count": sum(s["stock"]["offcut"] for s in sheets),
@@ -217,5 +240,8 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) 
                            if group["price"] is not None else None),
         "algorithm": output.solution_label, "profile_allowance": PROFILE_ALLOWANCE if nesting else 0,
         "optimal": output.is_proven_optimal(),
-        "objective": "Fewest full stock pieces" if len(stocks) > 1 else "Fewest stock pieces",
+        "stock_count_optimal": stock_count_optimal, "optimises_offcuts": optimise_offcuts,
+        "best_offcut": best_offcut,
+        "objective": ("Fewest full stock pieces" if len(stocks) > 1 else
+                      "Fewest sheets, then useful rectangular offcuts" if optimise_offcuts else "Fewest stock pieces"),
     }

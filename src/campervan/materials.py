@@ -50,7 +50,10 @@ ROLES = [
         kind="sheet",
         fields={"thickness": "cabinet_frame_thickness_mm"},
     ),
-    MaterialRole(id="skins", name="Skin plywood", kind="sheet", fields={"thickness": "wall_thickness_mm"}),
+    MaterialRole(
+        id="skins", name="Cross-bench rear plywood", kind="sheet",
+        fields={"thickness": "cross_bench_skin_thickness_mm"},
+    ),
     MaterialRole(id="shelves", name="Shelf plywood", kind="sheet", fields={"thickness": "cabinet_shelf_thickness_mm"}),
     MaterialRole(id="drawer", name="Drawer plywood", kind="sheet", fields={"thickness": "drawer_ply_mm"}),
     MaterialRole(
@@ -77,13 +80,15 @@ for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
         "cabinet-frames": "tigerply-12",
-        "skins": "tigerply-okoume-4",
+        "skins": "tigerply-okoume-9",
         "shelves": "tigerply-12",
         "drawer": "tigerply-12",
         "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
     if role.id in {"cabinet-frames", "shelves", "drawer"}:
         role.note = "Share 12mm sheets across cabinet partitions/frames, shelves and drawer; plan cuts together."
+    elif role.id == "skins":
+        role.note = "One cross-bench rear skin; share the 9mm sheet with the cabinet doors."
 
 ROLES.extend(
     [
@@ -183,7 +188,7 @@ ROLES.extend(
         ),
         MaterialRole(
             id="slides",
-            name="Rear drawer slides",
+            name="Locking drawer sliders",
             kind="hardware",
             fields={
                 "length": "drawer_length_mm",
@@ -191,10 +196,10 @@ ROLES.extend(
                 "thickness": "slide_thickness_mm",
                 "travel": "slide_travel_mm",
             },
-            default_product_id="instantpanel-1200",
+            default_product_id="instantpanel-locking-1200",
             note=(
-                "One complete pair, including all three rail stages. "
-                "Non-locking; drawer restraint and M5 fixings still to specify."
+                "One complete pair, locking fully closed and fully open. Includes all three telescoping stages. "
+                "Levers project toward the rear doors; allow 50mm operating clearance. M5 fixings not included."
             ),
         ),
         MaterialRole(
@@ -293,6 +298,10 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         project.materials["cabinet-catches"] = Selection(product_id="vanlifer-point-ll016")
     if project.materials.get("ledges", Selection()).product_id == "tigerply-18":
         project.materials["ledges"] = Selection(product_id="pinetrim-18-18-2400")
+    if project.materials.get("skins", Selection()).product_id == "tigerply-okoume-4":
+        project.materials["skins"] = Selection(product_id="tigerply-okoume-9")
+    if project.materials.get("slides", Selection()).product_id == "instantpanel-1200":
+        project.materials["slides"] = Selection(product_id="instantpanel-locking-1200")
     project.materials = default_selections() | project.materials
     project.parameters = resolve(project.parameters, project.materials)
     return project
