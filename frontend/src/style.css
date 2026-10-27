@@ -60,6 +60,18 @@ p { margin: 0; }
 aside input[aria-invalid="true"] { border-color: #f09a91; }
 aside button:disabled { opacity: 0.45; cursor: default; }
 aside label { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cabinet-side-row { grid-template-columns: minmax(0, 1fr) auto; font-size: 11px; }
+.segmented-choice { display: inline-flex; gap: 1px; padding: 1px; border-radius: 3px; background: #454a54; }
+.segmented-choice label { position: relative; overflow: visible; cursor: pointer; }
+.segmented-choice input { position: absolute; width: 1px; height: 1px; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.segmented-choice span { display: flex; align-items: center; justify-content: center; min-width: 44px; height: 23px;
+  padding: 2px 9px; color: #d5d9df; background: #2c3037; }
+.segmented-choice label:first-child span { border-radius: 2px 0 0 2px; }
+.segmented-choice label:last-child span { border-radius: 0 2px 2px 0; }
+.segmented-choice label:hover span { background: #3a424d; }
+.segmented-choice input:checked + span { color: #eef3fa; background: #30465f; box-shadow: inset 0 0 0 1px #8bb7e8; }
+.segmented-choice input:focus-visible + span { outline: 1px solid #8bb7e8; outline-offset: 2px; }
 aside input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border: 1px solid #454a54;
   border-radius: 3px; background: #15171a; color: #e3e7ed; font: inherit; font-size: 11px; }
 .position-row output { text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }

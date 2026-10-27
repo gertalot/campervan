@@ -7,6 +7,7 @@ import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
 import { createViewerPieces, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
+import { createLayoutMirror } from './layout-mirror';
 import { Box3, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
 import { assetUrl, isStaticSite } from './site-runtime';
@@ -87,6 +88,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const mannequinPoses = { seated: { ...seatedPose }, lying: { ...lyingPose }, 'lying-second': { ...secondLyingPose } };
   let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
   const vehicleFade = createVehicleFade();
+  const layoutMirror = createLayoutMirror();
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
     cancelCameraAnimation, saveCamera);
   const drag = createViewerDrag(container, {
@@ -117,13 +119,24 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   if (import.meta.hot) import.meta.hot.accept('./pillows', module => {
     if (!module || !viewer?.ready) return;
     pillows = module.createPillows();
-    pillows.attach(viewer.rendered.nestedGroup.groups);
-    pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    layoutMirror.inOriginalCoordinates(() => {
+      pillows.attach(viewer!.rendered.nestedGroup.groups);
+      pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    });
     viewer.update(true, true);
   });
   let seeInside = false;
 
   function showMannequin(render = true) {
+    if (!viewer?.ready) return;
+    layoutMirror.inOriginalCoordinates(() => {
+      fitMannequin();
+      for (const model of Object.values(mannequins)) layoutMirror.add(model.root);
+    });
+    if (render) viewer.update(true, false);
+  }
+
+  function fitMannequin() {
     if (!viewer?.ready) return;
     const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
     for (const model of Object.values(mannequins)) model.root.visible = false;
@@ -161,7 +174,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         }
       }
       onMannequinStatus(feetOutside ? 'Feet extend beyond the mattress.' : '');
-      if (render) viewer.update(true, false);
       return;
     }
     const visible = mannequinPose.visible && bed === 0;
@@ -179,7 +191,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       : fitted.compression < -5 ? 'This leg pose lifts the hips off the seat.'
       : fitted.compression > (seatCushion.bounds().max.z - seatCushion.bounds().min.z) * 0.55
         ? 'This leg pose needs more compression than the cushion allows.' : '');
-    if (render) viewer.update(true, false);
   }
 
   function cancelCameraAnimation() {
@@ -415,6 +426,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             drag.cancel();
             pieces.clear();
             vehicleFade.clear();
+            layoutMirror.clear();
             Object.values(mannequins).forEach(model => model.root.removeFromParent());
             seatCushion?.dispose();
             seatCushion = undefined;
@@ -436,6 +448,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             }
             pillows.attach(viewer!.rendered.nestedGroup.groups);
             pillows.pose(positions.bed_extension_percent ?? 0);
+            layoutMirror.attach(viewer!.rendered.nestedGroup.groups);
             motions = {};
             bases.clear();
             trimToolbar();
@@ -491,6 +504,13 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       scheduleMove(name);
     },
     setMotionController(controller: MotionController) { motionController = controller; },
+    setLayoutWidth(width: number) { layoutMirror.setWidth(width); },
+    setMirrored(enabled: boolean) {
+      drag.cancel();
+      layoutMirror.setEnabled(enabled);
+      (viewer as unknown as PieceViewer | undefined)?.idPicker?.setDirty();
+      viewer?.update(true, false);
+    },
     previewPositions: previewPose,
     savePositions: saveAcceptedPositions,
     cancelDrag: drag.cancel,

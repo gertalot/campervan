@@ -48,7 +48,8 @@ export function createTableDrag(arm: Object3D, top: Object3D, wood: Object3D, po
   const parentMatrix = arm.parent?.matrixWorld ?? arm.matrixWorld;
   const xAxis = new Vector3(1, 0, 0).transformDirection(parentMatrix);
   const normal = new Vector3(0, 0, 1).transformDirection(parentMatrix);
-  const yAxis = normal.clone().cross(xAxis).normalize();
+  // Use both actual basis vectors: a cross product would reverse Y in a mirrored layout.
+  const yAxis = new Vector3(0, 1, 0).transformDirection(parentMatrix);
   const xy = (v: Vector3): XY => ({ x: v.dot(xAxis), y: v.dot(yAxis) });
   const link = xy(tip.clone().sub(pivot));
   const length = Math.hypot(link.x, link.y), startArm = Math.atan2(link.y, link.x);

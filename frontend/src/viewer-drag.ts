@@ -93,7 +93,12 @@ function hingeSolver(target: Target, camera: Camera, rect: DOMRect, x: number, y
   const field = target.field!, track = target.track!, initial = pose[field];
   target.group.updateWorldMatrix(true, false);
   const pivot = target.group.getWorldPosition(new Vector3()), axis = new Vector3(); axis[track.axis] = 1;
-  if (target.group.parent) axis.transformDirection(target.group.parent.matrixWorld);
+  if (target.group.parent) {
+    const matrix = target.group.parent.matrixWorld;
+    axis.transformDirection(matrix);
+    // Rotation axes reverse handedness under a reflection; translation axes do not.
+    if (matrix.determinant() < 0) axis.negate();
+  }
   const radius = target.point.clone().sub(pivot), radians = (track.travel ?? 0) * Math.PI / 180 / 100;
   const projected = (value: number) => screen(radius.clone().applyAxisAngle(axis, (value - initial) * radians)
     .add(pivot), camera, rect);

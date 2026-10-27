@@ -75,6 +75,21 @@ const cutting = setupCutting(element('cuts-panel'), path => {
   }
 });
 viewer.setPieceLink({ has: cutting.hasPart, show: path => { void cutting.showPart(path); } });
+const cabinetSideControl = element('cabinet-side-control');
+const cabinetSideInputs = [...cabinetSideControl.querySelectorAll<HTMLInputElement>('input[name="cabinet-side"]')];
+function setCabinetSide(side: string) {
+  const right = side === 'right';
+  for (const input of cabinetSideInputs) input.checked = input.value === (right ? 'right' : 'left');
+  localStorage.setItem('campervan.cabinet-side', right ? 'right' : 'left');
+  viewer.setMirrored(right);
+  cutting.setMirrored(right);
+}
+for (const input of cabinetSideInputs) input.addEventListener('change', () => {
+  if (input.checked) setCabinetSide(input.value);
+});
+setCabinetSide(localStorage.getItem('campervan.cabinet-side')
+  ?? (localStorage.getItem('campervan.mirror-layout') === 'true' ? 'right' : 'left'));
+localStorage.removeItem('campervan.mirror-layout');
 void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
@@ -82,7 +97,7 @@ const controller = createController(api, {
   setMetadata(metadata) {
     visibility.resetGroups();
     fields.replaceChildren();
-    liveControls.replaceChildren();
+    liveControls.replaceChildren(cabinetSideControl);
     inputs.clear();
     tableEyes.clear();
     const groups = new Map<string, HTMLDetailsElement>();
@@ -231,6 +246,7 @@ const controller = createController(api, {
     form.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled = Object.keys(errors).length > 0;
   },
   setParameters(parameters, reset) {
+    viewer.setLayoutWidth(parameters.cargo_width_mm);
     const stack = 2 * parameters.table_ply_thickness_mm;
     element('table-stowed-summary').textContent = `Folded top with upright and arm stored underneath. `
       + `Approx. ${stack + 77}mm thick including the ${stack}mm bamboo stack. `

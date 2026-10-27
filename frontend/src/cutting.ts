@@ -1,7 +1,7 @@
 import { request, type ModelStatus } from './api';
 import { onTab, showTab } from './tabs';
 import { createPlanDropdown } from './plan-dropdown';
-import { pieceGallery, sheetDrawing } from './cutting-diagrams';
+import { cabinetSideLabel, drawingCut, mirrorsPart, mirrorsSheet, pieceGallery, sheetDrawing, updateDrawingMirror } from './cutting-diagrams';
 import { assembly, csv, download, el, fullName, isPlywood, materialName, mm, option, partColour, pieceKey } from './cutting-types';
 import type { Data, Grain, Group, Mode, Part, Result, StockOptions } from './cutting-types';
 import { isStaticSite } from './site-runtime';
@@ -14,6 +14,9 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   let pending = Promise.resolve();
   let refreshPromise: Promise<void> | null = null, selectedPath: string | null = null, pointerX: number | null = null;
   let returnSpot: { path: string; filter: string; scroll: number } | null = null;
+  let mirrored = false;
+  const mirrorTextUpdates = new Map<string, (() => void)[]>();
+  const layoutNote = el('p', cabinetSideLabel(mirrored));
   const pieceMenu = createPlanDropdown();
   const starting = new Set<string>(), errors = new Map<string, string>(), attempted = new Set<string>();
   let progressLoading = false;
@@ -158,10 +161,10 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   }
   function render() {
     if (!data) return;
-    layoutHosts.clear(); host.replaceChildren();
+    layoutHosts.clear(); mirrorTextUpdates.clear(); host.replaceChildren();
     const header = el('div'); header.className = 'cut-page-header';
     const title = el('div'); title.append(el('h2', 'Cut list'), el('p', `${data.groups.reduce((n, g) => n + g.parts.length, 0)} pieces from the van design · dimensions in mm`),
-      el('p', 'Click a piece for details · double-click to show it in 3D'));
+      el('p', 'Click a piece for details · double-click to show it in 3D'), layoutNote);
     const actions = el('div'); actions.className = 'cut-page-actions';
     const print = el('button', 'Print'); print.type = 'button'; print.onclick = () => window.print();
     const exportList = el('button', 'Export cut list'); exportList.type = 'button'; exportList.onclick = exportCsv;
@@ -186,7 +189,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   }
 
   function renderOverview() {
-    content.replaceChildren(); layoutHosts.clear();
+    content.replaceChildren(); layoutHosts.clear(); mirrorTextUpdates.clear();
     const parts = data!.groups.flatMap(g => g.parts);
     const groups = new Map<string, Part[]>();
     for (const part of parts) groups.set(assembly(part), [...(groups.get(assembly(part)) ?? []), part]);
@@ -197,7 +200,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       const heading = el('div'); heading.className = 'cut-section-heading';
       const h3 = el('h3', name); h3.style.setProperty('--part-colour', partColour(pieces[0]));
       heading.append(h3, el('span', `${pieces.length} pieces`)); section.append(heading);
-      section.append(pieceGallery(pieces, data!.groups, selectPart)); overview.append(section);
+      section.append(pieceGallery(pieces, data!.groups, selectPart, mirrored)); overview.append(section);
     }
     content.append(overview);
     content.append(el('p', 'Select a plywood thickness above for sheet layouts and its detailed cut list. Select a piece for its full name and measurements.'));
@@ -212,7 +215,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     inspector.replaceChildren();
     const close = el('button', 'Close'); close.type = 'button'; close.className = 'cut-inspector-close'; close.onclick = () => inspector.close();
     inspector.append(close, el('h2', fullName(part)), el('p', part.path.split(' / ').join(' › ')),
-      pieceGallery([part], [g], () => {}), el('strong', `${mm(part.length)} × ${mm(part.width)} × ${mm(part.thickness)} mm`),
+      pieceGallery([part], [g], () => {}, mirrored), el('strong', `${mm(part.length)} × ${mm(part.width)} × ${mm(part.thickness)} mm`),
       el('p', materialName(g)));
     const show = el('button', 'Show in 3D'); show.type = 'button'; show.onclick = () => goToCad(path);
     show.title = 'Double-click a piece to show it in 3D'; inspector.append(show);
@@ -250,14 +253,14 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   }
 
   function renderFocus() {
-    content.replaceChildren(); layoutHosts.clear();
+    content.replaceChildren(); layoutHosts.clear(); mirrorTextUpdates.clear();
     for (const g of filteredGroups()) {
       const section = el('section'); section.className = 'cut-material';
       const header = el('div'); header.className = 'cut-section-heading';
       header.append(el('h3', materialName(g)), el('span', `${g.parts.length} pieces`)); section.append(header);
       const layoutHost = el('div'); layoutHosts.set(g.key, layoutHost); section.append(layoutHost);
       section.append(stockSettings(g));
-      const partsHeading = el('h4', 'Pieces in this material'); section.append(partsHeading, pieceGallery(g.parts, [g], selectPart));
+      const partsHeading = el('h4', 'Pieces in this material'); section.append(partsHeading, pieceGallery(g.parts, [g], selectPart, mirrored));
       const cutList = details(`Cut list · ${g.parts.length} pieces and dimensions`, `parts:${g.key}`);
       cutList.className = 'cut-detail-list'; cutList.append(partTable(g)); section.append(cutList);
       content.append(section); renderLayouts(g);
@@ -314,6 +317,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
 
   function renderLayouts(g: Group) {
     const root = layoutHosts.get(g.key); if (!root) return;
+    const textUpdates: (() => void)[] = [];
+    mirrorTextUpdates.set(g.key, textUpdates);
     root.replaceChildren();
     const key = resultKey(g), result = data!.state.results[key];
     const running = starting.has(key) || data!.jobs[key]?.state === 'running';
@@ -357,7 +362,12 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       heading.append(el('h4', `${materialName(g)} · ${g.kind === 'timber' ? 'Length' : 'Sheet'} ${index + 1} of ${result.sheets.length}`));
       heading.append(el('span', `${mm(sheet.stock.length)} × ${mm(sheet.stock.width)} mm${sheet.stock.offcut ? ' · owned offcut' : ''}`));
       card.append(heading);
-      const svg = sheetDrawing(sheet, g, result, index, selectPart); card.append(svg);
+      const svg = sheetDrawing(sheet, g, result, index, selectPart, mirrored); card.append(svg);
+      if (mirrorsSheet(sheet) && sheet.parts.some(part => !mirrorsPart(part))) {
+        const faceNote = el('p', 'Pieces that stay fixed in the van are shown from their reverse face.');
+        const updateFaceNote = () => { faceNote.hidden = !mirrored; };
+        textUpdates.push(updateFaceNote); updateFaceNote(); card.append(faceNote);
+      }
       card.append(el('p', `${mm(result.options.kerf)} mm ${g.kind === 'timber' ? 'crosscut kerf' : 'tool width'}${result.profile_allowance ? ` + ${mm(result.profile_allowance)} mm curve allowance` : ''} · ${result.options.trim ? `${mm(result.options.trim)} mm ${g.kind === 'timber' ? 'end' : 'edge'} trim (hatched)` : 'untrimmed edges'}`));
       const keyList = el('ul'); keyList.className = 'cut-sheet-key';
       for (const placed of sheet.parts) {
@@ -372,7 +382,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
         const copy = svg.cloneNode(true) as SVGSVGElement;
         copy.setAttribute('width', `${svg.dataset.physicalWidth}mm`); copy.setAttribute('height', `${svg.dataset.physicalHeight}mm`);
         copy.querySelector('.cut-saw-lines')?.setAttribute('display', svg.classList.contains('show-cuts') ? 'inline' : 'none');
-        download(`${materialName(g).replace(/[^\w-]+/g, '-')}-${index + 1}.svg`, new XMLSerializer().serializeToString(copy), 'image/svg+xml');
+        download(`${materialName(g).replace(/[^\w-]+/g, '-')}-${index + 1}-cabinet-${mirrored ? 'right' : 'left'}.svg`,
+          new XMLSerializer().serializeToString(copy), 'image/svg+xml');
       }; actions.append(exportSvg); card.append(actions);
       if (sheet.cuts.length) {
         const sequence = details(`Saw-cut sequence · ${sheet.cuts.length} cuts`, `sequence:${g.key}:${index}`);
@@ -380,9 +391,16 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
         sequence.addEventListener('toggle', () => svg.classList.toggle('show-cuts', sequence.open));
         svg.classList.toggle('show-cuts', sequence.open);
         const list = el('ol');
-        for (const [x1, y1, x2, y2] of sheet.cuts) list.append(el('li', x1 === x2
-          ? `Crosscut at length ${mm(x1)} mm, across width coordinates ${mm(y1)}–${mm(y2)} mm.`
-          : `Rip at width ${mm(y1)} mm, along length coordinates ${mm(x1)}–${mm(x2)} mm.`));
+        const updateSequence = () => {
+          list.replaceChildren();
+          for (const cut of sheet.cuts) {
+            const [x1, y1, x2, y2] = drawingCut(cut, sheet, mirrored);
+            list.append(el('li', x1 === x2
+              ? `Crosscut at length ${mm(x1)} mm, across width coordinates ${mm(y1)}–${mm(y2)} mm.`
+              : `Rip at width ${mm(y1)} mm, along length coordinates ${mm(x1)}–${mm(x2)} mm.`));
+          }
+        };
+        textUpdates.push(updateSequence); updateSequence();
         sequence.append(el('p', 'Straight cuts separate rectangular blanks. Cut curves, openings and notches afterwards.'),
           el('p', 'Coordinates start at the top-left corner. Lines mark finished edges; keep the blade on the waste side.'), list); card.append(sequence);
       }
@@ -446,6 +464,12 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   void refresh();
   onTab(tab => { if (tab === 'cuts') void refresh(); else { inspector.close(); pieceMenu.close(); } });
   return {
+    setMirrored(value: boolean) {
+      if (mirrored === value) return;
+      mirrored = value; layoutNote.textContent = cabinetSideLabel(mirrored);
+      for (const svg of host.querySelectorAll<SVGSVGElement>('svg')) updateDrawingMirror(svg, mirrored);
+      for (const updates of mirrorTextUpdates.values()) for (const update of updates) update();
+    },
     hasPart(path: string) { return Boolean(data?.groups.some(g => g.parts.some(p => p.path === path))); },
     async showPart(path: string) {
       showTab('cuts'); await refresh();

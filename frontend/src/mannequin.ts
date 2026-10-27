@@ -198,7 +198,8 @@ export function createMannequin(body: Group) {
         }
         resourcesAdopted = true;
       }
-      scene.add(root);
+      // The browser layout reflection may already own this root's display parent.
+      if (!root.parent) scene.add(root);
     },
     setPose(pose: RigPose) {
       // Pose in the asset's untransformed world, then place the whole person in CAD space.

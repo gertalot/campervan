@@ -2,8 +2,8 @@
   "parameters": {
     "table_mount": 0.0,
     "table_height_mm": 750.0,
-    "table_arm_swivel_deg": 288.1015916629387,
-    "table_top_rotation_deg": 251.27937704241523,
+    "table_arm_swivel_deg": 296.01707631321244,
+    "table_top_rotation_deg": 243.39939209324928,
     "table_top_offset_percent": -53.7,
     "table_fold_open_percent": 100.0,
     "table_stowed_x_mm": 572.0,

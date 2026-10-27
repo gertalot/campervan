@@ -21,6 +21,24 @@ The bench converts wheel-arch and rear-corner positions to furniture-local coord
 The cabinet reflects and translates body/ceiling fitting volumes into that coordinate system before scribing,
 so its mirrored placement fits the actual left side. Wheel-arch cutouts remain symmetric.
 A perfect furniture reflection does not imply an asymmetric vehicle is mirrored.
+
+The sidebar's **Cabinet side · Left | Right** radio group selects the arrangement, with vehicle sides defined facing
+the windscreen. It sits alongside the live controls and applies immediately. The right-side choice reflects furniture,
+the table, stored gear and mannequins through the cargo centreline while leaving the vehicle and floor fixed. The side
+is saved in localStorage and works in the static site; the former checkbox preference is migrated on first load.
+Reflection parents preserve native named paths, local slider
+tracks, picking and highlights. Hinge dragging accounts for reflected rotation axes; table steering uses the actual
+parent basis. Mannequins fit and cushions deform in the original coordinates before their displays reflect together.
+CAD edge ribbons render double-sided in one pass: their screen-space winding stays unchanged when the display
+parent reflects, whereas Three.js reverses face culling for a negative world determinant. Solid face materials retain
+their existing sidedness.
+The two door openings have different offsets, so inspect fit against the fixed vehicle on the selected side.
+
+Cut-list galleries and whole sheet drawings use a reflected face view with readable labels. Reflecting an entire
+sheet preserves the saved nesting, kerf, offcuts and cut sequence; through-cut outlines can be viewed from the reverse
+face. Floor-only drawings stay unchanged. Cut-list drawings and saved SVGs identify the selected cabinet side.
+Native CAD/STEP exports and Python geometry retain their saved orientation; changing the cabinet side does not
+regenerate or modify the model or cutting results.
 `src/campervan/parameters.py` owns dimensions, basic validation and sidebar metadata.
 `parameter_fit.py` checks the bed-height dependency chain before saving or regenerating: wheel-arch/top-rail clearance,
 rounded frame openings, slide mounting bands and the mattress-following cabinet divider.
