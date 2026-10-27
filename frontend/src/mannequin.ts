@@ -116,7 +116,10 @@ export function createMannequin(body: Group) {
     point.z *= 1780 / (crown - sole);
     // Gert: sole-to-knee pivot 500mm, hip-to-knee 400mm, inseam 800mm, total height 1780mm.
     const levels = [[sole, 0], [kneeHeight, 500], [crotch, 800], [hipHeight, 900], [crown, 1780]];
-    const end = Math.max(1, levels.findIndex(([height]) => height >= point.y));
+    const upper = levels.findIndex(([height]) => height >= point.y);
+    // Rounded crown vertices can slightly exceed the measured height. Continue the
+    // final interval above the crown instead of mapping them through the lower leg.
+    const end = upper < 0 ? levels.length - 1 : Math.max(1, upper);
     const [a, low] = levels[end - 1], [b, high] = levels[end];
     point.y = low + (point.y - a) * (high - low) / (b - a);
     return point;

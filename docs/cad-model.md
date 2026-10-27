@@ -687,6 +687,10 @@ skinning joints along a continuous arc from the sacrum to the shoulders, replaci
 The pelvis follows the bottom tangent; shoulders, arms, neck and head follow the top tangent. Non-trunk skin influences
 are retained, and the original GLB is unchanged.
 
+Landmark resizing continues the nearest end interval for points outside the measured height range. Float rounding
+can put crown vertices just above the measured maximum; those vertices retain the upper-body scale instead of
+falling through to the lower-leg scale and denting the head.
+
 **Seated mannequin → Reset posture** fits a seated pose to the displayed long-seat cushion, allows estimated foam compression and clears
 the calves past the bench edge. XYZ hip position, facing and joints remain adjustable with sliders. Ankle rotation
 maintains the flat-foot orientation independently of the calves. Joint edits retain the chosen angles and adjust hip
