@@ -237,9 +237,10 @@ class ContentUpdate(Record):
 
 
 class PlanningStore:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, backup_dir: Path | None = None) -> None:
         self.path = path
-        self.previous = path.with_suffix(".previous.json")
+        self.backup_dir = backup_dir if backup_dir is not None else path.parent
+        self.previous = self.backup_dir / f"{path.stem}.previous.json"
 
     def read(self) -> PlanningDocument:
         if not self.path.exists():
@@ -249,8 +250,9 @@ class PlanningStore:
         raw = json.loads(original)
         document = parse_document(raw)
         if raw.get("version") == 1:
-            backup_path = self.path.with_name(self.path.stem + ".v1-backup.json")
+            backup_path = self.backup_dir / f"{self.path.stem}.v1-backup.json"
             if not backup_path.exists():
+                self.backup_dir.mkdir(parents=True, exist_ok=True)
                 with backup_path.open("xb") as backup:
                     backup.write(original)
             document.revision += 1
@@ -263,6 +265,7 @@ class PlanningStore:
     def write(self, document: PlanningDocument, *, backup: bool = True) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if backup and self.path.exists():
+            self.backup_dir.mkdir(parents=True, exist_ok=True)
             temporary_backup = self.previous.with_suffix(".tmp")
             temporary_backup.write_bytes(self.path.read_bytes())
             temporary_backup.replace(self.previous)

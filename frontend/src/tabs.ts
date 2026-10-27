@@ -1,3 +1,5 @@
+import { isStaticSite } from './site-runtime';
+
 export type Tab = 'cad' | 'bom' | 'plan' | 'cuts';
 const tabs = ['cad', 'bom', 'plan', 'cuts'] as const;
 type Listener = (tab: Tab, role?: string) => void;
@@ -21,7 +23,9 @@ export function showTab(tab: Tab, role?: string, history = true) {
   document.getElementById('workspace')!.classList.toggle('show-bom', tab !== 'cad');
   if (history) {
     const path = tab === 'bom' && role ? `/bom/${encodeURIComponent(role)}` : `/${tab}`;
-    if (path !== location.pathname) window.history.pushState(null, '', path);
+    if (isStaticSite) {
+      if (`#${path}` !== location.hash) window.history.pushState(null, '', `#${path}`);
+    } else if (path !== location.pathname) window.history.pushState(null, '', path);
   }
   listeners.forEach(fn => fn(tab, role));
 }
@@ -46,9 +50,13 @@ export function setupTabs() {
     });
   }
   const restore = () => {
-    const match = location.pathname.match(/^\/(cad|bom|plan|cuts)(?:\/([^/]+))?\/?$/);
+    const path = isStaticSite ? location.hash.slice(1) : location.pathname;
+    const match = path.match(/^\/(cad|bom|plan|cuts)(?:\/([^/]+))?\/?$/);
     showTab((match?.[1] as Tab) ?? 'cad', match?.[2] ? decodeURIComponent(match[2]) : undefined, false);
-    if (location.pathname === '/') history.replaceState(null, '', '/cad');
+    if (isStaticSite && !location.hash) history.replaceState(null, '', '#/cad');
+    else if (!isStaticSite && location.pathname === '/') history.replaceState(null, '', '/cad');
   };
-  window.addEventListener('popstate', restore); restore();
+  window.addEventListener('popstate', restore);
+  if (isStaticSite) window.addEventListener('hashchange', restore);
+  restore();
 }

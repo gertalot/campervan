@@ -2,6 +2,7 @@ import {
   emptyFilter, newPurchase, type PlanningClient, type PurchaseFilter, type PurchaseRecord,
   type PurchaseRow, type PurchaseView, type Totals,
 } from './planning-api';
+import { isStaticSite } from './site-runtime';
 
 const money = (value: number) => new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(value);
 export const el = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '') => {
@@ -55,18 +56,21 @@ export function mountPurchaseGrid(
   search.setAttribute('aria-label', 'Search purchases');
   search.oninput = () => { filter.search = search.value; onFilter?.({ ...filter }); renderRows(); };
   const save = (record: PurchaseRecord) => {
+    if (isStaticSite) return;
     try {
       client.mutate({ kind: 'purchase', id: record.id, values: record as unknown as Record<string, unknown> }, false);
       feedback.textContent = 'Saving purchase…';
     } catch (error) { feedback.textContent = String(error); }
   };
-  controls.append(search, action('+ Item', () => {
+  controls.append(search);
+  if (!isStaticSite) controls.append(action('+ Item', () => {
     const record = newPurchase(); const name = prompt('Item or service name'); if (!name?.trim()) return;
     record.name = name.trim(); record.category = filter.category; record.tags = filter.tag ? [filter.tag] : [];
     record.supplier = filter.supplier;
     // New items start unbought; show them even if this view was previously showing only bought stock.
     filter.status = ''; filter.search = ''; search.value = ''; onFilter?.({ ...filter }); save(record);
-  }), action('Clear filters', () => { filter = emptyFilter(); search.value = ''; onFilter?.({ ...filter }); render(); }));
+  }));
+  controls.append(action('Clear filters', () => { filter = emptyFilter(); search.value = ''; onFilter?.({ ...filter }); render(); }));
 
   function render() {
     if (!data || disposed) return;
@@ -84,17 +88,29 @@ export function mountPurchaseGrid(
     if (!data || disposed) return;
     const rows = data.rows.filter(r => matches(r, filter));
     totals.replaceChildren(el('p', totalText('Shown items', sum(rows))), el('p', totalText('Whole project', data.totals)),
-      el('small', 'NZD incl. GST. Add delivery as an item. Shared stock is counted once; filtered views are not separate budgets.'));
+      el('small', 'NZD incl. GST. ' + (isStaticSite ? '' : 'Add delivery as an item. ')
+        + 'Shared stock is counted once; filtered views are not separate budgets.'));
     const table = el('table'); table.className = 'purchase-grid';
     const head = el('tr');
-    ['Item / source', 'Category / tags', 'Purchase unit', 'Required', 'Owned', 'Bought', 'Est. unit $', 'Actual spent $', 'Remaining', 'Actions'].forEach(label => head.append(el('th', label)));
+    const columns = ['Item / source', 'Category / tags', 'Purchase unit', 'Required', 'Owned', 'Bought', 'Est. unit $', 'Actual spent $', 'Remaining'];
+    if (!isStaticSite) columns.push('Actions');
+    columns.forEach(label => head.append(el('th', label)));
     const thead = el('thead'); thead.append(head); table.append(thead);
     const body = el('tbody'); table.append(body); content.replaceChildren(table);
-    if (!rows.length) { content.append(el('p', 'No items match. Add an item here or change the filters.')); return; }
+    if (!rows.length) {
+      content.append(el('p', isStaticSite ? 'No items match. Change the filters.' : 'No items match. Add an item here or change the filters.'));
+      return;
+    }
     for (const row of rows) {
       let record = structuredClone(row.record);
-      const tr = el('tr'); const cells = Array.from({ length: 10 }, () => el('td')); tr.append(...cells); body.append(tr);
+      const tr = el('tr'); const cells = Array.from({ length: columns.length }, () => el('td')); tr.append(...cells); body.append(tr);
       const edit = (cell: HTMLElement, key: keyof PurchaseRecord, label: string, numeric = false) => {
+        if (isStaticSite) {
+          const value = key === 'required' ? record.required ?? row.required : record[key];
+          const text = key === 'tags' ? record.tags.join(', ') : value === null ? 'Unknown' : String(value ?? '');
+          const display = el('span', text); display.style.whiteSpace = 'pre-wrap'; cell.append(display);
+          return;
+        }
         const input = el('input'); input.type = numeric ? 'number' : 'text'; input.setAttribute('aria-label', `${record.name}: ${label}`);
         input.dataset.purchaseId = record.id; input.dataset.field = key;
         input.value = key === 'tags' ? record.tags.join(', ') : String(record[key] ?? '');
@@ -138,6 +154,7 @@ export function mountPurchaseGrid(
       cells[8].append(el('strong', row.remaining === null ? 'Quantity unknown' : `${row.remaining} ${record.unit}`),
         el('small', row.remaining_cost === null ? 'Cost unknown' : money(row.remaining_cost)), el('small', row.status));
       if (row.status === 'Unused stock') cells[3].append(el('small', 'No current CAD requirement'));
+      if (isStaticSite) continue;
       cells[9].append(action('Bought', () => {
         record = structuredClone(client.document?.purchases[record.id] ?? record);
         const required = row.status === 'Unused stock' ? 0 : record.required ?? row.required;
@@ -183,10 +200,11 @@ export function mountPurchaseGrid(
   }
   const undo = action('Undo purchase', () => client.undoPurchase());
   const redo = action('Redo purchase', () => client.redoPurchase());
-  controls.append(undo, redo);
+  if (!isStaticSite) controls.append(undo, redo);
   const status = () => {
     undo.disabled = !client.canUndoPurchase; redo.disabled = !client.canRedoPurchase;
-    feedback.textContent = client.error ? client.status + ': ' + client.error + ' — use Plan → Reload or recovery controls.' : client.status;
+    feedback.textContent = client.error ? client.status + ': ' + client.error
+      + (isStaticSite ? '' : ' — use Plan → Reload or recovery controls.') : client.status;
     content.inert = client.blocked;
   };
   const unsubscribe = client.subscribe(change => { status(); if (change.purchases) void refresh(); });

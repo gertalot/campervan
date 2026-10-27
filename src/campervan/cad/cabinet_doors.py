@@ -117,9 +117,8 @@ def build_cabinet_doors(
                 left, right = start - overlap, end + overlap
                 width = (right - left - p.cabinet_door_gap_mm) / 2
                 height = top - bottom + 2 * overlap
-                position = p.cabinet_storage_doors_open_percent
-                angle = position * 90 / 100
                 for name, hinge, reverse, sign in (("Aft", left, False, 1), ("Fore", right, True, -1)):
+                    angle = getattr(p, f"cabinet_storage_{name.lower()}_open_percent") * 90 / 100
                     doors.append(
                         _hinged_door(
                             p,
@@ -142,7 +141,7 @@ def build_cabinet_doors(
             if min(width, height) <= 2 * corner:
                 raise ValueError("Cabinet doors must leave room for their rounded corners.")
             position = (
-                p.cabinet_upper_doors_open_percent
+                getattr(p, f"cabinet_{'rear' if bay_name == 'Rear' else 'cab_end'}_upper_{number}_open_percent")
                 if upper
                 else p.cabinet_storage_upper_doors_open_percent
                 if bay_name == "Rear"
@@ -163,41 +162,24 @@ def cabinet_door_motions(p: Parameters) -> dict[str, object]:
     """Use the same hinge origins and rotations as the CAD assembly."""
     from campervan.cad.mirror import mirror_motion_tracks
 
-    motions: dict[str, object] = {
+    return {
         name: {
             "position": getattr(p, name),
             "tracks": mirror_motion_tracks(
                 [
                     {"path": f"/Campervan/Cabinet/Doors/{label}", "axis": axis, "kind": "rotation", "travel": travel}
-                    for label in labels
                 ]
             ),
         }
-        for name, axis, travel, labels in (
-            (
-                "cabinet_upper_doors_open_percent",
-                "y",
-                -90,
-                ("Rear upper 1", "Rear upper 2", "Cab-end upper 1", "Cab-end upper 2"),
-            ),
-            ("cabinet_lower_doors_open_percent", "z", 90, ("Cab-end lower 1",)),
-            ("cabinet_front_upper_door_open_percent", "y", -90, ("Cab-end lower 2",)),
-            ("cabinet_storage_upper_doors_open_percent", "y", -90, ("Rear storage upper flap",)),
+        for name, axis, travel, label in (
+            ("cabinet_rear_upper_1_open_percent", "y", -90, "Rear upper 1"),
+            ("cabinet_rear_upper_2_open_percent", "y", -90, "Rear upper 2"),
+            ("cabinet_cab_end_upper_1_open_percent", "y", -90, "Cab-end upper 1"),
+            ("cabinet_cab_end_upper_2_open_percent", "y", -90, "Cab-end upper 2"),
+            ("cabinet_lower_doors_open_percent", "z", 90, "Cab-end lower 1"),
+            ("cabinet_front_upper_door_open_percent", "y", -90, "Cab-end lower 2"),
+            ("cabinet_storage_upper_doors_open_percent", "y", -90, "Rear storage upper flap"),
+            ("cabinet_storage_aft_open_percent", "z", 90, "Rear storage aft"),
+            ("cabinet_storage_fore_open_percent", "z", -90, "Rear storage fore"),
         )
     }
-    for field, tier in (("cabinet_storage_doors_open_percent", ""),):
-        motions[field] = {
-            "position": getattr(p, field),
-            "tracks": mirror_motion_tracks(
-                [
-                    {
-                        "path": f"/Campervan/Cabinet/Doors/Rear storage {tier}{name}",
-                        "axis": "z",
-                        "kind": "rotation",
-                        "travel": angle,
-                    }
-                    for name, angle in (("aft", 90), ("fore", -90))
-                ]
-            ),
-        }
-    return motions

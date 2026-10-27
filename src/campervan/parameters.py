@@ -26,6 +26,8 @@ RETIRED_PARAMETERS = frozenset(
         "cabinet_table_arm_swivel_deg",
         "cabinet_table_top_rotation_deg",
         "table_stowed_arm_deg",
+        "cabinet_upper_doors_open_percent",
+        "cabinet_storage_doors_open_percent",
     }
 )
 
@@ -1077,45 +1079,77 @@ class Parameters(BaseModel):
         title="Door edge roundover",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
     )
-    cabinet_upper_doors_open_percent: float = Field(
+    cabinet_rear_upper_1_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Cabinet upper doors",
-        description="Lower all four upper flaps to horizontal, held by paired chains, without regeneration.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+        title="Rear bay lower flap",
+        description="Lower the first rear upper-shelf flap to horizontal, held by paired chains.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
+    )
+    cabinet_rear_upper_2_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Rear bay top flap",
+        description="Lower the top rear-shelf flap to horizontal, held by paired chains.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
+    )
+    cabinet_cab_end_upper_1_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cab-end bay lower flap",
+        description="Lower the first cab-end upper-shelf flap to horizontal, held by paired chains.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
+    )
+    cabinet_cab_end_upper_2_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Cab-end bay top flap",
+        description="Lower the top cab-end-shelf flap to horizontal, held by paired chains.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_lower_doors_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Cabinet front bottom door",
+        title="Cab-end bottom door",
         description="Open the bottom front compartment independently of the door above the mattress.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
-    cabinet_storage_doors_open_percent: float = Field(
+    cabinet_storage_aft_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Storage bottom doors",
-        description="Swing the lower storage pair outward on opposite hinges, without regenerating.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+        title="Aft door",
+        description="Swing the rearward bottom-storage door outward on its own hinge.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Bottom storage"], "control": "position"},
+    )
+    cabinet_storage_fore_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Fore door",
+        description="Swing the forward bottom-storage door outward on its own hinge.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Bottom storage"], "control": "position"},
     )
     cabinet_front_upper_door_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Cabinet front above-bed door",
+        title="Cab-end above-bed flap",
         description="Open the raised front compartment while the bed is made up, independently of the bottom door.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
     cabinet_storage_upper_doors_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Storage above-bed flap",
-        description="Open the upper storage pair independently, above the mattress, without regenerating.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors"], "control": "position"},
+        title="Rear above-bed flap",
+        description="Lower the full-width rear storage flap above the mattress.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
 
     cabinet_ceiling_gap_mm: float = Field(
@@ -1403,6 +1437,25 @@ class Parameters(BaseModel):
     def migrate_saved_parameters(cls, data: object) -> object:
         """Preserve construction datums while retiring superseded controls."""
         if isinstance(data, dict):
+            data = data.copy()
+            for legacy, fields in (
+                (
+                    "cabinet_upper_doors_open_percent",
+                    (
+                        "cabinet_rear_upper_1_open_percent",
+                        "cabinet_rear_upper_2_open_percent",
+                        "cabinet_cab_end_upper_1_open_percent",
+                        "cabinet_cab_end_upper_2_open_percent",
+                    ),
+                ),
+                (
+                    "cabinet_storage_doors_open_percent",
+                    ("cabinet_storage_aft_open_percent", "cabinet_storage_fore_open_percent"),
+                ),
+            ):
+                if legacy in data:
+                    for field in fields:
+                        data.setdefault(field, data[legacy])
             data = {name: value for name, value in data.items() if name not in RETIRED_PARAMETERS}
             if data.get("table_mount") == 1:
                 data["table_mount"] = 0  # The cabinet mounting option has been removed.

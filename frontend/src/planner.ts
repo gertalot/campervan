@@ -4,6 +4,7 @@ import { createPlanEditor } from './plan-editor';
 import { action, el } from './purchase-grid';
 import { onTab } from './tabs';
 import { createPlanDropdown, type PlanMenuItem } from './plan-dropdown';
+import { isStaticSite } from './site-runtime';
 
 function download(name: string, body: string, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([body], { type }));
@@ -74,27 +75,33 @@ export function setupPlanner(root: HTMLElement, client: PlanningClient) {
     fileMenu.open({ label: 'File', items: fileItems, trigger: fileButton, initial, className: 'plan-file-dropdown' });
   }
   tools.append(search, action('Previous match', () => { documentEditor?.find(-1); }),
-    action('Next match', () => { documentEditor?.find(1); }), hideLabel, fileButton, file);
+    action('Next match', () => { documentEditor?.find(1); }), hideLabel);
+  if (!isStaticSite) tools.append(fileButton, file);
 
   function status() {
     feedback.replaceChildren(el('span', client.status));
-    if (client.error) feedback.append(el('p', client.error), action('Download unsaved edits', () => {
-      download('unsaved-planning-edits.json', JSON.stringify(client.document, null, 2));
-    }));
-    if (documentEditor && documentEditor.editor.isEditable === client.blocked) documentEditor.editor.setEditable(!client.blocked, false);
+    if (client.error) {
+      feedback.append(el('p', client.error));
+      if (!isStaticSite) feedback.append(action('Download unsaved edits', () => {
+        download('unsaved-planning-edits.json', JSON.stringify(client.document, null, 2));
+      }));
+    }
+    const editable = !isStaticSite && !client.blocked;
+    if (documentEditor && documentEditor.editor.isEditable !== editable) documentEditor.editor.setEditable(editable, false);
   }
   function load() {
     documentEditor?.destroy(); documentEditor = null; surface.replaceChildren();
     if (!client.document) { surface.append(el('p', 'Loading the plan…')); return; }
     try {
       documentEditor = createPlanEditor(surface, {
-        content: client.document.content, client, fileButton,
+        content: client.document.content, client, fileButton: isStaticSite ? undefined : fileButton,
         onChange(content) { try { client.setContent(content); } catch (error) { report(error); } },
       });
       documentEditor.setView(query, hideCompleted);
     } catch (error) {
-      surface.replaceChildren(el('p', `Cannot open the saved document: ${String(error)}. Use File to reload or import a backup.`));
-      tools.append(fileButton);
+      surface.replaceChildren(el('p', `Cannot open the saved document: ${String(error)}.`
+        + (isStaticSite ? '' : ' Use File to reload or import a backup.')));
+      if (!isStaticSite) tools.append(fileButton);
     }
   }
   const unsubscribe = client.subscribe(change => { if (change.loaded) load(); status(); });

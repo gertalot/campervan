@@ -18,6 +18,7 @@ header #status { display: flex; align-items: center; gap: 7px; margin-left: auto
 header #status[data-state="regenerating"]::before { content: ''; width: 11px; height: 11px;
   border: 2px solid #454a54; border-top-color: #9ec5ef; border-radius: 50%; animation: status-spin 0.8s linear infinite; }
 header #status[data-state="failed"] { color: #f09a91; }
+.snapshot-label { margin-left: 16px; color: #aab3c0; font-size: 11px; white-space: nowrap; }
 @keyframes status-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { header #status[data-state="regenerating"]::before { animation: none; } }
 main { display: grid; grid-template-columns: var(--sidebar-width, 280px) 5px minmax(0, 1fr); min-height: 0; }
@@ -67,6 +68,7 @@ aside input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border:
 .position-row input { grid-column: 1 / -1; height: 18px; margin: 0; padding: 0; border: 0; accent-color: #8bb7e8; }
 .actions { display: flex; gap: 6px; position: sticky; top: 0; z-index: 1;
   margin-bottom: 10px; padding: 6px; background: #1b1d21; }
+.actions[hidden] { display: none; }
 aside button { height: 25px; padding: 2px 9px; border: 1px solid #454a54; border-radius: 3px;
   background: #2c3037; color: #d5d9df; font: inherit; font-size: 11px; cursor: pointer; }
 aside button[type="submit"] { border-color: #476484; background: #30465f; }
@@ -89,6 +91,14 @@ aside button:focus-visible, aside input:focus-visible, summary:focus-visible { o
 #viewer .cad-piece-button svg { display: block; width: 21px; height: 21px; margin: auto; }
 #viewer .cad-piece-button:disabled { opacity: 0.4; cursor: default; }
 #viewer .cad-piece-button:focus-visible { outline: 2px solid #8bb7e8; outline-offset: -2px; border-radius: 4px; }
+#viewer .cad-drag-controls .is-active { color: #29dbf0; background: #25444b; }
+#viewer.cad-can-drag canvas { cursor: grab !important; }
+#viewer.cad-is-dragging canvas { cursor: grabbing !important; }
+#viewer.cad-orbit-override canvas { cursor: move !important; }
+.cad-drag-hint { position: absolute; z-index: 8; pointer-events: none; max-width: min(420px, calc(100% - 24px));
+  padding: 6px 9px; border: 1px solid #48717a; border-radius: 4px; background: #17282eed; color: #e0faff;
+  font: 12px/1.4 system-ui, sans-serif; box-shadow: 0 2px 8px #0005; }
+.cad-drag-hint[hidden] { display: none; }
 #viewer .tcv_cad_toolbar > :has(.tcv_button_reset),
 #viewer .tcv_cad_toolbar > :has(.tcv_button_distance) {
   margin-left: 6px; padding-left: 6px; border-left: 1px solid #737780;

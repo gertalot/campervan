@@ -1,5 +1,5 @@
 /** Picking, framing and persistent selection for links to physical cutting pieces. */
-import { Box3, DoubleSide, Mesh, MeshBasicMaterial, Vector3, type Camera, type Object3D } from 'three';
+import { Box3, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector2, Vector3, type Camera, type Object3D } from 'three';
 import { createPlanDropdown, type PlanMenuItem } from './plan-dropdown';
 
 interface PickHit { info: { solidPath: string | null; path: string } }
@@ -32,6 +32,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   let link: Link | undefined, selected: string | null = null;
   let removeHighlight: (() => void) | undefined;
   let down: { x: number; y: number; camera: string } | undefined;
+  let extraCommands = (): PlanMenuItem[] => [];
   const tools = document.createElement('span'); tools.className = 'cad-piece-controls';
   tools.dataset.campervanControl = 'true';
   function iconButton(command: PlanMenuItem, drawing: string) {
@@ -64,6 +65,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
       { label: 'Show in cut list', group: 'piece', shortcut: 'Double-click',
         enabled: Boolean(selected && link?.has(cutPath(selected))), run: navigate },
       { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape', run: clear },
+      ...extraCommands(),
     ];
   }
   function openMenu(x?: number, y?: number) {
@@ -156,6 +158,27 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
 
   return {
     setLink(value: Link) { link = value; },
+    setCommands(value: () => PlanMenuItem[]) { extraCommands = value; },
+    pickPoint(event: MouseEvent) {
+      const path = pick(event), viewer = getViewer();
+      const group = path && viewer?.rendered.nestedGroup.groups[path];
+      const canvas = container.querySelector('canvas');
+      if (!path || !viewer || !group || !canvas) return null;
+      group.updateWorldMatrix(true, true);
+      const rect = canvas.getBoundingClientRect();
+      const ray = new Raycaster();
+      ray.setFromCamera(new Vector2(2 * (event.clientX - rect.left) / rect.width - 1,
+        1 - 2 * (event.clientY - rect.top) / rect.height), viewer.rendered.camera.camera);
+      const solid = group as Object3D & { front?: Mesh; back?: Mesh };
+      const meshes: Mesh[] = [];
+      if (solid.front) meshes.push(solid.front);
+      if (solid.back) meshes.push(solid.back);
+      if (!meshes.length) group.traverse(object => {
+        if (object instanceof Mesh && !object.userData.campervanOverlay) meshes.push(object);
+      });
+      const hits = ray.intersectObjects(meshes, false).filter(hit => !hit.object.userData.campervanOverlay);
+      return hits.length ? { path, point: hits[0].point } : null;
+    },
     attach() { select(null); container.querySelector('.tcv_cad_toolbar')!.append(tools); },
     clear,
     focus(path: string) {

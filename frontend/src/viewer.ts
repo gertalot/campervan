@@ -6,8 +6,10 @@ import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
 import { createViewerPieces, type PieceViewer } from './viewer-pieces';
+import { createViewerDrag, type DragSnapshot } from './viewer-drag';
 import { Box3, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
+import { assetUrl, isStaticSite } from './site-runtime';
 
 type Axis = 'x' | 'y' | 'z';
 interface Track {
@@ -20,6 +22,12 @@ interface CameraState {
   position: number[]; quaternion: number[]; target: number[]; zoom: number; ortho: boolean; viewHeight?: number;
 }
 interface SceneGroup { position: Vector; rotation: Vector; visible: boolean; updateMatrixWorld(force: boolean): void }
+interface MotionController {
+  snapshotPositions(): DragSnapshot;
+  previewPositions(patch: Record<string, number>): void;
+  restorePositions(snapshot: DragSnapshot): void;
+  savePositions(patch?: Record<string, number>): Promise<void>;
+}
 interface CameraQuaternion {
   toArray(): number[];
   clone(): CameraQuaternion;
@@ -70,6 +78,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const pendingMotions = new Set<string>();
   let mannequinPending = false;
   let motionFrame: number | null = null;
+  let motionController: MotionController | undefined;
   const cameraKey = 'campervan.camera';
   let rendering = false;
   let cameraAnimation: number | null = null;
@@ -80,6 +89,30 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const vehicleFade = createVehicleFade();
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
     cancelCameraAnimation, saveCamera);
+  const drag = createViewerDrag(container, {
+    viewer: () => viewer as unknown as PieceViewer | undefined,
+    motions: () => motions,
+    pose: () => motionController?.snapshotPositions().positions ?? { ...positions },
+    pick: pieces.pickPoint,
+    preview: previewPose,
+    save: () => { void saveAcceptedPositions(); },
+    snapshot: () => motionController?.snapshotPositions() ?? { positions: { ...positions }, returnMountedTable: false },
+    restore: snapshot => motionController?.restorePositions(snapshot),
+  });
+  pieces.setCommands(drag.commands);
+
+  function previewPose(patch: Record<string, number>) {
+    motionController?.previewPositions(patch);
+    return motionController?.snapshotPositions().positions ?? { ...positions };
+  }
+  async function saveAcceptedPositions() {
+    const pose = motionController?.snapshotPositions().positions;
+    const normalised: Record<string, number> = {};
+    for (const name of ['table_arm_swivel_deg', 'table_top_rotation_deg']) {
+      if (pose && (pose[name] < 0 || pose[name] > 360)) normalised[name] = ((pose[name] % 360) + 360) % 360;
+    }
+    await motionController?.savePositions(normalised);
+  }
   let pillows = createPillows();
   if (import.meta.hot) import.meta.hot.accept('./pillows', module => {
     if (!module || !viewer?.ready) return;
@@ -219,9 +252,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     setDirection([Math.cos(azimuth) * Math.cos(elevation), Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation)], false);
   }
 
-  function showTables() {
+  function showTables(pose: Record<string, number> = positions) {
     if (!viewer?.ready) return;
-    const selected = positions.table_mount ?? motions.table_mount?.position ?? 0;
+    const selected = pose.table_mount ?? motions.table_mount?.position ?? 0;
     for (const [name, value] of [['Bench mount', 0], ['Stowed', 2]] as const) {
       const group = viewer.rendered.nestedGroup.groups[`/Campervan/Laptop table/${name}`];
       if (group) group.visible = selected === value;
@@ -253,9 +286,20 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       pendingMotions.clear();
       mannequinPending = false;
     }
+    applyMotionTransforms(positions, changed);
+    const bedChanged = !changed || changed.has('bed_extension_percent');
+    if (bedChanged) pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    if (!changed || changed.has('table_mount')) showTables();
+    if (bedChanged || mannequinChanged) showMannequin(false);
+    (viewer as unknown as PieceViewer).idPicker?.setDirty();
+    viewer.update(true, true);
+  }
+
+  function applyMotionTransforms(pose: Record<string, number>, changed?: ReadonlySet<string>) {
+    if (!viewer?.ready) return;
     for (const [name, motion] of Object.entries(motions)) {
       if (changed && !changed.has(name)) continue;
-      const percent = positions[name] ?? motion.position;
+      const percent = pose[name] ?? motion.position;
       const fraction = (percent - motion.position) / 100;
       for (const track of motion.tracks) {
         const group = viewer.rendered.nestedGroup.groups[track.path];
@@ -284,26 +328,20 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         group.updateMatrixWorld(true);
       }
     }
-    const bedChanged = !changed || changed.has('bed_extension_percent');
-    if (bedChanged) pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
-    if (!changed || changed.has('table_mount')) showTables();
-    if (bedChanged || mannequinChanged) showMannequin(false);
-    (viewer as unknown as PieceViewer).idPicker?.setDirty();
-    viewer.update(true, true);
   }
 
   return {
     async connect(url: string) {
       const css = document.createElement('link');
       css.rel = 'stylesheet';
-      css.href = '/viewer-assets/css/three-cad-viewer.css';
+      css.href = assetUrl('viewer-assets/css/three-cad-viewer.css');
       const styles = new Promise<void>((resolve, reject) => {
         css.onload = () => resolve();
         css.onerror = () => reject(new Error('Could not load CAD viewer styles.'));
       });
       document.head.append(css);
       // Serve JS and CSS from the locked Python package, keeping both halves compatible.
-      const coreUrl = '/viewer-assets/js/ocp-viewer-core/index.js';
+      const coreUrl = assetUrl('viewer-assets/js/ocp-viewer-core/index.js');
       const [core] = await Promise.all([import(/* @vite-ignore */ coreUrl), styles]);
       // createPage accepts the Viewer constructor; capture its instance while reusing
       // OCP's geometry loading and measurement messages.
@@ -334,6 +372,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         },
       });
       const allowed = new Set(['perspective', 'transparent', 'blackedges', 'reset', 'resize', 'distance']);
+      if (isStaticSite) allowed.delete('distance');
       function trimToolbar() {
         // createPage clears the host when it creates the first display.
         cube ??= createViewCube(container, setDirection, orbitCube);
@@ -346,84 +385,95 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         viewer?.rendered.orientationMarker.setVisible(true);
         if (viewer?.ready) cube?.update(viewer.getCameraQuaternion());
       }
+      function receive(message: any) {
+        if (message.type === 'data') cancelCameraAnimation();
+        if (message.type === 'campervan_motion') {
+          motions = message.motions;
+          for (const motion of Object.values(motions)) {
+            for (const track of motion.tracks) {
+              const group = viewer?.rendered.nestedGroup.groups[track.path];
+              if (group) {
+                const transform = track.kind === 'rotation' ? group.rotation : group.position;
+                bases.set(`${track.path}:${track.kind ?? 'translation'}`, { x: transform.x, y: transform.y, z: transform.z });
+              }
+            }
+          }
+          move();
+        } else {
+          const camera: CameraState | null = message.type === 'data'
+            ? cameraState() ?? JSON.parse(localStorage.getItem(cameraKey) ?? 'null') : null;
+          if (message.config) {
+            Object.assign(message.config, { tools: false, glass: false, control: 'orbit', up: 'Z' });
+            if (message.type === 'data') {
+              // Explicit camera values preserve the exact framing, including across a full page reload.
+              Object.assign(message.config, camera ?? { zoom: 0.65 }, { resetCamera: 'keep' });
+            }
+          }
+          rendering = true;
+          // OCP disposes its old scene when replacing geometry; keep the independent human rig.
+          if (message.type === 'data') {
+            drag.cancel();
+            pieces.clear();
+            vehicleFade.clear();
+            Object.values(mannequins).forEach(model => model.root.removeFromParent());
+            seatCushion?.dispose();
+            seatCushion = undefined;
+          }
+          try { page.handleMessage(message); }
+          finally { rendering = false; }
+          if (message.type === 'data') {
+            vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
+            const picker = (viewer as unknown as PieceViewer).idPicker;
+            if (picker) {
+              const pick = picker.pickAt.bind(picker);
+              let pickingVersion = -1;
+              picker.pickAt = (x, y, options) => {
+                if (pickingVersion !== vehicleFade.pickingVersion) {
+                  picker.setDirty(); pickingVersion = vehicleFade.pickingVersion;
+                }
+                return vehicleFade.withPicking(() => pick(x, y, options));
+              };
+            }
+            pillows.attach(viewer!.rendered.nestedGroup.groups);
+            pillows.pose(positions.bed_extension_percent ?? 0);
+            motions = {};
+            bases.clear();
+            trimToolbar();
+            pieces.attach();
+            drag.attach();
+            page.resize();
+            if (camera && viewer?.ready) {
+              const projection = viewer.rendered.camera.camera;
+              // Perspective zoom is already encoded by position. Orthographic zoom depends on the new frustum.
+              const zoom = camera.ortho
+                ? camera.viewHeight ? (projection.top - projection.bottom) / camera.viewHeight : camera.zoom
+                : null;
+              viewer.setCameraLocationSettings(camera.position, camera.quaternion, camera.target, zoom, false);
+            }
+            saveCamera();
+            onModel();
+            showTables();
+            showMannequin();
+          }
+        }
+      }
+      new ResizeObserver(() => { if (viewer?.ready) page.resize(); }).observe(container);
+      if (isStaticSite) {
+        const response = await fetch(assetUrl('viewer-frames.json'));
+        if (!response.ok) throw new Error(`Could not load the exported model (${response.status}).`);
+        const messages = await response.json() as unknown[];
+        for (const message of messages) receive(message);
+        if (!viewer?.ready) throw new Error('The exported model did not load. Run make site again.');
+        return;
+      }
       const endpoint = new URL(url);
       endpoint.protocol = endpoint.protocol === 'https:' ? 'wss:' : 'ws:';
       endpoint.pathname = '/';
       socket = new WebSocket(endpoint);
       socket.onmessage = event => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'data') cancelCameraAnimation();
-          if (message.type === 'campervan_motion') {
-            motions = message.motions;
-            for (const motion of Object.values(motions)) {
-              for (const track of motion.tracks) {
-                const group = viewer?.rendered.nestedGroup.groups[track.path];
-                if (group) {
-                  const transform = track.kind === 'rotation' ? group.rotation : group.position;
-                  bases.set(`${track.path}:${track.kind ?? 'translation'}`, { x: transform.x, y: transform.y, z: transform.z });
-                }
-              }
-            }
-            move();
-          } else {
-            const camera: CameraState | null = message.type === 'data'
-              ? cameraState() ?? JSON.parse(localStorage.getItem(cameraKey) ?? 'null') : null;
-            if (message.config) {
-              Object.assign(message.config, { tools: false, glass: false, control: 'orbit', up: 'Z' });
-              if (message.type === 'data') {
-                // Explicit camera values preserve the exact framing, including across a full page reload.
-                Object.assign(message.config, camera ?? { zoom: 0.65 }, { resetCamera: 'keep' });
-              }
-            }
-            rendering = true;
-            // OCP disposes its old scene when replacing geometry; keep the independent human rig.
-            if (message.type === 'data') {
-              pieces.clear();
-              vehicleFade.clear();
-              Object.values(mannequins).forEach(model => model.root.removeFromParent());
-              seatCushion?.dispose();
-              seatCushion = undefined;
-            }
-            try { page.handleMessage(message); }
-            finally { rendering = false; }
-            if (message.type === 'data') {
-              vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
-              const picker = (viewer as unknown as PieceViewer).idPicker;
-              if (picker) {
-                const pick = picker.pickAt.bind(picker);
-                let pickingVersion = -1;
-                picker.pickAt = (x, y, options) => {
-                  if (pickingVersion !== vehicleFade.pickingVersion) {
-                    picker.setDirty(); pickingVersion = vehicleFade.pickingVersion;
-                  }
-                  return vehicleFade.withPicking(() => pick(x, y, options));
-                };
-              }
-              pillows.attach(viewer!.rendered.nestedGroup.groups);
-              pillows.pose(positions.bed_extension_percent ?? 0);
-              motions = {};
-              bases.clear();
-              trimToolbar();
-              pieces.attach();
-              page.resize();
-              if (camera && viewer?.ready) {
-                const projection = viewer.rendered.camera.camera;
-                // Perspective zoom is already encoded by position. Orthographic zoom depends on the new frustum.
-                const zoom = camera.ortho
-                  ? camera.viewHeight ? (projection.top - projection.bottom) / camera.viewHeight : camera.zoom
-                  : null;
-                viewer.setCameraLocationSettings(camera.position, camera.quaternion, camera.target, zoom, false);
-              }
-              saveCamera();
-              onModel();
-              showTables();
-              showMannequin();
-            }
-          }
-        } catch (error) { onError(error instanceof Error ? error.message : String(error)); }
+        try { receive(JSON.parse(event.data)); }
+        catch (error) { onError(error instanceof Error ? error.message : String(error)); }
       };
-      new ResizeObserver(() => { if (viewer?.ready) page.resize(); }).observe(container);
       await new Promise<void>((resolve, reject) => {
         socket!.onopen = () => { socket!.send('L:{}'); resolve(); };
         socket!.onerror = () => {
@@ -440,6 +490,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       positions[name] = percent;
       scheduleMove(name);
     },
+    setMotionController(controller: MotionController) { motionController = controller; },
+    previewPositions: previewPose,
+    savePositions: saveAcceptedPositions,
+    cancelDrag: drag.cancel,
     setPieceLink: pieces.setLink,
     focusPiece: pieces.focus,
     setSeeInside(enabled: boolean) {

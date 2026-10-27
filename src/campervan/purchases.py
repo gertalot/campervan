@@ -4,8 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 from typing import Any
 
-from campervan.coordinator import Coordinator
-from campervan.materials import ROLES, catalogue
+from campervan.materials import ROLES, CutPart, Selection, catalogue
 from campervan.planning import PlanningDocument, PurchaseFilter, PurchaseRecord
 
 
@@ -13,11 +12,13 @@ def money(value: Decimal) -> float:
     return float(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
-def purchase_view(document: PlanningDocument, coordinator: Coordinator) -> dict[str, Any]:
+def purchase_view(
+    document: PlanningDocument, materials: dict[str, Selection], cuts: list[CutPart], current: bool = True,
+) -> dict[str, Any]:
     products = {product.id: product for product in catalogue()}
     groups: dict[str, dict[str, Any]] = {}
     for role in ROLES:
-        selection = coordinator.materials.get(role.id)
+        selection = materials.get(role.id)
         product = products.get(selection.product_id) if selection and selection.product_id else None
         key = f"product-{product.id}" if product else f"custom-{role.id}"
         group = groups.setdefault(key, {"product": product, "uses": [], "counts": [], "owned": [], "quantities": []})
@@ -30,8 +31,8 @@ def purchase_view(document: PlanningDocument, coordinator: Coordinator) -> dict[
         if selection and selection.purchase_quantity is not None:
             group["quantities"].append(selection.purchase_quantity)
         count = role.quantity
-        if count is None and coordinator.cuts_revision == coordinator.status().requested_revision:
-            count = sum(cut.material == role.id for cut in coordinator.cuts) or None
+        if count is None and current:
+            count = sum(cut.material == role.id for cut in cuts) or None
         group["counts"].append(count if role.kind == "hardware" else None)
     rows = []
     for key in dict.fromkeys([*groups, *document.purchases]):

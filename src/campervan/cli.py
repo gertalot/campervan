@@ -33,10 +33,21 @@ def main() -> None:
     commands.add_parser("viewer", help="Run the standalone OCP viewer")
     commands.add_parser("dev-api", help="Run the development API and CAD watcher")
     commands.add_parser("dev-ui", help="Run the Vite development UI")
+    commands.add_parser("site", help="Export the saved project to site/ for static hosting")
     serve = commands.add_parser("serve", help="Run the built local application without hot reload")
     serve.add_argument("--host")
     serve.add_argument("--port", type=_port)
     args = parser.parse_args()
+    if args.command == "site":
+        import asyncio
+
+        from campervan.site import export_site
+
+        try:
+            asyncio.run(export_site())
+        except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+            parser.exit(1, f"Site export failed: {error}\n")
+        return
     if args.command in {"dev-api", "serve"}:
         os.environ["CAMPERVAN_DEV"] = "1" if args.command == "dev-api" else "0"
     settings = load_settings()

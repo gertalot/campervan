@@ -30,29 +30,53 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
   delete positions.cross_bed_extension_percent;
 
-  function updateTableForBed() {
-    if (positions.bed_extension_percent > 0 && positions.table_mount !== 2) {
-      returnMountedTable = true;
-      positions.table_mount = 2;
-    } else if (positions.bed_extension_percent === 0 && returnMountedTable) {
-      returnMountedTable = false;
-      positions.table_mount = 0;
-    } else return false;
-    storage.setItem(tableReturnKey, String(returnMountedTable));
-    return true;
+  function migrateDoorPositions() {
+    for (const [old, names] of Object.entries({
+      cabinet_upper_doors_open_percent: ['cabinet_rear_upper_1_open_percent', 'cabinet_rear_upper_2_open_percent',
+        'cabinet_cab_end_upper_1_open_percent', 'cabinet_cab_end_upper_2_open_percent'],
+      cabinet_storage_doors_open_percent: ['cabinet_storage_aft_open_percent', 'cabinet_storage_fore_open_percent'],
+    })) {
+      if (positions[old] !== undefined) for (const name of names) positions[name] ??= positions[old];
+      delete positions[old];
+    }
   }
+  migrateDoorPositions();
 
-  function setPosition(name: string, percent: number) {
-    positions[name] = percent;
-    if (name === 'table_mount' && returnMountedTable) {
-      returnMountedTable = false; // An explicit choice replaces the automatic return.
-      storage.setItem(tableReturnKey, 'false');
+  function candidate(patch: Parameters) {
+    const next = { ...positions, ...patch };
+    let mountedReturn = returnMountedTable;
+    if ('table_mount' in patch) mountedReturn = false; // Explicit selection replaces the automatic return.
+    if ('bed_extension_percent' in patch) {
+      if (next.bed_extension_percent > 0 && next.table_mount !== 2) {
+        mountedReturn = true;
+        next.table_mount = 2;
+      } else if (next.bed_extension_percent === 0 && mountedReturn) {
+        mountedReturn = false;
+        next.table_mount = 0;
+      }
     }
-    if (name === 'bed_extension_percent' && updateTableForBed()) {
-      view.setPosition('table_mount', positions.table_mount);
-    }
+    return { positions: next, returnMountedTable: mountedReturn };
+  }
+  function restore(snapshot: { positions: Parameters; returnMountedTable: boolean }) {
+    const before = positions;
+    positions = { ...snapshot.positions };
+    returnMountedTable = snapshot.returnMountedTable;
+    storage.setItem(tableReturnKey, String(returnMountedTable));
     storage.setItem(positionKey, JSON.stringify(positions));
-    view.setPosition(name, percent);
+    for (const [name, value] of Object.entries(positions)) {
+      if (before[name] !== value) view.setPosition(name, value);
+    }
+  }
+  function previewPositions(patch: Parameters) {
+    restore(candidate(patch));
+  }
+  let saving = Promise.resolve();
+  function savePositions(patch: Parameters = {}) {
+    if (Object.keys(patch).length) previewPositions(patch);
+    if (api.readOnly) return Promise.resolve();
+    const accepted = { ...positions };
+    saving = saving.then(() => api.setPositions(accepted)).then(() => {}, showError);
+    return saving;
   }
 
   function show(status: ModelStatus) {
@@ -68,13 +92,13 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   }
   function schedule(delay = current?.state === 'regenerating' ? 500 : 2000) {
     clock.clearTimeout(timer);
-    if (running && !polling) timer = clock.setTimeout(() => { void poll(); }, delay);
+    if (running && !polling && !api.readOnly) timer = clock.setTimeout(() => { void poll(); }, delay);
   }
   function showError(error: unknown) {
     view.setError(error instanceof Error ? error.message : String(error));
   }
   async function request(operation: () => Promise<ModelStatus>) {
-    if (!running) return false;
+    if (!running || api.readOnly) return false;
     try {
       const accepted = await operation();
       if (!running) return false;
@@ -90,6 +114,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     } catch (error) { showError(error); schedule(2000); return false; }
   }
   async function preview(raw: Record<string, string>): Promise<ParameterResponse | null> {
+    if (api.readOnly) return null;
     const revision = ++previewRevision;
     if (!metadata) { view.setError('Parameters are unavailable.'); return null; }
     const parameters: Parameters = {};
@@ -145,15 +170,18 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
             return [name, saved !== undefined && (!options || options.some(option => option.value === saved))
               ? saved : value];
           }));
-        updateTableForBed();
+        const restored = candidate({ bed_extension_percent: positions.bed_extension_percent });
+        positions = restored.positions;
+        returnMountedTable = restored.returnMountedTable;
+        storage.setItem(tableReturnKey, String(returnMountedTable));
         storage.setItem(positionKey, JSON.stringify(positions));
         for (const [name, value] of Object.entries(positions)) view.setPosition(name, value);
         view.setParameters({ ...data.parameters, ...positions }, true);
-        await Promise.all(Object.entries(positions)
-          .filter(([name, value]) => data.parameters[name] !== value)
-          .map(([name, value]) => api.setPosition(name, value)));
+        const restoredPositions = Object.fromEntries(Object.entries(positions)
+          .filter(([name, value]) => data.parameters[name] !== value));
+        if (!api.readOnly && Object.keys(restoredPositions).length) await api.setPositions(restoredPositions);
         session = data.session_id;
-        status = await api.loadModel();
+        if (!api.readOnly) status = await api.loadModel();
         if (!running || status.session_id !== session) return;
         show(status);
         const draft = Object.fromEntries(Object.entries({ ...data.parameters, ...positions })
@@ -182,17 +210,12 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
       try { view.setParameters({ ...(await api.getParameters()).parameters, ...positions }, false); }
       catch (error) { showError(error); }
     },
-    previewPosition: setPosition,
-    async savePosition(name: string, percent: number) {
-      setPosition(name, percent);
-      try {
-        await Promise.all([
-          api.setPosition(name, percent),
-          ...(name === 'bed_extension_percent' ? [api.setPosition('table_mount', positions.table_mount)] : []),
-        ]);
-      }
-      catch (error) { showError(error); }
-    },
+    previewPositions,
+    snapshotPositions: () => ({ positions: { ...positions }, returnMountedTable }),
+    restorePositions: restore,
+    savePositions,
+    previewPosition: (name: string, percent: number) => previewPositions({ [name]: percent }),
+    savePosition: (name: string, percent: number) => savePositions({ [name]: percent }),
     stop() { running = false; clock.clearTimeout(timer); },
   };
 }

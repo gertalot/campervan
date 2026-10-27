@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
-from campervan.materials import PROJECT_PATH, CutPart, Project, Selection, load_project, resolve, save_project
+from campervan.materials import CutPart, Project, Selection, load_project, resolve, save_project
 from campervan.model_cache import ModelBundle, model_fingerprint, read_bundle, save_bundle
 from campervan.parameter_fit import fit_parameters
 from campervan.parameters import Parameters
+from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
@@ -42,7 +43,7 @@ class Coordinator:
     ) -> None:
         self.session_id = str(uuid4())
         self._project_path = project_path
-        self._cache_path = project_path.with_name("model-cache.json")
+        self._cache_path = MODEL_CACHE_PATH
         project = load_project(project_path)
         self.parameters = project.parameters
         self.materials = project.materials

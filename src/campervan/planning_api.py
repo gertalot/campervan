@@ -13,6 +13,7 @@ from pydantic import Field, field_validator
 from campervan.coordinator import Coordinator
 from campervan.materials import ROLES, Product, Project, catalogue, resolve, save_project
 from campervan.parameter_fit import fit_parameters
+from campervan.paths import LOCAL_DIR
 from campervan.planning import (
     ContentUpdate, Mutation, PlanningConflict, PlanningDocument, PlanningStore,
     PurchaseFilter, PurchaseRecord, Record, outline_markdown, parse_document,
@@ -39,7 +40,7 @@ class Restore(Record):
 
 def register_planning(app: FastAPI, project_path: Path) -> None:
     router = APIRouter(prefix="/api/v1")
-    store = PlanningStore(project_path.with_name("planning.json"))
+    store = PlanningStore(project_path.with_name("planning.json"), backup_dir=LOCAL_DIR)
 
     def coordinator(request: Request) -> Coordinator:
         return request.app.state.coordinator  # type: ignore[no-any-return]
@@ -49,6 +50,11 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
             return store.read()
         except (ValueError, OSError) as error:
             raise HTTPException(422, f"Cannot read planning file: {error}. Restore a backup to recover.") from error
+
+    def purchases(document: PlanningDocument, request: Request) -> dict[str, Any]:
+        current = coordinator(request)
+        return purchase_view(document, current.materials, current.cuts,
+                             current.cuts_revision == current.status().requested_revision)
 
     def backup(request: Request) -> Backup:
         current = coordinator(request)
@@ -71,7 +77,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
     async def mutate(mutation: Mutation, request: Request) -> PlanningDocument:
         op = mutation.operation
         if op.kind == "delete_purchase":
-            row = next((row for row in purchase_view(read(), coordinator(request))["rows"] if row["record"]["id"] == op.id), None)
+            row = next((row for row in purchases(read(), request)["rows"] if row["record"]["id"] == op.id), None)
             if row and row["generated"]:
                 raise HTTPException(422, "CAD stock cannot be deleted here. Change its CAD selection or quantities instead.")
         if op.kind == "purchase":
@@ -97,7 +103,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
     async def get_purchases(
         request: Request, category: str = "", tag: str = "", supplier: str = "", status: str = "", search: str = "",
     ) -> dict[str, Any]:
-        view = purchase_view(read(), coordinator(request))
+        view = purchases(read(), request)
         filters = PurchaseFilter(category=category, tag=tag, supplier=supplier, status=status, search=search)
         rows = [row for row in view["rows"] if matches(row, filters)]
         return view | {"rows": rows, "filtered_totals": purchase_totals(rows)}
@@ -113,7 +119,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
             buffer = io.StringIO()
             writer = csv.writer(buffer)
             writer.writerow(["Item", "Category", "Tags", "Supplier", "URL", "Unit", "Required", "Owned", "Bought", "Estimated unit NZD", "Spent NZD", "Remaining NZD", "Status", "Notes"])
-            for row in purchase_view(bundle.planning, coordinator(request))["rows"]:
+            for row in purchases(bundle.planning, request)["rows"]:
                 r = row["record"]
                 values = [r["name"], r["category"], ", ".join(r["tags"]), r["supplier"], r["url"], r["unit"], row["required"], r["owned"], r["bought"], r["unit_price"], r["spent"], row["remaining_cost"], row["status"], r["notes"]]
                 writer.writerow(["'" + value if isinstance(value, str) and value.startswith(("=", "+", "-", "@")) else value for value in values])

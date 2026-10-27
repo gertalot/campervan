@@ -1,5 +1,7 @@
 /.venv/
+# Saved inputs in data/ are versioned; caches, recovery files and temporary writes are not.
 /.local/
+/data/*.tmp
 /.venv-prod/
 __pycache__/
 *.py[cod]
@@ -13,6 +15,8 @@ coverage.xml
 *.egg-info/
 /dist/
 /build/
+/site/
+/.campervan-site-*/
 /src/campervan/web/
 /frontend/node_modules/
 /frontend/dist/

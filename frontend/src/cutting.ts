@@ -4,6 +4,7 @@ import { createPlanDropdown } from './plan-dropdown';
 import { pieceGallery, sheetDrawing } from './cutting-diagrams';
 import { assembly, csv, download, el, fullName, isPlywood, materialName, mm, option, partColour, pieceKey } from './cutting-types';
 import type { Data, Grain, Group, Mode, Part, Result, StockOptions } from './cutting-types';
+import { isStaticSite } from './site-runtime';
 import './cutting.css';
 
 const methodNames: Record<Mode, string> = { straight: 'Straight saw cuts', nesting: 'Nested shapes' };
@@ -117,15 +118,17 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
                        min = 0, max = 10000, integer = false) {
     const label = el('label', title), input = el('input'); input.type = 'number'; input.value = String(value);
     input.min = String(min); input.max = String(max); input.step = integer ? '1' : 'any';
+    input.readOnly = isStaticSite;
     input.onchange = () => { if (input.reportValidity()) update(input.valueAsNumber); };
     label.append(input); parent.append(label); return input;
   }
   function globalSettings() {
-    const settings = details('Cutting settings · apply to the whole project', 'global'); settings.className = 'cut-global-settings';
+    const settings = details(isStaticSite ? 'Exported cutting settings' : 'Cutting settings · apply to the whole project', 'global'); settings.className = 'cut-global-settings';
     const form = el('div'); form.className = 'cut-settings-fields';
     const methodLabel = el('label', 'Arrange sheets for'), select = el('select');
     select.append(option('straight', methodNames.straight), option('nesting', methodNames.nesting));
     select.value = mode(); select.onchange = () => { data!.state.settings.algorithm = select.value as Mode; settingsChanged(); };
+    select.disabled = isStaticSite;
     methodLabel.append(select); form.append(methodLabel);
     numberField(form, 'Blade kerf / tool width (mm)', data!.state.settings.kerf,
       n => { data!.state.settings.kerf = n; settingsChanged(); }, 0, 20);
@@ -134,6 +137,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const grainLabel = el('label', 'Default grain direction'), grain = el('select');
     grain.append(option('length', 'Along each piece’s length'), option('width', 'Along each piece’s width'), option('free', 'Either direction'));
     grain.value = data!.state.settings.grain;
+    grain.disabled = isStaticSite;
     grain.onchange = () => { data!.state.settings.grain = grain.value as Grain; settingsChanged(); };
     grainLabel.append(grain); form.append(grainLabel); settings.append(form);
     settings.append(el('p', 'Kerf is the material removed by a cut. Edge trim reserves a strip around the sheet; use 0 for untrimmed edges.'));
@@ -262,7 +266,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   function stockSettings(g: Group) {
     const opts = groupOptions(g), stock = details('Sheet sizes & offcuts', `stock:${g.key}`); stock.className = 'cut-stock';
     if (g.kind === 'timber') stock.querySelector('summary')!.textContent = 'Timber lengths & offcuts';
-    if (!g.stock_sourced && !opts.confirmed) {
+    if (!isStaticSite && !g.stock_sourced && !opts.confirmed) {
       stock.open = true;
       stock.append(el('p', 'No stock size has been selected for this material. Enter the available dimensions below.'));
       const confirm = el('button', 'Use these stock sizes'); confirm.type = 'button';
@@ -275,7 +279,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       width.disabled = g.kind === 'timber';
       numberField(row, entry.offcut ? 'Pieces available' : 'Available (0 = unlimited)', entry.copies,
         n => { entry.copies = n; stockChanged(g); }, entry.offcut ? 1 : 0, 1000, true);
-      if (opts.stock.length > 1) {
+      if (!isStaticSite && opts.stock.length > 1) {
         const remove = el('button', 'Remove'); remove.type = 'button';
         remove.onclick = () => { opts.stock.splice(index, 1); stockChanged(g); }; row.append(remove);
       }
@@ -284,7 +288,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const add = el('button', 'Add offcut'); add.type = 'button'; add.onclick = () => {
       opts.stock.push({ name: `Offcut ${opts.stock.filter(s => s.offcut).length + 1}`, length: 600,
         width: g.kind === 'timber' ? g.stock[0].width : 400, copies: 1, offcut: true }); stockChanged(g);
-    }; stock.append(add); return stock;
+    }; if (!isStaticSite) stock.append(add); return stock;
   }
   function partTable(g: Group) {
     const table = el('table'); table.className = 'cut-parts';
@@ -299,7 +303,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       td.append(name); tr.append(td, el('td', `${mm(part.length)} × ${mm(part.width)}`), el('td', `${mm(part.thickness)} mm`));
       const orientation = el('td'), select = el('select'); select.setAttribute('aria-label', `Grain direction for ${fullName(part)}`);
       select.append(option('', 'Use global setting'), option('length', 'Along length'), option('width', 'Along width'), option('free', 'Either direction'));
-      select.value = groupOptions(g).orientations[part.path] ?? ''; select.disabled = g.kind === 'timber';
+      select.value = groupOptions(g).orientations[part.path] ?? ''; select.disabled = isStaticSite || g.kind === 'timber';
       select.onchange = () => {
         if (select.value) groupOptions(g).orientations[part.path] = select.value as Grain;
         else delete groupOptions(g).orientations[part.path]; stockChanged(g);
@@ -322,14 +326,16 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     };
     regenerate.disabled = !data!.current || (!g.stock_sourced && !groupOptions(g).confirmed);
     const countProven = result && (result.stock_count_optimal ?? result.optimal) && !result.unplaced.length;
-    const state = !result ? running ? 'Finding a layout…' : 'Sheet layout not calculated yet'
+    const state = !result ? isStaticSite ? 'No layout was exported for this material' : running ? 'Finding a layout…' : 'Sheet layout not calculated yet'
       : !isCurrent(g, result) ? 'Previous layout · cutting settings or design changed'
       : running ? result.optimises_offcuts && countProven ? 'Minimum sheet count proven · improving offcuts…'
         : 'Improving this layout…'
       : countProven ? result.optimises_offcuts ? 'Minimum sheet count proven · best offcut found'
         : 'Minimum stock count proven' : 'Best layout found';
-    status.append(el('span', state), regenerate); root.append(status);
-    if (!g.stock_sourced && !groupOptions(g).confirmed) root.append(el('p', 'Choose the available stock sizes below to calculate a layout.'));
+    status.append(el('span', state));
+    if (!isStaticSite) status.append(regenerate);
+    root.append(status);
+    if (!isStaticSite && !g.stock_sourced && !groupOptions(g).confirmed) root.append(el('p', 'Choose the available stock sizes below to calculate a layout.'));
     if (errors.has(key)) { const error = el('p', errors.get(key)!); error.className = 'cut-warning'; root.append(error); }
     if (data!.jobs[key]?.error) {
       const error = el('p', data!.jobs[key].error!); error.className = 'cut-warning'; root.append(error);
@@ -387,7 +393,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   }
 
   function startFocusedLayouts() {
-    if (!data?.current || filter === 'all' || savingFailed) return;
+    if (isStaticSite || !data?.current || filter === 'all' || savingFailed) return;
     for (const g of filteredGroups()) {
       if (!g.stock_sourced && !groupOptions(g).confirmed) continue;
       const result = data.state.results[resultKey(g)], key = `${resultKey(g)}:${data.sources[g.key]}`;

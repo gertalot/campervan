@@ -13,6 +13,7 @@ import { mountPlanMenu } from './plan-menu';
 import { outlineNumbers } from './plan-numbering';
 import { purchaseExtension } from './plan-purchases';
 import type { PlanningClient } from './planning-api';
+import { isStaticSite } from './site-runtime';
 
 type ViewState = { query: string; hideCompleted: boolean };
 const viewKey = new PluginKey<ViewState>('planView');
@@ -61,6 +62,16 @@ const PlanView = Extension.create({
     })];
   },
 });
+const PublishedPlan = Extension.create({
+  name: 'publishedPlan',
+  addProseMirrorPlugins() {
+    return [new Plugin({
+      // Disclosure is a local view change. All content-changing commands, including built-in
+      // keyboard shortcuts and table actions, are rejected in the published document.
+      filterTransaction: tr => !tr.docChanged || Boolean(tr.getMeta('planViewCollapse')),
+    })];
+  },
+});
 
 export function createPlanEditor(
   root: HTMLElement,
@@ -71,24 +82,27 @@ export function createPlanEditor(
   const area = document.createElement('div'); area.className = 'document-surface'; root.append(toolbar, area);
   const editor = new Editor({
     element: area,
+    editable: !isStaticSite,
     extensions: [
       StarterKit.configure({ link: { openOnClick: true }, bulletList: false, orderedList: false, listItem: false, listKeymap: false }),
       TaskList.extend({
         addKeyboardShortcuts() { return {}; },
         parseHTML() { return [...(this.parent?.() ?? []), { tag: 'ul' }, { tag: 'ol' }]; },
       }), PlanTaskItem,
-      TableKit.configure({ table: { resizable: true } }),
-      purchaseExtension(options.client), UniqueID.configure({ types: ['taskItem', 'purchaseView'] }), PlanSlash, PlanView, PlanActionKeys,
+      TableKit.configure({ table: { resizable: !isStaticSite } }),
+      purchaseExtension(options.client), UniqueID.configure({ types: ['taskItem', 'purchaseView'], updateDocument: !isStaticSite }),
+      ...(isStaticSite ? [PlanView, PublishedPlan] : [PlanSlash, PlanView, PlanActionKeys]),
     ],
     content: options.content, enableContentCheck: true,
     editorProps: { attributes: { class: 'plan-rich-text continuous-document', 'aria-label': 'Conversion plan document' } },
-    onUpdate: ({ editor }) => options.onChange(editor.getJSON()),
+    onUpdate: ({ editor }) => { if (!isStaticSite) options.onChange(editor.getJSON()); },
     onBlur: () => { void options.client.flush().catch(() => {}); },
   });
   // Do not accept editor repair as a substitute for validating the saved document.
   editor.schema.nodeFromJSON(options.content).check();
-  const menu = mountPlanMenu(editor);
-  const controls = mountPlanInsert(toolbar, editor, menu.open, options.fileButton);
+  const menu = isStaticSite ? null : mountPlanMenu(editor);
+  const controls = menu ? mountPlanInsert(toolbar, editor, menu.open, options.fileButton) : null;
+  if (isStaticSite) toolbar.remove();
   return {
     editor,
     setView(query: string, hideCompleted: boolean) {
@@ -103,6 +117,6 @@ export function createPlanEditor(
       editor.view.dispatch(editor.state.tr.setSelection(TextSelection.create(editor.state.doc, target.from, target.to)).scrollIntoView());
       editor.view.focus(); return ranges.length;
     },
-    destroy() { menu.destroy(); controls.destroy(); editor.destroy(); root.replaceChildren(); },
+    destroy() { menu?.destroy(); controls?.destroy(); editor.destroy(); root.replaceChildren(); },
   };
 }

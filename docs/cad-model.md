@@ -460,14 +460,18 @@ coordinate, independent of bench skin thickness. Shelf and partition depths deri
 support and flute-board lining retain their existing contour and position.
 
 Door groups have hinge-centred origins and native plywood children, keeping cutting sizes independent of pose.
-`cabinet_upper_doors_open_percent` rotates the four upper groups about Y from 0 to −90 degrees, and
-`cabinet_lower_doors_open_percent` rotates the lower groups about Z from 0 to 90 degrees. The viewer reuses
-these tracks through the existing mirrored motion mechanism, without regeneration.
-`cabinet_storage_doors_open_percent` turns the bottom rear pair about Z by +90 and −90 degrees before mirroring.
+The four upper flaps have independent `cabinet_rear_upper_1_open_percent`, `cabinet_rear_upper_2_open_percent`,
+`cabinet_cab_end_upper_1_open_percent` and `cabinet_cab_end_upper_2_open_percent` controls. Each rotates about Y
+from 0 to −90 degrees before mirroring. The bottom rear pair has independent `cabinet_storage_aft_open_percent`
+and `cabinet_storage_fore_open_percent` controls, rotating about Z by +90 and −90 degrees before mirroring.
+The viewer reuses these tracks through the existing mirrored motion mechanism, without regeneration.
 `cabinet_storage_upper_doors_open_percent` independently drops the above-bed rear flap about Y through −90 degrees before mirroring. The front bottom door
 uses `cabinet_lower_doors_open_percent`; its raised neighbour uses `cabinet_front_upper_door_open_percent`.
 The two above-bed drop-down flaps clear the flat uncompressed mattress in the fully made-up bed.
-Bottom doors still require the bed stowed; sliders do not enforce furniture operating sequences.
+Bottom doors still require the bed stowed for physical access; the preview permits overlapping furniture.
+Python saved-parameter loading and browser position loading migrate the former grouped upper/storage values to
+their individual doors. Explicit individual values take precedence. Controls are grouped under Cabinet → Doors;
+the subgroup headings describe controls rather than introducing extra assembly visibility paths.
 
 The BoM includes eighteen Zenith 35mm fixed-pin butt hinges, nine Vanlifer Point push latches and two 3m packs of
 Pinnacle 2mm double jack chain. The six drop-down flaps each require two chain restraints; cut lengths depend
@@ -566,8 +570,8 @@ absolute offset from that pose. Long-bed, cross-cushion and drawer sliders work 
 Each bench slider also repositions its own cushions. Their tracks include position/angle keyframes from the same layout used
 by CAD, so regeneration at an intermediate position preserves the preview. Translation and
 rotation bases are stored separately for groups that use both.
-The Python model uses the same poses and travel for geometry checks and future exports. Releasing a slider saves only
-that position through `PATCH /api/v1/model/position`. Slider input also saves all positions to `campervan.positions`
+The Python model uses the same poses and travel for geometry checks and future exports. Releasing a slider or drag
+saves the accepted pose together through one `PATCH /api/v1/model/position`. Preview input also saves all positions to `campervan.positions`
 localStorage. On page load or API session change, the controller restores the positions to the UI and API before
 requesting regeneration. New geometry receives the latest selected positions.
 Slider previews are combined into one animation-frame update using the latest values. Only changed motion
@@ -581,6 +585,26 @@ already stowed stays stowed. Browser storage remembers the automatic return acro
 a table pose cancels that pending return.
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
+
+Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece picker. Unmodified primary drags on
+the moving bed support/slats, drawer, cabinet doors and mounted bamboo leaves take precedence over camera orbit.
+The 4px threshold preserves ordinary clicks and double-click cut-list navigation. Pointer capture owns the gesture;
+Escape, lost capture, page blur, tab changes and geometry replacement restore the starting pose and automatic
+table-return flag. Cyan surface/edge overlays are separate from persistent magenta selection and do not enter picking
+queries. Alt-drag and the toolbar/context-menu orbit override (O) retain camera access on movable parts.
+
+Bed dragging maps one full frame-travel distance to 40 percentage points. Completing all stages takes 2.5 times that
+distance, across one or several drags. Release pauses; reversal retraces the existing keyframes. Drawer dragging follows
+its world slider axis; hinged doors follow their projected hinge arc. Edge-on views hold the pose with a direction hint.
+`table-drag.ts` resolves the actual arm pivots, offset and current tabletop envelope. The central 15% of either half-extent
+retains world heading; heading freedom increases smoothly to full two-joint steering at 90%. Angles stay continuous during
+dragging and normalise on release. The table stays at its current height and fold. A near-horizontal view holds the pose.
+
+Gert removed interactive collision detection after it caused browser freezes. Dragging and sliders apply their
+requested joint positions directly through the controller. No collision geometry, solver, acceleration dependency
+or worker is loaded. Physical overlaps remain visible in the model. Releasing the primary button discards queued
+drag input and saves the last accepted pose. Escape discards queued input and restores the pre-drag pose, including
+the automatic table-return flag. The release listener uses window capture and movement also checks the button state.
 
 Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Wooden floor, Slats, Cushions and
 Cabinet preferences live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's
@@ -709,8 +733,8 @@ custom stock and measured overrides. Updates go through catalogue edits and the 
 section/thickness overrides. Custom stock uses the existing parameter value. Listed sheet sizes and stock lengths
 constrain cutting, not the van layout. Reused slats start as already owned custom stock.
 
-`.local/project.json` saves parameters, material selections, measured overrides, ownership and manually confirmed
-purchase quantities. It is gitignored. API reloads read it; edits through the API save it. Browser storage continues
+`data/project.json` saves parameters, material selections, measured overrides, ownership and manually confirmed
+purchase quantities. It is versioned with the source. API reloads read it; edits through the API save it. Browser storage continues
 owning camera, visibility and live-control preferences. Shelf ledge width and height are separate dimensions; shelf
 bottoms remain on top of the ledges, whose bottoms stay aligned with the support-frame cross-beams.
 

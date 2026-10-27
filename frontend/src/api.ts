@@ -1,3 +1,6 @@
+import { isStaticSite, readSnapshotPart } from './site-runtime';
+
+export const readOnly = isStaticSite;
 export type Parameters = Record<string, number>;
 export interface FieldMetadata {
   title: string;
@@ -29,6 +32,7 @@ export interface ModelStatus extends MutationResponse {
   error: { message: string } | null;
 }
 export interface Api {
+  readonly readOnly?: boolean;
   getParameters(): Promise<ParameterResponse>;
   previewParameters(parameters: Parameters): Promise<ParameterResponse>;
   getStatus(): Promise<ModelStatus>;
@@ -36,12 +40,20 @@ export interface Api {
   loadModel(): Promise<ModelStatus>;
   regenerate(): Promise<ModelStatus>;
   setPosition(name: string, percent: number): Promise<Parameters>;
+  setPositions(positions: Parameters): Promise<Parameters>;
 }
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
 }
 
 export async function request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
+  if (isStaticSite) {
+    if (method !== 'GET') throw new Error('This exported snapshot is read-only.');
+    if (!['parameters', 'materials', 'cutting', 'planning', 'purchases'].includes(path)) {
+      throw new Error(`This action requires the local application: ${path}`);
+    }
+    return readSnapshotPart<T>(path);
+  }
   const response = await fetch(`/api/v1/${path}`, {
     method,
     ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
@@ -61,10 +73,13 @@ export async function request<T>(path: string, method = 'GET', body?: unknown): 
 }
 export const getParameters = () => request<ParameterResponse>('parameters');
 export const previewParameters = (parameters: Parameters) => request<ParameterResponse>('parameters/preview', 'POST', parameters);
-export const getStatus = () => request<ModelStatus>('model/status');
+export const getStatus = async (): Promise<ModelStatus> => {
+  if (!isStaticSite) return request<ModelStatus>('model/status');
+  const data = await getParameters();
+  return { session_id: data.session_id, requested_revision: 0, published_revision: 0, state: 'ready', error: null };
+};
 export const putParameters = (parameters: Parameters) => request<ModelStatus>('parameters', 'PUT', parameters);
 export const loadModel = () => request<ModelStatus>('model/load', 'POST');
 export const regenerate = () => request<ModelStatus>('model/regenerate', 'POST');
-export const setPosition = (name: string, percent: number) => request<Parameters>(
-  'model/position', 'PATCH', { [name]: percent },
-);
+export const setPositions = (positions: Parameters) => request<Parameters>('model/position', 'PATCH', positions);
+export const setPosition = (name: string, percent: number) => setPositions({ [name]: percent });

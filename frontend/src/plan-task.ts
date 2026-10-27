@@ -2,6 +2,7 @@ import { TaskItem } from '@tiptap/extension-list';
 import type { Editor } from '@tiptap/core';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import type { Node as PMNode } from '@tiptap/pm/model';
+import { isStaticSite } from './site-runtime';
 
 export function currentTask(editor: Editor): { node: PMNode; pos: number; depth: number } | null {
   const { selection } = editor.state;
@@ -55,7 +56,7 @@ export function deleteTask(editor: Editor) {
 }
 
 export const PlanTaskItem = TaskItem.extend({
-  draggable: true,
+  draggable: !isStaticSite,
   parseHTML() {
     return [...(this.parent?.() ?? []), { tag: 'li' }];
   },
@@ -89,7 +90,7 @@ export const PlanTaskItem = TaskItem.extend({
     return ({ node, editor, getPos, decorations }) => {
       let current = node;
       let number = String(decorations.find(d => d.spec.outlineNumber)?.spec.outlineNumber ?? '');
-      const dom = document.createElement('li'); dom.className = 'document-task'; dom.draggable = true;
+      const dom = document.createElement('li'); dom.className = 'document-task'; dom.draggable = !isStaticSite;
       const controls = document.createElement('span'); controls.className = 'task-controls'; controls.contentEditable = 'false';
       const handle = document.createElement('button'); handle.type = 'button'; handle.textContent = '⠿';
       handle.className = 'task-drag'; handle.draggable = true; handle.title = 'Drag to move · click for item actions';
@@ -98,6 +99,8 @@ export const PlanTaskItem = TaskItem.extend({
       handle.onmousedown = () => { const pos = getPos(); if (pos !== undefined) editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, pos))); };
       const collapse = document.createElement('button'); collapse.type = 'button'; collapse.className = 'task-collapse';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox';
+      checkbox.disabled = isStaticSite;
+      handle.hidden = isStaticSite;
       const badge = document.createElement('span'); badge.className = 'task-detail-badge'; badge.contentEditable = 'false';
       const content = document.createElement('div'); content.className = 'task-content';
       controls.append(handle, collapse, checkbox); dom.append(controls, content, badge);
@@ -110,18 +113,21 @@ export const PlanTaskItem = TaskItem.extend({
       const numberLabel = document.createElement('span'); numberLabel.className = 'task-number';
       numberLabel.setAttribute('aria-hidden', 'true'); controls.insertBefore(numberLabel, checkbox);
       const change = (values: Record<string, unknown>, history = true) => {
+        if (isStaticSite && Object.keys(values).some(key => key !== 'collapsed')) return;
         const pos = getPos(); if (pos === undefined) return;
         const tr = editor.state.tr;
         if (values.collapsed && tr.selection.from > pos && tr.selection.to < pos + current.nodeSize) {
           tr.setSelection(TextSelection.near(tr.doc.resolve(pos + 2)));
         }
         for (const [key, value] of Object.entries(values)) tr.setNodeAttribute(pos, key, value);
+        if (isStaticSite) tr.setMeta('planViewCollapse', true);
         if (!history) tr.setMeta('addToHistory', false);
-        editor.view.dispatch(tr); editor.view.focus();
+        editor.view.dispatch(tr);
+        if (!isStaticSite) editor.view.focus();
       };
       checkbox.onmousedown = event => event.preventDefault();
       checkbox.onchange = () => change({ checked: checkbox.checked });
-      collapse.onmousedown = event => event.preventDefault();
+      collapse.onmousedown = event => { if (!isStaticSite) event.preventDefault(); };
       collapse.onclick = () => change({ collapsed: !current.attrs.collapsed }, false);
       const paint = () => {
         numberLabel.textContent = number;
@@ -134,7 +140,8 @@ export const PlanTaskItem = TaskItem.extend({
         collapse.setAttribute('aria-expanded', String(!current.attrs.collapsed));
         collapse.setAttribute('aria-label', current.attrs.collapsed ? 'Expand item' : 'Collapse item');
         checkbox.checked = Boolean(current.attrs.checked);
-        checkbox.setAttribute('aria-label', `Complete item ${number}: ${current.firstChild?.textContent || 'Untitled'}`);
+        checkbox.setAttribute('aria-label', `${isStaticSite ? 'Completion status of' : 'Complete'} item ${number}: `
+          + (current.firstChild?.textContent || 'Untitled'));
         let unfinished = 0;
         current.descendants(child => { if (child.type.name === 'taskItem' && !child.attrs.checked) unfinished++; });
         badge.textContent = [current.attrs.needs_review ? 'Needs review' : '', unfinished ? `${unfinished} unfinished` : ''].filter(Boolean).join(' · ');

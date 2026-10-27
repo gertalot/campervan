@@ -7,8 +7,9 @@ import { setupMannequinControls } from './mannequin-controls';
 import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
 import { setupPlanner } from './planner';
-import { setupTabs, showTab } from './tabs';
+import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
+import { isStaticSite, readSnapshotPart } from './site-runtime';
 import './style.css';
 
 function element<T extends HTMLElement>(id: string): T {
@@ -30,6 +31,17 @@ function refreshTableEyes() {
 }
 const status = element('status');
 const error = element('error');
+if (isStaticSite) {
+  form.querySelector<HTMLElement>('.actions')!.hidden = true;
+  const badge = document.createElement('span');
+  badge.className = 'snapshot-label';
+  badge.textContent = 'Read-only snapshot';
+  badge.title = 'Explore the model and saved layouts. Edit dimensions, materials and the plan in the local application.';
+  status.before(badge);
+  void readSnapshotPart<string>('exported_at').then(date => {
+    badge.textContent = `Snapshot · ${new Date(date).toLocaleDateString()}`;
+  }).catch(message => { error.textContent = String(message); error.hidden = false; });
+}
 const viewer = createCadViewer(element('viewer'), () => visibility.restore(), message => {
   error.textContent = message;
   error.hidden = false;
@@ -103,7 +115,7 @@ const controller = createController(api, {
             });
             tableEyes.set(tableIndex, eye);
             heading.append(eye);
-          } else if (cadVisibility) {
+          } else if (cadVisibility && !(groupPath[0] === 'Cabinet' && groupPath[1] === 'Doors' && depth >= 2)) {
             visibility.addGroup(heading, `/Campervan/${groupPath.slice(0, depth + 1).join('/')}`, title);
           }
           group.append(heading);
@@ -115,7 +127,8 @@ const controller = createController(api, {
       return parent;
     }
     for (const [name, field] of Object.entries(metadata)) {
-      const topLevelControl = field.control === 'position' && !['Stored gear', 'Laptop table'].includes(field.group[0]);
+      const topLevelControl = field.control === 'position'
+        && (name === 'table_fold_open_percent' || !['Stored gear', 'Laptop table', 'Cabinet'].includes(field.group[0]));
       const parent = groupFor(topLevelControl ? [] : field.group, topLevelControl ? liveControls : fields);
       const row = document.createElement('div');
       row.className = 'parameter-row';
@@ -137,7 +150,7 @@ const controller = createController(api, {
       if (field.material && input instanceof HTMLInputElement) {
         input.readOnly = true;
         input.addEventListener('click', () => materials.show(field.material));
-        label.title = 'Edit stock dimensions in Bill of materials';
+        label.title = isStaticSite ? 'View stock details in Bill of materials' : 'Edit stock dimensions in Bill of materials';
         const link = document.createElement('button');
         link.type = 'button'; link.className = 'material-link'; link.textContent = field.title;
         link.addEventListener('click', () => materials.show(field.material));
@@ -170,9 +183,13 @@ const controller = createController(api, {
           value.id = `${name}-value`;
           row.append(label, value, input);
         }
-        input.addEventListener('input', () => controller.previewPosition(name, Number(input.value)));
-        input.addEventListener('change', () => { void controller.savePosition(name, Number(input.value)); });
+        input.addEventListener('input', () => viewer.previewPositions({ [name]: Number(input.value) }));
+        input.addEventListener('change', () => { void viewer.savePositions(); });
       } else {
+        if (isStaticSite) {
+          if (input instanceof HTMLInputElement) input.readOnly = true;
+          else input.disabled = true;
+        }
         const hint = document.createElement('small');
         hint.id = `${name}-constraint`;
         hint.className = 'parameter-constraint';
@@ -257,10 +274,13 @@ const controller = createController(api, {
   setTimeout: (callback, delay) => window.setTimeout(callback, delay),
   clearTimeout: handle => window.clearTimeout(handle as number),
 }, window.localStorage);
+viewer.setMotionController(controller);
+onTab(tab => { if (tab !== 'cad') viewer.cancelDrag(); });
 
 const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name, input.value]));
 let previewTimer: number;
 form.addEventListener('input', event => {
+  if (isStaticSite) return;
   const target = event.target as HTMLElement;
   if (target.dataset.livePosition === 'true') return;
   dirty = true;
@@ -269,6 +289,7 @@ form.addEventListener('input', event => {
 });
 form.addEventListener('submit', event => {
   event.preventDefault();
+  if (isStaticSite) return;
   window.clearTimeout(previewTimer);
   void controller.apply(draftValues());
 });

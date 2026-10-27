@@ -3,6 +3,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createSpine } from './spine-rig';
+import { assetUrl } from './site-runtime';
 
 export interface MannequinPose {
   mode: 'seated' | 'lying' | 'lying-second';
@@ -340,6 +341,6 @@ export function createMannequin(body: Group) {
 }
 
 export async function loadMannequin() {
-  const asset = await new GLTFLoader().loadAsync('/models/mannequin.glb');
+  const asset = await new GLTFLoader().loadAsync(assetUrl('models/mannequin.glb'));
   return createMannequin(asset.scene);
 }

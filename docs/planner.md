@@ -90,10 +90,10 @@ spending retained. CAD source specifications/cut lists remain under **CAD stock 
 Changes autosave. Check **Saved locally** before closing. Neither writing nor recording a purchase regenerates CAD.
 The new planning document has version 2; the full backup envelope remains version 1 because its fields are unchanged.
 
-- `.local/planning.json`: rich document, revision and purchase records.
+- `data/planning.json`: versioned rich document, revision and purchase records.
 - `.local/planning.previous.json`: document before the latest successful write.
 - `.local/planning.v1-backup.json`: untouched original saved before the first old-format conversion.
-- `.local/project.json`: existing CAD parameters and material selections.
+- `data/project.json`: versioned CAD parameters, material selections and cutting layouts.
 
 Old plans convert on load, retaining task IDs, text, tables, statuses, subtasks, purchase filters and records. Existing
 empty plans stay empty. Former bullet/numbered lists become unchecked numbered items, preserving their contents and

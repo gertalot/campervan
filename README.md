@@ -2,7 +2,46 @@
 
 Design a campervan interior with parametric Python models and inspect it in a local, interactive 3D viewer.
 The application uses build123d for geometry and a browser interface for dimensions and configurations.
-This is a personal, local-only hobby project.
+This is a personal hobby project. Design editing runs locally; a static snapshot can be exported for sharing.
+
+## Export a static site
+
+From the project directory, after setup:
+
+```sh
+make site
+```
+
+This creates `site/`, containing the application, model, motion data, saved cutting layouts, bill of materials and plan.
+Both the local application and exporter use `data/project.json` and `data/planning.json`. Commit these files with the
+source so GitHub Actions builds the saved design, layouts, plan and purchases. Generated caches and recovery files
+remain in the gitignored `.local/` directory.
+The exporter reuses the saved model when it matches the current design, or builds it offline. It does not start the API,
+viewer or development server. No services need to be running.
+
+The snapshot supports camera movement, visibility, mannequins, sliders, dragging moving parts, and links between CAD
+pieces and cutting drawings. Dimensions are read-only. The plan and purchases can be viewed, searched and filtered;
+editing, regeneration, cutting optimisation and exact CAD measurements require the local application.
+Cutting drawings and CSV lists can still be downloaded.
+
+The export includes current saved cutting layouts. Calculate any missing layouts in the local app before exporting;
+`make site` reports missing or outdated layouts and includes the corresponding pieces and dimensions without a layout.
+It does not run the optimiser. Run `make site` again to replace the snapshot after changing the project.
+
+Upload the **contents of `site/`** to a static host such as
+[GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
+Assets use relative paths and tabs use hash URLs such as `#/cuts`, so the site can live beneath a repository URL without
+server rewrite rules. The `.nojekyll` file is included. Serve the export over HTTP(S); opening `index.html` directly as a
+file is unsupported. Generated `site/` is gitignored; publishing is a separate step.
+
+`.github/workflows/site.yml` builds and publishes to GitHub Pages on pushes to `develop`, or when run manually from
+Actions. Set the repository's **Settings → Pages → Source** to **GitHub Actions**. Commit both `data/project.json` and
+`data/planning.json` with the source; the workflow checks that they are tracked, then runs `make setup` and `make site`.
+Only the generated `site/` directory is uploaded for publication. The workflow runs no tests or local services.
+
+The header shows the export date. Browser preferences and poses stay in that browser and do not change the exported
+project. The export contains the complete saved plan, purchases and supplier details; its contents are visible to site
+visitors.
 
 ## Prerequisites
 
@@ -82,6 +121,7 @@ the rear window is clear.
 The long bench contains separate fixed plywood frames and a rear header. Its dimensions and construction
 thicknesses are editable in the sidebar. Platform height includes the allowance for slats above the frame.
 Live controls sit at the top of the sidebar, outside the collapsible dimension groups.
+**Unfold tabletop** is there too: 0% folds it closed; 100% opens it flat.
 The **Vehicle**, **Wooden floor**, **Slats**, **Cushions**, **Cabinet**, **Long bench** and **Cross bench** checkboxes
 show or hide those categories without regeneration. Assembly switches and content filters work together: showing a
 bench keeps disabled slats/cushions hidden, and enabling slats/cushions never reveals a hidden bench. Checkboxes retain
@@ -98,6 +138,15 @@ backrests, and 80–100 lowers them into place. The green backrest is split into
 Both pieces fill the outer long-bed strip when extended. The cross bench has one full-width fixed cushion
 and no conversion slider. Dragging backward reverses the long-bench sequence.
 **Drawer extension (%)** moves the rear drawer independently from retracted to fully extended.
+You can also drag the moving bed support or its slats, the drawer, individual cabinet doors and the mounted
+tabletop directly. Movable parts glow cyan on hover and while dragging. Continue pulling after the bed frame
+stops to reposition its cushions and lower the backrests; reverse to undo those stages before retracting it.
+Release pauses and saves; another drag resumes. **Escape** cancels the drag and restores its starting pose.
+Dragging near the tabletop centre keeps its heading; dragging near an edge steers both swivel joints.
+Dragging and sliders follow the existing joint limits. Rotate the view if the allowed movement is too edge-on to drag.
+**Alt-drag** or the toolbar's **Orbit camera over movable parts** button (**O**) lets you orbit over these parts;
+right-click the viewer for the same camera action and its shortcut. Background and fixed-part drags still orbit.
+Individual cabinet-door sliders are under **Cabinet → Doors**. Existing shared door positions migrate automatically.
 No Apply or regeneration is needed. Slider positions are saved in browser storage and sent to the API;
 dimension changes, source edits and page reloads retain the selected positions.
 The sliders preview the cushions being repositioned. This represents
@@ -191,7 +240,8 @@ is on the right. Each group can be hidden independently. Cab dimensions are prov
 Edit CAD models in `src/campervan/cad/` and the web interface in `frontend/src/`. Saving CAD changes regenerates the
 model with the selected parameters. Backend changes reload the API and restore the saved project. Frontend changes
 trigger Vite updates or a page reload. Matching geometry is reused across page reloads and API restarts.
-Dimensions and material selections are saved in `.local/project.json`; camera, slider and visibility preferences
+Dimensions, material selections and cutting layouts are saved in `data/project.json`; the plan and purchases are saved
+in `data/planning.json`. These are versioned project inputs. Camera, slider and visibility preferences
 are kept in browser storage.
 
 The last complete CAD result is saved in `.local/model-cache.json`: viewer geometry, exact measurement shapes,
@@ -288,7 +338,7 @@ Tell Codex when you want a product sourced or changed. Selected stock dimensions
 shelf ledges use the sourced 18 × 18mm pine, for example. Measured overrides account for the actual material you buy.
 Sheet sizes and timber lengths define stock to cut; they do not change the furniture layout. Product details live in
 `src/campervan/materials.json`; default selections and parameter bindings live in `materials.py`. Selections and
-measured overrides persist with parameters in `.local/project.json` and can be updated through the materials API.
+measured overrides persist with parameters in `data/project.json` and can be updated through the materials API.
 Camera and visibility stay intact when switching tabs.
 The URL records the tab and highlighted material (`/cad`, `/bom`, `/bom/skins`, `/plan`), so reloads, bookmarks and
 browser Back/Forward restore that view. **Cut list** has its own `/cuts` URL.
@@ -325,7 +375,7 @@ native solver finds; it does not prove a global optimum for the ratio or cut cou
 refers only to sheet count. Nesting and timber minimise stock pieces; mixed full stock/offcuts minimise full
 stock pieces with a small cost for each offcut. **Stop optimisation** retains the best
 saved layout. Geometry/settings changes stop old searches and identify their saved layouts as previous results.
-Settings and both methods' results persist in `.local/project.json` and the JSON project backup.
+Settings and both methods' results persist in `data/project.json` and the JSON project backup.
 
 Straight saw cuts produce rectangular blanks and an expandable cut sequence. Nested shapes use profiles sampled to
 0.1mm with another 0.2mm of spacing between them. Cut items nested inside holes before their surrounding frames.

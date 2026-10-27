@@ -1,5 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 import { ApiError, request } from './api';
+import { isStaticSite } from './site-runtime';
 
 export interface PurchaseFilter { category: string; tag: string; supplier: string; status: string; search: string }
 export const emptyFilter = (): PurchaseFilter => ({ category: '', tag: '', supplier: '', status: '', search: '' });
@@ -46,14 +47,15 @@ export class PlanningClient {
       if (this.dirty) { event.preventDefault(); event.returnValue = ''; }
     });
   }
-  get dirty() { return this.queue.length > 0 || this.saving || this.blocked || this.drafts.size > 0; }
-  get canUndoPurchase() { return this.undoStack.length > 0 && !this.blocked; }
-  get canRedoPurchase() { return this.redoStack.length > 0 && !this.blocked; }
+  get dirty() { return !isStaticSite && (this.queue.length > 0 || this.saving || this.blocked || this.drafts.size > 0); }
+  get canUndoPurchase() { return !isStaticSite && this.undoStack.length > 0 && !this.blocked; }
+  get canRedoPurchase() { return !isStaticSite && this.redoStack.length > 0 && !this.blocked; }
   subscribe(listener: (change: Change) => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   refreshPurchases() { this.notify({ purchases: true }); }
   private notify(change: Change = {}) { [...this.listeners].forEach(fn => fn(change)); }
   getDraft(key: string) { return this.drafts.get(key); }
   setDraft(key: string, dirty: boolean, value = '') {
+    if (isStaticSite) return;
     if (dirty) this.drafts.set(key, value); else this.drafts.delete(key);
     if (!this.blocked && !this.saving && !this.queue.length) this.status = this.drafts.size ? 'Purchase cell not yet saved' : 'Saved locally';
     this.notify();
@@ -65,7 +67,7 @@ export class PlanningClient {
       const next = await request<PlanningDocument>('planning');
       this.document = next; this.revision = next.revision;
       this.blocked = false; this.error = ''; this.queue = []; this.drafts.clear();
-      this.undoStack = []; this.redoStack = []; this.status = 'Saved locally';
+      this.undoStack = []; this.redoStack = []; this.status = isStaticSite ? 'Published snapshot · read only' : 'Saved locally';
       this.notify({ loaded: true, purchases: true });
     } catch (error) { this.fail(error); }
   }
@@ -77,7 +79,10 @@ export class PlanningClient {
     this.status = 'Saving…'; this.notify(); clearTimeout(this.timer);
     this.timer = setTimeout(() => { void this.drain(); }, 450);
   }
-  private ready() { if (!this.document || this.blocked) throw new Error(this.error || 'The plan is not ready.'); }
+  private ready() {
+    if (isStaticSite) throw new Error('The published plan is read only.');
+    if (!this.document || this.blocked) throw new Error(this.error || 'The plan is not ready.');
+  }
   mutate(operation: Operation, _structural = false, history = true) {
     this.ready();
     const before = this.document!.purchases[operation.id];
@@ -102,7 +107,8 @@ export class PlanningClient {
   }
   private fail(error: unknown) {
     this.error = error instanceof Error ? error.message : String(error); this.blocked = true;
-    this.status = error instanceof ApiError && error.status === 409 ? 'Changed elsewhere — edits kept here' : 'Not saved — edits kept here';
+    this.status = isStaticSite ? 'Cannot load published plan'
+      : error instanceof ApiError && error.status === 409 ? 'Changed elsewhere — edits kept here' : 'Not saved — edits kept here';
     this.waiters.splice(0).forEach(w => w.reject(new Error(this.error))); this.notify();
   }
   private async drain() {
@@ -128,6 +134,7 @@ export class PlanningClient {
     }
   }
   async flush(checkDrafts = true): Promise<void> {
+    if (isStaticSite) return;
     clearTimeout(this.timer);
     if (this.blocked) throw new Error(this.error || 'The plan is not ready.');
     if (checkDrafts && this.drafts.size) throw new Error('Finish or correct the active purchase cell first.');
@@ -136,6 +143,7 @@ export class PlanningClient {
   }
   async purchases() { await this.flush(false); return request<PurchaseView>('purchases'); }
   async restore(bundle: Backup) {
+    if (isStaticSite) throw new Error('The published plan is read only.');
     if (!this.blocked) await this.flush();
     let revision = 0;
     try { revision = (await request<PlanningDocument>('planning')).revision; }

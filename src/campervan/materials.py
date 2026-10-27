@@ -8,9 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from campervan.cutting_models import CuttingState
 from campervan.parameters import Parameters, default_parameters
+from campervan.paths import PROJECT_PATH
 
 CATALOGUE_PATH = Path(__file__).with_name("materials.json")
-PROJECT_PATH = Path(".local/project.json")
 
 
 class Product(BaseModel):

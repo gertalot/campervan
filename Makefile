@@ -1,4 +1,4 @@
-.PHONY: setup check format chrome build serve
+.PHONY: setup check format chrome build serve site
 
 setup:
 	uv sync --locked
@@ -16,6 +16,9 @@ format:
 build:
 	npm --prefix frontend run build
 	uv build
+
+site:
+	uv run --locked campervan site
 
 serve:
 	mkdir -p logs

@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated, Any, cast
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -13,23 +13,16 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from campervan.coordinator import Coordinator, ModelStatus, Regenerate
-from campervan.cutting import effective_options, source_key, stock_groups
+from campervan.cutting import stock_groups
 from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
-from campervan.materials import PROJECT_PATH, ROLES, MaterialUpdate, catalogue, resolve
-from campervan.parameter_fit import FitError, fit_parameters, parameter_constraints
-from campervan.parameters import Parameters, parameter_schema
+from campervan.materials import ROLES, MaterialUpdate, resolve
+from campervan.parameter_fit import FitError, fit_parameters
+from campervan.parameters import Parameters
+from campervan.paths import PROJECT_PATH
 from campervan.planning_api import register_planning
 from campervan.settings import Settings, load_settings
+from campervan.snapshot import ParameterResponse, cutting_data, material_data, parameter_response
 from campervan.worker import regenerate_model
-
-
-class ParameterResponse(BaseModel):
-    session_id: str
-    parameters: Parameters
-    schema_: dict[str, object] = Field(serialization_alias="schema")
-    viewer_url: str
-    errors: dict[str, str] = Field(default_factory=dict)
-    adjustments: dict[str, str] = Field(default_factory=dict)
 
 
 class Positions(BaseModel):
@@ -49,9 +42,13 @@ class Positions(BaseModel):
     bed_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     drawer_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     doors_close_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    cabinet_upper_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_rear_upper_1_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_rear_upper_2_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_cab_end_upper_1_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_cab_end_upper_2_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_lower_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    cabinet_storage_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_storage_aft_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_storage_fore_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_front_upper_door_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_storage_upper_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     solar_bag_x_mm: float = 750
@@ -125,26 +122,9 @@ def build_app(
     async def value_error(request: Request, error: ValueError) -> JSONResponse:
         return JSONResponse(status_code=422, content={"detail": str(error)})
 
-    def parameter_response(coordinator: Coordinator, parameters: Parameters) -> ParameterResponse:
-        schema = cast(dict[str, Any], parameter_schema())
-        for name, constraint in parameter_constraints(parameters).items():
-            field = schema["properties"][name]
-            field.update(constraint)
-            field.pop("exclusiveMinimum", None)
-            field.pop("exclusiveMaximum", None)
-        for role in ROLES:
-            for parameter in role.fields.values():
-                schema["properties"][parameter]["material"] = role.id
-        return ParameterResponse(
-            session_id=coordinator.session_id,
-            parameters=parameters,
-            schema_=schema,
-            viewer_url=settings.viewer_url,
-        )
-
     @app.get("/api/v1/parameters", response_model=ParameterResponse)
     async def get_parameters(coordinator: CurrentCoordinator) -> ParameterResponse:
-        return parameter_response(coordinator, coordinator.parameters)
+        return parameter_response(coordinator.session_id, coordinator.parameters, settings.viewer_url)
 
     @app.post("/api/v1/parameters/preview", response_model=ParameterResponse)
     async def preview_parameters(parameters: Parameters, coordinator: CurrentCoordinator) -> ParameterResponse:
@@ -155,7 +135,7 @@ def build_app(
             parameters, adjustments = fit_parameters(parameters)
         except FitError as error:
             errors[error.field] = str(error)
-        return parameter_response(coordinator, parameters).model_copy(
+        return parameter_response(coordinator.session_id, parameters, settings.viewer_url).model_copy(
             update={"errors": errors, "adjustments": adjustments}
         )
 
@@ -167,29 +147,16 @@ def build_app(
     @app.get("/api/v1/materials")
     async def get_materials(coordinator: CurrentCoordinator) -> dict[str, object]:
         status = coordinator.status()
-        return {
-            "roles": [role.model_dump() for role in ROLES],
-            "products": [product.model_dump() for product in catalogue()],
-            "selections": {name: selection.model_dump() for name, selection in coordinator.materials.items()},
-            "parameters": coordinator.parameters.model_dump(),
-            "cuts": [cut.model_dump() for cut in coordinator.cuts],
-            "cuts_revision": coordinator.cuts_revision,
-            "requested_revision": status.requested_revision,
-        }
+        return material_data(coordinator.parameters, coordinator.materials, coordinator.cuts,
+                             coordinator.cuts_revision, status.requested_revision)
 
-    def cutting_data(coordinator: Coordinator) -> dict:
-        groups = stock_groups(coordinator.cuts, coordinator.materials)
-        sources = {}
-        for group in groups:
-            options = effective_options(group, coordinator.cutting.settings, coordinator.cutting.options.get(group["key"]))
-            sources[group["key"]] = source_key(group, options)
-        return {"groups": groups, "sources": sources, "state": coordinator.cutting.model_dump(),
-                "jobs": coordinator.cutting_jobs,
-                "current": coordinator.cuts_revision == coordinator.status().requested_revision}
+    def current_cutting_data(coordinator: Coordinator) -> dict:
+        return cutting_data(coordinator.cuts, coordinator.materials, coordinator.cutting, coordinator.cutting_jobs,
+                            coordinator.cuts_revision == coordinator.status().requested_revision)
 
     @app.get("/api/v1/cutting")
     async def get_cutting(coordinator: CurrentCoordinator) -> dict:
-        return cutting_data(coordinator)
+        return current_cutting_data(coordinator)
 
     def cutting_group(key: str, coordinator: Coordinator) -> dict:
         group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials)
@@ -203,7 +170,7 @@ def build_app(
         await coordinator.stop_cutting()
         coordinator.cutting.settings = settings
         coordinator.save_cutting()
-        return cutting_data(coordinator)
+        return current_cutting_data(coordinator)
 
     @app.put("/api/v1/cutting/options")
     async def put_cutting_options(update: StockUpdate, coordinator: CurrentCoordinator) -> dict:
@@ -211,7 +178,7 @@ def build_app(
         await coordinator.stop_cutting(update.group)
         coordinator.cutting.options[update.group] = update.options
         coordinator.save_cutting()
-        return cutting_data(coordinator)
+        return current_cutting_data(coordinator)
 
     @app.post("/api/v1/cutting/layout", status_code=202)
     async def generate_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
@@ -219,12 +186,12 @@ def build_app(
             raise HTTPException(409, "The cut list is waiting for the current CAD model. Generate after it finishes.")
         group = cutting_group(update.group, coordinator)
         await coordinator.start_cutting(group)
-        return cutting_data(coordinator)
+        return current_cutting_data(coordinator)
 
     @app.post("/api/v1/cutting/stop")
     async def stop_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
         await coordinator.stop_cutting(update.group)
-        return cutting_data(coordinator)
+        return current_cutting_data(coordinator)
 
     @app.put("/api/v1/materials", status_code=202, response_model=ModelStatus)
     async def put_materials(update: MaterialUpdate, coordinator: CurrentCoordinator) -> ModelStatus:
