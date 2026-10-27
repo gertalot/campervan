@@ -2,8 +2,8 @@
   "parameters": {
     "table_mount": 0.0,
     "table_height_mm": 750.0,
-    "table_arm_swivel_deg": 287.73612471196117,
-    "table_top_rotation_deg": 251.6888470241854,
+    "table_arm_swivel_deg": 296.01707631321244,
+    "table_top_rotation_deg": 243.39939209324928,
     "table_top_offset_percent": -53.7,
     "table_fold_open_percent": 100.0,
     "table_stowed_x_mm": 572.0,
@@ -28433,8 +28433,8 @@
       },
       "product-tigerply-12-12:straight": {
         "mode": "straight",
-        "source": "c9a702ce2726dae7d5d71e864ec20b9a325cb8f420464518d49ceae69903e7c1",
-        "created": "2026-10-27T03:04:37.572458+00:00",
+        "source": "7ea4fc1cdf2efb0cf6fab721b839f3cadf549c16c69eb211dd09da8e0e68b5bf",
+        "created": "2026-10-27T09:07:44.287461+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},

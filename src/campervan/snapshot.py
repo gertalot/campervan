@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
-from campervan.cutting import effective_options, source_key, stock_groups
+from campervan.cutting import effective_options, refresh_layout_source, source_key, stock_groups
 from campervan.cutting_models import CuttingState
 from campervan.materials import ROLES, CutPart, Selection, catalogue
 from campervan.mannequins import MannequinSettings
@@ -60,7 +60,12 @@ def cutting_data(
 ) -> dict[str, Any]:
     groups = stock_groups(cuts, materials)
     sources = {}
+    state = cutting.model_dump()
     for group in groups:
         options = effective_options(group, cutting.settings, cutting.options.get(group["key"]))
         sources[group["key"]] = source_key(group, options)
-    return {"groups": groups, "sources": sources, "state": cutting.model_dump(), "jobs": jobs, "current": current}
+        for mode in ("straight", "nesting"):
+            key = f"{group['key']}:{mode}"
+            if key in state["results"]:
+                state["results"][key] = refresh_layout_source(state["results"][key], group, options)
+    return {"groups": groups, "sources": sources, "state": state, "jobs": jobs, "current": current}

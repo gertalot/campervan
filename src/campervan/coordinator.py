@@ -17,7 +17,7 @@ from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
-from campervan.cutting import effective_options, layout_score, source_key
+from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key
 from campervan.cutting_worker import solve_layout
 
 Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
@@ -87,6 +87,8 @@ class Coordinator:
         if not group["stock_sourced"] and not options.confirmed:
             raise ValueError("Set the available stock dimensions before arranging these pieces.")
         source = source_key(group, options)
+        if key in self.cutting.results:
+            self.cutting.results[key] = refresh_layout_source(self.cutting.results[key], group, options)
         if self.cutting_jobs.get(key, {}).get("state") == "running":
             return
         self.cutting_jobs[key] = {"state": "running", "source": source, "error": None}

@@ -723,6 +723,9 @@ Plywood-thickness filters show material-specific layouts. `cutting_models.py` ow
 per-material stock and saved results. The coordinator owns native solver subprocesses through `cutting_worker.py`,
 receives improving layouts, and saves them with the project. Searches have no time limit; the page labels minimum
 stock count as proven only when the solver reports it. Source fingerprints identify previous layouts after edits.
+Fingerprints ignore redundant collinear profile points and wire ordering so identical CAD profiles generated on
+different operating systems reuse their saved layouts, including in GitHub Pages exports. Older fingerprints are
+upgraded only when the saved inputs match the current stock, settings, dimensions and sampled shapes.
 Each product expands into component uses and a combined cut list grouped by dimensions. Hardware quantities are
 summed across unowned uses before rounding up to purchase packs. Sheet areas and timber lengths are combined,
 but purchase counts still require a cutting layout. Sidebar links retain their role-based URLs and expand the
