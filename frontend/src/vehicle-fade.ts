@@ -43,12 +43,14 @@ function directions(path: string): Direction[] {
 
 /** Fade vehicle sides, without touching visibility, geometry, or furniture materials. */
 export function createVehicleFade() {
-  type Entry = { group: CadGroup; skipPick: boolean; directions: Direction[]; maxOpacity: number; fadeAmount: number; materials: {
-    material: Material; edge: boolean;
-  }[] };
+  type Entry = {
+    group: CadGroup; directionFrame?: Object3D; skipPick: boolean; directions: Direction[];
+    maxOpacity: number; fadeAmount: number; materials: { material: Material; edge: boolean }[];
+  };
   let entries: Entry[] = [];
   let pickingVersion = 0;
   const towardCamera = new Vector3();
+  const panelNormal = new Vector3();
   const camera = new Vector3(), fromPanel = new Vector3();
   const rotation = new Quaternion();
   function skipPicking(entry: Entry, skip: boolean) {
@@ -68,6 +70,8 @@ export function createVehicleFade() {
   return {
     attach(groups: Record<string, unknown>) {
       entries = [];
+      const hatchPath = '/Campervan/Vehicle references/Rear opening/Rear hatch';
+      const hatch = groups[hatchPath] as Object3D | undefined;
       for (const [path, object] of Object.entries(groups)) {
         const opaque = path.startsWith('/Campervan/Vehicle references/Wheel arches/');
         const normals = directions(path);
@@ -87,7 +91,9 @@ export function createVehicleFade() {
         }
         const glass = path.endsWith('/Window glass');
         const rearGlass = glass && path.startsWith('/Campervan/Vehicle references/Rear opening/');
-        if (materials.length) entries.push({ group, skipPick: false, directions: normals, materials,
+        if (materials.length) entries.push({ group,
+          directionFrame: path === hatchPath || path.startsWith(`${hatchPath}/`) ? hatch : undefined,
+          skipPick: false, directions: normals, materials,
           fadeAmount: path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
           maxOpacity: rearGlass ? 0 : glass ? 0.3 : 1 });
       }
@@ -116,8 +122,12 @@ export function createVehicleFade() {
           fromPanel.subVectors(camera, fromPanel).normalize();
           direction = fromPanel;
         }
-        const facing = Math.max(...entry.directions.map(([x, y, z]) =>
-          x * direction.x + y * direction.y + z * direction.z));
+        const facing = Math.max(...entry.directions.map(([x, y, z]) => {
+          panelNormal.set(x, y, z);
+          // The rear hatch's outward face turns upward with its hinge.
+          if (entry.directionFrame) panelNormal.transformDirection(entry.directionFrame.matrixWorld);
+          return panelNormal.dot(direction);
+        }));
         // Keep far-facing and edge-on panels solid; fade only as their side turns toward us.
         const t = Math.max(0, Math.min(1, facing / 0.35));
         const near = t * t * (3 - 2 * t);

@@ -686,7 +686,10 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Doors closed (%)",
-        description="Both doors slide forward, then pull inward during the final 15%. Zero is fully open.",
+        description=(
+            "Closes both sliding doors and lowers the rear hatch. Sliding doors pull inward during the final 15%. "
+            "Zero is fully open, with the rear hatch raised 90 degrees in this preview; 100 is fully closed."
+        ),
         json_schema_extra={"unit": "%", "group": ["Vehicle references", "Sliding doors"], "control": "position"},
     )
 

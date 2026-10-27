@@ -26,7 +26,7 @@ Movable parts glow cyan on hover and during dragging. Motion follows the joint l
 | --- | --- |
 | Long bench conversion | Extends the frame, repositions cushions, then lowers backrests. Reverse to undo the sequence. |
 | Drawer extension | Moves the rear drawer on its sliders. |
-| Doors closed | Slides the van doors closed, including their final inward movement. |
+| Doors closed | Closes both sliding doors and lowers the rear hatch. At 0%, the hatch is raised 90°; at 100%, all doors are closed. |
 | Cabinet door sliders | Open individual doors; find them under Cabinet → Doors. |
 | Unfold tabletop | Top-level slider: 0% folded, 100% flat. |
 | Laptop table | Adjust mounting/stowed pose, height, arm swivel, tabletop rotation and offset. |

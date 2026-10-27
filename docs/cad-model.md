@@ -100,7 +100,7 @@ Campervan
 │   ├── Rear opening
 │   │   ├── Hatch surround
 │   │   ├── Clear opening
-│   │   └── Closed hatch (Door envelope, Window glass)
+│   │   └── Rear hatch (Door envelope, Window glass)
 │   ├── Body floor
 │   └── Cab
 │       ├── Floor
@@ -220,6 +220,13 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   the hatch curvature, recessed 30mm outward from the inner panel and remaining 8mm inside the exterior.
   The tapered metal return follows both curved window boundaries. Width, taper, height, top gap and recess
   are adjustable under Rear opening; the surround width is shared with the side windows.
+  The **Doors closed (%)** slider also raises/lowers this hatch. The `Rear hatch` group pivots about X at the
+  opening crown, Y = upper forward rake and Z = opening height + sill offset. A negative 90° rotation at 0% swings
+  its lower edge aft and upwards; 100% is the closed pose. The hinge location and 90° travel are visual estimates.
+  CAD construction and absolute viewer rotation keyframes share `rear_hatch_angle`; slider adjustments need no regeneration.
+  See inside rotates the hatch's fade direction with that hinge; the fixed surround retains its rear-facing fade.
+  The existing native slider keeps its label, 0–100 range and keyboard behavior; its description now names both
+  sliding doors and the rear hatch, following the [W3C slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/).
 - Rear aperture widths are 1250 at floor, 1265 at Z = 390 and 1115 at 60 below its 1280 centre height. Its outline is
   non-planar, bowing aft by 120 at the centre near bed height and leaning forward at the roof (80mm estimate).
   The closed hatch inner surface is a separate approximate reference, constrained to Y = −30 at the centre at

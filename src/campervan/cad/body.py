@@ -489,6 +489,11 @@ def floor_outline_wire(p: Parameters, *, front_y: float | None = None) -> Wire:
     return Wire.make_polygon(pts)
 
 
+def rear_hatch_angle(percent: float) -> float:
+    """Preview a quarter-turn lift at 0% closed; the actual opening angle is unmeasured."""
+    return -90 * (1 - percent / 100)
+
+
 def rear_hatch(p: Parameters) -> Compound:
     """Curved liftgate with a recessed, slightly tapered window; retain measured inner clearance."""
     inner = Face.make_surface(
@@ -537,7 +542,15 @@ def rear_hatch(p: Parameters) -> Compound:
     envelope = Solid.extrude(inner, (0, -recess - 8, 0))
     metal = Part(((envelope - opening) - pocket).solids(), label="Door envelope", color=WALL)
     glass = Compound(glass_surface.faces(), label="Window glass", color=Color(0.45, 0.62, 0.68, 0.12))
-    return Compound(label="Closed hatch", children=[metal, glass])
+    # Keep the leaf geometry local to the top seal so CAD and live motion use
+    # the same hinge. Negative X rotation swings the lower edge rearwards and up.
+    hinge = (centre, p.rear_opening_rake_mm, p.rear_opening_height_mm + p.rear_opening_sill_mm)
+    local = Location(tuple(-value for value in hinge))
+    for part in (metal, glass):
+        part.location = local * part.location
+    hatch = Compound(label="Rear hatch", children=[metal, glass])
+    hatch.location = Location(hinge, (rear_hatch_angle(p.doors_close_percent), 0, 0))
+    return hatch
 
 
 def rounded_rear_corner(p: Parameters, sections: list[list[Wire]], rear: list[Shell]) -> Part:

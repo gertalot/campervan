@@ -68,7 +68,7 @@ def replay_model(bundle: ModelBundle, settings: Settings) -> None:
 
 def motion_data(parameters: Parameters) -> dict[str, Any]:
     from campervan.cad.bed_motion import bed_keyframes
-    from campervan.cad.body import sliding_door_offset
+    from campervan.cad.body import rear_hatch_angle, sliding_door_offset
     from campervan.cad.cabinet_doors import cabinet_door_motions
     from campervan.cad.cushions import cushion_motion_tracks
     from campervan.cad.gear import gear_motions
@@ -77,6 +77,24 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
     from campervan.cad.sliding_bed import long_bed_layout
 
     drawer = "/Campervan/Long bench/Rear drawer"
+    door_tracks: list[dict[str, Any]] = [
+        {
+            "path": f"/Campervan/Vehicle references/Sliding doors/{side.title()} door",
+            "axis": axis,
+            "keyframes": [
+                (percent, sliding_door_offset(parameters, percent, side == "right")[index])
+                for percent in (0, 85, 100)
+            ],
+        }
+        for side in ("left", "right")
+        for index, axis in enumerate(("x", "y"))
+    ]
+    door_tracks.append({
+        "path": "/Campervan/Vehicle references/Rear opening/Rear hatch",
+        "axis": "x",
+        "kind": "rotation",
+        "keyframes": [(percent, rear_hatch_angle(percent)) for percent in (0, 100)],
+    })
     # The host applies independent translations and hinge rotations relative to the published CAD pose.
     return {
         "type": "campervan_motion",
@@ -86,18 +104,7 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
             **cabinet_door_motions(parameters),
             "doors_close_percent": {
                 "position": parameters.doors_close_percent,
-                "tracks": [
-                    {
-                        "path": f"/Campervan/Vehicle references/Sliding doors/{side.title()} door",
-                        "axis": axis,
-                        "keyframes": [
-                            (percent, sliding_door_offset(parameters, percent, side == "right")[index])
-                            for percent in (0, 85, 100)
-                        ],
-                    }
-                    for side in ("left", "right")
-                    for index, axis in enumerate(("x", "y"))
-                ],
+                "tracks": door_tracks,
             },
             "bed_extension_percent": {
                 "position": parameters.bed_extension_percent,
