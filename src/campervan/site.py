@@ -85,12 +85,11 @@ async def export_site() -> None:
     purchases = purchase_view(planning, project.materials, bundle.cuts)
     snapshot = {
         "exported_at": datetime.now(UTC).isoformat(),
-        "parameters": parameter_response(f"static-{fingerprint[:16]}", project.parameters, "").model_dump(
-            mode="json", by_alias=True,
-        ),
+        "parameters": parameter_response(
+            f"static-{fingerprint[:16]}", project.parameters, "", project.mannequins,
+        ).model_dump(mode="json", by_alias=True),
         "materials": material_data(project.parameters, project.materials, bundle.cuts, 0, 0),
         "cutting": cutting,
-        "planning": planning.model_dump(mode="json"),
         "purchases": purchases | {"filtered_totals": purchases["totals"]},
     }
     frames = [json.loads(payload) for kind, payload in bundle.frames if kind != "B"]

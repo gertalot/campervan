@@ -6,7 +6,6 @@ import { createCadViewer } from './viewer';
 import { setupMannequinControls } from './mannequin-controls';
 import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
-import { setupPlanner } from './planner';
 import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
 import { isStaticSite, readSnapshotPart } from './site-runtime';
@@ -36,7 +35,7 @@ if (isStaticSite) {
   const badge = document.createElement('span');
   badge.className = 'snapshot-label';
   badge.textContent = 'Read-only snapshot';
-  badge.title = 'Explore the model and saved layouts. Edit dimensions, materials and the plan in the local application.';
+  badge.title = 'Explore the model, materials and saved layouts. Edit the project in the local application.';
   status.before(badge);
   void readSnapshotPart<string>('exported_at').then(date => {
     badge.textContent = `Snapshot · ${new Date(date).toLocaleDateString()}`;
@@ -57,13 +56,27 @@ seeInside.addEventListener('change', () => {
   viewer.setSeeInside(seeInside.checked);
 });
 const seatedMannequin = element<HTMLDetailsElement>('mannequin');
+let mannequinSaveTimer: number;
+let mannequinSave = Promise.resolve();
 const mannequinControls = setupMannequinControls(
   seatedMannequin, element<HTMLInputElement>('mannequin-visible'), pose => viewer.setMannequinPose(pose),
+  settings => {
+    window.clearTimeout(mannequinSaveTimer);
+    mannequinSaveTimer = window.setTimeout(() => {
+      mannequinSave = mannequinSave.then(() => api.saveMannequins(settings)).then(() => {}, reason => {
+        error.textContent = `Could not save mannequin settings: ${String(reason)}`;
+        error.hidden = false;
+      });
+    }, 300);
+  },
 );
 let dirty = false;
 const planning = new PlanningClient();
 setupTabs();
-setupPlanner(element('plan-panel'), planning);
+if (!isStaticSite) {
+  const { setupPlanner } = await import('./planner');
+  setupPlanner(element('plan-panel'), planning);
+}
 const materials = setupMaterials(planning);
 const cutting = setupCutting(element('cuts-panel'), path => {
   showTab('cad');
@@ -75,10 +88,11 @@ const cutting = setupCutting(element('cuts-panel'), path => {
   }
 });
 viewer.setPieceLink({ has: cutting.hasPart, show: path => { void cutting.showPart(path); } });
-void planning.read();
+if (!isStaticSite) void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
 
 const controller = createController(api, {
+  setMannequins: settings => mannequinControls.restore(settings),
   setMetadata(metadata) {
     visibility.resetGroups();
     fields.replaceChildren();

@@ -16,6 +16,7 @@ from campervan.coordinator import Coordinator, ModelStatus, Regenerate
 from campervan.cutting import stock_groups
 from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
 from campervan.materials import ROLES, MaterialUpdate, resolve
+from campervan.mannequins import MannequinSettings
 from campervan.parameter_fit import FitError, fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import PROJECT_PATH
@@ -124,7 +125,9 @@ def build_app(
 
     @app.get("/api/v1/parameters", response_model=ParameterResponse)
     async def get_parameters(coordinator: CurrentCoordinator) -> ParameterResponse:
-        return parameter_response(coordinator.session_id, coordinator.parameters, settings.viewer_url)
+        return parameter_response(
+            coordinator.session_id, coordinator.parameters, settings.viewer_url, coordinator.mannequins,
+        )
 
     @app.post("/api/v1/parameters/preview", response_model=ParameterResponse)
     async def preview_parameters(parameters: Parameters, coordinator: CurrentCoordinator) -> ParameterResponse:
@@ -135,9 +138,8 @@ def build_app(
             parameters, adjustments = fit_parameters(parameters)
         except FitError as error:
             errors[error.field] = str(error)
-        return parameter_response(coordinator.session_id, parameters, settings.viewer_url).model_copy(
-            update={"errors": errors, "adjustments": adjustments}
-        )
+        response = parameter_response(coordinator.session_id, parameters, settings.viewer_url, coordinator.mannequins)
+        return response.model_copy(update={"errors": errors, "adjustments": adjustments})
 
     @app.put("/api/v1/parameters", status_code=202, response_model=ModelStatus)
     async def put_parameters(parameters: Parameters, coordinator: CurrentCoordinator) -> ModelStatus:
@@ -219,6 +221,10 @@ def build_app(
     async def set_position(position: Positions, coordinator: CurrentCoordinator) -> Positions:
         coordinator.set_positions(position.model_dump(exclude_unset=True))
         return Positions.model_validate(coordinator.parameters.model_dump())
+
+    @app.put("/api/v1/model/mannequins", response_model=MannequinSettings)
+    async def set_mannequins(settings: MannequinSettings, coordinator: CurrentCoordinator) -> MannequinSettings:
+        return coordinator.set_mannequins(settings)
 
     @app.get("/api/v1/model/status", response_model=ModelStatus)
     async def model_status(coordinator: CurrentCoordinator) -> ModelStatus:

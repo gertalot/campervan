@@ -695,19 +695,23 @@ with extended legs, lightly crossed ankles and hands over the belly. It is visib
 Head position follows the front pillow; adjustable pillow compression deforms its displayed mesh and restores it when
 the person is hidden or seated. Contact fitting is approximate and needs visual inspection.
 The pose reference is [PoseMyArt's lying crossed-legs pose](https://posemy.art/crossed-legs-poses/lying-crossed-legs-male-pose/666/).
-The mannequin checkbox
-lives alongside the other switches in **Visibility**. Pose and visibility retain the existing browser-storage key;
-the lying posture uses its own storage key. Metadata refreshes reattach the same controls without resetting them.
+The mannequin checkbox lives alongside the other switches in **Visibility**. All three poses, their individual
+visibility and the group checkbox save under `mannequins` in `data/project.json`. The API returns that configuration
+with the parameters, and `PUT /api/v1/model/mannequins` updates it without regenerating geometry. Existing browser
+poses migrate into projects without saved mannequin settings. Metadata refreshes reattach the same controls.
 Lying sliders adjust pillow-relative X/Y/Z offsets, body rotation, back lift/curvature, head tilt, hip/knee bend and
 hand position above/along the belly. Reset posture restores only that instance.
-Controls act directly on viewer geometry, persist in browser storage and do not regenerate CAD. The rig is detached
+Static snapshots include the saved configuration. Static startup applies it before loading the model; visitor changes
+stay in browser storage, scoped to the published configuration so a later configuration replaces old starting poses.
+Controls act directly on viewer geometry and do not regenerate CAD. The rig is detached
 before OCP disposes its old scene and reattached afterwards. OCP bundles Three.js r184. FastAPI's
 `/viewer-assets/js/shared-renderer.js` serves that locked bundle with its existing `THREE` namespace exported.
 `frontend/src/renderer.ts` loads it once and supplies the app's Three.js constructors. Vite aliases bare `three`
 imports to this module, including those inside the matching npm GLTFLoader and its utilities; dependency optimisation
 excludes `three` so it cannot embed another runtime. The npm package supplies addon sources and TypeScript types.
 The local Chrome build targets ES2022 for the renderer module's top-level await. App and OCP objects share constructors
-and resource IDs. No second canvas or render loop is used. The mannequin is not included in CAD assemblies or exports.
+and resource IDs. No second canvas or render loop is used. The mannequin is outside the CAD assembly and cutting list;
+static sites bundle the GLB and saved poses for display.
 
 ## Materials and bill of materials
 
@@ -733,9 +737,9 @@ custom stock and measured overrides. Updates go through catalogue edits and the 
 section/thickness overrides. Custom stock uses the existing parameter value. Listed sheet sizes and stock lengths
 constrain cutting, not the van layout. Reused slats start as already owned custom stock.
 
-`data/project.json` saves parameters, material selections, measured overrides, ownership and manually confirmed
-purchase quantities. It is versioned with the source. API reloads read it; edits through the API save it. Browser storage continues
-owning camera, visibility and live-control preferences. Shelf ledge width and height are separate dimensions; shelf
+`data/project.json` saves parameters, material selections, measured overrides, ownership, manually confirmed purchase
+quantities and mannequin settings. It is versioned with the source. API reloads read it; edits through the API save it.
+Browser storage retains camera, category visibility and live-control preferences. Shelf ledge width and height are separate dimensions; shelf
 bottoms remain on top of the ledges, whose bottoms stay aligned with the support-frame cross-beams.
 
 The CAD worker builds the assembly once, then `cad/bom.py` collects local leaf cutting envelopes before publication.

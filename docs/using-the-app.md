@@ -45,6 +45,10 @@ Expand **Mannequin** to adjust seated and lying poses. The main visibility check
 eye icon controls that mannequin. The lying mannequins follow the bed conversion. Pose, body shape and foam compression
 are visual fit references.
 
+The local app saves all three poses and their visibility choices in `data/project.json` without regenerating CAD.
+Static exports include that configuration. Visitors can adjust the mannequins in their browser; a newly published
+configuration replaces the previous export's starting poses.
+
 **Stored gear** contains the folded chairs, solar bag and chilly bin. Use their group eyes and live controls to explore
 positions. Reference geometry and hardware envelopes still need comparison with the physical van and equipment.
 

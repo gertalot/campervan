@@ -32,7 +32,7 @@ type Save = { kind: 'content'; content: JSONContent } | { kind: 'purchase'; oper
 
 export class PlanningClient {
   document: PlanningDocument | null = null;
-  status = 'Loading plan…'; error = ''; blocked = false;
+  status = isStaticSite ? 'Published snapshot · read only' : 'Loading plan…'; error = ''; blocked = false;
   private revision = 0;
   private queue: Save[] = [];
   private saving = false;

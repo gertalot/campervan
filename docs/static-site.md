@@ -6,19 +6,22 @@ Run from the project directory after setup:
 make site
 ```
 
-The export goes into `site/` and includes the model, motion data, saved cutting layouts, bill of materials and plan.
+The export goes into `site/` and includes the model, motion data, saved cutting layouts, bill of materials and purchases.
 Both the local application and exporter read `data/project.json` and `data/planning.json`. Commit these files with the
-source so GitHub Actions receives the saved design and plan.
+source so GitHub Actions receives the saved design and purchase records. The static site excludes the Plan page and
+its document; the exporter reads the planning file only to produce the purchase data used by the BOM.
 
 The exporter reuses a matching model cache or builds the geometry offline. It starts no services.
+The saved project includes all three mannequin poses, their individual visibility and the group's visibility.
+An export starts with that configuration. Visitor changes stay in browser storage and do not update the project.
 
 ## Included controls
 
 Visitors can move the camera, toggle visibility, adjust mannequins and operate sliders or drag moving parts.
-Links between CAD pieces and cutting drawings work. The plan and purchases support reading, search and filters.
+Links between CAD pieces and cutting drawings work. Purchases support reading, search and filters.
 Visitors can download cutting drawings and CSV lists.
 
-Dimensions, materials, the plan and purchase records are read-only. Regeneration, cutting optimisation and exact CAD
+Dimensions, materials and purchase records are read-only. Regeneration, cutting optimisation and exact CAD
 measurements require the local application.
 
 Calculate missing cutting layouts in the local app before exporting. `make site` includes current saved layouts and
@@ -32,7 +35,7 @@ Relative asset paths and hash URLs such as `#/cuts` allow hosting beneath a repo
 The exporter includes `.nojekyll`. Generated `site/` is gitignored.
 
 Run `make site` again to update an export. The header shows its export date. Browser preferences stay in that browser;
-they do not change the project files. The site includes the complete saved plan, purchases and supplier details.
+they do not change the project files. The site includes purchases and supplier details, and excludes the plan document.
 
 ## GitHub Pages
 

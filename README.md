@@ -40,11 +40,11 @@ and dragging move the existing model in the browser. The development services re
 
 ## Saved project
 
-- `data/project.json`: dimensions, material selections and cutting layouts.
+- `data/project.json`: dimensions, material selections, cutting layouts and mannequin configurations.
 - `data/planning.json`: the conversion plan and purchase records.
 
 Commit these files with the source. Generated caches and recovery files stay in the ignored `.local/` directory.
-Camera, visibility and pose preferences stay in browser storage.
+Camera, category visibility and moving-part pose preferences stay in browser storage.
 
 ## Guides
 
@@ -56,6 +56,7 @@ Camera, visibility and pose preferences stay in browser storage.
 
 ## Share the design
 
-`make site` exports an interactive snapshot to `site/`, including the model, saved cutting layouts, BOM and plan.
+`make site` exports an interactive snapshot to `site/`, including the model, saved cutting layouts, BOM and purchases.
+The Plan page and its document are excluded from the static site.
 Visitors can explore the design; editing requires the local app.
 See [static export and GitHub Pages](docs/static-site.md) for publishing instructions.

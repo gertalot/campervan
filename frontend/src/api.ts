@@ -1,4 +1,5 @@
 import { isStaticSite, readSnapshotPart } from './site-runtime';
+import type { MannequinSettings } from './mannequin';
 
 export const readOnly = isStaticSite;
 export type Parameters = Record<string, number>;
@@ -22,6 +23,7 @@ export interface ParameterResponse {
   parameters: Parameters;
   schema: { properties: Record<string, FieldMetadata> };
   viewer_url: string;
+  mannequins?: MannequinSettings | null;
   errors?: Record<string, string>;
   adjustments?: Record<string, string>;
 }
@@ -49,7 +51,7 @@ export class ApiError extends Error {
 export async function request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   if (isStaticSite) {
     if (method !== 'GET') throw new Error('This exported snapshot is read-only.');
-    if (!['parameters', 'materials', 'cutting', 'planning', 'purchases'].includes(path)) {
+    if (!['parameters', 'materials', 'cutting', 'purchases'].includes(path)) {
       throw new Error(`This action requires the local application: ${path}`);
     }
     return readSnapshotPart<T>(path);
@@ -83,3 +85,5 @@ export const loadModel = () => request<ModelStatus>('model/load', 'POST');
 export const regenerate = () => request<ModelStatus>('model/regenerate', 'POST');
 export const setPositions = (positions: Parameters) => request<Parameters>('model/position', 'PATCH', positions);
 export const setPosition = (name: string, percent: number) => setPositions({ [name]: percent });
+export const saveMannequins = (settings: MannequinSettings) =>
+  request<MannequinSettings>('model/mannequins', 'PUT', settings);
