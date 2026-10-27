@@ -9,6 +9,7 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from campervan.materials import CutPart, Project, Selection, load_project, resolve, save_project
+from campervan.mannequins import MannequinSettings
 from campervan.model_cache import ModelBundle, model_fingerprint, read_bundle, save_bundle
 from campervan.parameter_fit import fit_parameters
 from campervan.parameters import Parameters
@@ -16,7 +17,7 @@ from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
-from campervan.cutting import effective_options, layout_score, source_key
+from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key
 from campervan.cutting_worker import solve_layout
 
 Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
@@ -48,6 +49,7 @@ class Coordinator:
         self.parameters = project.parameters
         self.materials = project.materials
         self.cutting = project.cutting
+        self.mannequins = project.mannequins
         self.cutting_jobs: dict[str, dict[str, Any]] = {}
         self._cutting_tasks: dict[str, asyncio.Task[None]] = {}
         self._bundle = read_bundle(self._cache_path)
@@ -65,9 +67,18 @@ class Coordinator:
         self._task: asyncio.Task[None] | None = None
         self._publication = asyncio.Lock()
 
+    def project(self) -> Project:
+        return Project(
+            parameters=self.parameters, materials=self.materials, cutting=self.cutting, mannequins=self.mannequins,
+        )
+
     def save_cutting(self) -> None:
-        save_project(Project(parameters=self.parameters, materials=self.materials, cutting=self.cutting),
-                     self._project_path)
+        save_project(self.project(), self._project_path)
+
+    def set_mannequins(self, settings: MannequinSettings) -> MannequinSettings:
+        save_project(self.project().model_copy(update={"mannequins": settings}), self._project_path)
+        self.mannequins = settings
+        return settings
 
     async def start_cutting(self, group: dict) -> None:
         mode = self.cutting.settings.algorithm
@@ -76,6 +87,8 @@ class Coordinator:
         if not group["stock_sourced"] and not options.confirmed:
             raise ValueError("Set the available stock dimensions before arranging these pieces.")
         source = source_key(group, options)
+        if key in self.cutting.results:
+            self.cutting.results[key] = refresh_layout_source(self.cutting.results[key], group, options)
         if self.cutting_jobs.get(key, {}).get("state") == "running":
             return
         self.cutting_jobs[key] = {"state": "running", "source": source, "error": None}
@@ -120,7 +133,8 @@ class Coordinator:
         key = model_fingerprint(resolved)
         if key != previous_key:
             await self.stop_cutting()
-        save_project(Project(parameters=resolved, materials=selected, cutting=self.cutting), self._project_path)
+        project = self.project().model_copy(update={"parameters": resolved, "materials": selected})
+        save_project(project, self._project_path)
         self.parameters, self.materials = resolved, selected
         if not force and key == previous_key and self._status.state == "regenerating":
             return self._status.requested_revision

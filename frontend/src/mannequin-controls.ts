@@ -1,7 +1,10 @@
-import { lyingPose, secondLyingPose, seatedPose, restoreMannequinPose, type MannequinPose } from './mannequin';
+import {
+  lyingPose, secondLyingPose, seatedPose, restoreMannequinPose, type MannequinPose, type MannequinSettings,
+} from './mannequin';
 import { createVisibilityButton, updateVisibilityButton } from './visibility';
+import { isStaticSite } from './site-runtime';
 
-/** Browser-only pose controls: never send these through CAD regeneration. */
+/** Live pose controls, independent of CAD regeneration. */
 function setupPoseControls(
   container: HTMLDetailsElement,
   defaults: MannequinPose,
@@ -120,8 +123,13 @@ function setupPoseControls(
   }
   update();
   return {
+    restore(saved: MannequinSettings['poses'][MannequinPose['mode']]) {
+      Object.assign(pose, restoreMannequinPose(defaults, saved));
+      update();
+    },
     fitted(values: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) {
-      if (pose.mode !== 'seated') return;
+      if (pose.mode !== 'seated') return false;
+      const changed = pose.fitSeat || Object.entries(values).some(([key, value]) => pose[key as keyof MannequinPose] !== value);
       Object.assign(pose, values);
       pose.fitSeat = false;
       for (const name of ['x', 'y', 'z', 'facing', 'hip', 'knee'] as const) {
@@ -129,6 +137,7 @@ function setupPoseControls(
         outputs.get(name)!.value = `${Math.round(pose[name])}${['x', 'y', 'z'].includes(name) ? 'mm' : '°'}`;
       }
       localStorage.setItem(storageKey, JSON.stringify({ ...pose, poseVersion: 2 }));
+      return changed;
     },
   };
 }
@@ -136,7 +145,11 @@ function setupPoseControls(
 /** The master checkbox masks each mannequin's saved visibility preference. */
 export function setupMannequinControls(
   container: HTMLDetailsElement, visible: HTMLInputElement, change: (pose: MannequinPose) => void,
+  save: (settings: MannequinSettings) => void,
 ) {
+  let loaded = false, restoring = false;
+  let publishedSource: string | null = null;
+  const snapshotKey = 'campervan.mannequin.snapshot';
   const summary = document.createElement('summary');
   summary.textContent = 'Mannequin';
   container.append(summary);
@@ -147,6 +160,17 @@ export function setupMannequinControls(
   visible.checked = localStorage.getItem('campervan.mannequin.visible') === null
     ? saved.visible !== false : localStorage.getItem('campervan.mannequin.visible') !== 'false';
   const poses = new Map<string, MannequinPose>();
+  function configuration(): MannequinSettings {
+    return { version: 1, visible: visible.checked, poses: Object.fromEntries([...poses].map(([mode, pose]) =>
+      [mode, { ...pose, poseVersion: 2 }])) as MannequinSettings['poses'] };
+  }
+  function persist() {
+    if (!loaded || restoring) return;
+    const settings = configuration();
+    if (isStaticSite) {
+      localStorage.setItem(snapshotKey, JSON.stringify({ source: publishedSource, settings }));
+    } else save(settings);
+  }
   const groups = [seatedPose, lyingPose, secondLyingPose].map(defaults => {
     const group = document.createElement('details');
     group.className = 'parameter-group';
@@ -154,11 +178,37 @@ export function setupMannequinControls(
     return setupPoseControls(group, defaults, pose => {
       poses.set(pose.mode, pose);
       change({ ...pose, visible: visible.checked && pose.visible });
+      persist();
     });
   });
   visible.addEventListener('change', () => {
     localStorage.setItem('campervan.mannequin.visible', String(visible.checked));
     for (const pose of poses.values()) change({ ...pose, visible: visible.checked && pose.visible });
+    persist();
   });
-  return { fitted: groups[0].fitted };
+  return {
+    restore(settings: MannequinSettings | null) {
+      restoring = true;
+      let selected = settings;
+      if (isStaticSite) {
+        publishedSource = JSON.stringify(settings);
+        const saved = JSON.parse(localStorage.getItem(snapshotKey) ?? 'null');
+        if (saved?.source === publishedSource) selected = saved.settings;
+      }
+      if (selected) {
+        visible.checked = selected.visible;
+        for (const [index, mode] of ['seated', 'lying', 'lying-second'].entries()) {
+          groups[index].restore(selected.poses[mode as MannequinPose['mode']]);
+        }
+        localStorage.setItem('campervan.mannequin.visible', String(visible.checked));
+      }
+      restoring = false;
+      loaded = true;
+      // Bring a pre-project browser configuration into the saved project once.
+      if (!settings && !isStaticSite) persist();
+    },
+    fitted(values: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) {
+      if (groups[0].fitted(values)) persist();
+    },
+  };
 }

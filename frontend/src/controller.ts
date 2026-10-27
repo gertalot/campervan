@@ -1,6 +1,8 @@
 import type { Api, FieldMetadata, ModelStatus, ParameterResponse, Parameters } from './api';
+import type { MannequinSettings } from './mannequin';
 
 export interface View {
+  setMannequins(settings: MannequinSettings | null): void;
   setMetadata(metadata: Record<string, FieldMetadata>): void;
   setParameters(parameters: Parameters, reset: boolean): void;
   setViewerUrl(url: string): Promise<void> | void;
@@ -157,6 +159,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
       if (status.session_id !== session) {
         const data = await api.getParameters();
         if (!running) return;
+        view.setMannequins(data.mannequins ?? null);
         if (!metadata) await view.setViewerUrl(data.viewer_url);
         metadata = data.schema.properties;
         current = null;

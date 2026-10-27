@@ -28433,8 +28433,8 @@
       },
       "product-tigerply-12-12:straight": {
         "mode": "straight",
-        "source": "c9a702ce2726dae7d5d71e864ec20b9a325cb8f420464518d49ceae69903e7c1",
-        "created": "2026-10-27T03:04:37.572458+00:00",
+        "source": "7ea4fc1cdf2efb0cf6fab721b839f3cadf549c16c69eb211dd09da8e0e68b5bf",
+        "created": "2026-10-27T09:07:44.287461+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -45266,6 +45266,69 @@
           "perimeter_area_ratio": 0.004669338677354709
         },
         "objective": "Fewest sheets, then useful rectangular offcuts"
+      }
+    }
+  },
+  "mannequins": {
+    "version": 1,
+    "visible": true,
+    "poses": {
+      "seated": {
+        "mode": "seated",
+        "visible": true,
+        "x": 1115.0,
+        "y": 928.0,
+        "z": 519.0,
+        "facing": 270.0,
+        "compression": 23.0,
+        "lean": 24.0,
+        "curvature": 85.0,
+        "headTilt": 23.0,
+        "hip": 88.95162517948846,
+        "knee": 88.95162517948846,
+        "shoulder": 17.0,
+        "elbow": 52.0,
+        "autoLegs": true,
+        "fitSeat": false,
+        "poseVersion": 2
+      },
+      "lying": {
+        "mode": "lying",
+        "visible": true,
+        "x": 212.0,
+        "y": -91.0,
+        "z": -66.0,
+        "facing": 0.0,
+        "compression": 100.0,
+        "lean": -5.0,
+        "curvature": 21.0,
+        "headTilt": -30.0,
+        "hip": 0.0,
+        "knee": 0.0,
+        "shoulder": -100.0,
+        "elbow": -64.0,
+        "autoLegs": true,
+        "fitSeat": false,
+        "poseVersion": 2
+      },
+      "lying-second": {
+        "mode": "lying-second",
+        "visible": false,
+        "x": -134.0,
+        "y": -95.0,
+        "z": -37.0,
+        "facing": 0.0,
+        "compression": 100.0,
+        "lean": 0.0,
+        "curvature": 22.0,
+        "headTilt": -30.0,
+        "hip": 0.0,
+        "knee": 0.0,
+        "shoulder": -100.0,
+        "elbow": -125.0,
+        "autoLegs": true,
+        "fitSeat": false,
+        "poseVersion": 2
       }
     }
   }

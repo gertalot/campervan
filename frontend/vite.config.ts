@@ -4,8 +4,15 @@ import { fileURLToPath } from 'node:url';
 declare const process: { readonly env: Record<string, string | undefined> };
 
 // Settings come only from the invoking process; never load dotenv files.
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   envDir: false,
+  plugins: mode === 'static' ? [{
+    name: 'static-project-views',
+    transformIndexHtml(html: string) {
+      return html.replace(/<button id="plan-tab"[^>]*>[\s\S]*?<\/button>/, '')
+        .replace(/<section id="plan-panel"[^>]*>\s*<\/section>/, '');
+    },
+  }] : [],
   resolve: {
     alias: [{ find: /^three$/, replacement: fileURLToPath(new URL('./src/renderer.ts', import.meta.url)) }],
   },
@@ -26,4 +33,4 @@ export default defineConfig({
     assetsDir: 'assets',
   },
   test: { environment: 'node' },
-});
+}));

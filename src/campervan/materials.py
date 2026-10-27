@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from campervan.cutting_models import CuttingState
+from campervan.mannequins import MannequinSettings
 from campervan.parameters import Parameters, default_parameters
 from campervan.paths import PROJECT_PATH
 
@@ -272,6 +273,7 @@ class Project(BaseModel):
     parameters: Parameters = Field(default_factory=default_parameters)
     materials: dict[str, Selection] = Field(default_factory=default_selections)
     cutting: CuttingState = Field(default_factory=CuttingState)
+    mannequins: MannequinSettings | None = None
 
 
 def catalogue() -> list[Product]:

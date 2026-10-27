@@ -42,9 +42,52 @@ def stock_groups(cuts: list[CutPart], selections: dict[str, Selection]) -> list[
     return list(groups.values())
 
 
-def source_key(group: dict, options: CuttingOptions) -> str:
-    payload = {"version": 3, "group": group, "options": options.model_dump()}
+def _profile_key(points: list) -> tuple:
+    """Ignore wire ordering and redundant points without changing the sampled shape."""
+    # CAD profiles are recorded to four decimal places. Integer coordinates make
+    # collinearity exact, including extra edge samples produced on another OS.
+    ring = []
+    for x, y in points:
+        point = (round(x * 10000), round(y * 10000))
+        if not ring or point != ring[-1]:
+            ring.append(point)
+    if len(ring) > 1 and ring[0] == ring[-1]:
+        ring.pop()
+    corners = []
+    for i, (x, y) in enumerate(ring):
+        ax, ay = ring[i - 1]
+        bx, by = ring[(i + 1) % len(ring)]
+        collinear = (x - ax) * (by - ay) == (y - ay) * (bx - ax)
+        between = (x - ax) * (x - bx) + (y - ay) * (y - by) <= 0
+        if not (collinear and between):
+            corners.append((x, y))
+    if not corners:
+        return tuple(ring)
+    return min(tuple(order[i:] + order[:i])
+               for order in (corners, list(reversed(corners))) for i in range(len(order)))
+
+
+def _source_hash(group: dict, options: CuttingOptions, version: int) -> str:
+    payload = {"version": version, "group": group, "options": options.model_dump()}
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
+def source_key(group: dict, options: CuttingOptions) -> str:
+    parts = [part | {"outline": _profile_key(part["outline"]),
+                     "holes": sorted(_profile_key(hole) for hole in part["holes"])} for part in group["parts"]]
+    return _source_hash(group | {"parts": parts}, options, 4)
+
+
+def refresh_layout_source(result: dict, group: dict, options: CuttingOptions) -> dict:
+    """Migrate a saved fingerprint only when all original inputs still match."""
+    source = source_key(group, options)
+    if result.get("source") == source or "parts" not in result:
+        return result
+    saved_group = group | {"parts": result["parts"]}
+    if (result.get("source") == _source_hash(saved_group, options, 3)
+            and source_key(saved_group, options) == source):
+        return result | {"source": source}
+    return result
 
 
 def effective_options(group: dict, settings: CuttingSettings, stock: StockOptions | None) -> CuttingOptions:

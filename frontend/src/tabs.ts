@@ -1,7 +1,7 @@
 import { isStaticSite } from './site-runtime';
 
 export type Tab = 'cad' | 'bom' | 'plan' | 'cuts';
-const tabs = ['cad', 'bom', 'plan', 'cuts'] as const;
+const tabs: readonly Tab[] = isStaticSite ? ['cad', 'bom', 'cuts'] : ['cad', 'bom', 'plan', 'cuts'];
 type Listener = (tab: Tab, role?: string) => void;
 let current: Tab = 'cad';
 let currentRole: string | undefined;
@@ -11,6 +11,7 @@ export function onTab(listener: Listener) {
   return () => { listeners.delete(listener); };
 }
 export function showTab(tab: Tab, role?: string, history = true) {
+  if (!tabs.includes(tab)) { tab = 'cad'; role = undefined; }
   current = tab; currentRole = role;
   for (const name of tabs) {
     const panel = document.getElementById(`${name}-panel`)!;
@@ -52,8 +53,9 @@ export function setupTabs() {
   const restore = () => {
     const path = isStaticSite ? location.hash.slice(1) : location.pathname;
     const match = path.match(/^\/(cad|bom|plan|cuts)(?:\/([^/]+))?\/?$/);
-    showTab((match?.[1] as Tab) ?? 'cad', match?.[2] ? decodeURIComponent(match[2]) : undefined, false);
-    if (isStaticSite && !location.hash) history.replaceState(null, '', '#/cad');
+    const requested = (match?.[1] as Tab) ?? 'cad';
+    showTab(requested, match?.[2] ? decodeURIComponent(match[2]) : undefined, false);
+    if (isStaticSite && (!location.hash || !tabs.includes(requested))) history.replaceState(null, '', '#/cad');
     else if (!isStaticSite && location.pathname === '/') history.replaceState(null, '', '/cad');
   };
   window.addEventListener('popstate', restore);

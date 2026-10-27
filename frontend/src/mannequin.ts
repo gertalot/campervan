@@ -12,6 +12,11 @@ export interface MannequinPose {
   lean: number; curvature: number; headTilt: number; hip: number; knee: number; shoulder: number; elbow: number;
   autoLegs: boolean; fitSeat: boolean;
 }
+export interface MannequinSettings {
+  version: 1;
+  visible: boolean;
+  poses: Record<MannequinPose['mode'], MannequinPose & { poseVersion: 2 }>;
+}
 export const seatedPose: MannequinPose = {
   mode: 'seated', visible: true, x: 1153, y: 700, z: 560, facing: 270, compression: 30,
   lean: 20, curvature: 35, headTilt: 15, hip: 82, knee: 82, shoulder: 10, elbow: 80, autoLegs: true, fitSeat: true,
@@ -28,7 +33,7 @@ export function restoreMannequinPose(defaults: MannequinPose, saved: Partial<Man
   if ((saved.mode && saved.mode !== defaults.mode) || (defaults.mode === 'lying' && saved.poseVersion !== 2)) {
     return { ...defaults };
   }
-  return { ...defaults, ...saved, mode: defaults.mode };
+  return { ...defaults, ...Object.fromEntries(Object.entries(saved).filter(([key]) => key in defaults)), mode: defaults.mode };
 }
 
 interface RigPose {
