@@ -34,9 +34,10 @@ Assets use relative paths and tabs use hash URLs such as `#/cuts`, so the site c
 server rewrite rules. The `.nojekyll` file is included. Serve the export over HTTP(S); opening `index.html` directly as a
 file is unsupported. Generated `site/` is gitignored; publishing is a separate step.
 
-`.github/workflows/site.yml` builds and publishes to GitHub Pages on pushes to `develop`, or when run manually from
-Actions. Set the repository's **Settings → Pages → Source** to **GitHub Actions**. Commit both `data/project.json` and
-`data/planning.json` with the source; the workflow checks that they are tracked, then runs `make setup` and `make site`.
+`.github/workflows/site.yml` builds and publishes to GitHub Pages on pushes to `main`, or when run manually on `main`
+from Actions. Runs on other branches are skipped. Set **Settings → Pages → Source** to **GitHub Actions**. Commit both
+`data/project.json` and `data/planning.json` with the source; the workflow checks that they are tracked, then runs
+`make setup` and `make site`.
 Only the generated `site/` directory is uploaded for publication. The workflow runs no tests or local services.
 
 The header shows the export date. Browser preferences and poses stay in that browser and do not change the exported
