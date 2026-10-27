@@ -13,9 +13,7 @@ from campervan.cad.cut_profiles import flat_profile
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
     if "Laptop table" in path:
-        if name == "thin cabinet spacer":
-            return "skins"
-        return "table-plywood" if name == "laptop tabletop" else "frames"
+        return "table-plywood" if name in {"fixed bamboo leaf", "folding bamboo leaf"} else "frames"
     if name == "finished floor plywood":
         return "floor"
     if name.startswith("point latch"):
@@ -58,14 +56,16 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
+        if "Laptop table" in path and "Stowed" in path:
+            return  # Another pose of the same two leaves and purchased leg kit.
+        if "Laptop table" in path and "Table hinges · Homer HOM006136" in path:
+            return  # One purchased pair; the moving halves follow their bamboo leaves.
         if "Latch strikes" in path:
             return  # Supplied with the purchased Point latches.
         if part.children:
             for child in part.children:
                 visit(child, path)
             return
-        if "Laptop table" in path and "Cabinet mount" in path and part.label == "Laptop tabletop":
-            return  # This is another display pose of the same physical tabletop.
         # Each leaf retains its construction geometry. Remove its local placement;
         # ancestor transforms (bed motion, lid hinge, mirroring) do not change stock sizes.
         size = part.located(Location()).bounding_box().size

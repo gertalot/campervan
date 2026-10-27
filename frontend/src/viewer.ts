@@ -12,7 +12,7 @@ import * as library from './renderer';
 type Axis = 'x' | 'y' | 'z';
 interface Track {
   path: string; axis: Axis; kind?: 'rotation' | 'translation';
-  travel?: number; keyframes?: [number, number][];
+  travel?: number; keyframes?: [number, number][]; interpolation?: 'linear' | 'step';
 }
 interface Motion { position: number; tracks: Track[] }
 interface Vector { x: number; y: number; z: number }
@@ -67,6 +67,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let motions: Record<string, Motion> = {};
   const positions: Record<string, number> = {};
   const bases = new Map<string, Vector>();
+  const pendingMotions = new Set<string>();
+  let mannequinPending = false;
+  let motionFrame: number | null = null;
   const cameraKey = 'campervan.camera';
   let rendering = false;
   let cameraAnimation: number | null = null;
@@ -87,7 +90,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   });
   let seeInside = false;
 
-  function showMannequin() {
+  function showMannequin(render = true) {
     if (!viewer?.ready) return;
     const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
     for (const model of Object.values(mannequins)) model.root.visible = false;
@@ -125,7 +128,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         }
       }
       onMannequinStatus(feetOutside ? 'Feet extend beyond the mattress.' : '');
-      viewer.update(true, false);
+      if (render) viewer.update(true, false);
       return;
     }
     const visible = mannequinPose.visible && bed === 0;
@@ -143,7 +146,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       : fitted.compression < -5 ? 'This leg pose lifts the hips off the seat.'
       : fitted.compression > (seatCushion.bounds().max.z - seatCushion.bounds().min.z) * 0.55
         ? 'This leg pose needs more compression than the cushion allows.' : '');
-    viewer.update(true, false);
+    if (render) viewer.update(true, false);
   }
 
   function cancelCameraAnimation() {
@@ -219,16 +222,39 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   function showTables() {
     if (!viewer?.ready) return;
     const selected = positions.table_mount ?? motions.table_mount?.position ?? 0;
-    for (const [index, name] of ['Bench mount', 'Cabinet mount'].entries()) {
+    for (const [name, value] of [['Bench mount', 0], ['Stowed', 2]] as const) {
       const group = viewer.rendered.nestedGroup.groups[`/Campervan/Laptop table/${name}`];
-      if (group) group.visible = selected === index;
+      if (group) group.visible = selected === value;
     }
     (viewer as unknown as PieceViewer).idPicker?.setDirty();
   }
 
-  function move() {
+  function scheduleMove(name?: string) {
+    if (!viewer?.ready) return; // Latest values are replayed when geometry arrives.
+    if (name) pendingMotions.add(name);
+    else mannequinPending = true;
+    if (motionFrame !== null) return;
+    motionFrame = requestAnimationFrame(() => {
+      motionFrame = null;
+      const changed = new Set(pendingMotions);
+      const mannequinChanged = mannequinPending;
+      pendingMotions.clear();
+      mannequinPending = false;
+      move(changed, mannequinChanged);
+    });
+  }
+
+  function move(changed?: ReadonlySet<string>, mannequinChanged = false) {
     if (!viewer?.ready) return;
+    if (!changed) {
+      // A new motion payload replays all latest values and replaces queued work.
+      if (motionFrame !== null) cancelAnimationFrame(motionFrame);
+      motionFrame = null;
+      pendingMotions.clear();
+      mannequinPending = false;
+    }
     for (const [name, motion] of Object.entries(motions)) {
+      if (changed && !changed.has(name)) continue;
       const percent = positions[name] ?? motion.position;
       const fraction = (percent - motion.position) / 100;
       for (const track of motion.tracks) {
@@ -239,19 +265,30 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         const units = track.kind === 'rotation' ? Math.PI / 180 : 1;
         if (track.keyframes) {
           const points = track.keyframes;
-          const endIndex = points.findIndex(([position], index) => index > 0 && position >= percent);
-          const [start, a] = points[endIndex - 1];
-          const [end, b] = points[endIndex];
-          transform[track.axis] = (a + (b - a) * (percent - start) / (end - start)) * units;
+          if (track.interpolation === 'step') {
+            let value = points[0][1];
+            for (const [threshold, next] of points) {
+              if (percent < threshold) break;
+              value = next;
+            }
+            transform[track.axis] = value * units;
+          } else {
+            const endIndex = points.findIndex(([position], index) => index > 0 && position >= percent);
+            const [start, a] = points[endIndex - 1];
+            const [end, b] = points[endIndex];
+            transform[track.axis] = (a + (b - a) * (percent - start) / (end - start)) * units;
+          }
         } else {
           transform[track.axis] = base[track.axis] + fraction * track.travel! * units;
         }
         group.updateMatrixWorld(true);
       }
     }
-    pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
-    showTables();
-    showMannequin();
+    const bedChanged = !changed || changed.has('bed_extension_percent');
+    if (bedChanged) pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    if (!changed || changed.has('table_mount')) showTables();
+    if (bedChanged || mannequinChanged) showMannequin(false);
+    (viewer as unknown as PieceViewer).idPicker?.setDirty();
     viewer.update(true, true);
   }
 
@@ -398,8 +435,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       socket.onclose = () => onError('CAD viewer connection closed. Refresh after restarting make viewer.');
     },
     setPosition(name: string, percent: number) {
+      if (positions[name] === percent) return;
       if (name === 'table_mount' && positions[name] !== percent) pieces.clear();
-      positions[name] = percent; move();
+      positions[name] = percent;
+      scheduleMove(name);
     },
     setPieceLink: pieces.setLink,
     focusPiece: pieces.focus,
@@ -409,12 +448,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     setMannequinPose(pose: MannequinPose) {
       mannequinPoses[pose.mode] = { ...pose };
-      if (mannequins.seated && mannequins.lying && mannequins['lying-second']) showMannequin();
+      if (mannequins.seated && mannequins.lying && mannequins['lying-second']) scheduleMove();
       else if (pose.visible) mannequinLoading ??= Promise.all([loadMannequin(), loadMannequin(), loadMannequin()]).then(([seated, lying, second]) => {
         mannequins.seated = seated;
         mannequins.lying = lying;
         mannequins['lying-second'] = second;
-        showMannequin();
+        scheduleMove();
       }).catch(error => onError(`Mannequin: ${error instanceof Error ? error.message : String(error)}`));
     },
     getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed' {

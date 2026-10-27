@@ -25,11 +25,32 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let inputError: string | null = null;
   let previewRevision = 0;
   const positionKey = 'campervan.positions';
+  const tableReturnKey = 'campervan.table-return-after-bed';
+  let returnMountedTable = storage.getItem(tableReturnKey) === 'true';
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
   delete positions.cross_bed_extension_percent;
 
+  function updateTableForBed() {
+    if (positions.bed_extension_percent > 0 && positions.table_mount !== 2) {
+      returnMountedTable = true;
+      positions.table_mount = 2;
+    } else if (positions.bed_extension_percent === 0 && returnMountedTable) {
+      returnMountedTable = false;
+      positions.table_mount = 0;
+    } else return false;
+    storage.setItem(tableReturnKey, String(returnMountedTable));
+    return true;
+  }
+
   function setPosition(name: string, percent: number) {
     positions[name] = percent;
+    if (name === 'table_mount' && returnMountedTable) {
+      returnMountedTable = false; // An explicit choice replaces the automatic return.
+      storage.setItem(tableReturnKey, 'false');
+    }
+    if (name === 'bed_extension_percent' && updateTableForBed()) {
+      view.setPosition('table_mount', positions.table_mount);
+    }
     storage.setItem(positionKey, JSON.stringify(positions));
     view.setPosition(name, percent);
   }
@@ -118,7 +139,13 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
         view.setMetadata(metadata);
         positions = Object.fromEntries(Object.entries(data.parameters)
           .filter(([name]) => metadata![name]?.control === 'position')
-          .map(([name, value]) => [name, positions[name] ?? value]));
+          .map(([name, value]) => {
+            const saved = positions[name];
+            const options = metadata![name].options;
+            return [name, saved !== undefined && (!options || options.some(option => option.value === saved))
+              ? saved : value];
+          }));
+        updateTableForBed();
         storage.setItem(positionKey, JSON.stringify(positions));
         for (const [name, value] of Object.entries(positions)) view.setPosition(name, value);
         view.setParameters({ ...data.parameters, ...positions }, true);
@@ -158,7 +185,12 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     previewPosition: setPosition,
     async savePosition(name: string, percent: number) {
       setPosition(name, percent);
-      try { await api.setPosition(name, percent); }
+      try {
+        await Promise.all([
+          api.setPosition(name, percent),
+          ...(name === 'bed_extension_percent' ? [api.setPosition('table_mount', positions.table_mount)] : []),
+        ]);
+      }
       catch (error) { showError(error); }
     },
     stop() { running = false; clock.clearTimeout(timer); },

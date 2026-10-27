@@ -45,18 +45,21 @@ ROLES = [
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
-        id="table-plywood", name="Laptop tabletop plywood", kind="sheet",
-        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="tigerply-18",
-        note="600 × 360mm solid top; share the 18mm sheets with the bench frames. Mount backing also uses frame plywood.",
+        id="table-plywood", name="Bamboo tabletop", kind="sheet",
+        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="prempanel-bamboo-25",
+        note="Two 250mm-wide leaves, folding to 250mm and opening to 500mm. Both fit on one 2200 × 600 × 25mm "
+             "bamboo panel. Grain follows the tabletop length. The mounting spacer remains frame plywood.",
     ),
     MaterialRole(
         id="lagun", name="Lagun swivel table leg", kind="hardware", fields={}, quantity=1,
-        note="One 500mm single-arm kit with standard 92 × 170mm bracket. Both CAD mount positions use this one kit. "
+        note="One 500mm single-arm kit with standard 92 × 170mm bracket and 240 × 200mm tabletop mount. "
              "Confirm bolt lengths and backing against the physical furniture before drilling.",
     ),
     MaterialRole(
-        id="lagun-second-bracket", name="Second Lagun mounting bracket", kind="hardware", fields={}, quantity=1,
-        note="Additional standard 92 × 170mm bracket for the second mounting location. One table moves between the mounts.",
+        id="table-hinges", name="Tabletop fold-over hinges", kind="hardware", fields={}, quantity=2,
+        note="Two Homer HOM006136 hinges, supplied as one pair, for the 25mm bamboo leaves. "
+             "Fosters specifies horizontal support and a 180° fold-over action. "
+             "Hinge positions, capacity, mortises, joint gap and fixings remain unconfirmed.",
     ),
     MaterialRole(
         id="cabinet-frames",
@@ -93,7 +96,8 @@ ROLES = [
 for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
-        "table-plywood": "tigerply-18",
+        "table-plywood": "prempanel-bamboo-25",
+        "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "tigerply-12",
         "skins": "tigerply-okoume-9",
         "shelves": "tigerply-12",
@@ -308,6 +312,7 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         project.materials.pop(role, None)
     # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.
     project.materials.pop("cabinet-stays", None)
+    project.materials.pop("lagun-second-bracket", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
     if project.materials.get("cabinet-catches", Selection()).product_id == "taskmaster-roller-4":
         project.materials["cabinet-catches"] = Selection(product_id="vanlifer-point-ll016")
@@ -317,6 +322,10 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         project.materials["skins"] = Selection(product_id="tigerply-okoume-9")
     if project.materials.get("slides", Selection()).product_id == "instantpanel-1200":
         project.materials["slides"] = Selection(product_id="instantpanel-locking-1200")
+    if project.materials.get("table-plywood", Selection()).product_id in {"tigerply-18", "tigerply-12", "tigerply-okoume-9"}:
+        # Replace the superseded single plywood top with Gert's two-leaf bamboo design.
+        project.materials["table-plywood"] = Selection(product_id="prempanel-bamboo-25")
+        project.parameters = project.parameters.model_copy(update={"table_depth_mm": 250.0})
     project.materials = default_selections() | project.materials
     project.parameters = resolve(project.parameters, project.materials)
     return project

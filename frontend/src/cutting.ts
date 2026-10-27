@@ -83,7 +83,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   };
   function filteredGroups() {
     return data!.groups.filter(g => filter === 'all' || (filter === 'timber' && g.kind === 'timber')
-      || (filter === 'other' && g.kind === 'sheet' && !isPlywood(g))
+      || filter === `sheet:${g.key}`
       || (filter.startsWith('ply:') && isPlywood(g) && g.thickness === Number(filter.slice(4))))
       .sort((a, b) => Number(b.stock_sourced) - Number(a.stock_sourced));
   }
@@ -167,7 +167,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const choices = [['all', 'All pieces'], ...[...new Set(data.groups.filter(isPlywood).map(g => g.thickness))]
       .sort((a, b) => a - b).map(n => [`ply:${n}`, `${mm(n)} mm plywood`]),
       ...(data.groups.some(g => g.kind === 'timber') ? [['timber', 'Timber']] : []),
-      ...(data.groups.some(g => g.kind === 'sheet' && !isPlywood(g)) ? [['other', 'Other sheet materials']] : [])];
+      ...data.groups.filter(g => g.kind === 'sheet' && !isPlywood(g))
+        .map(g => [`sheet:${g.key}`, /bamboo/i.test(g.name) ? `${mm(g.thickness)} mm bamboo` : materialName(g)])];
     if (!choices.some(([key]) => key === filter)) filter = 'all';
     for (const [key, name] of choices) {
       const button = el('button', name); button.type = 'button'; button.setAttribute('aria-pressed', String(filter === key));
@@ -223,7 +224,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     }
     const focus = el('button', `Show ${isPlywood(g) ? `${mm(g.thickness)} mm plywood` : g.kind === 'timber' ? 'timber' : 'this sheet material'}`);
     focus.type = 'button'; focus.onclick = () => {
-      inspector.close(); filter = isPlywood(g) ? `ply:${g.thickness}` : g.kind === 'timber' ? 'timber' : 'other'; render();
+      inspector.close(); filter = isPlywood(g) ? `ply:${g.thickness}` : g.kind === 'timber' ? 'timber' : `sheet:${g.key}`; render();
     }; inspector.append(focus);
     inspector.style.width = pointerX === null ? 'min(560px, calc(100vw - 32px))' : 'min(560px, 44vw)';
     inspector.style.left = pointerX !== null && pointerX > window.innerWidth / 2 ? '16px' : 'auto';
@@ -445,7 +446,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       const group = data?.groups.find(g => g.parts.some(p => p.path === path)); if (!group) return;
       const returning = returnSpot?.path === path ? returnSpot : null;
       returnSpot = null;
-      filter = returning?.filter ?? (isPlywood(group) ? `ply:${group.thickness}` : group.kind === 'timber' ? 'timber' : 'other');
+      filter = returning?.filter ?? (isPlywood(group) ? `ply:${group.thickness}`
+        : group.kind === 'timber' ? 'timber' : `sheet:${group.key}`);
       selectedPath = path; render(); markSelected();
       const matches = [...host.querySelectorAll<HTMLElement | SVGElement>('[data-part]')].filter(n => represents(n, path));
       const target = matches.find(n => n.closest('.cut-sheet')) ?? matches[0];

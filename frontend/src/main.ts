@@ -20,7 +20,7 @@ const form = element<HTMLFormElement>('parameters');
 const fields = element('fields');
 const liveControls = element('live-controls');
 const inputs = new Map<string, HTMLInputElement | HTMLSelectElement>();
-const tableGroups = ['Bench mount', 'Cabinet mount', 'Stowed (TBD)'];
+const tableGroups: Record<number, string> = { 0: 'Bench mount', 2: 'Stowed' };
 const tableEyes = new Map<number, HTMLButtonElement>();
 function refreshTableEyes() {
   const selected = Number(inputs.get('table_mount')?.value ?? 0);
@@ -56,10 +56,7 @@ const materials = setupMaterials(planning);
 const cutting = setupCutting(element('cuts-panel'), path => {
   showTab('cad');
   if (path.startsWith('Laptop table / ')) {
-    if (path.endsWith(' / Laptop tabletop') && Number(inputs.get('table_mount')?.value) === 1) {
-      path = path.replace('Laptop table / Bench mount /', 'Laptop table / Cabinet mount /');
-    }
-    void controller.savePosition('table_mount', path.startsWith('Laptop table / Cabinet mount /') ? 1 : 0);
+    void controller.savePosition('table_mount', 0);
   }
   if (!viewer.focusPiece(path)) {
     error.textContent = 'This piece is not in the displayed CAD model yet.'; error.hidden = false;
@@ -97,11 +94,12 @@ const controller = createController(api, {
           });
           const heading = document.createElement('summary');
           heading.textContent = title;
-          const tableIndex = groupPath[0] === 'Laptop table' && depth === 1 ? tableGroups.indexOf(title) : -1;
+          const tableIndex = groupPath[0] === 'Laptop table' && depth === 1
+            ? Number(Object.entries(tableGroups).find(([, name]) => name === title)?.[0] ?? -1) : -1;
           if (tableIndex >= 0) {
             const eye = createVisibilityButton(title, () => {
               const current = Number(inputs.get('table_mount')?.value ?? 0);
-              void controller.savePosition('table_mount', current === tableIndex ? 2 : tableIndex);
+              void controller.savePosition('table_mount', current === tableIndex ? (tableIndex === 0 ? 2 : 0) : tableIndex);
             });
             tableEyes.set(tableIndex, eye);
             heading.append(eye);
@@ -185,10 +183,10 @@ const controller = createController(api, {
       parent.append(row);
       inputs.set(name, input);
     }
-    const stored = groupFor(['Laptop table', 'Stowed (TBD)'], fields);
+    const stored = groupFor(['Laptop table', 'Stowed'], fields);
     const hint = document.createElement('p');
+    hint.id = 'table-stowed-summary';
     hint.className = 'dimension-hint';
-    hint.textContent = 'Storage position and controls to be defined. Selecting this hides both mounted tables.';
     stored.append(hint);
     // Reattach the same live controls after metadata refreshes, preserving pose and listeners.
     fields.append(seatedMannequin);
@@ -216,6 +214,10 @@ const controller = createController(api, {
     form.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled = Object.keys(errors).length > 0;
   },
   setParameters(parameters, reset) {
+    const stack = 2 * parameters.table_ply_thickness_mm;
+    element('table-stowed-summary').textContent = `Folded top with upright and arm stored underneath. `
+      + `Approx. ${stack + 77}mm thick including the ${stack}mm bamboo stack. `
+      + 'Preview location is adjustable; final storage location and actual handle clearance remain unconfirmed.';
     for (const [name, input] of inputs) {
       if (dirty && !reset && !(input instanceof HTMLInputElement && input.readOnly)) continue;
       input.value = String(parameters[name]);

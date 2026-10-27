@@ -570,6 +570,15 @@ The Python model uses the same poses and travel for geometry checks and future e
 that position through `PATCH /api/v1/model/position`. Slider input also saves all positions to `campervan.positions`
 localStorage. On page load or API session change, the controller restores the positions to the UI and API before
 requesting regeneration. New geometry receives the latest selected positions.
+Slider previews are combined into one animation-frame update using the latest values. Only changed motion
+tracks are applied. Mannequin fitting, seat compression and pillow deformation are recalculated for bed or
+mannequin changes; table, drawer, door and gear sliders leave them alone. A slider frame draws once. Releasing
+a slider with the same value does not repeat the geometry update; its API save still occurs.
+Moving the bed extension above 0% automatically selects the Stowed table pose in the same preview frame.
+Releasing the bed slider saves both positions. Reloading with an extended bed also restores the table stowed.
+If extending the bed stowed a mounted table, returning the slider to 0% restores Bench mount. A table that was
+already stowed stays stowed. Browser storage remembers the automatic return across reloads; explicitly selecting
+a table pose cancels that pending return.
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
 
@@ -744,11 +753,26 @@ CAD supplies visibility anchors only. Pillow geometry, support contact, rotation
 frontend/src/pillows.ts and update in the browser without CAD regeneration.
 
 `Laptop table` is a furniture-local assembly from `cad/table.py`, mirrored with the benches and cabinet. It contains
-`Bench mount` and `Cabinet mount` display groups for one physical table. Each has separate live height, arm swivel
-and tabletop rotation controls. The Show table selector changes group visibility without regeneration. Stowed (TBD)
-reserves a third state and hides both mounted versions until its physical storage arrangement is designed.
+the `Bench mount` display group with live height, arm swivel, tabletop rotation, fold and mounting-offset controls.
+The cabinet mount has been removed. The Show table selector switches between Bench mount and Stowed without
+regeneration. Stowed shows the folded bamboo with the detached upright beside the arm beneath the tabletop.
+The fixed furniture bracket and spacer remain on the bench. Stowed has its own live XYZ and facing controls;
+the arm automatically points towards the displaced tabletop, flipping 180° when the offset changes sides.
+The default aisle position is a preview pending a storage-location decision. The two display
+poses share component builders and one mount offset. The duplicate stowed geometry is excluded from the cut
+list and its bamboo leaves link to the working pose's cutting entries. Nominal packed thickness is 127mm
+(50mm bamboo + 30mm fitting + 47mm arm); actual handles and the storage channel remain unmeasured.
 The bench mount has a 92mm post and one 18mm spacer flush with the retracted moving frame. That moving frame is
 trimmed 5mm at its cab end, leaving 3mm beside the mounting post throughout sideways travel. Slats stay unchanged.
-The cut list counts the 600 × 360 × 18mm top once, plus both mounts' backing pieces. The top and most backing pieces
-share frame plywood sheets; the cabinet mount also uses one 9mm shim. There is one kit plus an extra fixed bracket.
-Dimensions and mounting limitations are recorded in [Lagun table](research/lagun-table.md).
+The tabletop has two 700 × 250 × 25mm Prempanel bamboo leaves with rounded corners and perimeter round-over.
+It folds from 500mm open width to a 250mm-wide, 50mm-thick stack. The long-edge hinge rotates above the fixed
+leaf. Two selected Homer HOM006136 hinges appear in both table poses, with centres at 20% and 80% along
+the seam. Their 114 × 42mm open footprint and 38mm pin width follow the supplier; thickness, pivot spacing,
+barrel section, taper and countersunk holes are photo-based approximations. Each half follows its leaf
+through the existing schematic fold. Nominal blind seats prevent metal/wood overlap without changing the
+cutting silhouette. The hardware groups contribute no wood or extra hinge purchases to the cut list.
+Actual recesses, joint gap and fixing details remain unmeasured. The two leaves have separate cutting profiles on
+2200 × 600 × 25mm bamboo stock; the single mount spacer remains frame plywood. There is one Lagun kit. The current
+official tabletop mount is 240 × 200mm with 30mm overall profile depth. Its 240mm axis follows the tabletop length.
+Offset previews move the wood relative to the fixed mount; they do not add a sliding mechanism. Published
+dimensions and unverified hardware details are recorded in [Lagun table](research/lagun-table.md).

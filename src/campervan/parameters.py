@@ -22,6 +22,10 @@ RETIRED_PARAMETERS = frozenset(
         "cross_bed_extension_percent",
         "cab_backrest_length_mm",
         "drawer_rear_setback_mm",
+        "cabinet_table_height_mm",
+        "cabinet_table_arm_swivel_deg",
+        "cabinet_table_top_rotation_deg",
+        "table_stowed_arm_deg",
     }
 )
 
@@ -30,16 +34,16 @@ class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
 
     table_mount: float = Field(
-        default=0, ge=0, le=2, multiple_of=1, title="Show table",
-        description="Switch instantly between table poses. The stored position is still to be designed.",
+        default=0, ge=0, le=2, multiple_of=2, title="Show table",
+        description="Switch instantly between the working table and the folded, disassembled storage preview.",
         json_schema_extra={"unit": "", "group": ["Laptop table"], "control": "position", "options": [
-            {"value": 0, "label": "Bench mount"}, {"value": 1, "label": "Cabinet mount"},
-            {"value": 2, "label": "Stowed (TBD)"},
+            {"value": 0, "label": "Bench mount"},
+            {"value": 2, "label": "Stowed"},
         ]},
     )
     table_height_mm: float = Field(
-        default=700, ge=620, le=780, title="Tabletop height",
-        description="Top surface above the wooden floor. Range retains the upright through the mounting bracket.",
+        default=700, ge=620, le=780, title="Tabletop height (open)",
+        description="Open surface above the wooden floor. Folding the leaf onto the top adds one panel thickness.",
         json_schema_extra={"unit": "mm", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_arm_swivel_deg: float = Field(
@@ -50,28 +54,53 @@ class Parameters(BaseModel):
         default=0, ge=0, le=360, title="Tabletop rotation",
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
-    cabinet_table_height_mm: float = Field(
-        default=700, ge=620, le=780, title="Tabletop height",
-        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    table_top_offset_percent: float = Field(
+        default=0, ge=-100, le=100, title="Mount towards short edge",
+        description="0 centres the mount. ±100 places the 240mm plate's end flush with either short tabletop edge. "
+                    "The plate's 240mm axis runs along the tabletop length. This previews mounting positions.",
+        json_schema_extra={"unit": "%", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
-    cabinet_table_arm_swivel_deg: float = Field(
-        default=180, ge=0, le=360, title="Arm swivel",
-        json_schema_extra={"unit": "°", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    table_fold_open_percent: float = Field(
+        default=0, ge=0, le=100, title="Unfold tabletop",
+        description="0: two leaves stacked, 250mm wide. 100: flat, 500mm wide. Uses a 180° fold-over hinge axis.",
+        json_schema_extra={"unit": "%", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
-    cabinet_table_top_rotation_deg: float = Field(
-        default=0, ge=0, le=360, title="Tabletop rotation",
-        json_schema_extra={"unit": "°", "group": ["Laptop table", "Cabinet mount"], "control": "position"},
+    table_stowed_x_mm: float = Field(
+        default=800, ge=-1000, le=2500, title="X position",
+        description="Storage preview position across the van; final storage location remains undecided.",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
+    )
+    table_stowed_y_mm: float = Field(
+        default=450, ge=-1000, le=2500, title="Y position",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
+    )
+    table_stowed_z_mm: float = Field(
+        default=0, ge=0, le=1500, title="Bottom above floor",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
+    )
+    table_stowed_yaw_deg: float = Field(
+        default=0, ge=0, le=360, title="Facing",
+        json_schema_extra={"unit": "°", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_length_mm: float = Field(
-        default=600, ge=200, title="Tabletop length",
+        default=600, ge=240, title="Tabletop length",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_depth_mm: float = Field(
-        default=360, ge=240, title="Tabletop depth",
+        default=250, ge=200, title="Folded width",
+        description="Width of each leaf; the open tabletop is twice this width.",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_ply_thickness_mm: float = Field(
-        default=18, gt=0, le=25, title="Tabletop plywood",
+        default=25, gt=0, le=25, title="Bamboo thickness",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
+    )
+    table_corner_radius_mm: float = Field(
+        default=20, ge=0, le=80, title="Corner radius",
+        json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
+    )
+    table_edge_radius_mm: float = Field(
+        default=3, ge=0, le=10, title="Edge round-over",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
 
@@ -1375,6 +1404,8 @@ class Parameters(BaseModel):
         """Preserve construction datums while retiring superseded controls."""
         if isinstance(data, dict):
             data = {name: value for name, value in data.items() if name not in RETIRED_PARAMETERS}
+            if data.get("table_mount") == 1:
+                data["table_mount"] = 0  # The cabinet mounting option has been removed.
             # The removed cab-end skin also supplied these long-bench layout offsets.
             # Preserve the slats, guides and frame positions when reading older projects.
             if "wall_thickness_mm" in data:

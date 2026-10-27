@@ -35,13 +35,16 @@ class ParameterResponse(BaseModel):
 class Positions(BaseModel):
     """Live pose controls, updated without regenerating geometry."""
 
-    table_mount: float = Field(default=0, ge=0, le=2, multiple_of=1, allow_inf_nan=False)
+    table_mount: float = Field(default=0, ge=0, le=2, multiple_of=2, allow_inf_nan=False)
     table_height_mm: float = Field(default=700, ge=620, le=780, allow_inf_nan=False)
     table_arm_swivel_deg: float = Field(default=180, ge=0, le=360, allow_inf_nan=False)
     table_top_rotation_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
-    cabinet_table_height_mm: float = Field(default=700, ge=620, le=780, allow_inf_nan=False)
-    cabinet_table_arm_swivel_deg: float = Field(default=180, ge=0, le=360, allow_inf_nan=False)
-    cabinet_table_top_rotation_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
+    table_top_offset_percent: float = Field(default=0, ge=-100, le=100, allow_inf_nan=False)
+    table_fold_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    table_stowed_x_mm: float = Field(default=800, ge=-1000, le=2500, allow_inf_nan=False)
+    table_stowed_y_mm: float = Field(default=450, ge=-1000, le=2500, allow_inf_nan=False)
+    table_stowed_z_mm: float = Field(default=0, ge=0, le=1500, allow_inf_nan=False)
+    table_stowed_yaw_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
 
     bed_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     drawer_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)

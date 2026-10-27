@@ -1,5 +1,33 @@
 [
   {
+    "id": "homer-table-hinge-pair",
+    "name": "Homer stainless folding-table hinges · HOM006136",
+    "supplier": "Harken Fosters NZ",
+    "url": "https://fostersshipchandlery.co.nz/products/table-hinge-homer-pair",
+    "kind": "hardware",
+    "dimensions": {"length": 114, "width": 42, "pin_width": 38},
+    "price_nzd": 75.67,
+    "sale_unit": "pair",
+    "pack_quantity": 2,
+    "specification": "HOM006136. Two stainless steel dual-pin folding-table hinges. Fosters specifies horizontal tabletop support and a 180° fold-over action. Published open length 114mm, maximum width 42mm, pin width 38mm. Steel grade, metal thickness, central recess depth, fixing sizes, joint gap and load rating are unpublished; establish these on the selected hardware before machining the bamboo.",
+    "availability": "Fosters live product data shows in stock for online ordering. Wellington collection not confirmed.",
+    "checked": "2026-10-27"
+  },
+  {
+    "id": "prempanel-bamboo-25",
+    "name": "Prempanel laminated bamboo panel",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770",
+    "kind": "sheet",
+    "dimensions": {"length": 2200, "width": 600, "thickness": 25},
+    "price_nzd": 139,
+    "sale_unit": "panel",
+    "pack_quantity": 1,
+    "specification": "Laminated bamboo furniture panel, Bunnings I/N 0221770. Two 700 × 250mm tabletop leaves fit side by side on one panel. Keep the bamboo grain running along the tabletop length. Round and finish cut edges.",
+    "availability": "Bunnings lists in stock at Lyall Bay; aisle 5, bay 15. Recheck before collection.",
+    "checked": "2026-10-27"
+  },
+  {
     "id": "pinetrim-18-18-2400",
     "name": "Pinetrim untreated clear pine D4S · 18 × 18mm",
     "supplier": "Bunnings NZ",
