@@ -73,6 +73,8 @@ Selected material dimensions drive the model; measured overrides account for the
 Write multiline notes, nested numbered tasks, tables and linked purchases in the rich editor.
 Use the toolbar, slash commands and contextual menu for actions and their shortcuts.
 **Enter** continues text within a task; **Cmd/Ctrl+Shift+Enter** adds a task.
+From an expanded item with subitems, the new task becomes its first subitem. Otherwise it follows at the same level.
+Use **Actions → Add subitem / Add item at same level** to choose explicitly; **Shift+Tab** promotes an item one level.
 
 See [planner and purchase details](planner.md) for editing, saving and recovery controls, and
 [the cushion guide](squabs-guide.md) for the squab instructions.

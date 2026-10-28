@@ -20,13 +20,17 @@ export function mountPlanMenu(editor: Editor) {
     const dialog = document.createElement('dialog'); dialog.className = 'plan-shortcut-help';
     const heading = el('h2', 'Editor shortcuts'); heading.id = 'plan-shortcut-heading'; dialog.setAttribute('aria-labelledby', heading.id);
     const intro = el('p', 'Actions menus show the shortcuts for your current selection. Enter continues writing; a new item is a separate action. Shift + right-click opens the browser menu.');
+    const insertionHelp = el('p',
+      'New item adds the first subitem of an expanded item with subitems. Otherwise it adds an item at the same level. '
+      + 'Use Add subitem or Add item at same level to choose explicitly. '
+      + 'Tab indents; Shift+Tab moves an item up one level.');
     const table = el('table');
     for (const [label, key] of [['New paragraph', 'Enter'], ['Line break', 'Shift-Enter'],
       ['Open actions menu', 'Shift-F10'], ...planActions.filter(a => a.shortcut).map(a => [actionLabel(a, editor), a.shortcut!] as [string, string])]) {
       const row = el('tr'); row.append(el('td', label), el('td', shortcutLabel(key))); table.append(row);
     }
     const done = el('button', 'Close'); done.type = 'button'; done.onclick = () => dialog.close();
-    dialog.append(heading, intro, table, done); dialog.onclose = () => { dialog.remove(); editor.view.focus(); };
+    dialog.append(heading, intro, insertionHelp, table, done); dialog.onclose = () => { dialog.remove(); editor.view.focus(); };
     document.body.append(dialog); dialog.showModal();
   };
   const open = (request: MenuRequest = {}) => {

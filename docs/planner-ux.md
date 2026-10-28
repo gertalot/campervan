@@ -1,6 +1,6 @@
 # Planner interaction decisions
 
-Updated 26 October 2026. This is a personal conversion checklist editor, not a team project-management system.
+Updated 28 October 2026. This is a personal conversion checklist editor, not a team project-management system.
 The current interaction contract is also documented in [the planner guide](planner.md).
 
 ## Numbered checkbox outline
@@ -14,6 +14,27 @@ parent continue that parent's numbering. Existing and pasted conventional lists 
 Each item remains a rich container for paragraphs, tables and shared purchase views. Enter continues prose inside
 the item; Shift+Enter inserts a line break. New item is a separate, visible action with its shortcut shown in the UI.
 This typing contract is Gert's requested application behaviour; it is not claimed as a universal outliner convention.
+
+### New-item placement, 28 October
+
+Gert chose context-sensitive insertion: **New item**, Cmd/Ctrl+Shift+Enter and `/task` prepend a subitem to an
+expanded item that already has subitems. A collapsed item or an item without subitems gets a same-level item after
+its full contents. Existing paragraphs, tables, purchase views and subitems retain their ownership. The new item is
+unchecked, gets a fresh ID and receives the caret. Explicit **Add subitem** and **Add item at same level** actions
+are available in the existing contextual menu; Add subitem expands a collapsed parent. Keyboard shortcuts help
+explains the rule inside the app. Enter continues multiline writing; Tab/Shift+Tab retain the existing nesting commands.
+
+The ordinary-outline insertion rule in
+[Logseq's source](https://github.com/logseq/logseq/blob/master/src/main/frontend/handler/editor.cljs#L219-L241)
+provided a concrete precedent for selecting child versus same-level insertion based on expansion and existing children.
+[Workflowy](https://workflowy.com/help/add-edit-format) and
+[Dynalist](https://help.dynalist.io/article/49-make-subitems) document same-level insertion and Tab nesting, but those
+help pages do not establish the expanded-parent edge case. This behaviour follows Gert's choice.
+The [WAI-ARIA menu-button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) was consulted again;
+the actions reuse the current menu, saved selection, focus return and shared action registry.
+
+Source inspection covered insertion positions, the installed task-item schema and the inherited Shift+Tab command.
+No tests, builds, typechecks or browser interaction checks were run. Gert's hands-on editing remains the acceptance check.
 
 The slash picker accepts its highlighted item with plain Tab or Enter, as Gert requested. Its footer displays the
 navigation/accept/dismiss keys. Tab is intercepted only for an active picker with a matching item; modified Tab,

@@ -26,7 +26,9 @@ opens it, Up/Down selects an item, Home/End jumps to an end, and typing finds an
 | --- | --- |
 | Enter in prose | Another paragraph |
 | Enter in a task | Another paragraph in the same task; no extra checkbox |
-| Cmd/Ctrl+Shift+Enter | New task after the current task |
+| Cmd/Ctrl+Shift+Enter or `/task` | First subitem of an expanded item with subitems; otherwise another item at the same level |
+| Actions → Add subitem | First subitem; expands the parent |
+| Actions → Add item at same level | Another item after the current item and its subitems |
 | Shift+Enter | Another line in the same paragraph, without another checkbox |
 | Alt/Option+Enter or `/text` | Another paragraph within the same task/container |
 | Enter in an empty final list item | Leave/outdent the list and continue writing |
@@ -34,6 +36,11 @@ opens it, Up/Down selects an item, Home/End jumps to an end, and typing finds an
 | Tab / Shift+Tab in a table | Next/previous cell; Tab from the final cell adds a row |
 | Cmd/Ctrl+Z and redo | Undo/redo document writing, tables, completion and movement |
 | Alt/Option+Up / Down | Move the current task up/down |
+
+For example, New item from expanded item **4** creates **4.1** before the existing subitems, which renumber.
+From collapsed item **4**, it creates **5**. From **4.2** without subitems, it creates **4.3**.
+Shift+Tab on that final **4.3** promotes it to **5**; its subitems move with it and the old **5** becomes **6**.
+Enter continues writing within the current item.
 
 Type `/` at a fresh line or after a space for insertion commands: `/text`, `/task`, `/heading`, `/table`, `/purchases`.
 Choose with arrows, then Tab or Enter to insert the highlighted item. The picker shows these keys in its footer.

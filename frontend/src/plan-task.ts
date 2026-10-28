@@ -30,14 +30,34 @@ export function moveTask(editor: Editor, direction: -1 | 1): boolean {
   editor.view.dispatch(tr); editor.view.focus(); return true;
 }
 
-export function newTask(editor: Editor): boolean {
+export function newTask(editor: Editor, placement: 'auto' | 'child' | 'sibling' = 'auto'): boolean {
   const task = currentTask(editor);
-  if (!task) return editor.chain().focus().toggleTaskList().run();
+  if (!task) return placement === 'auto' && editor.chain().focus().toggleTaskList().run();
   const item = editor.schema.nodes.taskItem.createAndFill({ id: crypto.randomUUID(), checked: false,
     collapsed: false, needs_review: false });
   if (!item) return false;
-  const at = task.pos + task.node.nodeSize;
-  const tr = editor.state.tr.insert(at, item);
+
+  let childListPos: number | undefined;
+  task.node.forEach((child, offset) => {
+    if (childListPos === undefined && child.type.name === 'taskList') childListPos = task.pos + 1 + offset;
+  });
+  const asChild = placement === 'child'
+    || placement === 'auto' && childListPos !== undefined && !task.node.attrs.collapsed;
+  const tr = editor.state.tr;
+  let at = task.pos + task.node.nodeSize;
+  if (asChild) {
+    tr.setNodeAttribute(task.pos, 'collapsed', false);
+    if (childListPos !== undefined) {
+      at = childListPos + 1;
+      tr.insert(at, item);
+    } else {
+      const listPos = task.pos + task.node.nodeSize - 1;
+      tr.insert(listPos, editor.schema.nodes.taskList.create(null, item));
+      at = listPos + 1;
+    }
+  } else {
+    tr.insert(at, item);
+  }
   tr.setSelection(TextSelection.near(tr.doc.resolve(at + 2))).scrollIntoView();
   editor.view.dispatch(tr); editor.view.focus(); return true;
 }

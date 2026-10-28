@@ -108,9 +108,13 @@ async function paste(editor: Editor) {
   } finally { editor.off('transaction', map); }
 }
 export const planActions: PlanAction[] = [
-  { id: 'newItem', label: 'New item after', group: 'Item', shortcut: 'Mod-Shift-Enter', alias: '/task', context: true,
+  { id: 'newItem', label: 'New item', group: 'Item', shortcut: 'Mod-Shift-Enter', alias: '/task', context: true,
     when: e => !e.isActive('table'),
     run: e => newTask(e) },
+  { id: 'newSubitem', label: 'Add subitem', group: 'Item', when: taskContext, context: true,
+    run: e => newTask(e, 'child') },
+  { id: 'newSibling', label: 'Add item at same level', group: 'Item', when: taskContext, context: true,
+    run: e => newTask(e, 'sibling') },
   { id: 'complete', label: e => currentTask(e)?.node.attrs.checked ? 'Reopen item' : 'Complete item', group: 'Item',
     shortcut: 'Mod-Enter', when: taskContext, context: true, run: e => taskFlag(e, 'checked') },
   { id: 'collapse', label: e => currentTask(e)?.node.attrs.collapsed ? 'Expand item' : 'Collapse item', group: 'Item',
