@@ -90,7 +90,10 @@ edge trim and grain direction. Set stock sizes, available offcuts and individual
 Custom stock needs confirmed dimensions before arranging it.
 
 Selecting a thickness starts a background layout search. It publishes improvements and saves the best layout.
-**Stop optimisation** keeps that result. Design or cutting-setting changes stop old searches and mark previous layouts.
+Each search pauses after at most 20 seconds of elapsed time. **Arrange sheets** (or **Arrange timber lengths**) resumes
+that search for another 20 seconds. **Stop optimisation** pauses it early and keeps the best layout. Paused searches
+use no CPU and retain their search state while the backend stays running. Restarting the backend retains the saved
+layout but starts a fresh search. Design or cutting-setting changes discard affected searches and mark previous layouts.
 
 Straight-cut plywood candidates rank by sheet count, then the largest rectangular offcut's area/perimeter ratio,
 then the number of blank-separating cuts. A proven minimum sheet count does not prove the best possible offcut or cut

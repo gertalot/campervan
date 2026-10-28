@@ -192,7 +192,7 @@ def build_app(
 
     @app.post("/api/v1/cutting/stop")
     async def stop_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
-        await coordinator.stop_cutting(update.group)
+        coordinator.pause_cutting(update.group)
         return current_cutting_data(coordinator)
 
     @app.put("/api/v1/materials", status_code=202, response_model=ModelStatus)

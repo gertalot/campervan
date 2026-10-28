@@ -18,7 +18,7 @@ from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
 from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key
-from campervan.cutting_worker import solve_layout
+from campervan.cutting_worker import LayoutSearch
 
 Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
 logger = logging.getLogger(__name__)
@@ -52,6 +52,7 @@ class Coordinator:
         self.mannequins = project.mannequins
         self.cutting_jobs: dict[str, dict[str, Any]] = {}
         self._cutting_tasks: dict[str, asyncio.Task[None]] = {}
+        self._cutting_searches: dict[str, LayoutSearch] = {}
         self._bundle = read_bundle(self._cache_path)
         self.cuts: list[CutPart] = self._bundle.cuts if self._bundle else []
         self.cuts_revision: int | None = 0 if self._bundle else None
@@ -89,16 +90,29 @@ class Coordinator:
         source = source_key(group, options)
         if key in self.cutting.results:
             self.cutting.results[key] = refresh_layout_source(self.cutting.results[key], group, options)
-        if self.cutting_jobs.get(key, {}).get("state") == "running":
-            return
-        self.cutting_jobs[key] = {"state": "running", "source": source, "error": None}
-        self._cutting_tasks[key] = asyncio.create_task(
-            self._run_cutting(key, {"group": group, "mode": mode, "options": options.model_dump()})
+        task = self._cutting_tasks.get(key)
+        current_job = self.cutting_jobs.get(key)
+        if task is not None and not task.done():
+            if current_job and current_job["source"] == source:
+                if current_job["state"] == "paused":
+                    self._cutting_searches[key].resume()
+                    current_job["state"] = "running"
+                return
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        job: dict[str, Any] = {"state": "running", "source": source, "error": None}
+        self.cutting_jobs[key] = job
+        search = LayoutSearch(
+            {"group": group, "mode": mode, "options": options.model_dump()},
+            lambda: job.update(state="paused"),
         )
+        self._cutting_searches[key] = search
+        search.resume()
+        self._cutting_tasks[key] = asyncio.create_task(self._run_cutting(key, search))
 
-    async def _run_cutting(self, key: str, payload: dict) -> None:
+    async def _run_cutting(self, key: str, search: LayoutSearch) -> None:
         try:
-            async for event in solve_layout(payload):
+            async for event in search.updates():
                 if error := event.get("error"):
                     raise ValueError(error)
                 if result := event.get("result"):
@@ -115,13 +129,26 @@ class Coordinator:
         except Exception as error:
             logger.exception("Cutting layout failed")
             self.cutting_jobs[key].update(state="failed", error=str(error))
+        finally:
+            self._cutting_searches.pop(key, None)
+
+    def pause_cutting(self, group: str) -> None:
+        for key, search in self._cutting_searches.items():
+            if key.startswith(group + ":") and self.cutting_jobs[key]["state"] == "running":
+                search.pause()
 
     async def stop_cutting(self, group: str | None = None) -> None:
-        tasks = [task for key, task in self._cutting_tasks.items() if group is None or key.startswith(group + ":")]
-        for task in tasks:
+        tasks = {key: task for key, task in self._cutting_tasks.items()
+                 if group is None or key.startswith(group + ":")}
+        for task in tasks.values():
             task.cancel()
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(*tasks.values(), return_exceptions=True)
+        for key, task in tasks.items():
+            # A task cancelled before its first turn never enters _run_cutting's cleanup.
+            self._cutting_searches.pop(key, None)
+            if task.cancelled():
+                self.cutting_jobs[key]["state"] = "stopped"
 
     async def accept(
         self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None, *, force: bool = False

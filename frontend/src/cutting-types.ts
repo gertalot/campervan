@@ -27,7 +27,7 @@ export interface Result {
 }
 export interface Data {
   groups: Group[]; sources: Record<string, string>; current: boolean;
-  jobs: Record<string, { state: 'running' | 'complete' | 'stopped' | 'failed'; source: string; error: string | null }>;
+  jobs: Record<string, { state: 'running' | 'paused' | 'complete' | 'stopped' | 'failed'; source: string; error: string | null }>;
   state: { settings: Settings; options: Record<string, StockOptions>; results: Record<string, Result> };
 }
 export const mm = (n: number) => Number(n.toFixed(2)).toLocaleString('en-NZ');

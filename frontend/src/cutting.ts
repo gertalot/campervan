@@ -319,9 +319,11 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const root = layoutHosts.get(g.key); if (!root) return;
     const textUpdates: (() => void)[] = [];
     mirrorTextUpdates.set(g.key, textUpdates);
+    const restoreActionFocus = root.querySelector('.cut-layout-status button') === document.activeElement;
     root.replaceChildren();
     const key = resultKey(g), result = data!.state.results[key];
     const running = starting.has(key) || data!.jobs[key]?.state === 'running';
+    const paused = data!.jobs[key]?.state === 'paused';
     const status = el('div'); status.className = 'cut-layout-status';
     const regenerate = el('button', running ? 'Stop optimisation' : 'Arrange sheets'); regenerate.type = 'button';
     if (g.kind === 'timber' && !running) regenerate.textContent = 'Arrange timber lengths';
@@ -337,9 +339,14 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
         : 'Improving this layout…'
       : countProven ? result.optimises_offcuts ? 'Minimum sheet count proven · best offcut found'
         : 'Minimum stock count proven' : 'Best layout found';
-    status.append(el('span', state));
+    const statusText = el('span', paused ? `${state} · paused` : state);
+    statusText.setAttribute('role', 'status'); status.append(statusText);
     if (!isStaticSite) status.append(regenerate);
     root.append(status);
+    if (restoreActionFocus && !isStaticSite) regenerate.focus({ preventScroll: true });
+    if (!isStaticSite && (running || paused)) root.append(el('p', running
+      ? 'Search pauses automatically after 20 seconds.'
+      : `${g.kind === 'timber' ? 'Arrange timber lengths' : 'Arrange sheets'} continues this search for up to 20 seconds.`));
     if (!isStaticSite && !g.stock_sourced && !groupOptions(g).confirmed) root.append(el('p', 'Choose the available stock sizes below to calculate a layout.'));
     if (errors.has(key)) { const error = el('p', errors.get(key)!); error.className = 'cut-warning'; root.append(error); }
     if (data!.jobs[key]?.error) {
@@ -414,6 +421,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     if (isStaticSite || !data?.current || filter === 'all' || savingFailed) return;
     for (const g of filteredGroups()) {
       if (!g.stock_sourced && !groupOptions(g).confirmed) continue;
+      if (data.jobs[resultKey(g)]?.state === 'paused') continue;
       const result = data.state.results[resultKey(g)], key = `${resultKey(g)}:${data.sources[g.key]}`;
       const needsSearch = !result || !isCurrent(g, result) || result.unplaced.length > 0
         || (!result.optimal && !data.jobs[resultKey(g)]);
@@ -422,6 +430,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   }
   async function generate(g: Group) {
     const key = resultKey(g); if (starting.has(key) || data?.jobs[key]?.state === 'running' || !data?.current) return;
+    attempted.add(`${key}:${data.sources[g.key]}`);
     starting.add(key); errors.delete(key); renderLayouts(g);
     try {
       await pending; if (savingFailed || !starting.has(key)) return;

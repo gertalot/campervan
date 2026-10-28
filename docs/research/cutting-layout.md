@@ -32,11 +32,16 @@ have a valid guillotine sequence; curved profiles, notches and internal openings
 Aligning equal-sized parts may simplify the sequence, but it is not a feasibility requirement.
 
 Nesting and timber with one stock size retain the bin-packing objective. Multiple stock entries minimise full stock
-pieces, treating owned offcuts as low-cost stock; these do not use the native leftovers objective. Native solver
-workers have no time limit. The coordinator owns/cancels their tasks,
-saves improving candidates and keeps better saved candidates when a new search starts. The existing model-status
-poll also refreshes active cutting results. API requests return immediately; leaving the tab does not end the search.
-Global setting changes, stock edits, changed CAD dimensions and application shutdown stop affected workers.
+pieces, treating owned offcuts as low-cost stock; these do not use the native leftovers objective. Each worker runs
+for at most 20 seconds of wall-clock time per start/resume, including the CPU-sharing intervals. The parent suspends
+the process with SIGSTOP at the deadline, retaining the native search state. Arrange sheets resumes the same process
+for another 20 seconds; Stop optimisation pauses it early. Native solver timers remain unlimited because they count
+time spent suspended too. The coordinator owns/cancels the tasks, saves improving candidates and keeps better saved
+candidates when a new search starts. Paused searches consume no CPU, but retain process memory until invalidated or
+the backend shuts down. Only the best layout survives a backend restart, not the native search state.
+The existing model-status poll also refreshes active cutting results. API requests return immediately; leaving the
+tab does not end the current 20-second run. Returning to the tab does not automatically resume a paused search.
+Global setting changes, stock edits, changed CAD dimensions and application shutdown discard affected workers.
 
 Objective references: [PackingSolver guillotine documentation](https://fontanf.github.io/packingsolver/rectangleguillotine.html)
 and the [native solution comparator](https://github.com/fontanf/packingsolver/blob/master/src/rectangleguillotine/solution.cpp).
@@ -63,6 +68,11 @@ settings use progressive disclosure. New settings default to zero trim, and diag
 The UI decisions follow [recognition over recall](https://www.nngroup.com/articles/recognition-and-recall/) and
 [progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/), with OpenCutList's material,
 part-identification and allowance conventions. These sources inform the design; Gert's visual use provides acceptance.
+
+The 20-second pause/resume change follows [W3C status-message guidance](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html):
+the existing layout status identifies a paused search without taking focus, with a polite status role. A visible note
+explains the 20-second limit and the existing Arrange sheets action's continuation behaviour; no search-time setting
+or extra action is added. This guidance informs the change; screen-reader behaviour has not been verified.
 
 ## Plywood purchase and design audit, 26 October 2026
 
