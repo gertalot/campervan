@@ -19,11 +19,40 @@ Timber uses the same guillotine engine as fixed-width lengths, with end trims an
 
 Straight-cut sheets with one stock size use PackingSolver's `bin-packing-with-leftovers` objective, which searches
 for fewer sheets and a larger rectangular remainder. The coordinator ranks published candidates by stock use,
-then the best rectangular remnant's area/perimeter ratio, then the number of blank-separating saw cuts. Only
-separated rectangular remnants count; material inside profile openings is not included. A higher area/perimeter
+then middle-third crosscuts, the best rectangular remnant's area/perimeter ratio, and the number of blank-separating
+saw cuts. Only separated rectangular remnants count; material inside profile openings is not included. A higher area/perimeter
 ratio favours larger, less slender rectangles. The drawing marks the best rectangle and gives its dimensions.
+When all of those priorities tie, the smaller bounding area around the placed blanks wins, preferring tighter
+packing over an empty band between groups of parts.
 
-This is candidate ranking, not an exact solver for all three priorities: the native search objective does not
+For straight-cut sheet layouts, a full-width crosscut anywhere within the middle third of the long dimension is
+preferred after stock use. All positions in that band rank equally; useful offcuts and then cut count decide between
+them. There is no reward for moving closer to the exact centre. Sheets without a qualifying cut rank behind
+those with one; narrow end strips do not qualify. This preference does not apply to timber lengths or shape nesting.
+For an untrimmed 2400mm sheet the acceptable band runs from approximately 800 to 1600mm, accounting for the kerf centre.
+Existing saved layouts remain valid candidates, preventing a search from replacing them with extra sheets.
+
+The search explores both unrestricted sheets and sheets divided into two sections with a separating kerf.
+Candidate divisions use part dimensions and the blank edges of the valid saved layout throughout the middle third,
+followed by midpoint, 60% and two-thirds fallback positions. The saved layout also seeds the search's best result.
+Existing blank boundaries beside empty full-width bands are tried first, so those bands can be closed without
+requiring the native solver to rediscover an already feasible division.
+Both sections retain
+the native three-stage solver, giving the joined sheet an additional separating cut. Left and right sections
+are paired by their original stock type, with unused halves retained as rectangular offcuts. Finite stock quantities,
+grain direction, outer trim and kerf are preserved. Placements, cuts and remnants are translated back into the original
+sheet coordinates. The drawing uses its existing cut lines, without labels or special styling for the crosscut.
+Once a complete layout is known, section copies are capped at that layout's sheet count. This makes a one-sheet
+section search use the two halves of one sheet, rather than two larger halves from two separate sheets.
+
+Progressively wider finite native tree-search passes alternate between unrestricted and divided-sheet candidates.
+The existing worker still pauses the entire process after 20 seconds and resumes its current pass and candidate
+sequence. Nesting and timber retain their existing native searches. Section-packing bounds and optimality flags
+are not treated as proofs about full-sheet packing; an original-sheet area bound can still prove sheet count.
+The search finishes when all native candidate problems are solved or infeasible, or when another widening pass
+would exceed the binding's signed 32-bit queue-size range. This does not prove the secondary ranking globally optimal.
+
+This is a heuristic search and candidate ranking, not an exact solver for all priorities: the native search objective does not
 directly optimise area/perimeter or cut count, and its callback only publishes improvements to its own objective.
 It can miss a candidate with a better ratio or fewer cuts. Its leftovers objective also does not report a complete
 optimality proof. Sheet count is marked proven when it matches the greater of the blank-area lower bound and the
@@ -45,6 +74,9 @@ Global setting changes, stock edits, changed CAD dimensions and application shut
 
 Objective references: [PackingSolver guillotine documentation](https://fontanf.github.io/packingsolver/rectangleguillotine.html)
 and the [native solution comparator](https://github.com/fontanf/packingsolver/blob/master/src/rectangleguillotine/solution.cpp).
+
+Observed on 1 November 2026: the 18mm layout placed all twelve pieces on one 2400 × 1200mm sheet, with 3mm kerf
+and free rotation, including a full-width crosscut at 1280mm. The new search paused at the existing 20-second limit.
 
 Observed on the current 9mm parts with 3mm kerf, no trim and free rotation: the previous one-sheet layout's best
 rectangular remnant was 1260 × 737.92mm. The leftovers search found a one-sheet layout with a 1281 × 1200mm remnant,

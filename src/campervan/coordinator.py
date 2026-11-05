@@ -103,7 +103,8 @@ class Coordinator:
         job: dict[str, Any] = {"state": "running", "source": source, "error": None}
         self.cutting_jobs[key] = job
         search = LayoutSearch(
-            {"group": group, "mode": mode, "options": options.model_dump()},
+            {"group": group, "mode": mode, "options": options.model_dump(),
+             "incumbent": self.cutting.results.get(key)},
             lambda: job.update(state="paused"),
         )
         self._cutting_searches[key] = search

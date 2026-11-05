@@ -61,11 +61,29 @@ Faded near-side vehicle surfaces do not intercept interior piece picking in **Se
 
 ## Bill of materials
 
-Track categories, tags, quantities, bought items and costs in the purchase grid. Use filters to narrow the list;
-the totals show the filtered items and whole project. Shared stock appears once across its uses.
+The cost summary shows project spending and the remaining estimate, with missing prices or quantities flagged.
+Search or filter the shopping list by category, tag, supplier or status. Filtered costs appear above the table;
+the project summary keeps its scope. Shared stock appears once across its uses.
+Missing information has amber labels on the item and affected quantity/price fields. Click the summary's
+**items need details** link or tick **Needs details** to show those items.
 
-Expand **CAD stock and cutting details** for supplier links, specifications, availability, component uses and grouped
-cut sizes. Material links in the CAD sidebar open and highlight the corresponding stock entry.
+Required quantities include owned and bought materials. Current, complete saved cutting layouts supply sheet and
+timber-stock counts. Existing unsourced bed slats use the number of modelled pieces; their owned count covers that
+requirement. Incomplete or outdated layouts leave the stock requirement unknown.
+
+Edit quantities, including Bought, and unit prices directly in the table. The **pencil** opens the item's name,
+supplier, URL, category, tags, purchase unit, optional actual spending and notes. **Save** commits those detail fields
+and closes the form. **Cancel** discards the detail edits and closes the form. Table quantity and price cells autosave
+when you leave them. The Total price column emphasises the remaining cost, with the quantity below it.
+Click a column heading to sort ascending, then click again to reverse it. Arrows show the sort direction;
+unknown values stay at the bottom. **Total price** sorts by remaining cost. Filters and edits retain the selected sort.
+The column and direction are saved in this browser across page reloads. Each embedded Plan purchase table remembers
+its own sort separately from the Bill of materials.
+Supplier names link directly to the product. The static site shows the same information read only.
+
+Use **Model stock** at the top of the page to jump to specifications, availability, component uses and grouped cut
+sizes. Expand individual stock entries for their details. **Cut list** opens the sheet layouts.
+Material links in the CAD sidebar open and highlight the corresponding stock entry.
 Selected material dimensions drive the model; measured overrides account for the stock purchased.
 
 ## Plan

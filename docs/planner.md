@@ -77,20 +77,25 @@ Ordinary document tables do not affect costs.
 | Actual spent | Total actually paid so far for this item |
 | Remaining | Required minus owned minus bought, minimum zero |
 
-**Bought** records the outstanding quantity, or asks for the total bought when the requirement is unknown.
-It does not guess actual spending: enter that separately. Quantity/cost cells commit when you leave them; correct
+Edit Bought directly to record purchases. The **pencil** opens supplier information, categories, tags, purchase units,
+optional actual spending and notes. Detail changes stay in a draft until **Save** commits them and closes the form;
+**Cancel** discards them and closes the form. Both return keyboard focus to the pencil.
+Quantity and unit-price cells remain directly editable in the table. They commit when you leave them; correct
 invalid input before exporting. Unsaved purchase drafts are retained during refresh and can also be recovered in the BOM.
 Use **Undo purchase / Redo purchase** for committed purchase records. A focused input has normal text undo.
 Document Undo covers the view/filter, not the stock purchases.
 
 Remaining estimate is remaining quantity × unit price. Combined is actual spent plus remaining estimate. Unknown
-quantities/prices/actual costs are labelled incomplete; zero is valid. Currency is NZD. Add delivery as its own item.
+quantities/prices needed for outstanding purchases are labelled incomplete; zero is valid. Actual spending is optional
+and does not trigger a missing-data warning. Totals include only recorded spending and known remaining estimates.
+Currency is NZD. Add delivery as its own item.
 Changing a unit label does not convert quantities. Each shared product contributes once to whole-project totals.
 
-CAD stock is grouped by product. Hardware uses pack counts; sheets/timber need a cutting layout before purchase
-quantities are known. Existing owned flags exclude supplied uses from automatic need and are labelled. Required can
-override calculated need. Saved purchases of a product no longer selected in CAD remain as Unused stock with actual
-spending retained. CAD source specifications/cut lists remain under **CAD stock and cutting details** in the BOM.
+CAD stock is grouped by product. Hardware uses pack counts; sheets/timber use current, complete saved cutting layouts.
+Existing unsourced bed slats use their modelled piece count. Required includes owned and bought stock; ownership
+reduces only what remains to buy. Required can override calculated need. Saved purchases of a product no longer
+selected in CAD remain as Unused stock with actual spending retained. CAD source specifications/cut lists appear
+under **Model stock** in the BOM. Amber missing-data labels and **Needs details** identify incomplete items.
 
 ## Saving, conversion and recovery
 

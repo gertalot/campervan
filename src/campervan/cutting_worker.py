@@ -97,7 +97,7 @@ if __name__ == "__main__":
     try:
         payload = json.load(sys.stdin)
         result = layout(payload["group"], CuttingOptions.model_validate(payload["options"]), payload["mode"],
-                        lambda result: publish({"result": result, "running": True}))
+                        lambda result: publish({"result": result, "running": True}), payload.get("incumbent"))
         publish({"result": result, "running": False})
     except Exception as error:
         traceback.print_exc()

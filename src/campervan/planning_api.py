@@ -19,6 +19,7 @@ from campervan.planning import (
     PurchaseFilter, PurchaseRecord, Record, outline_markdown, parse_document,
 )
 from campervan.purchases import matches, purchase_totals, purchase_view
+from campervan.snapshot import cutting_data
 
 
 class Backup(Record):
@@ -53,8 +54,9 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
 
     def purchases(document: PlanningDocument, request: Request) -> dict[str, Any]:
         current = coordinator(request)
-        return purchase_view(document, current.materials, current.cuts,
-                             current.cuts_revision == current.status().requested_revision)
+        fresh = current.cuts_revision == current.status().requested_revision
+        cutting = cutting_data(current.cuts, current.materials, current.cutting, current.cutting_jobs, fresh)
+        return purchase_view(document, current.materials, current.cuts, fresh, cutting=cutting)
 
     def backup(request: Request) -> Backup:
         current = coordinator(request)
@@ -121,7 +123,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
             writer.writerow(["Item", "Category", "Tags", "Supplier", "URL", "Unit", "Required", "Owned", "Bought", "Estimated unit NZD", "Spent NZD", "Remaining NZD", "Status", "Notes"])
             for row in purchases(bundle.planning, request)["rows"]:
                 r = row["record"]
-                values = [r["name"], r["category"], ", ".join(r["tags"]), r["supplier"], r["url"], r["unit"], row["required"], r["owned"], r["bought"], r["unit_price"], r["spent"], row["remaining_cost"], row["status"], r["notes"]]
+                values = [r["name"], r["category"], ", ".join(r["tags"]), r["supplier"], r["url"], r["unit"], row["required"], row["owned"], r["bought"], r["unit_price"], r["spent"], row["remaining_cost"], row["status"], r["notes"]]
                 writer.writerow(["'" + value if isinstance(value, str) and value.startswith(("=", "+", "-", "@")) else value for value in values])
             body, media, extension = buffer.getvalue(), "text/csv", "csv"
         return Response(body, media_type=media, headers={"Content-Disposition": f'attachment; filename="conversion-plan.{extension}"'})

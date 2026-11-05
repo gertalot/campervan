@@ -1,5 +1,19 @@
 [
   {
+    "id": "bbi-redline-6-1200-1195",
+    "name": "bbi Redline untreated plywood · 6mm",
+    "supplier": "Mitre 10 NZ",
+    "url": "https://www.mitre10.co.nz/shop/bbi-redline-non-structural-plywood-untreated-1200-1195-6mm/p/303849",
+    "kind": "sheet",
+    "dimensions": {"length": 1200, "width": 1195, "thickness": 6},
+    "price_nzd": 33.47,
+    "sale_unit": "panel",
+    "pack_quantity": 1,
+    "specification": "SKU 303849. Non-structural untreated pine plywood for indoor use, pre-sanded faces and E0 glue. Use the product title's 1195mm width for cutting stock; the specifications round it to 1200mm. Select flat stock for the nine cabinet doors.",
+    "availability": "Regular retail listing with click-and-collect; Wellington branch stock not confirmed.",
+    "checked": "2026-11-01"
+  },
+  {
     "id": "homer-table-hinge-pair",
     "name": "Homer stainless folding-table hinges · HOM006136",
     "supplier": "Harken Fosters NZ",

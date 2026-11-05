@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "revision": 283,
+  "revision": 291,
   "content": {
     "type": "doc",
     "content": [
@@ -871,7 +871,16 @@
                                         "content": [
                                           {
                                             "type": "text",
-                                            "text": "Keep each tag flat; attach it to flat card if the paper would curl. Leave the black pattern and surrounding margin visible."
+                                            "text": "Keep each tag flat; attach it to flat card if the paper would curl. Leave the black pattern and surrounding margin visible. Use the circled centre on each target as the tape-measure endpoint."
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "paragraph",
+                                        "content": [
+                                          {
+                                            "type": "text",
+                                            "text": "Print more unique IDs if needed for exterior coverage. Record the actual IDs printed in the location table."
                                           }
                                         ]
                                       }
@@ -17012,5 +17021,77 @@
       }
     ]
   },
-  "purchases": {}
+  "purchases": {
+    "manual-alternative-bed-continuous-hinges": {
+      "id": "manual-alternative-bed-continuous-hinges",
+      "name": "Trio stainless continuous hinge · 600 × 31mm",
+      "product_id": null,
+      "role_id": null,
+      "category": "Furniture",
+      "tags": [
+        "Alternative long bench",
+        "Hinges"
+      ],
+      "supplier": "Mitre 10 Wellington Central",
+      "url": "https://www.mitre10.co.nz/shop/trio-continuous-hinge-31mm-x-600mm-stainless-steel/p/346915",
+      "notes": "For the alternative hinged/sliding long bench: two 600mm lengths along the rear hinge line. The lowered frame rests on timber supports. Trio T0P3110SS600K12, Mitre 10 SKU 346915; 31mm open width, 1mm leaves, 2.8mm pin; fixings included. $22.27 each checked 30 October 2026. Listed available at Wellington Central, 133 Tory Street, aisle 36, bay 3.",
+      "unit": "hinge",
+      "required": 2.0,
+      "owned": 0.0,
+      "bought": 0.0,
+      "unit_price": 22.27,
+      "spent": null
+    },
+    "custom-floor": {
+      "id": "custom-floor",
+      "name": "Floor plywood",
+      "product_id": null,
+      "role_id": "floor",
+      "category": "Furniture",
+      "tags": [],
+      "supplier": "",
+      "url": "",
+      "notes": "",
+      "unit": "each",
+      "required": 1.0,
+      "owned": 0.0,
+      "bought": 1.0,
+      "unit_price": null,
+      "spent": null
+    },
+    "product-zenith-8g-15": {
+      "id": "product-zenith-8g-15",
+      "name": "Zenith 8g × 15mm button-head timber screws",
+      "product_id": "zenith-8g-15",
+      "role_id": null,
+      "category": "Furniture",
+      "tags": [],
+      "supplier": "Bunnings NZ",
+      "url": "https://www.bunnings.co.nz/zenith-8g-x-15mm-galvanised-button-head-stitching-timber-screws-100-pack_p2420703",
+      "notes": "",
+      "unit": "100-pack",
+      "required": 3.0,
+      "owned": 0.0,
+      "bought": 0.0,
+      "unit_price": 11.32,
+      "spent": null
+    },
+    "custom-lagun": {
+      "id": "custom-lagun",
+      "name": "Lagun swivel table leg",
+      "product_id": null,
+      "role_id": "lagun",
+      "category": "Furniture",
+      "tags": [],
+      "supplier": "RV World NZ",
+      "url": "https://www.rvworldstore.co.nz/lagun-table-pedestal-natural-anodised",
+      "notes": "RV World RV159: complete natural-anodised Lagun kit with 500mm leg, swivel arm and mounting plates; plastic shims included. Tabletop excluded. Listed in stock at NZ$399; checked 1 November 2026. Delivery not included in this estimate.",
+      "unit": "kit",
+      "required": null,
+      "owned": 0.0,
+      "bought": 0.0,
+      "unit_price": 399.0,
+      "spent": null
+    }
+  }
 }

@@ -30,8 +30,12 @@ Reflection parents preserve native named paths, local slider
 tracks, picking and highlights. Hinge dragging accounts for reflected rotation axes; table steering uses the actual
 parent basis. Mannequins fit and cushions deform in the original coordinates before their displays reflect together.
 CAD edge ribbons render double-sided in one pass: their screen-space winding stays unchanged when the display
-parent reflects, whereas Three.js reverses face culling for a negative world determinant. Solid face materials retain
-their existing sidedness.
+parent reflects, whereas Three.js reverses face culling for a negative world determinant. The GPU picker's separate
+edge shader needs the same setting; otherwise visible mirrored edges disappear from its ID buffer and the picker
+returns the face beneath them. `layout-mirror.ts` configures that shader just before the native pick-buffer render,
+after OCP has lazily created its materials. This adapter uses the pinned renderer's `_renderPickBuffer` hook; retain
+that integration when upgrading the renderer. Its depth testing and automatic vertex/edge/face priorities stay intact.
+Solid face materials retain their existing sidedness.
 The two door openings have different offsets, so inspect fit against the fixed vehicle on the selected side.
 
 Cut-list galleries and whole sheet drawings use a reflected face view with readable labels. Reflecting an entire
@@ -369,31 +373,34 @@ Its closed-door footprint starts at X = 1070, Y = 0–1000, narrowed by the vehi
 rear end. The centre partition starts at `cabinet_rear_bay_length_mm` (560mm), measured from the open rear end,
 following the requested 90mm rearward move. The owned folded chairs measure 600 × 700 × 100mm; their placement is
 shown by the Stored gear live positions, with an open rear entrance. The forward bay uses the remaining space.
-Rear upper shelves have 548mm clear length between panels, and the forward bay has 416mm clear length.
+Rear upper shelves have 551mm clear length between panels, and the forward bay has 422mm clear length.
 The cab end's outer face is at local Y = 1000, vehicle Y = 1100.
 
-`cabinet_frame_thickness_mm` supplies the solid partitions, aisle frame, rear rails and rear upright from the same
-sourced 12mm Tigerply stock; the bed retains its 18mm stock. The aisle frame retains its rounded openings and door
+`cabinet_partition_thickness_mm` supplies the three solid vertical panels from 9mm Tigerply Okoume stock,
+shared with the five 9mm shelves and cross-bench rear skin. `cabinet_frame_thickness_mm` independently supplies
+the aisle frame, rear rails and narrow rear upright from the same 9mm Tigerply Okoume stock; the bed retains its 18mm stock.
+Shelf ledges, rail joint blocks and corner cleats follow the thinner partitions' inner faces. The aisle frame's
+middle post follows the centre of the middle partition. The aisle frame retains its rounded openings and door
 mounting posts. The centre and cab-end partitions are solid, scribed against the lining and vehicle fitting volume.
 The aisle frame's top rail extends to the finished plywood underside, following its curve across the frame thickness.
 It has no ceiling gap. Door openings and hinge elevations retain their existing heights; the top rail grows upward.
 The centre panel has the wheel-arch notch with 3mm clearance and reaches the floor inside the arch. The cab-end
-panel follows the plywood ceiling with the selected 3mm fitting gap. The `Rear upper panel` uses the same 12mm
-stock at Y = 0–12, starting at `cabinet_rear_storage_height_mm` (730mm). Its outline is taken at the restrictive
+panel follows the plywood ceiling with the selected 3mm fitting gap. The `Rear upper panel` uses the same 9mm
+stock at Y = 0–9, starting at `cabinet_rear_storage_height_mm` (730mm). Its outline is taken at the restrictive
 rear face of the body/ceiling fitting volume and extruded square through the plywood thickness. Both faces have
 the same outline: template and jigsaw the curves, without a compound bevel or sculpted edge. The opening widens
 toward the cab, leaving fitting clearance behind the wall-side edge.
 It closes the two upper rear compartments while leaving the full lower chair entrance open. Rear shelves start
-at its inner face, Y = 12; they have rear-panel ledges with their outer ends scribed around the rear pillar.
+at its inner face, Y = 9; they have rear-panel ledges with their outer ends scribed around the rear pillar.
 There are no cabinet skins, full-height transverse rear frame, bottom threshold or lower rear crossbar.
 The van floor is the bottom.
 
-The lowest rear shelf supports start at `cabinet_rear_storage_height_mm` (730mm); shelf underside/top remain at
-748/760mm. The forward middle shelf shares this elevation, so both bays' middle beams run at 730–790mm.
-The upper rear shelf and three forward shelves remain. Shelf and door heights, front rail retaining lips and the
-closed doors' 1070mm bed envelope are unchanged by the partition conversion.
+The lowest rear shelf supports start at `cabinet_rear_storage_height_mm` (730mm); shelf underside/top are at
+748/757mm. The forward middle shelf shares this elevation, so both bays' middle beams run at 730–790mm.
+The upper rear shelf and three forward shelves remain. The lower forward shelf top retains its mattress clearance;
+the other shelf tops are 3mm lower with the thinner plywood. The closed doors retain their 1070mm bed envelope.
 
-The wall-side support is a separate `Wall supports` group: eight straight 12 × 60mm plywood rails and one narrow
+The wall-side support is a separate `Wall supports` group: eight straight 9 × 60mm plywood rails and one narrow
 transverse rear upright. Each bay has a top rail and matching lower, middle and upper rails.
 Rails butt into the centre/cab-end partitions and rear upright rather than fastening to the vehicle. Each rail
 is vertical rectangular stock, set inboard of the lining over its full height; higher rails sit further inward.
@@ -404,19 +411,21 @@ Its top is `cabinet_lower_rail_top_mm`: platform + foam + shelf clearance + memb
 The rear aisle frame has the same extra crossbeam; the wall-side rail now matches its height.
 
 The rear upright stands on the floor immediately ahead of the rear pillar, at the start of the back lining.
-It is a 12mm transverse plywood strip, nominally 60mm wide across X at each height, with its profile approximating
+It is a 9mm transverse plywood strip, nominally 60mm wide across X at each height, with its profile approximating
 the wall. The rear shelf edges are notched around it. It leaves the rear chair-loading route clear.
 The solid partitions are bounded by the lining/vehicle fitting volume; shelves end at their own rail's inboard face.
 The old `cabinet_frame_step_height_mm` parameter is retained for saved projects, now labelled **Upper shelf reference
 height**: the upper shelf rail remains halfway between this reference and the cabinet top.
 
-The five 12mm shelves form a bonded assembly: glue shelves onto their ledges and glue ledges continuously to the
+The five 9mm shelves form a bonded assembly: glue shelves onto their ledges and glue ledges continuously to the
 partitions, aisle frame and rear rails. The separate `Rail joint blocks` group contains sixteen vertical pine
-blocks, one at each rail end, with a full rail-height face against the rail and an adjacent face against the
-upright or partition. They use the same ready-made 18 × 18mm stock and are 60mm tall at defaults. Glue both faces;
-predrill assembly screws through the plywood faces into the blocks, staggering perpendicular screws.
-The five shelves have local corner notches around the blocks; transverse ledges stop 18mm short of the rail
-face and wall ledges fit between the blocks. The blocks replace the two former 30mm wall corner cleats.
+blocks, one at each rail end, against the rail face and the adjacent upright or partition. They use ready-made
+18 × 18mm stock. At the five shelf levels, ten blocks start at the shelf top and extend to the rail top:
+33mm high with 18mm ledges and 9mm shelves. The six blocks on the top rails and the rear lower rail remain 60mm high.
+Glue both mating faces; predrill assembly screws through the plywood faces into the blocks, staggering perpendicular screws.
+Crosswise shelf ledges extend the full shelf depth into the corners, and longitudinal ledges butt between them.
+At the rear pillar the wall ledge starts against the rear upright. The shelves have no notches for joint blocks;
+their vehicle-fitting profiles and rear-upright cutouts remain. The blocks replace the two former wall corner cleats.
 Two 60mm-high aisle cleats remain above the lowest forward shelf. The rear lower rail has matching end blocks;
 the other rear rail blocks remain above the chair bay's 730mm clear height. Glue layers and assembly screws are not
 modelled. The BoM includes an initial 250ml bottle
@@ -433,7 +442,7 @@ The rear bay loads from the rear and through its paired aisle doors. A 230 × 73
 rear corner pillar and wheel arch. Stored chair and solar-panel poses are unchanged.
 Both rear and forward shelves have aisle/wall and two transverse ledges. The rear-panel ledges remain at or above
 the storage clear height; nothing crosses the lower rear entrance. The 20 shelf ledges use ready-made 18 × 18mm untreated
-clear pine; ledge bottoms align with their rail bottoms, leaving a 30mm retaining lip at defaults. All ledges and
+clear pine; ledge bottoms align with their rail bottoms, leaving a 33mm retaining lip at defaults. All ledges and
 corner cleats are rectangular crosscuts; no wall-facing bevels are needed.
 The BOM records the purchased rectangular section and crosscut lengths, including the two 70mm latch blocks.
 The selected Bunnings product is Pinetrim 18 × 18 × 2400mm D4S untreated clear pine (0293156), listed at $12.27
@@ -466,21 +475,21 @@ The BOM records the sheet separately from plywood and uses its developed centre-
 not the curved part's bounding-box depth. Confirm flute orientation and physical fit before cutting.
 There is no top panel. Shelf fasteners are not modelled.
 
-`cabinet_doors.py` makes nine 9mm plywood overlay doors. The four upper shelf openings each have a
+`cabinet_doors.py` makes nine 6mm plywood overlay doors. The four upper shelf openings each have a
 bottom-hinged flap, intended to stop horizontally on two short chain restraints. The front bottom door retains its vertical hinge; its above-bed neighbour is bottom-hinged, with separate live controls. All edges overlap the openings by
 15mm, with 12mm plan corner radii and 2mm face roundovers. The four upper flaps follow their respective bay widths.
 The rear storage has an opposed bottom pair and one full-width bottom-hinged flap above the raised shelf rail. The aisle crossbeam divides
 access without adding a shelf or rear crossbar. The rear chair-loading entrance remains 730mm high.
 
 `cabinet_mattress_clearance_mm` places the front lower shelf top 10mm above the uncompressed mattress. At the
-saved platform height 390mm and foam thickness 100mm, the shelf top is 500mm, the beam spans 470–530mm, and the
-above-bed doors begin at 515mm. Clear access openings above that beam are 200mm high. The two front lower doors
-are 374 × 440mm and 374 × 230mm; the bottom rear storage leaves are 252 × 440mm and the merged above-bed flap is
-506 × 230mm.
+saved platform height 390mm and foam thickness 100mm, the shelf top is 500mm, the beam spans 473–533mm, and the
+above-bed doors begin at 518mm. Clear access openings above that beam are 197mm high. The two front lower doors
+are 375.5 × 443mm and 375.5 × 227mm; the bottom rear storage leaves are 251.25 × 443mm and the merged above-bed flap is
+504.5 × 227mm.
 These dimensions follow bed height, foam, clearance, stock sizes and overlay instead of fixed elevations.
 
-The closed door fronts stay at X = `bed_width_mm` (1070mm), and backs at X = 1079. The aisle frame starts at
-X = 1081, giving a 2mm gap for folded surface-mounted hinge leaves. `cabinet_aisle_x` is this actual front-face
+The closed door fronts stay at X = `bed_width_mm` (1070mm), and backs at X = 1076. The aisle frame starts at
+X = 1078, giving a 2mm gap for folded surface-mounted hinge leaves. `cabinet_aisle_x` is this actual front-face
 coordinate, independent of bench skin thickness. Shelf and partition depths derive from it; the wall-side
 support and flute-board lining retain their existing contour and position.
 
@@ -504,7 +513,7 @@ on actual anchor positions (roughly 240–300mm each as an initial allowance).
 
 All doors use Vanlifer NZ Point LL016 positive push latches (NZ$16 each including GST), each with its supplied striker.
 The supplier drawing specifies 5–25mm panels, a 27mm bore with 23.5mm flats, 32mm flange and 50mm depth from the
-door front face: 41mm projects behind the 9mm door. The catch station is 35.5mm behind the door face and 20mm above
+door front face: 44mm projects behind the 6mm door. The catch station is 35.5mm behind the door face and 20mm above
 the bore axis. Storage latches sit near the inner upper corners; flap latches are centred near the top and the lower
 side-hinged doors latch near their free upper corners. Six strike under the aisle shelf ledges. Four 70mm blocks cut from the same 18 × 18mm pine support
 the topmost strikers and bottom storage-door strikers behind the aisle frame/crossbeam.
@@ -514,10 +523,9 @@ on the physical product before machining. Closed flange envelopes extend 1.5mm i
 Strikes are included with the latches and excluded from separate BOM purchasing counts. The single shared catch
 role counts the ten modelled latch bodies; old saved roller-catch selections migrate to this product.
 Other hardware bodies, chain restraints, anchors and fasteners are not modelled.
-Hinge leaves are intended to face-mount in the closing gap, avoiding screws
-into the 9mm plywood edge. Through-fix the door-side hardware with flush countersunk heads. Check the actual
-leaf thickness/holes and select fixings before drilling. Fasten chain anchors into frame members and through-fix
-door anchors rather than relying on the 4mm skin or screws into a 9mm plywood edge. Check that slack chain
+Hinge leaves face-mount in the closing gap. Through-fix the 6mm door faces with flush countersunk heads. Check the actual
+leaf thickness/holes and select fixings before drilling. Fasten cabinet-side chain anchors into frame members and
+through-fix the door-side anchors. Check that slack chain
 stows inside the opening without being pinched when the door closes. The hinge-centred preview stops at
 90 degrees; it does not simulate flexible chain or verify the final anchor/load capacity.
 
@@ -615,8 +623,23 @@ Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece p
 the moving bed support/slats, drawer, cabinet doors and mounted bamboo leaves take precedence over camera orbit.
 The 4px threshold preserves ordinary clicks and double-click cut-list navigation. Pointer capture owns the gesture;
 Escape, lost capture, page blur, tab changes and geometry replacement restore the starting pose and automatic
-table-return flag. Cyan surface/edge overlays are separate from persistent magenta selection and do not enter picking
-queries. Alt-drag and the toolbar/context-menu orbit override (O) retain camera access on movable parts.
+table-return flag. `viewer-highlight.ts` supplies the same translucent surface tint and edge outline for persistent
+magenta selection and cyan drag previews. Active fill opacity is 0.42; hover opacity is 0.13. Overlay objects are
+marked and excluded from ray picking, and their materials and generated edges are disposed when removed.
+Alt-drag and the toolbar/context-menu orbit override (O) retain camera access on movable parts.
+
+The renderer's existing `activeTool` state owns measurement mode. A state subscription cancels pending drags and
+selection clicks, removes our magenta/cyan overlays, closes the piece menu and disables the piece-action buttons.
+This removes only our selection; it does not call the renderer's measurement-selection reset. While a tool is active,
+our click, double-click, context-menu, Escape and drag handlers yield to the renderer. Camera navigation remains
+available. Ending measurement restores normal piece actions with no selected piece or pending click suppression.
+Entering measurement resets the renderer's topology filter to All. The existing picker chooses vertices, edges and
+faces from cursor proximity; no shape-type menu or mode-specific filter shortcuts are needed.
+Unavailable toolbar actions use native disabled buttons, following the
+[WAI-ARIA button guidance](https://www.w3.org/WAI/ARIA/apg/patterns/button/). The event guards leave measurement events
+untouched: [event propagation](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) and
+[pointer capture](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events#pointer_capture) apply only to gestures
+owned by our direct-manipulation handlers.
 
 Bed dragging maps one full frame-travel distance to 40 percentage points. Completing all stages takes 2.5 times that
 distance, across one or several drags. Release pauses; reversal retraces the existing keyframes. Drawer dragging follows
@@ -756,8 +779,9 @@ Fingerprints ignore redundant collinear profile points and wire ordering so iden
 different operating systems reuse their saved layouts, including in GitHub Pages exports. Older fingerprints are
 upgraded only when the saved inputs match the current stock, settings, dimensions and sampled shapes.
 Each product expands into component uses and a combined cut list grouped by dimensions. Hardware quantities are
-summed across unowned uses before rounding up to purchase packs. Sheet areas and timber lengths are combined,
-but purchase counts still require a cutting layout. Sidebar links retain their role-based URLs and expand the
+summed across all uses before rounding up to purchase packs. Sheet and timber purchase quantities come from current,
+complete saved cutting layouts. Existing unsourced slats use their modelled cut-piece count. Required includes owned
+stock; ownership reduces the remaining purchase quantity. Sidebar links retain their role-based URLs and expand the
 containing product, highlighting the specific use. Expanded product rows survive status refreshes during the session.
 
 `src/campervan/materials.json` is the product catalogue: exact supplier links, variant dimensions in mm, specifications,
@@ -793,11 +817,18 @@ purchase quantities require a cutting layout; roles selecting the same product m
 
 Bed frame supports, cross-bench support rails and bed guide ledges use the selected 18mm plywood.
 Cabinet ledges, corner cleats and strike blocks share ready-made 18 × 18mm untreated pine.
-Cabinet partitions and frames use their own 12mm role, sharing sheets with shelves and drawer.
+Cabinet aisle frames, rear rails, rear upright, solid vertical panels and shelves share 9mm sheets with the
+cross-bench rear skin. The drawer uses 12mm sheets. The cabinet frame, partition and shelf roles
+retain their actual flat profiles in the cut list, including the partitions' wall curves and wheel-arch notch.
 The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
 Both cabinet batten section dimensions come from the selected timber product, with measured overrides.
 
-The cross-bench rear skin shares 9mm Tigerply Okoume-faced poplar-core plywood with the cabinet doors. Its material
+The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, listed at $33.47 per
+1200 × 1195mm panel on 1 November 2026. The cutting stock uses the product title's 1195mm width rather than
+the specification table's rounded 1200mm. Wellington branch stock remains unconfirmed. Door hinges use
+through-fixings in the 6mm faces; their fixing details still depend on the physical hinges.
+
+The cross-bench rear skin shares 9mm Tigerply Okoume-faced poplar-core plywood with the cabinet verticals and shelves. Its material
 role retains the `skins` ID and sets `cross_bench_skin_thickness_mm`. Projects selecting the former 4mm special-order
 skin product migrate to the 9mm product. The long bench has no cab-end skin. Slat and long-bench frame positions use
 their retained construction inset rather than skin thickness.

@@ -16,7 +16,7 @@ export interface Operation {
   kind: 'purchase' | 'delete_purchase' | 'reset_purchase'; id: string; values?: Record<string, unknown>;
 }
 export interface PurchaseRow {
-  record: PurchaseRecord; required: number | null; remaining: number | null; remaining_cost: number | null;
+  record: PurchaseRecord; required: number | null; owned: number; remaining: number | null; remaining_cost: number | null;
   status: string; uses: string[]; shared: boolean; legacy_owned: boolean; generated: boolean;
 }
 export interface Totals { spent: number; remaining: number; forecast: number; unknown_remaining: number; unknown_spent: number }

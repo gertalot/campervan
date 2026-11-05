@@ -24,9 +24,9 @@ def material_for(path: tuple[str, ...]) -> str:
         return "cabinet-doors"
     if "Cabinet" in path and name == "back lining":
         return "cabinet-back"
-    if "Cabinet" in path and (
-        "frame" in name or "Wall supports" in path or name in {"middle panel", "cab-end panel", "rear upper panel"}
-    ):
+    if "Cabinet" in path and name in {"middle panel", "cab-end panel", "rear upper panel"}:
+        return "cabinet-partitions"
+    if "Cabinet" in path and ("frame" in name or "Wall supports" in path):
         return "cabinet-frames"
     if "Angle brackets" in path:
         return "brackets"
@@ -106,7 +106,10 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             for section in (width, thickness):
                 dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
             length = round(dimensions[0], 2)
-        if material in {"floor", "frames", "cabinet-frames", "skins", "shelves", "drawer", "cabinet-doors", "guides", "table-plywood"}:
+        if material in {
+            "floor", "frames", "cabinet-frames", "cabinet-partitions", "skins", "shelves", "drawer",
+            "cabinet-doors", "guides", "table-plywood",
+        }:
             try:
                 profile = flat_profile(part)
             except (ValueError, RuntimeError, IndexError) as error:

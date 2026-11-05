@@ -82,7 +82,7 @@ async def export_site() -> None:
         if key not in results:
             print(f"Warning: no current saved cutting layout for {group['name']}; its cut list is included.", flush=True)
 
-    purchases = purchase_view(planning, project.materials, bundle.cuts)
+    purchases = purchase_view(planning, project.materials, bundle.cuts, cutting=cutting)
     snapshot = {
         "exported_at": datetime.now(UTC).isoformat(),
         "parameters": parameter_response(

@@ -64,9 +64,15 @@ ROLES = [
     ),
     MaterialRole(
         id="cabinet-frames",
-        name="Cabinet structure plywood",
+        name="Cabinet frame plywood",
         kind="sheet",
         fields={"thickness": "cabinet_frame_thickness_mm"},
+    ),
+    MaterialRole(
+        id="cabinet-partitions",
+        name="Cabinet solid vertical plywood",
+        kind="sheet",
+        fields={"thickness": "cabinet_partition_thickness_mm"},
     ),
     MaterialRole(
         id="skins", name="Cross-bench rear plywood", kind="sheet",
@@ -99,16 +105,17 @@ for role in ROLES:
         "frames": "tigerply-18",
         "table-plywood": "prempanel-bamboo-25",
         "table-hinges": "homer-table-hinge-pair",
-        "cabinet-frames": "tigerply-12",
+        "cabinet-frames": "tigerply-okoume-9",
+        "cabinet-partitions": "tigerply-okoume-9",
         "skins": "tigerply-okoume-9",
-        "shelves": "tigerply-12",
+        "shelves": "tigerply-okoume-9",
         "drawer": "tigerply-12",
         "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
-    if role.id in {"cabinet-frames", "shelves", "drawer"}:
-        role.note = "Share 12mm sheets across cabinet partitions/frames, shelves and drawer; plan cuts together."
-    elif role.id == "skins":
-        role.note = "One cross-bench rear skin; share the 9mm sheet with the cabinet doors."
+    if role.id == "drawer":
+        role.note = "Drawer sides, ends and bottom share 12mm sheets; plan cuts together."
+    elif role.id in {"cabinet-frames", "cabinet-partitions", "shelves", "skins"}:
+        role.note = "Share 9mm sheets across cabinet frames, solid vertical panels, shelves and cross-bench rear skin."
 
 ROLES.extend(
     [
@@ -131,7 +138,7 @@ ROLES.extend(
             name="Cabinet door plywood",
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
-            default_product_id="tigerply-okoume-9",
+            default_product_id="bbi-redline-6-1200-1195",
             note="Nine overlay doors: six drop-down flaps, one front door and the bottom storage pair.",
         ),
         MaterialRole(
@@ -143,7 +150,7 @@ ROLES.extend(
             default_product_id="zenith-butt-35",
             note=(
                 "Two per door. Face-mount the leaves between door rear and aisle frame, within the closing gap. "
-                "Use countersunk through-fixings on the 9mm door, not screws into its edge. "
+                "Use countersunk through-fixings on the 6mm door. "
                 "Hole sizes, leaf thickness and fixings still require checking against the physical hinge."
             ),
         ),
@@ -155,7 +162,7 @@ ROLES.extend(
             default_product_id="vanlifer-point-ll016",
             note=(
                 "One positive push latch per door, including its supplied striker. 50mm from front face to body rear "
-                "means 41mm projects behind 9mm plywood. Five strikers mount under shelf ledges; four 70mm pine "
+                "means 44mm projects behind 6mm plywood. Five strikers mount under shelf ledges; four 70mm pine "
                 "blocks support the topmost and bottom-storage strikers. No centre post in the storage openings. "
                 "Body/bore dimensions follow the supplier drawing, but striker size, flange thickness "
                 "and fixings need checking on receipt."
@@ -172,7 +179,7 @@ ROLES.extend(
                 "Two 3m packs for twelve short restraints: two per drop-down door. "
                 "Allow roughly 240–300mm each at default door sizes; cut to the actual anchor positions "
                 "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
-                "to plywood frame members, not the 4mm skin. Chains, anchors and fixings are not modelled. "
+                "to plywood frame members. Chains, anchors and fixings are not modelled. "
                 "Confirm link openings, anchor details and closing clearance before buying fixings."
             ),
         ),

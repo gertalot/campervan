@@ -1,6 +1,14 @@
 import { DoubleSide, Group, type Material, type Object3D } from 'three';
+import type { PieceViewer } from './viewer-pieces';
 
 const roots = ['Long bench', 'Cross bench', 'Cabinet', 'Laptop table', 'Stored gear'];
+
+function makeEdgeDoubleSided(material: Material) {
+  if (material.side === DoubleSide && material.forceSinglePass) return;
+  material.side = DoubleSide;
+  material.forceSinglePass = true;
+  material.needsUpdate = true;
+}
 
 /** Reflect display parents so native CAD placements and animation tracks stay untouched. */
 export function createLayoutMirror() {
@@ -26,9 +34,7 @@ export function createLayoutMirror() {
       // These camera-facing ribbons keep their screen-space winding under reflection,
       // while Three.js reverses face culling for the negative world determinant.
       for (const material of Array.isArray(line.material) ? line.material : [line.material]) {
-        material.side = DoubleSide;
-        material.forceSinglePass = true;
-        material.needsUpdate = true;
+        makeEdgeDoubleSided(material);
       }
     });
     const wrapper = new Group();
@@ -41,6 +47,16 @@ export function createLayoutMirror() {
 
   return {
     add,
+    attachPicker(picker: NonNullable<PieceViewer['idPicker']>) {
+      const render = picker._renderPickBuffer.bind(picker);
+      picker._renderPickBuffer = (camera, target) => {
+        // OCP creates its separate edge-picking shader lazily, immediately before this pass.
+        // Give its camera-facing ribbons the same reflection handling as the visible edges.
+        if (picker.edgeMaterial) makeEdgeDoubleSided(picker.edgeMaterial);
+        render(camera, target);
+      };
+      picker.setDirty();
+    },
     attach(groups: Record<string, unknown>) {
       for (const name of roots) {
         const object = groups[`/Campervan/${name}`] as Object3D | undefined;

@@ -1,11 +1,21 @@
 /** Picking, framing and persistent selection for links to physical cutting pieces. */
-import { Box3, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector2, Vector3, type Camera, type Object3D } from 'three';
+import { Box3, Mesh, Raycaster, Vector2, Vector3, type Camera, type Material, type Object3D } from 'three';
 import { createPlanDropdown, type PlanMenuItem } from './plan-dropdown';
+import { highlightPiece } from './viewer-highlight';
 
 interface PickHit { info: { solidPath: string | null; path: string } }
 export interface PieceViewer {
   ready: boolean;
-  idPicker: { pickAt(x: number, y: number, options?: object): PickHit | null; setDirty(): void } | null;
+  state: {
+    get(name: string): unknown;
+    subscribe(name: string, listener: () => void): () => void;
+  };
+  idPicker: {
+    pickAt(x: number, y: number, options?: object): PickHit | null;
+    setDirty(): void;
+    edgeMaterial: Material | null;
+    _renderPickBuffer(camera: Camera, target: unknown): void;
+  } | null;
   rendered: {
     nestedGroup: { groups: Record<string, Object3D> };
     camera: { camera: Camera & { top: number; bottom: number; fov?: number } };
@@ -19,6 +29,7 @@ export interface PieceViewer {
   removeLastBbox(): void;
   update(change: boolean, controls?: boolean): void;
 }
+export const hasActiveTool = (viewer: PieceViewer | undefined) => Boolean(viewer?.state.get('activeTool'));
 type Link = { has(path: string): boolean; show(path: string): void };
 const cutPath = (path: string) => path
   .replace('/Laptop table/Stowed/Facing/Packed tabletop/Offset tabletop/',
@@ -49,7 +60,8 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   const showButton = iconButton(commands()[0],
     '<rect x="3" y="3" width="14" height="18" rx="1.5"/><path d="M3 9h14M9 9v12M13 15h8m-3-3 3 3-3 3"/>');
   showButton.disabled = true;
-  iconButton(commands()[1], '<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="m8 8 8 8m0-8-8 8"/>');
+  const clearButton = iconButton(commands()[1],
+    '<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="m8 8 8 8m0-8-8 8"/>');
   container.tabIndex = 0;
 
   function clear() {
@@ -58,17 +70,19 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (viewer?.ready) { viewer.clearSelection(); viewer.removeLastBbox(); viewer.update(true, false); }
   }
   function navigate() {
-    if (selected && link?.has(cutPath(selected))) link.show(cutPath(selected));
+    if (!hasActiveTool(getViewer()) && selected && link?.has(cutPath(selected))) link.show(cutPath(selected));
   }
   function commands(): PlanMenuItem[] {
     return [
       { label: 'Show in cut list', group: 'piece', shortcut: 'Double-click',
-        enabled: Boolean(selected && link?.has(cutPath(selected))), run: navigate },
-      { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape', run: clear },
+        enabled: !hasActiveTool(getViewer()) && Boolean(selected && link?.has(cutPath(selected))), run: navigate },
+      { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape',
+        enabled: !hasActiveTool(getViewer()), run: () => { if (!hasActiveTool(getViewer())) clear(); } },
       ...extraCommands(),
     ];
   }
   function openMenu(x?: number, y?: number) {
+    if (hasActiveTool(getViewer())) return;
     const rect = showButton.getBoundingClientRect();
     menu.open({ label: 'Piece actions', items: commands(), x: x ?? rect.left, y: y ?? rect.bottom,
       returnFocus: () => container.focus({ preventScroll: true }) });
@@ -76,7 +90,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   function canvasEvent(event: Event) { return event.target instanceof HTMLCanvasElement; }
   function pick(event: MouseEvent) {
     const viewer = getViewer();
-    if (!viewer?.ready || !viewer.idPicker) return null;
+    if (!viewer?.ready || hasActiveTool(viewer) || !viewer.idPicker) return null;
     const canvas = container.querySelector('canvas'); if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
     const hit = viewer.idPicker.pickAt(event.clientX - rect.left, event.clientY - rect.top);
@@ -92,8 +106,14 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
         viewer.update(true, false);
       }
     }
-    showButton.disabled = !path || !link?.has(cutPath(path));
-    const label = !showButton.disabled ? `Show ${path!.split('/').at(-1)} in cut list › Double-click`
+    updateControls();
+  }
+  function updateControls() {
+    const measuring = hasActiveTool(getViewer());
+    showButton.disabled = measuring || !selected || !link?.has(cutPath(selected));
+    clearButton.disabled = measuring;
+    const label = !showButton.disabled ? `Show ${selected!.split('/').at(-1)} in cut list › Double-click`
+      : measuring ? 'Show in cut list › Finish measuring first'
       : 'Show in cut list › Select a wood piece, or double-click one';
     showButton.title = label; showButton.parentElement!.parentElement!.dataset.tooltip = label;
   }
@@ -101,20 +121,10 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     const previous = viewer.getStates()[path]?.slice();
     const shown = previous?.map(value => value === 3 ? 3 : 1);
     if (shown) viewer.setStates({ [path]: shown });
-    const overlays: Mesh[] = [];
-    const front = (group as Object3D & { front?: Mesh }).front;
-    const sources: Mesh[] = [];
-    if (front) sources.push(front);
-    else group.traverse(object => { if (object instanceof Mesh) sources.push(object); });
     const colour = getComputedStyle(container).getPropertyValue('--piece-selection-colour').trim();
-    for (const source of sources) {
-      const overlay = new Mesh(source.geometry, new MeshBasicMaterial({ color: colour, side: DoubleSide,
-        transparent: true, opacity: 1, depthTest: false, depthWrite: false, toneMapped: false }));
-      overlay.position.copy(source.position); overlay.quaternion.copy(source.quaternion); overlay.scale.copy(source.scale);
-      overlay.layers.set(0); overlay.renderOrder = 10000; source.parent!.add(overlay); overlays.push(overlay);
-    }
+    const removeOverlay = highlightPiece(group, colour);
     removeHighlight = () => {
-      for (const overlay of overlays) { overlay.removeFromParent(); (overlay.material as MeshBasicMaterial).dispose(); }
+      removeOverlay();
       if (previous && JSON.stringify(viewer.getStates()[path]) === JSON.stringify(shown)) {
         viewer.setStates({ [path]: previous });
       }
@@ -122,12 +132,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     };
   }
   container.addEventListener('pointerdown', event => {
-    if (!canvasEvent(event) || event.button !== 0) return;
+    if (hasActiveTool(getViewer()) || !canvasEvent(event) || event.button !== 0) return;
     down = { x: event.clientX, y: event.clientY, camera: JSON.stringify(getViewer()?.getCameraPosition()) };
     container.focus({ preventScroll: true });
   }, true);
   container.addEventListener('click', event => {
-    if (!canvasEvent(event) || event.button !== 0 || !down) return;
+    if (hasActiveTool(getViewer()) || !canvasEvent(event) || event.button !== 0 || !down) return;
     const start = down; down = undefined;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 4
       || start.camera !== JSON.stringify(getViewer()?.getCameraPosition())) return;
@@ -135,28 +145,37 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (path) select(path); else clear();
   });
   container.addEventListener('dblclick', event => {
-    if (!canvasEvent(event) || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (hasActiveTool(getViewer()) || !canvasEvent(event)
+      || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); event.stopImmediatePropagation();
     select(pick(event));
     if (selected) navigate(); else clear();
   }, true);
   container.addEventListener('contextmenu', event => {
-    if (!canvasEvent(event)) return;
+    if (hasActiveTool(getViewer()) || !canvasEvent(event)) return;
     event.preventDefault(); select(pick(event)); openMenu(event.clientX, event.clientY);
   });
   container.addEventListener('keydown', event => {
+    if (hasActiveTool(getViewer())) return;
     if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable=true]')) return;
     if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
       event.preventDefault(); openMenu();
     }
   });
   document.addEventListener('keydown', event => {
-    if (event.key !== 'Escape' || event.defaultPrevented || container.closest('[inert]') || !selected) return;
+    if (hasActiveTool(getViewer()) || event.key !== 'Escape' || event.defaultPrevented
+      || container.closest('[inert]') || !selected) return;
     if ((event.target as Element).closest('[role="menu"]')) return;
     event.preventDefault(); clear();
   }, true);
 
   return {
+    toolChanged() {
+      down = undefined; menu.close();
+      // Remove only our overlay: clear() would also reset the measurement endpoints.
+      if (hasActiveTool(getViewer())) select(null);
+      else updateControls();
+    },
     setLink(value: Link) { link = value; },
     setCommands(value: () => PlanMenuItem[]) { extraCommands = value; },
     pickPoint(event: MouseEvent) {
@@ -183,6 +202,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     clear,
     focus(path: string) {
       const viewer = getViewer();
+      if (hasActiveTool(viewer)) return false;
       const group = viewer?.ready ? viewer.rendered.nestedGroup.groups[cadPath(path)] : undefined;
       if (!viewer || !group) return false;
       clear(); cancelCamera(); select(cadPath(path));

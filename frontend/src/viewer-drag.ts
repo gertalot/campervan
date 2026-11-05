@@ -1,11 +1,12 @@
 /** Pointer gestures for the existing constrained assembly motions. */
 import {
-  DoubleSide, EdgesGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Raycaster, Vector2, Vector3,
+  Raycaster, Vector2, Vector3,
   type Camera, type Object3D,
 } from 'three';
 import type { PlanMenuItem } from './plan-dropdown';
 import { createTableDrag } from './table-drag';
-import type { PieceViewer } from './viewer-pieces';
+import { hasActiveTool, type PieceViewer } from './viewer-pieces';
+import { highlightPiece } from './viewer-highlight';
 
 export interface Track {
   path: string; axis: 'x' | 'y' | 'z'; kind?: 'rotation' | 'translation'; travel?: number;
@@ -162,8 +163,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
 
   function targetAt(event: MouseEvent): Target | null {
     const viewer = host.viewer(); if (!viewer?.ready) return null;
-    const state = (viewer as PieceViewer & { state?: { get(name: string): unknown } }).state;
-    if (state?.get('activeTool') || state?.get('animationMode') === 'explode') return null;
+    if (hasActiveTool(viewer) || viewer.state.get('animationMode') === 'explode') return null;
     const hit = host.pick(event); if (!hit) return null;
     const groups = viewer.rendered.nestedGroup.groups;
     if (under(hit.path, TABLE_WOOD) && /\/(Fixed|Folding) bamboo leaf(?:\/|$)/.test(hit.path)
@@ -190,33 +190,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
   function overlay(target: Target | null, active = false) {
     removeOverlay?.(); removeOverlay = undefined;
     if (!target) { if (host.viewer()?.ready) host.viewer()!.update(true, false); return; }
-    const fronts = new Set<Mesh>(), fallback = new Set<Mesh>();
-    target.group.traverse(object => {
-      if (object.userData.campervanOverlay) return;
-      const front = (object as Object3D & { front?: Mesh }).front;
-      if (front && !front.userData.campervanOverlay) fronts.add(front);
-      if (object instanceof Mesh) fallback.add(object);
-    });
-    const dispose: (() => void)[] = [];
-    for (const source of fronts.size ? fronts : fallback) {
-      if (!source.parent || source.userData.campervanOverlay) continue;
-      const material = new MeshBasicMaterial({ color: CYAN, side: DoubleSide, transparent: true,
-        opacity: active ? 0.42 : 0.13, depthTest: false, depthWrite: false, toneMapped: false });
-      const surface = new Mesh(source.geometry, material);
-      const edges = new EdgesGeometry(source.geometry, 35);
-      const lineMaterial = new LineBasicMaterial({ color: CYAN, transparent: true,
-        opacity: active ? 1 : 0.85, depthTest: false, depthWrite: false, toneMapped: false });
-      const outline = new LineSegments(edges, lineMaterial);
-      for (const object of [surface, outline]) {
-        object.position.copy(source.position); object.quaternion.copy(source.quaternion); object.scale.copy(source.scale);
-        object.userData.campervanOverlay = true; object.raycast = () => {};
-        object.renderOrder = active ? 10003 : 10002; source.parent.add(object);
-      }
-      dispose.push(() => {
-        surface.removeFromParent(); outline.removeFromParent(); material.dispose(); edges.dispose(); lineMaterial.dispose();
-      });
-    }
-    removeOverlay = () => dispose.forEach(remove => remove());
+    removeOverlay = highlightPiece(target.group, CYAN, active);
     host.viewer()?.update(true, false);
   }
 
@@ -351,9 +325,13 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
         enabled: Boolean(gesture?.active), run: cancel },
     ];
   }
+  function toolChanged() {
+    cancel(); suppressClickUntil = 0;
+    orbitButton.disabled = hasActiveTool(host.viewer());
+  }
   return {
     attach() {
-      cancel();
+      toolChanged();
       container.querySelector('.tcv_cad_toolbar')?.append(tools); container.append(hint);
       if (attached) return; attached = true;
       container.addEventListener('pointerdown', pointerDown, true);
@@ -363,25 +341,26 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
       container.addEventListener('lostpointercapture', event => { if (gesture?.id === event.pointerId) cancel(); }, true);
       container.addEventListener('pointerleave', () => { if (!gesture) clearHover(); });
       for (const type of ['click', 'dblclick'] as const) window.addEventListener(type, event => {
-        if (event.target instanceof HTMLCanvasElement && container.contains(event.target)
+        if (!hasActiveTool(host.viewer()) && event.target instanceof HTMLCanvasElement && container.contains(event.target)
           && performance.now() < suppressClickUntil) {
           event.preventDefault(); event.stopImmediatePropagation();
         }
       }, true);
       // Window capture runs before the persistent piece-selection Escape handler.
       window.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && gesture) {
+        if (!hasActiveTool(host.viewer()) && event.key === 'Escape' && gesture) {
           event.preventDefault(); event.stopImmediatePropagation(); cancel();
         }
       }, true);
       container.addEventListener('keydown', event => {
-        if (event.ctrlKey || event.metaKey || event.altKey || event.key.toLowerCase() !== 'o'
+        if (hasActiveTool(host.viewer()) || event.ctrlKey || event.metaKey || event.altKey || event.key.toLowerCase() !== 'o'
           || (event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]')) return;
         event.preventDefault(); event.stopPropagation(); setOrbit(!orbit);
       });
       window.addEventListener('blur', cancel); window.addEventListener('pagehide', cancel);
       document.addEventListener('visibilitychange', () => { if (document.hidden) cancel(); });
     },
+    toolChanged,
     cancel,
     commands,
   };

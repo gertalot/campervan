@@ -5,7 +5,7 @@ import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPo
 import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
-import { createViewerPieces, type PieceViewer } from './viewer-pieces';
+import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
 import { createLayoutMirror } from './layout-mirror';
 import { Box3, type Object3D, type Scene } from 'three';
@@ -50,6 +50,9 @@ interface CameraPose {
 }
 interface CadViewer {
   ready: boolean;
+  display: {
+    shapeFilterDropDownMenu: { setValue(value: string): void };
+  };
   rendered: {
     scene: Scene;
     nestedGroup: { groups: Record<string, SceneGroup> };
@@ -71,6 +74,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   onMannequinStatus: (message: string) => void = () => {},
   onMannequinFit: (pose: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) => void = () => {}) {
   let viewer: CadViewer | undefined;
+  let unsubscribeTool: (() => void) | undefined;
   let cube: ReturnType<typeof createViewCube> | undefined;
   let socket: WebSocket | undefined;
   let motions: Record<string, Motion> = {};
@@ -360,6 +364,11 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         constructor(...args: any[]) {
           super(...args);
           viewer = this as unknown as CadViewer;
+          unsubscribeTool?.();
+          unsubscribeTool = (this as unknown as PieceViewer).state.subscribe('activeTool', () => {
+            drag.toolChanged(); pieces.toolChanged();
+            if (hasActiveTool(this as unknown as PieceViewer)) this.display.shapeFilterDropDownMenu.setValue('All');
+          });
           const update = this.update.bind(this);
           this.update = (...updateArgs: any[]) => {
             if (this.ready) {
@@ -437,6 +446,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
             const picker = (viewer as unknown as PieceViewer).idPicker;
             if (picker) {
+              layoutMirror.attachPicker(picker);
               const pick = picker.pickAt.bind(picker);
               let pickingVersion = -1;
               picker.pickAt = (x, y, options) => {

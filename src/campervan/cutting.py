@@ -3,7 +3,9 @@
 import hashlib
 import io
 import json
+from copy import deepcopy
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from math import ceil, cos, floor, radians, sin
 from typing import Any
@@ -96,11 +98,158 @@ def effective_options(group: dict, settings: CuttingSettings, stock: StockOption
 
 
 def layout_score(result: dict) -> tuple:
-    """Rank candidates by stock use, offcut area/perimeter, then saw-cut count."""
+    """Rank stock use, middle-third crosscuts, useful offcuts, then saw-cut count."""
     offcut = result.get("best_offcut")
+    sheet_layout = result["mode"] == "straight" and any(
+        role.id == result["parts"][0]["material"] and role.kind == "sheet" for role in ROLES
+    )
+    missing_crosscuts = 0
+    occupied_area = 0.0
+    if sheet_layout:
+        trim = result["options"]["trim"]
+        kerf = ceil(result["options"]["kerf"] * SCALE) / SCALE
+        for sheet in result["sheets"]:
+            if sheet["stock"]["offcut"]:
+                continue
+            axis = 0 if sheet["stock"]["length"] >= sheet["stock"]["width"] else 1
+            length = sheet["stock"]["length" if axis == 0 else "width"] - 2 * trim
+            width = sheet["stock"]["width" if axis == 0 else "length"] - 2 * trim
+            distances = [
+                abs((cut[axis] - trim + kerf / 2) / length - 0.5) * 2
+                for cut in sheet["cuts"]
+                if abs(cut[axis] - cut[axis + 2]) < 0.02
+                and min(cut[1 - axis], cut[3 - axis]) <= trim + 0.02
+                and max(cut[1 - axis], cut[3 - axis]) >= trim + width - 0.02
+            ]
+            # Every cut in the middle third is equally useful for handling.
+            # Once one exists, useful offcuts and cut count decide the layout.
+            missing_crosscuts += not any(d <= 1 / 3 + 0.00001 for d in distances)
+            blanks = [part["blank"] for part in sheet["parts"]]
+            if blanks:
+                occupied_area += (
+                    max(b[0] + b[2] for b in blanks) - min(b[0] for b in blanks)
+                ) * (max(b[1] + b[3] for b in blanks) - min(b[1] for b in blanks))
     return (len(result["unplaced"]), result["full_stock_count"], result["offcut_count"], result["stock_area"],
+            missing_crosscuts,
             offcut["perimeter_area_ratio"] if offcut else float("inf"),
-            sum(len(sheet["cuts"]) for sheet in result["sheets"]))
+            sum(len(sheet["cuts"]) for sheet in result["sheets"]), occupied_area)
+
+
+@dataclass(frozen=True)
+class _SheetSection:
+    stock_id: int
+    stock: dict
+    axis: int
+    cut: float
+    side: int
+
+
+def _section_stock(stocks: list[dict], options: CuttingOptions, fraction: float) -> tuple[list[dict], list[_SheetSection]]:
+    """Two virtual sections per purchased sheet, reserving the separating kerf."""
+    sections, metadata = [], []
+    kerf = ceil(options.kerf * SCALE) / SCALE
+    for stock_id, stock in enumerate(stocks):
+        axis = 0 if stock["length"] >= stock["width"] else 1
+        dimension = "length" if axis == 0 else "width"
+        length = floor((stock[dimension] - 2 * options.trim) * SCALE) / SCALE
+        cut = round((length - kerf) * fraction * SCALE) / SCALE
+        for side, size in ((0, cut), (1, length - cut - kerf)):
+            # The existing adapter removes edge trim on both ends. The inner
+            # edges here are already finished by the separating cut.
+            sections.append(stock | {dimension: size + 2 * options.trim})
+            metadata.append(_SheetSection(stock_id, stock, axis, cut, side))
+    return sections, metadata
+
+
+def _join_sections(sheets: list[dict], options: CuttingOptions) -> list[dict]:
+    """Pair left/right sections into actual sheets and translate their cut trees."""
+    groups: dict[int, tuple[_SheetSection, list[list[dict]]]] = {}
+    for sheet in sheets:
+        section = sheet.pop("section")
+        groups.setdefault(section.stock_id, (section, [[], []]))[1][section.side].append(sheet)
+    joined = []
+    kerf, trim = ceil(options.kerf * SCALE) / SCALE, options.trim
+    for section, sides in groups.values():
+        stock, axis = section.stock, section.axis
+        usable = [floor((stock[d] - 2 * trim) * SCALE) / SCALE for d in ("length", "width")]
+        for index in range(max(map(len, sides))):
+            cut = trim + section.cut
+            crosscut = [cut, trim, cut, trim + usable[1]] if axis == 0 else [trim, cut, trim + usable[0], cut]
+            sheet = {"stock": stock, "parts": [], "cuts": [crosscut], "remnants": []}
+            for side in (0, 1):
+                offset = 0.0 if side == 0 else section.cut + kerf
+                if index >= len(sides[side]):
+                    remnant = [trim, trim, *usable]
+                    remnant[axis] += offset
+                    remnant[axis + 2] = section.cut if side == 0 else usable[axis] - offset
+                    sheet["remnants"].append(remnant)
+                    continue
+                half = sides[side][index]
+                for part in half["parts"]:
+                    for point in (*part["outline"], *(p for hole in part["holes"] for p in hole)):
+                        point[axis] += offset
+                    part["blank"][axis] += offset
+                for line in half["cuts"]:
+                    line[axis] += offset
+                    line[axis + 2] += offset
+                for remnant in half["remnants"]:
+                    remnant[axis] += offset
+                for key in ("parts", "cuts", "remnants"):
+                    sheet[key].extend(half[key])
+            joined.append(sheet)
+    return joined
+
+
+def _crosscut_fractions(stocks: list[dict], parts: list[dict], grains: list[str], options: CuttingOptions,
+                       incumbent: dict | None) -> list[float]:
+    stock = max(stocks, key=lambda s: s["length"] * s["width"])
+    axis = 0 if stock["length"] >= stock["width"] else 1
+    long, short = sorted((floor((stock[d] - 2 * options.trim) * SCALE) / SCALE
+                          for d in ("length", "width")), reverse=True)
+    available = long - ceil(options.kerf * SCALE) / SCALE
+    if available <= 0:
+        return []
+    fractions = set()
+    gap_boundaries = []
+    for part, grain in zip(parts, grains):
+        sizes = [(part["width"], part["length"])] if grain == "width" else [(part["length"], part["width"])]
+        if grain == "free":
+            sizes.append((part["width"], part["length"]))
+        for size in sizes:
+            if size[1 - axis] <= short and size[axis] < available:
+                fraction = max(size[axis], available - size[axis]) / available
+                if 0.5 <= fraction <= 2 / 3:
+                    fractions.add(fraction)
+    if incumbent is not None:
+        for sheet in incumbent["sheets"]:
+            stock = sheet["stock"]
+            axis = 0 if stock["length"] >= stock["width"] else 1
+            available = floor((max(stock["length"], stock["width"]) - 2 * options.trim) * SCALE) / SCALE
+            available -= ceil(options.kerf * SCALE) / SCALE
+            if available <= 0:
+                continue
+            kerf = ceil(options.kerf * SCALE) / SCALE
+            intervals = [(p["blank"][axis] - options.trim,
+                          p["blank"][axis] + p["blank"][axis + 2] - options.trim) for p in sheet["parts"]]
+            for part in sheet["parts"]:
+                near = part["blank"][axis] - options.trim
+                for edge in (near, near + part["blank"][axis + 2]):
+                    fraction = max(edge, available - edge) / available
+                    if 0.5 <= fraction <= 2 / 3:
+                        fractions.add(fraction)
+                        # Try closing an existing empty band first. A boundary
+                        # that already clears every blank is a known workable
+                        # division, so the search can pack its sides tightly.
+                        following = [start for start, _ in intervals if start >= edge - 0.01]
+                        if following and not any(start < edge - 0.01 and end > edge + 0.01
+                                                 for start, end in intervals):
+                            gap = min(following) - edge - kerf
+                            if gap > 0.01:
+                                gap_boundaries.append((gap, fraction))
+    # Try real part boundaries before arbitrary fallback positions. Keeping
+    # the full middle-third range avoids forcing gaps to hit a central target.
+    preferred = list(dict.fromkeys(f for _, f in sorted(gap_boundaries, reverse=True)))
+    return preferred + sorted(fractions - set(preferred)) + [f for f in (0.5, 0.6, 2 / 3) if f not in fractions]
 
 
 def rectangle(length: float, width: float) -> list[list[float]]:
@@ -117,9 +266,10 @@ def transform(points: list, angle: float, x: float, y: float) -> list[list[float
     return [[round(px * c - py * s + x, 4), round(px * s + py * c + y, 4)] for px, py in points]
 
 
-def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable[[dict], None] | None = None) -> dict:
+def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable[[dict], None] | None = None,
+           incumbent: dict | None = None) -> dict:
     """Solve a snapshot; no CAD work or project mutation occurs in this worker thread."""
-    from packingsolver import irregular, rectangleguillotine
+    from packingsolver import OptimizationMode, irregular, rectangleguillotine
 
     if not options.stock:
         raise ValueError("Add a stock sheet or timber length.")
@@ -171,21 +321,71 @@ def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable
         item["copies"] = 1
         instance_data["item_types"].append(item)
     solver = irregular if nesting else rectangleguillotine
-    builder = solver.InstanceBuilder()
-    builder.read(io.StringIO(json.dumps(instance_data)))
-    instance = builder.build()
-    parameters = solver.OptimizeParameters()
-    parameters.verbosity_level = 0
-    if on_update is not None:
-        def publish(progress):
-            if progress.solution.number_of_items():
-                on_update(_read_layout(progress, group, options, mode, stocks, grains, nesting, trim_y))
-        parameters.new_solution_callback = publish
-    output = solver.optimize(instance, parameters)
-    return _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y)
+    if incumbent is not None and (incumbent["source"] != source_key(group, options) or incumbent["mode"] != mode):
+        incumbent = None
+    candidates = [(instance_data, stocks, None)]
+    if not nesting and not timber:
+        for fraction in _crosscut_fractions(stocks, parts, grains, options, incumbent):
+            sections, metadata = _section_stock(stocks, options, fraction)
+            if any(min(s["length"], s["width"]) <= 2 * options.trim for s in sections):
+                continue
+            bins = [
+                {"width": round((s["length"] - 2 * options.trim) * SCALE),
+                 "height": round((s["width"] - 2 * options.trim) * SCALE),
+                 "copies": s["copies"] or len(parts), "cost": 0.000001 if s["offcut"] else 1}
+                for s in sections
+            ]
+            candidates.append((instance_data | {"objective": "variable-sized-bin-packing", "bin_types": bins},
+                               sections, metadata))
+
+    best = incumbent
+
+    def consider(output, candidate_stocks, metadata):
+        nonlocal best
+        result = _read_layout(output, group, options, mode, candidate_stocks, grains, nesting, trim_y,
+                              metadata, stocks)
+        if best is None or layout_score(result) < layout_score(best):
+            best = result
+            if on_update is not None:
+                on_update(result)
+
+    queue_size = 32
+    while True:
+        native_complete = True
+        for data, candidate_stocks, metadata in candidates:
+            if metadata is not None and best is not None and not best["unplaced"]:
+                # Search within the known sheet count. Otherwise the native
+                # solver can prefer two large left halves from different
+                # sheets over the left/right pair of a single sheet.
+                limit = len(best["sheets"])
+                data = data | {"bin_types": [b | {"copies": min(b["copies"], limit)} for b in data["bin_types"]]}
+            builder = solver.InstanceBuilder()
+            builder.read(io.StringIO(json.dumps(data)))
+            instance = builder.build()
+            parameters = solver.OptimizeParameters()
+            parameters.verbosity_level = 0
+            if not nesting and not timber:
+                # Finite, progressively wider passes give both unrestricted
+                # and split-sheet candidates search time. The existing worker
+                # suspends this process at 20s and resumes its current pass.
+                parameters.optimization_mode = OptimizationMode.NotAnytimeSequential
+                parameters.use_tree_search = True
+                parameters.not_anytime_tree_search_queue_size = queue_size
+            parameters.new_solution_callback = lambda output: consider(output, candidate_stocks, metadata)
+            output = solver.optimize(instance, parameters)
+            consider(output, candidate_stocks, metadata)
+            native_complete = native_complete and (output.is_proven_optimal() or output.is_proven_infeasible)
+        # The binding accepts a signed 32-bit queue size; native tree search
+        # also adds one to it internally. Finish instead of overflowing it.
+        if nesting or timber or native_complete or queue_size > (2**31 - 2) // 4:
+            if best is None:
+                return _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y)
+            return best
+        queue_size *= 4
 
 
-def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) -> dict:
+def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
+                 sections: list[_SheetSection] | None = None, original_stocks: list[dict] | None = None) -> dict:
     parts = group["parts"]
     solution = output.solution
     sheets = []
@@ -252,7 +452,15 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) 
             if nodes:
                 cuts_in_order(0)
             for _ in range(bin.copies):
-                sheets.append({"stock": stock, "parts": placements, "cuts": cut_lines, "remnants": remnants})
+                # Sections are translated in place when joined, so repeated
+                # bins need independent placement and cutting data.
+                sheet = deepcopy({"stock": stock, "parts": placements, "cuts": cut_lines, "remnants": remnants})
+                if sections is not None:
+                    sheet["section"] = sections[bin.bin_type_id]
+                sheets.append(sheet)
+    if sections is not None:
+        sheets = _join_sections(sheets, options)
+        stocks = original_stocks if original_stocks is not None else stocks
     stock_area = sum(s["stock"]["length"] * s["stock"]["width"] for s in sheets)
     used_parts = [p for p in parts if p["id"] in placed]
     blank_area = sum(p["length"] * p["width"] for p in used_parts)
@@ -267,10 +475,10 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) 
     ]
     best_offcut = min(offcuts, key=lambda offcut: (offcut["perimeter_area_ratio"], -offcut["area"]), default=None)
     optimise_offcuts = not nesting and group["kind"] != "timber" and len(stocks) == 1
-    stock_count_optimal = output.is_proven_optimal()
+    stock_count_optimal = output.is_proven_optimal() if sections is None else False
     if optimise_offcuts and not unplaced and sheets:
         usable_area = (stocks[0]["length"] - 2 * options.trim) * (stocks[0]["width"] - 2 * trim_y)
-        lower_bound = max(ceil(blank_area / usable_area), output.bin_packing_bound)
+        lower_bound = max(ceil(blank_area / usable_area), output.bin_packing_bound if sections is None else 0)
         stock_count_optimal = len(sheets) == lower_bound
     return {
         "mode": mode, "source": source_key(group, options), "created": datetime.now(UTC).isoformat(),
@@ -282,9 +490,10 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y) 
         "estimated_cost": (sum(not s["stock"]["offcut"] for s in sheets) * group["price"]
                            if group["price"] is not None else None),
         "algorithm": output.solution_label, "profile_allowance": PROFILE_ALLOWANCE if nesting else 0,
-        "optimal": output.is_proven_optimal(),
+        "optimal": output.is_proven_optimal() if sections is None else False,
         "stock_count_optimal": stock_count_optimal, "optimises_offcuts": optimise_offcuts,
         "best_offcut": best_offcut,
         "objective": ("Fewest full stock pieces" if len(stocks) > 1 else
-                      "Fewest sheets, then useful rectangular offcuts" if optimise_offcuts else "Fewest stock pieces"),
+                      "Fewest sheets, then middle-third crosscuts and useful rectangular offcuts"
+                      if optimise_offcuts else "Fewest stock pieces"),
     }

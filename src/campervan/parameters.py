@@ -1043,15 +1043,23 @@ class Parameters(BaseModel):
     )
 
     cabinet_frame_thickness_mm: float = Field(
-        default=12.0,
+        default=9.0,
         gt=0,
-        title="Structure plywood thickness",
-        description="Cabinet partitions, aisle frame, rear rails and upright share 12mm plywood.",
+        title="Frame plywood thickness",
+        description="Cabinet aisle frame, rear rails and narrow rear upright share 9mm plywood with the shelves.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+    )
+
+    cabinet_partition_thickness_mm: float = Field(
+        default=9.0,
+        gt=0,
+        title="Solid vertical plywood thickness",
+        description="Middle, cab-end and rear upper panels share 9mm plywood with the shelves.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
 
     cabinet_door_thickness_mm: float = Field(
-        default=9.0,
+        default=6.0,
         gt=0,
         title="Door plywood thickness",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
@@ -1199,7 +1207,7 @@ class Parameters(BaseModel):
     )
 
     cabinet_shelf_thickness_mm: float = Field(
-        default=12.0,
+        default=9.0,
         gt=0,
         title="Shelf thickness",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},

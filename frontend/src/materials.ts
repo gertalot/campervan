@@ -1,5 +1,5 @@
 import { request, type ModelStatus, type Parameters } from './api';
-import type { PlanningClient } from './planning-api';
+import { emptyFilter, type PlanningClient } from './planning-api';
 import { mountPurchaseGrid } from './purchase-grid';
 import { onTab, showTab } from './tabs';
 
@@ -47,6 +47,7 @@ export function setupMaterials(client: PlanningClient) {
   let modelError = '';
   let focusRole: string | undefined;
   let scrollToRole = false;
+  let purchaseFilter = emptyFilter();
   const expandedGroups = new Set<string>();
   const feedback = el('p'); feedback.className = 'bom-feedback'; feedback.setAttribute('role', 'status');
 
@@ -77,8 +78,6 @@ export function setupMaterials(client: PlanningClient) {
   onTab((tab, role) => {
     if (tab !== 'bom') return;
     focusRole = role; scrollToRole = Boolean(role);
-    const detail = panel.querySelector<HTMLDetailsElement>('.cad-stock-details');
-    if (role && detail) detail.open = true;
     highlightMaterial();
     if (stale || !data) void refresh();
     else void purchaseGrid?.refresh();
@@ -99,15 +98,26 @@ export function setupMaterials(client: PlanningClient) {
   function render(data: Materials) {
     const host = document.getElementById('bom-panel')!;
     purchaseGrid?.destroy(); host.replaceChildren();
-    host.append(el('h2', 'Bill of materials & purchases'));
+    const heading = el('div'); heading.className = 'bom-heading';
+    heading.append(el('h2', 'Bill of materials'));
+    const navigation = el('nav'); navigation.setAttribute('aria-label', 'Materials sections');
+    const stockLink = el('a', 'Model stock'); stockLink.href = '#model-stock';
+    // Static exports use the hash for page routing; keep this jump within the BOM.
+    stockLink.onclick = event => {
+      event.preventDefault();
+      const stock = host.querySelector<HTMLElement>('#model-stock');
+      stock?.scrollIntoView({ block: 'start' }); stock?.focus({ preventScroll: true });
+    };
+    const cutsLink = el('button', 'Cut list'); cutsLink.type = 'button'; cutsLink.onclick = () => showTab('cuts');
+    navigation.append(stockLink, cutsLink); heading.append(navigation); host.append(heading);
     const purchaseHost = el('div'); host.append(purchaseHost);
-    purchaseGrid = mountPurchaseGrid(purchaseHost, client);
-    const details = el('details'); details.className = 'cad-stock-details';
-    details.open = Boolean(focusRole); details.append(el('summary', 'CAD stock and cutting details'));
-    const panel = el('div'); details.append(panel); host.append(details);
+    purchaseGrid = mountPurchaseGrid(purchaseHost, client, purchaseFilter, filter => { purchaseFilter = filter; });
+    const panel = el('section'); panel.className = 'cad-stock-details'; panel.id = 'model-stock'; panel.tabIndex = -1;
+    panel.setAttribute('aria-labelledby', 'model-stock-heading'); host.append(panel);
     const groups = stockGroups(data);
     const intro = el('div'); intro.className = 'bom-intro';
-    intro.append(el('h2', 'Bill of materials'), el('p', 'By material / product · NZD incl. GST · freight excluded'));
+    const stockHeading = el('h3', 'Model stock'); stockHeading.id = 'model-stock-heading';
+    intro.append(stockHeading, el('p', 'Specifications, model parts and cut sizes'));
     panel.append(intro, feedback);
     feedback.textContent = modelError || (data.cuts_revision === data.requested_revision ? ''
       : 'Cut quantities await regeneration; any displayed parts are from the previous model.');
@@ -223,8 +233,10 @@ export function setupMaterials(client: PlanningClient) {
       for (const cut of unassigned) rest.append(el('p', `${cut.path} · ${size(cut)} mm envelope`));
       panel.append(rest);
     }
-    panel.append(el('p', 'Sheet and timber purchase counts need a cutting layout allowing for kerf, grain and waste. Selected stock dimensions drive the model.'));
-    panel.append(el('p', 'Still to detail: drawer restraint / M5 slide fixings, lid screws, timber joint fixings and adhesive. Existing cushions and vehicle are outside this furniture shopping list.'));
+    const notes = el('details'); notes.className = 'bom-notes'; notes.append(el('summary', 'Unresolved requirements'));
+    notes.append(el('p', 'Sheet and timber purchase counts depend on the cutting layout.'),
+      el('p', 'Still to detail: drawer restraint / M5 slide fixings, lid screws, timber joint fixings and adhesive.'));
+    panel.append(notes);
   }
   return {
     show: (role?: string) => showTab('bom', role),

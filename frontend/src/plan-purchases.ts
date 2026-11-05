@@ -21,7 +21,7 @@ export function purchaseExtension(client: PlanningClient) {
           if (!editor.isEditable) return;
           const pos = getPos(); if (pos === undefined) return;
           editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, filter }));
-        });
+        }, `plan-${node.attrs.id}`);
         return {
           dom,
           update(updated) {
