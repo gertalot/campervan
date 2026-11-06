@@ -43,6 +43,7 @@ export function setupMaterials(client: PlanningClient) {
   let data: Materials | null = null;
   let loading = false;
   let statusKey = '';
+  let cuttingRevision = -1;
   let stale = true;
   let modelError = '';
   let focusRole: string | undefined;
@@ -239,6 +240,11 @@ export function setupMaterials(client: PlanningClient) {
     panel.append(notes);
   }
   return {
+    invalidate() {
+      stale = true;
+      client.refreshPurchases();
+      if (!panel.hidden) void refresh();
+    },
     show: (role?: string) => showTab('bom', role),
     onStatus(status: ModelStatus) {
       modelError = status.error ? `Model update failed: ${status.error.message}` : '';
@@ -247,7 +253,10 @@ export function setupMaterials(client: PlanningClient) {
         statusKey = key; stale = true;
         client.refreshPurchases();
         if (!panel.hidden) void refresh();
+      } else if (cuttingRevision !== status.cutting_revision) {
+        client.refreshPurchases();
       }
+      cuttingRevision = status.cutting_revision;
     },
   };
 }

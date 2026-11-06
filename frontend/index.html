@@ -43,9 +43,15 @@
           <label><input type="checkbox" id="mannequin-visible" /> Mannequin</label>
           <label class="see-inside"><input type="checkbox" id="see-inside" /> See inside</label>
         </fieldset>
-        <h2>Model parameters</h2>
-        <p class="dimension-hint">Dimensions · mm</p>
+        <fieldset id="build-components" aria-describedby="build-components-hint">
+            <legend>Included in build</legend>
+            <div id="build-component-fields"></div>
+            <p id="build-components-hint">Updates cut lists and BOM automatically. Excluded items are hidden; re-including restores their eye settings.</p>
+            <p id="build-components-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        </fieldset>
         <form id="parameters" novalidate>
+          <h2>Model parameters</h2>
+          <p class="dimension-hint">Dimensions · mm</p>
           <div class="actions">
             <button type="submit">Apply</button>
             <button id="regenerate" type="button">Regenerate</button>

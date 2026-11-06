@@ -35,6 +35,18 @@ RETIRED_PARAMETERS = frozenset(
 class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
 
+    drawer_included: float = Field(
+        default=1, ge=0, le=1, multiple_of=1, title="Rear drawer",
+        description="Include the drawer tray and sliders in cut lists and the BOM. The design remains in CAD.",
+        json_schema_extra={"unit": "", "group": ["Included in build"], "control": "build"},
+    )
+    table_included: float = Field(
+        default=1, ge=0, le=1, multiple_of=1, title="Lagun table",
+        description="Include the tabletop, spacer, Lagun kit and hinges in cut lists and the BOM. "
+                    "The design remains in CAD.",
+        json_schema_extra={"unit": "", "group": ["Included in build"], "control": "build"},
+    )
+
     table_mount: float = Field(
         default=0, ge=0, le=2, multiple_of=2, title="Show table",
         description="Switch instantly between the working table and the folded, disassembled storage preview.",
@@ -85,7 +97,7 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_length_mm: float = Field(
-        default=600, ge=240, title="Tabletop length",
+        default=700, ge=240, title="Tabletop length",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_depth_mm: float = Field(
@@ -94,7 +106,7 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_ply_thickness_mm: float = Field(
-        default=25, gt=0, le=25, title="Bamboo thickness",
+        default=18, gt=0, le=25, title="Tabletop thickness",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_corner_radius_mm: float = Field(
@@ -1046,7 +1058,7 @@ class Parameters(BaseModel):
         default=9.0,
         gt=0,
         title="Frame plywood thickness",
-        description="Cabinet aisle frame, rear rails and narrow rear upright share 9mm plywood with the shelves.",
+        description="Cabinet aisle frame, rear rails and narrow rear upright share 9mm plywood with the partitions.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
 
@@ -1207,7 +1219,7 @@ class Parameters(BaseModel):
     )
 
     cabinet_shelf_thickness_mm: float = Field(
-        default=9.0,
+        default=6.0,
         gt=0,
         title="Shelf thickness",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},

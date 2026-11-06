@@ -23,9 +23,23 @@
     "price_nzd": 75.67,
     "sale_unit": "pair",
     "pack_quantity": 2,
-    "specification": "HOM006136. Two stainless steel dual-pin folding-table hinges. Fosters specifies horizontal tabletop support and a 180° fold-over action. Published open length 114mm, maximum width 42mm, pin width 38mm. Steel grade, metal thickness, central recess depth, fixing sizes, joint gap and load rating are unpublished; establish these on the selected hardware before machining the bamboo.",
+    "specification": "HOM006136. Two stainless steel dual-pin folding-table hinges. Fosters specifies horizontal tabletop support and a 180° fold-over action. Published open length 114mm, maximum width 42mm, pin width 38mm. Steel grade, metal thickness, central recess depth, fixing sizes, joint gap and load rating are unpublished; transfer the actual hinge recesses and select fixing lengths for the 18mm pine leaves before machining.",
     "availability": "Fosters live product data shows in stock for online ordering. Wellington collection not confirmed.",
     "checked": "2026-10-27"
+  },
+  {
+    "id": "specrite-pine-18-1200-600",
+    "name": "Specrite laminated radiata pine panel · 18mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619",
+    "kind": "sheet",
+    "dimensions": {"length": 1200, "width": 600, "thickness": 18},
+    "price_nzd": 47,
+    "sale_unit": "panel",
+    "pack_quantity": 1,
+    "specification": "I/N 0419619. Kiln-dried, finger-jointed and laminated radiata pine furniture panel. Two 700 × 250mm tabletop leaves fit side by side with grain along the 1200mm direction and room for kerf. Retain the 20mm corner radius and 3mm edge round-over. Finish both faces and all edges, including hinge pockets. Select hinge and Lagun plate fixing lengths for 18mm stock. Nominal full-panel weight 6.2kg; two unmachined leaves approximately 3.0kg.",
+    "availability": "Listed by Bunnings NZ; local store stock not confirmed.",
+    "checked": "2026-11-06"
   },
   {
     "id": "prempanel-bamboo-25",
@@ -70,6 +84,20 @@
     "checked": "2026-10-20"
   },
   {
+    "id": "taskmaster-roller-4",
+    "name": "Taskmaster zinc double roller catch · 4 pack",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/taskmaster-zinc-double-roller-catch-4-pack_p0035579",
+    "kind": "hardware",
+    "dimensions": {},
+    "price_nzd": 4.73,
+    "sale_unit": "4-pack",
+    "pack_quantity": 4,
+    "specification": "Zinc double roller catches with keepers and screws. Bunnings item 0035579. CAD envelopes are approximate; physical dimensions and screw lengths require checking. No verified vehicle holding-force rating.",
+    "availability": "Listed online; local stock unconfirmed.",
+    "checked": "2026-11-06"
+  },
+  {
     "id": "vanlifer-point-ll016",
     "name": "Vanlifer Point push latch · chrome · LL016",
     "supplier": "Vanlifer NZ (Auckland)",
@@ -82,6 +110,20 @@
     "specification": "LL016. Supplier section drawing: 5–25mm panel, 50mm from front mounting face to mechanism rear, catch at 35.5mm behind front face and 20mm off-axis; 27mm bore with 23.5mm flats, 32mm flange. Published 17.8mm knob extension. Striker overall dimensions and flange thickness not dimensioned: CAD envelopes are estimates, not machining drawings.",
     "availability": "NZ supplier; live product data marks available for online ordering. Wellington collection not confirmed.",
     "checked": "2026-10-20"
+  },
+  {
+    "id": "tigerply-okoume-6",
+    "name": "Tigerply Okoume plywood · 6mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-6mm-okoume-plywood_p0345103",
+    "kind": "sheet",
+    "dimensions": {"length": 2400, "width": 1200, "thickness": 6},
+    "price_nzd": 53.77,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "Interior non-structural Okoume veneer plywood with poplar core. Item 0345103. Cabinet shelves use continuous glued and screwed perimeter ledges; published product-specific bending stiffness is unavailable.",
+    "availability": "Special Order; local availability and lead time unconfirmed.",
+    "checked": "2026-11-06"
   },
   {
     "id": "tigerply-okoume-9",

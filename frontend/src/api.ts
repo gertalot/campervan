@@ -8,7 +8,7 @@ export interface FieldMetadata {
   default: number;
   unit: string;
   group: string[];
-  control?: 'position';
+  control?: 'position' | 'build';
   options?: { value: number; label: string }[];
   material?: string;
   description?: string;
@@ -29,6 +29,7 @@ export interface ParameterResponse {
 }
 export interface MutationResponse { session_id: string; requested_revision: number }
 export interface ModelStatus extends MutationResponse {
+  cutting_revision: number;
   published_revision: number | null;
   state: 'idle' | 'regenerating' | 'ready' | 'failed';
   error: { message: string } | null;
@@ -78,7 +79,8 @@ export const previewParameters = (parameters: Parameters) => request<ParameterRe
 export const getStatus = async (): Promise<ModelStatus> => {
   if (!isStaticSite) return request<ModelStatus>('model/status');
   const data = await getParameters();
-  return { session_id: data.session_id, requested_revision: 0, published_revision: 0, state: 'ready', error: null };
+  return { session_id: data.session_id, requested_revision: 0, published_revision: 0,
+    cutting_revision: 0, state: 'ready', error: null };
 };
 export const putParameters = (parameters: Parameters) => request<ModelStatus>('parameters', 'PUT', parameters);
 export const loadModel = () => request<ModelStatus>('model/load', 'POST');

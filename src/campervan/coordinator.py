@@ -8,8 +8,10 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
-from campervan.materials import CutPart, Project, Selection, load_project, resolve, save_project
+from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key, stock_groups
+from campervan.cutting_worker import LayoutSearch
 from campervan.mannequins import MannequinSettings
+from campervan.materials import CutPart, Project, Selection, active_cuts, load_project, resolve, save_project
 from campervan.model_cache import ModelBundle, model_fingerprint, read_bundle, save_bundle
 from campervan.parameter_fit import fit_parameters
 from campervan.parameters import Parameters
@@ -17,8 +19,6 @@ from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.settings import Settings
 from campervan.viewer import replay_model
 from campervan.worker import regenerate_model
-from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key
-from campervan.cutting_worker import LayoutSearch
 
 Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class ModelStatus:
     published_revision: int | None = None
     state: Literal["idle", "regenerating", "ready", "failed"] = "idle"
     error: ModelError | None = None
+    cutting_revision: int = 0
 
 
 class Coordinator:
@@ -54,7 +55,7 @@ class Coordinator:
         self._cutting_tasks: dict[str, asyncio.Task[None]] = {}
         self._cutting_searches: dict[str, LayoutSearch] = {}
         self._bundle = read_bundle(self._cache_path)
-        self.cuts: list[CutPart] = self._bundle.cuts if self._bundle else []
+        self._cuts: list[CutPart] = self._bundle.cuts if self._bundle else []
         self.cuts_revision: int | None = 0 if self._bundle else None
         matches = self._bundle is not None and self._bundle.fingerprint == model_fingerprint(self.parameters)
         self._status = ModelStatus(
@@ -73,6 +74,17 @@ class Coordinator:
             parameters=self.parameters, materials=self.materials, cutting=self.cutting, mannequins=self.mannequins,
         )
 
+    @property
+    def cuts(self) -> list[CutPart]:
+        return active_cuts(self._cuts, self.parameters)
+
+    async def set_build_options(self, options: dict[str, float]) -> None:
+        await self.stop_cutting()
+        parameters = Parameters.model_validate(self.parameters.model_dump() | options)
+        save_project(self.project().model_copy(update={"parameters": parameters}), self._project_path)
+        self.parameters = parameters
+        await self.ensure_cutting()
+
     def save_cutting(self) -> None:
         save_project(self.project(), self._project_path)
 
@@ -80,6 +92,31 @@ class Coordinator:
         save_project(self.project().model_copy(update={"mannequins": settings}), self._project_path)
         self.mannequins = settings
         return settings
+
+    def cutting_changed(self) -> None:
+        self._status = replace(self._status, cutting_revision=self._status.cutting_revision + 1)
+
+    async def ensure_cutting(self) -> None:
+        """Start missing/stale layouts for all confirmed stock, independently of the selected view."""
+        if self.cuts_revision != self._status.requested_revision:
+            return
+        mode = self.cutting.settings.algorithm
+        for group in stock_groups(self.cuts, self.materials):
+            options = effective_options(group, self.cutting.settings, self.cutting.options.get(group["key"]))
+            if not group["stock_sourced"] and not options.confirmed:
+                continue
+            key = f"{group['key']}:{mode}"
+            result = self.cutting.results.get(key)
+            if result is not None:
+                result = refresh_layout_source(result, group, options)
+                self.cutting.results[key] = result
+            source = source_key(group, options)
+            if result and result["source"] == source and not result["unplaced"]:
+                continue
+            job = self.cutting_jobs.get(key)
+            if job and job["source"] == source and job["state"] != "stopped":
+                continue  # Keep pauses and failures explicit; input changes permit a new automatic run.
+            await self.start_cutting(group)
 
     async def start_cutting(self, group: dict) -> None:
         mode = self.cutting.settings.algorithm
@@ -97,15 +134,22 @@ class Coordinator:
                 if current_job["state"] == "paused":
                     self._cutting_searches[key].resume()
                     current_job["state"] = "running"
+                    self.cutting_changed()
                 return
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
         job: dict[str, Any] = {"state": "running", "source": source, "error": None}
         self.cutting_jobs[key] = job
+        self.cutting_changed()
+
+        def paused() -> None:
+            job["state"] = "paused"
+            self.cutting_changed()
+
         search = LayoutSearch(
             {"group": group, "mode": mode, "options": options.model_dump(),
              "incumbent": self.cutting.results.get(key)},
-            lambda: job.update(state="paused"),
+            paused,
         )
         self._cutting_searches[key] = search
         search.resume()
@@ -123,13 +167,16 @@ class Coordinator:
                             continue
                     self.cutting.results[key] = result
                     self.save_cutting()
+                    self.cutting_changed()
             self.cutting_jobs[key]["state"] = "complete"
+            self.cutting_changed()
         except asyncio.CancelledError:
             self.cutting_jobs[key]["state"] = "stopped"
             raise
         except Exception as error:
             logger.exception("Cutting layout failed")
             self.cutting_jobs[key].update(state="failed", error=str(error))
+            self.cutting_changed()
         finally:
             self._cutting_searches.pop(key, None)
 
@@ -152,7 +199,8 @@ class Coordinator:
                 self.cutting_jobs[key]["state"] = "stopped"
 
     async def accept(
-        self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None, *, force: bool = False
+        self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None,
+        *, force: bool = False,
     ) -> int:
         selected = self.materials if materials is None else materials
         resolved = resolve(parameters or self.parameters, selected)
@@ -170,9 +218,10 @@ class Coordinator:
             # A return to cached dimensions also supersedes an in-flight build for different dimensions.
             replay = key != previous_key or self._status.state != "ready"
             revision = self._status.requested_revision + int(replay)
-            self.cuts = self._bundle.cuts
+            self._cuts = self._bundle.cuts
             self.cuts_revision = revision
             self._status = replace(self._status, requested_revision=revision, error=None)
+            await self.ensure_cutting()
             if replay:
                 try:
                     async with self._publication:
@@ -239,8 +288,9 @@ class Coordinator:
                         continue
                     save_bundle(self._cache_path, bundle)
                     self._bundle = bundle
-                    self.cuts = bundle.cuts
+                    self._cuts = bundle.cuts
                     self.cuts_revision = revision
+                    await self.ensure_cutting()
                     await asyncio.to_thread(replay_model, bundle, self._settings)
                     if revision == self._status.requested_revision:
                         self._status = replace(self._status, published_revision=revision, state="ready", error=None)

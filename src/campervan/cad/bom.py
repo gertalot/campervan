@@ -13,12 +13,12 @@ from campervan.cad.cut_profiles import flat_profile
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
     if "Laptop table" in path:
-        return "table-plywood" if name in {"fixed bamboo leaf", "folding bamboo leaf"} else "frames"
+        return "table-plywood" if name in {"fixed tabletop leaf", "folding tabletop leaf"} else "frames"
     if name == "finished floor plywood":
         return "floor"
-    if name.startswith("point latch"):
+    if name.startswith("roller catch keeper"):
         return "cabinet-catches"
-    if name.endswith("strike block"):
+    if "Catch timber" in path:
         return "ledges"
     if "Cabinet" in path and "Doors" in path:
         return "cabinet-doors"
@@ -59,9 +59,9 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         if "Laptop table" in path and "Stowed" in path:
             return  # Another pose of the same two leaves and purchased leg kit.
         if "Laptop table" in path and "Table hinges · Homer HOM006136" in path:
-            return  # One purchased pair; the moving halves follow their bamboo leaves.
-        if "Latch strikes" in path:
-            return  # Supplied with the purchased Point latches.
+            return  # One purchased pair; the moving halves follow their tabletop leaves.
+        if "Roller catch bodies" in path:
+            return  # One catch set is counted by its moving keeper.
         if part.children:
             for child in part.children:
                 visit(child, path)

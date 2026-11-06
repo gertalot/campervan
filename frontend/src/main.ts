@@ -26,6 +26,7 @@ const tableEyes = new Map<number, HTMLButtonElement>();
 function refreshTableEyes() {
   const selected = Number(inputs.get('table_mount')?.value ?? 0);
   for (const [index, button] of tableEyes) {
+    button.disabled = !(inputs.get('table_included') as HTMLInputElement | undefined)?.checked;
     updateVisibilityButton(button, tableGroups[index], selected === index ? 'shown' : 'hidden');
   }
 }
@@ -116,6 +117,8 @@ const controller = createController(api, {
     liveControls.replaceChildren(cabinetSideControl);
     inputs.clear();
     tableEyes.clear();
+    const buildFields = element('build-component-fields');
+    buildFields.replaceChildren();
     const groups = new Map<string, HTMLDetailsElement>();
     function groupFor(groupPath: string[], parent: HTMLElement, cadVisibility = true): HTMLElement {
       for (let depth = 0; depth < groupPath.length; depth++) {
@@ -158,6 +161,18 @@ const controller = createController(api, {
       return parent;
     }
     for (const [name, field] of Object.entries(metadata)) {
+      if (field.control === 'build') {
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox'; input.id = name; input.name = name;
+        input.disabled = isStaticSite;
+        input.addEventListener('change', () => { void saveBuildOptions(); });
+        label.title = field.description ?? '';
+        label.append(input, ` ${field.title}`);
+        buildFields.append(label);
+        inputs.set(name, input);
+        continue;
+      }
       const topLevelControl = field.control === 'position'
         && (name === 'table_fold_open_percent' || !['Stored gear', 'Laptop table', 'Cabinet'].includes(field.group[0]));
       const parent = groupFor(topLevelControl ? [] : field.group, topLevelControl ? liveControls : fields);
@@ -241,7 +256,7 @@ const controller = createController(api, {
   },
   setConstraints(metadata, errors, adjustments, parameters) {
     for (const [name, input] of inputs) {
-      if (!(input instanceof HTMLInputElement) || metadata[name].control === 'position') continue;
+      if (!(input instanceof HTMLInputElement) || metadata[name].control) continue;
       const field = metadata[name];
       const minimum = field.minimum ?? field.exclusiveMinimum;
       const maximum = field.maximum ?? field.exclusiveMaximum;
@@ -265,15 +280,16 @@ const controller = createController(api, {
     viewer.setLayoutWidth(parameters.cargo_width_mm);
     const stack = 2 * parameters.table_ply_thickness_mm;
     element('table-stowed-summary').textContent = `Folded top with upright and arm stored underneath. `
-      + `Approx. ${stack + 77}mm thick including the ${stack}mm bamboo stack. `
+      + `Approx. ${stack + 77}mm thick including the ${stack}mm timber stack. `
       + 'Preview location is adjustable; final storage location and actual handle clearance remain unconfirmed.';
     for (const [name, input] of inputs) {
       if (dirty && !reset && !(input instanceof HTMLInputElement && input.readOnly)) continue;
       input.value = String(parameters[name]);
+      if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = parameters[name] === 1;
       const output = document.getElementById(`${name}-value`);
       if (output) output.textContent = input.value;
     }
-    refreshTableEyes();
+    refreshBuildVisibility();
     if (reset) dirty = false;
   },
   setViewerUrl: url => viewer.connect(url),
@@ -309,7 +325,43 @@ const controller = createController(api, {
 viewer.setMotionController(controller);
 onTab(tab => { if (tab !== 'cad') viewer.cancelDrag(); });
 
-const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name, input.value]));
+const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name,
+  input instanceof HTMLInputElement && input.type === 'checkbox' ? String(Number(input.checked)) : input.value]));
+
+function refreshBuildVisibility() {
+  visibility.setBuildInclusion({
+    drawer: (inputs.get('drawer_included') as HTMLInputElement | undefined)?.checked ?? true,
+    table: (inputs.get('table_included') as HTMLInputElement | undefined)?.checked ?? true,
+  });
+  refreshTableEyes();
+}
+
+async function saveBuildOptions() {
+  const group = element<HTMLFieldSetElement>('build-components');
+  const feedback = element('build-components-status');
+  const switches = [...group.querySelectorAll<HTMLInputElement>('input')];
+  refreshBuildVisibility();
+  group.disabled = true;
+  feedback.textContent = 'Saving build choices…';
+  try {
+    const saved = await api.request<Record<string, number>>('build-options', 'PATCH',
+      Object.fromEntries(switches.map(input => [input.name, Number(input.checked)])));
+    for (const input of switches) {
+      input.value = String(saved[input.name]);
+      input.checked = saved[input.name] === 1;
+    }
+    refreshBuildVisibility();
+    materials.invalidate();
+    await cutting.refresh();
+    feedback.textContent = '';
+  } catch (reason) {
+    for (const input of switches) input.checked = input.value === '1';
+    refreshBuildVisibility();
+    feedback.textContent = `Build choices were not saved: ${reason instanceof Error ? reason.message : String(reason)}`;
+  } finally {
+    group.disabled = false;
+  }
+}
 let previewTimer: number;
 form.addEventListener('input', event => {
   if (isStaticSite) return;

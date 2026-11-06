@@ -1,14 +1,11 @@
 """Overlay plywood doors, rotating about face-mounted hinges in the closing gap."""
 
-from build123d import Align, Axis, Color, Compound, Cylinder, Location, fillet
+from build123d import Align, Axis, Color, Compound, Cylinder, GeomType, Location, fillet
 
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 
-# Vanlifer LL016 section drawing: 50mm behind the front face, 27mm bore with
-# 23.5mm flats, 32mm flange, catch station 35.5mm back and 20mm above the axis.
-# Striker overall size and flange thickness are conservative visual estimates.
-STRIKE_HEIGHT = 8.0
+FINGER_HOLE_DIAMETER = 30.0
 
 
 def _hinged_door(
@@ -24,33 +21,33 @@ def _hinged_door(
     reverse: bool = False,
     latch: bool = False,
 ) -> Compound:
-    if min(width, height) <= 2 * p.cabinet_door_corner_radius_mm or (latch and width <= 51):
-        raise ValueError("Door opening must leave room for its rounded corners and the storage latch flange.")
+    if min(width, height) <= 2 * p.cabinet_door_corner_radius_mm or (latch and min(width, height) <= 80):
+        raise ValueError("Door opening must leave room for its rounded corners and a 30mm finger hole.")
     door = panel(width, p.cabinet_door_thickness_mm, height)
     door = fillet(door.edges().filter_by(Axis.Y), p.cabinet_door_corner_radius_mm)
     door = fillet(door.edges().filter_by(Axis.Y, reverse=True), p.cabinet_door_edge_radius_mm)
     children = []
     if latch:
-        if not 5 <= p.cabinet_door_thickness_mm <= 25:
-            raise ValueError("The Point storage-door latch requires 5–25mm door plywood.")
         centre = (
             width / 2 if upper else (35 if reverse else width - 35),
             0,
-            height - p.cabinet_door_overlap_mm - 20 - STRIKE_HEIGHT,
+            height - p.cabinet_door_overlap_mm - 40,
         )
         thickness = p.cabinet_door_thickness_mm
-        bore = Cylinder(13.5, thickness + 2, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MIN))
-        bore = bore.moved(Location((0, thickness + 1, 0)))
-        bore &= panel(23.5, thickness + 2, 27).moved(Location((-11.75, -1, -13.5)))
-        door -= bore.moved(Location(centre))
-        body = Cylinder(13.5, 50, rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MIN))
-        body = body.moved(Location((0, thickness, 0)))
-        body &= panel(23.5, 50, 27).moved(Location((-11.75, thickness - 50, -13.5)))
-        flange = Cylinder(16, 1.5, rotation=(-90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MIN))
-        body += flange.moved(Location((0, thickness, 0)))
-        body = body.moved(Location(centre))
-        body.label, body.color = "Point latch (clearance envelope)", Color(0.35, 0.38, 0.40)
-        children.append(body)
+        bore = Cylinder(
+            FINGER_HOLE_DIAMETER / 2, thickness + 2,
+            rotation=(90, 0, 0), align=(Align.CENTER, Align.CENTER, Align.MIN),
+        ).moved(Location((centre[0], thickness + 1, centre[2])))
+        door -= bore
+        hole_edges = [
+            edge for edge in door.edges().filter_by(GeomType.CIRCLE)
+            if abs(edge.radius - FINGER_HOLE_DIAMETER / 2) < 1e-6
+        ]
+        door = fillet(hole_edges, p.cabinet_door_edge_radius_mm)
+        # Nominal keeper only: confirm the purchased catch before drilling fixings.
+        keeper = panel(12, 30, 12).moved(Location((centre[0] - 6, -30, height - p.cabinet_door_overlap_mm - 16)))
+        keeper.label, keeper.color = "Roller catch keeper (estimated envelope)", Color(0.35, 0.38, 0.40)
+        children.append(keeper)
     door.label, door.color = "Plywood door", Color(0.84, 0.72, 0.49)
     pose = Location((-p.cabinet_door_gap_mm / 2, -width if reverse else 0, 0)) * Location((0, 0, 0), (0, 0, 90))
     children = [door, *children]
@@ -62,33 +59,28 @@ def _hinged_door(
     return hinged
 
 
-def cabinet_door_strikes(p: Parameters, doors: Compound) -> tuple[Compound, Compound]:
-    """Use each closed leaf's bore centre to align estimated strikers and top-rail blocks."""
-    strikes = []
-    blocks = []
+def cabinet_door_hardware(p: Parameters, doors: Compound) -> tuple[Compound, Compound]:
+    """Fixed catch envelopes and mounting blocks, independent of door opening pose."""
+    catches, timber = [], []
+    section, depth = p.cabinet_ledge_size_mm, p.cabinet_ledge_height_mm
     for door in doors.children:
-        # Keep the hinge translation and remove its opening rotation. Child
-        # geometry then supplies the closed bore centre, even in an open build.
-        latch = door.children[1].located(Location(door.location.position) * door.children[1].location)
-        y = latch.bounding_box().center().Y
-        # The 32mm flange sets the vertical envelope symmetrically about the bore.
-        top = latch.bounding_box().center().Z + 20 + STRIKE_HEIGHT
-        strike = panel(15, 70, STRIKE_HEIGHT)
-        strike.location = Location((p.bed_width_mm + 35.5 - 7.5, y - 35, top - STRIKE_HEIGHT))
-        strike.label, strike.color = f"{door.label} strike (estimated envelope)", Color(0.25, 0.27, 0.29)
-        strikes.append(strike)
+        keeper = door.children[1].located(Location(door.location.position) * door.children[1].location)
+        y = keeper.bounding_box().center().Y
+        opening_top = keeper.bounding_box().max.Z + 4
+        # The roller body meets the keeper behind the door; mounting block is
+        # glued to the inside of the frame. Both envelopes need a physical fit-up.
+        catch = panel(25, 32, 16)
+        catch.location = Location((cabinet_aisle_x(p) + p.cabinet_frame_thickness_mm, y - 16, opening_top - 16))
+        catch.label, catch.color = f"{door.label} roller body (estimated envelope)", Color(0.35, 0.38, 0.40)
+        catches.append(catch)
         if door.label.endswith("upper 2") or door.label in {"Rear storage aft", "Rear storage fore"}:
-            block = panel(p.cabinet_ledge_size_mm, 70, p.cabinet_ledge_height_mm)
-            block.location = Location(
-                (
-                    cabinet_aisle_x(p) + p.cabinet_frame_thickness_mm,
-                    y - 35,
-                    top,
-                )
-            )
-            block.label, block.color = f"{door.label} strike block", Color(0.88, 0.61, 0.25)
-            blocks.append(block)
-    return Compound(label="Latch strikes", children=strikes), Compound(label="Latch strike blocks", children=blocks)
+            block = panel(section, 50, depth)
+            block.location = Location((cabinet_aisle_x(p) + p.cabinet_frame_thickness_mm, y - 25, opening_top))
+            block.label = f"{door.label} catch mounting block"
+            timber.append(block)
+    for part in timber:
+        part.color = Color(0.88, 0.61, 0.25)
+    return Compound(label="Roller catch bodies", children=catches), Compound(label="Catch timber", children=timber)
 
 
 def cabinet_aisle_x(p: Parameters) -> float:

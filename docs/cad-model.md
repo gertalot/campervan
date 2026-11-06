@@ -153,13 +153,13 @@ Campervan
     ├── Wall upper frame
     ├── Back lining
     ├── Doors
-    │   ├── Rear upper 1/2 → Plywood door + Point latch
-    │   ├── Cab-end upper 1/2 → Plywood door + Point latch
-    │   ├── Cab-end lower 1/2 → Plywood door + Point latch
-    │   ├── Rear storage aft/fore → Plywood door + Point latch
-    │   └── Rear storage upper aft/fore → Plywood door + Point latch
-    ├── Latch strikes
-    ├── Latch strike blocks
+    │   ├── Rear upper 1/2 → Plywood door + roller catch keeper
+    │   ├── Cab-end upper 1/2 → Plywood door + roller catch keeper
+    │   ├── Cab-end lower 1/2 → Plywood door + roller catch keeper
+    │   ├── Rear storage aft/fore → Plywood door + roller catch keeper
+    │   └── Rear storage upper aft/fore → Plywood door + roller catch keeper
+    ├── Roller catch bodies
+    ├── Catch timber
     ├── Corner cleats
     ├── Shelf ledges
     └── Shelves
@@ -344,6 +344,21 @@ Rear drawer contains the tray and the `Drawer sliders` assembly. Its stationary 
 bed's Fixed frame alongside the aisle frame and rear header,
 so hiding or omitting the drawer leaves the bed supports in place.
 
+`drawer_included` and `table_included` are saved 0/1 purchasing choices, separate from visibility and live poses.
+They default to included for existing saved designs. Both assemblies always remain in the CAD model and hierarchy.
+The cached bundle retains all cuts; `active_cuts` filters the manufacturing list and `active_roles` filters dedicated
+stock/hardware requirements. `Coordinator.cuts` supplies the current filtered list to all local consumers; static
+exports apply the same filter. Changing inclusion saves via `/api/v1/build-options` without rebuilding or republishing
+geometry. Inclusion does not enter the geometry fingerprint. Existing cutting searches stop when inclusion changes,
+and saved layout fingerprints determine which results still apply. All dimensions and selections remain saved;
+purchases with recorded ownership or spending remain as unused stock with no future requirement.
+The coordinator automatically starts missing/stale cutting layouts for all sourced or confirmed stock when the current
+cuts or their inputs change, and on application startup. Search ownership is independent of the selected frontend tab.
+Model status includes `cutting_revision`; BOM purchase tables refresh when layouts publish new results, using the existing
+draft-preserving refresh and polling. Current complete layouts are reused; unchanged paused/failed searches remain manual.
+The frontend masks excluded assembly roots in the viewer without changing the saved leaf-visibility rules.
+Re-including removes that mask, restoring the previous eye settings; disabled eyes retain their state while excluded.
+
 `cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
 18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. At the default 400mm platform height,
 the frame tops are Z = 382; the 18mm slats bear directly on them. There is no divider, deck, sliding assembly,
@@ -377,7 +392,7 @@ Rear upper shelves have 551mm clear length between panels, and the forward bay h
 The cab end's outer face is at local Y = 1000, vehicle Y = 1100.
 
 `cabinet_partition_thickness_mm` supplies the three solid vertical panels from 9mm Tigerply Okoume stock,
-shared with the five 9mm shelves and cross-bench rear skin. `cabinet_frame_thickness_mm` independently supplies
+shared with the cross-bench rear skin. The five shelves and nine doors share 6mm Tigerply Okoume stock. `cabinet_frame_thickness_mm` independently supplies
 the aisle frame, rear rails and narrow rear upright from the same 9mm Tigerply Okoume stock; the bed retains its 18mm stock.
 Shelf ledges, rail joint blocks and corner cleats follow the thinner partitions' inner faces. The aisle frame's
 middle post follows the centre of the middle partition. The aisle frame retains its rounded openings and door
@@ -396,9 +411,9 @@ There are no cabinet skins, full-height transverse rear frame, bottom threshold 
 The van floor is the bottom.
 
 The lowest rear shelf supports start at `cabinet_rear_storage_height_mm` (730mm); shelf underside/top are at
-748/757mm. The forward middle shelf shares this elevation, so both bays' middle beams run at 730–790mm.
+748/754mm. The forward middle shelf shares this elevation, so both bays' middle beams run at 730–790mm.
 The upper rear shelf and three forward shelves remain. The lower forward shelf top retains its mattress clearance;
-the other shelf tops are 3mm lower with the thinner plywood. The closed doors retain their 1070mm bed envelope.
+the other shelf tops follow the selected shelf thickness. The closed doors retain their 1070mm bed envelope.
 
 The wall-side support is a separate `Wall supports` group: eight straight 9 × 60mm plywood rails and one narrow
 transverse rear upright. Each bay has a top rail and matching lower, middle and upper rails.
@@ -417,11 +432,12 @@ The solid partitions are bounded by the lining/vehicle fitting volume; shelves e
 The old `cabinet_frame_step_height_mm` parameter is retained for saved projects, now labelled **Upper shelf reference
 height**: the upper shelf rail remains halfway between this reference and the cabinet top.
 
-The five 9mm shelves form a bonded assembly: glue shelves onto their ledges and glue ledges continuously to the
+The five 6mm shelves form a bonded assembly: glue and screw shelves onto their continuous perimeter ledges,
+and bond the ledges to the
 partitions, aisle frame and rear rails. The separate `Rail joint blocks` group contains sixteen vertical pine
 blocks, one at each rail end, against the rail face and the adjacent upright or partition. They use ready-made
 18 × 18mm stock. At the five shelf levels, ten blocks start at the shelf top and extend to the rail top:
-33mm high with 18mm ledges and 9mm shelves. The six blocks on the top rails and the rear lower rail remain 60mm high.
+36mm high with 18mm ledges and 6mm shelves. The six blocks on the top rails and the rear lower rail remain 60mm high.
 Glue both mating faces; predrill assembly screws through the plywood faces into the blocks, staggering perpendicular screws.
 Crosswise shelf ledges extend the full shelf depth into the corners, and longitudinal ledges butt between them.
 At the rear pillar the wall ledge starts against the rear upright. The shelves have no notches for joint blocks;
@@ -507,23 +523,23 @@ Python saved-parameter loading and browser position loading migrate the former g
 their individual doors. Explicit individual values take precedence. Controls are grouped under Cabinet → Doors;
 the subgroup headings describe controls rather than introducing extra assembly visibility paths.
 
-The BoM includes eighteen Zenith 35mm fixed-pin butt hinges, nine Vanlifer Point push latches and two 3m packs of
-Pinnacle 2mm double jack chain. The six drop-down flaps each require two chain restraints; cut lengths depend
-on actual anchor positions (roughly 240–300mm each as an initial allowance).
+The BoM includes eighteen Zenith 35mm fixed-pin butt hinges, nine Taskmaster zinc double roller catch sets
+(three four-packs, NZ$14.19 at the 6 November 2026 listed price), and two 3m
+packs of Pinnacle 2mm double jack chain. The six drop-down flaps each require two chain restraints; cut lengths
+depend on actual anchor positions (roughly 240–300mm each as an initial allowance).
 
-All doors use Vanlifer NZ Point LL016 positive push latches (NZ$16 each including GST), each with its supplied striker.
-The supplier drawing specifies 5–25mm panels, a 27mm bore with 23.5mm flats, 32mm flange and 50mm depth from the
-door front face: 44mm projects behind the 6mm door. The catch station is 35.5mm behind the door face and 20mm above
-the bore axis. Storage latches sit near the inner upper corners; flap latches are centred near the top and the lower
-side-hinged doors latch near their free upper corners. Six strike under the aisle shelf ledges. Four 70mm blocks cut from the same 18 × 18mm pine support
-the topmost strikers and bottom storage-door strikers behind the aisle frame/crossbeam.
-The CAD shows body envelopes and door bores. Striker overall dimensions (reserved 15 × 70 × 8mm) and flange
-thickness (1.5mm) are estimates; the cam, nut, fixing holes and released knob are not modelled. Confirm these details
-on the physical product before machining. Closed flange envelopes extend 1.5mm into the aisle.
-Strikes are included with the latches and excluded from separate BOM purchasing counts. The single shared catch
-role counts the ten modelled latch bodies; old saved roller-catch selections migrate to this product.
+Each door has a 30mm circular finger hole with the existing door edge roundover on both rims. Flap pulls are
+centred; side-hinged door pulls sit near their free upper corners. The former Point keyed bores, flanges and
+50mm latch bodies are removed. Roller keepers follow the doors; fixed bodies remain on the cabinet. Only the
+keeper counts towards purchasing, so each roller/keeper pair is one catch set. Catch geometry is an estimated
+clearance envelope, not a drilling template. Confirm mounting orientation and screw lengths on the physical
+[Taskmaster catch](https://www.bunnings.co.nz/taskmaster-zinc-double-roller-catch-4-pack_p0035579).
+Five catches use the existing shelf ledges; four use 50mm blocks of the selected pine batten behind the frame.
+
+Chains restrain open flaps; they do not hold closed doors shut.
+
 Other hardware bodies, chain restraints, anchors and fasteners are not modelled.
-Hinge leaves face-mount in the closing gap. Through-fix the 6mm door faces with flush countersunk heads. Check the actual
+Hinge leaves face-mount in the closing gap. Through-fix the thin plywood door faces with flush countersunk heads. Check the actual
 leaf thickness/holes and select fixings before drilling. Fasten cabinet-side chain anchors into frame members and
 through-fix the door-side anchors. Check that slack chain
 stows inside the opening without being pinched when the door closes. The hinge-centred preview stops at
@@ -620,7 +636,7 @@ Older project files and browser storage containing only the shared bed position 
 position. Once separate positions are saved, they remain independent.
 
 Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece picker. Unmodified primary drags on
-the moving bed support/slats, drawer, cabinet doors and mounted bamboo leaves take precedence over camera orbit.
+the moving bed support/slats, drawer, cabinet doors and mounted tabletop leaves take precedence over camera orbit.
 The 4px threshold preserves ordinary clicks and double-click cut-list navigation. Pointer capture owns the gesture;
 Escape, lost capture, page blur, tab changes and geometry replacement restore the starting pose and automatic
 table-return flag. `viewer-highlight.ts` supplies the same translucent surface tint and edge outline for persistent
@@ -816,8 +832,8 @@ Cut rectangles are not a nesting plan: they exclude saw kerf, grain constraints 
 purchase quantities require a cutting layout; roles selecting the same product may share stock.
 
 Bed frame supports, cross-bench support rails and bed guide ledges use the selected 18mm plywood.
-Cabinet ledges, corner cleats and strike blocks share ready-made 18 × 18mm untreated pine.
-Cabinet aisle frames, rear rails, rear upright, solid vertical panels and shelves share 9mm sheets with the
+Cabinet ledges, corner cleats and catch blocks share ready-made 18 × 18mm untreated pine.
+Cabinet aisle frames, rear rails, rear upright and solid vertical panels share 9mm sheets with the
 cross-bench rear skin. The drawer uses 12mm sheets. The cabinet frame, partition and shelf roles
 retain their actual flat profiles in the cut list, including the partitions' wall curves and wheel-arch notch.
 The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
@@ -846,24 +862,24 @@ frontend/src/pillows.ts and update in the browser without CAD regeneration.
 `Laptop table` is a furniture-local assembly from `cad/table.py`, mirrored with the benches and cabinet. It contains
 the `Bench mount` display group with live height, arm swivel, tabletop rotation, fold and mounting-offset controls.
 The cabinet mount has been removed. The Show table selector switches between Bench mount and Stowed without
-regeneration. Stowed shows the folded bamboo with the detached upright beside the arm beneath the tabletop.
+regeneration. Stowed shows the folded pine with the detached upright beside the arm beneath the tabletop.
 The fixed furniture bracket and spacer remain on the bench. Stowed has its own live XYZ and facing controls;
 the arm automatically points towards the displaced tabletop, flipping 180° when the offset changes sides.
 The default aisle position is a preview pending a storage-location decision. The two display
 poses share component builders and one mount offset. The duplicate stowed geometry is excluded from the cut
-list and its bamboo leaves link to the working pose's cutting entries. Nominal packed thickness is 127mm
-(50mm bamboo + 30mm fitting + 47mm arm); actual handles and the storage channel remain unmeasured.
+list and its tabletop leaves link to the working pose's cutting entries. Nominal packed thickness is 113mm
+(36mm pine + 30mm fitting + 47mm arm); actual handles and the storage channel remain unmeasured.
 The bench mount has a 92mm post and one 18mm spacer flush with the retracted moving frame. That moving frame is
 trimmed 5mm at its cab end, leaving 3mm beside the mounting post throughout sideways travel. Slats stay unchanged.
-The tabletop has two 700 × 250 × 25mm Prempanel bamboo leaves with rounded corners and perimeter round-over.
-It folds from 500mm open width to a 250mm-wide, 50mm-thick stack. The long-edge hinge rotates above the fixed
+The tabletop has two 700 × 250 × 18mm Specrite pine leaves with rounded corners and perimeter round-over.
+It folds from 500mm open width to a 250mm-wide, 36mm-thick stack. The long-edge hinge rotates above the fixed
 leaf. Two selected Homer HOM006136 hinges appear in both table poses, with centres at 20% and 80% along
 the seam. Their 114 × 42mm open footprint and 38mm pin width follow the supplier; thickness, pivot spacing,
 barrel section, taper and countersunk holes are photo-based approximations. Each half follows its leaf
 through the existing schematic fold. Nominal blind seats prevent metal/wood overlap without changing the
 cutting silhouette. The hardware groups contribute no wood or extra hinge purchases to the cut list.
 Actual recesses, joint gap and fixing details remain unmeasured. The two leaves have separate cutting profiles on
-2200 × 600 × 25mm bamboo stock; the single mount spacer remains frame plywood. There is one Lagun kit. The current
+1200 × 600 × 18mm pine stock; the single mount spacer remains frame plywood. There is one Lagun kit. The current
 official tabletop mount is 240 × 200mm with 30mm overall profile depth. Its 240mm axis follows the tabletop length.
 Offset previews move the wood relative to the fixed mount; they do not add a sliding mechanism. Published
 dimensions and unverified hardware details are recorded in [Lagun table](research/lagun-table.md).

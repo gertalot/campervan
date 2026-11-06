@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 
 from campervan.cutting import effective_options, refresh_layout_source, source_key, stock_groups
 from campervan.cutting_models import CuttingState
-from campervan.materials import ROLES, CutPart, Selection, catalogue
 from campervan.mannequins import MannequinSettings
+from campervan.materials import ROLES, CutPart, Selection, active_roles, catalogue
 from campervan.parameter_fit import parameter_constraints
 from campervan.parameters import Parameters, parameter_schema
 
@@ -44,7 +44,7 @@ def material_data(
     cuts_revision: int | None, requested_revision: int,
 ) -> dict[str, Any]:
     return {
-        "roles": [role.model_dump() for role in ROLES],
+        "roles": [role.model_dump() for role in active_roles(parameters)],
         "products": [product.model_dump() for product in catalogue()],
         "selections": {name: selection.model_dump() for name, selection in selections.items()},
         "parameters": parameters.model_dump(),

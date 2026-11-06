@@ -27,6 +27,11 @@ from campervan.snapshot import ParameterResponse, cutting_data, material_data, p
 from campervan.worker import regenerate_model
 
 
+class BuildOptions(BaseModel):
+    drawer_included: float = Field(default=1, ge=0, le=1, multiple_of=1, allow_inf_nan=False)
+    table_included: float = Field(default=1, ge=0, le=1, multiple_of=1, allow_inf_nan=False)
+
+
 class Positions(BaseModel):
     """Live pose controls, updated without regenerating geometry."""
 
@@ -79,6 +84,7 @@ def build_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         coordinator = Coordinator(settings, regenerator, project_path)
         app.state.coordinator = coordinator
+        await coordinator.ensure_cutting()
         stop = asyncio.Event()
         watcher = None
         if settings.development:
@@ -166,6 +172,11 @@ def build_app(
         return material_data(coordinator.parameters, coordinator.materials, coordinator.cuts,
                              coordinator.cuts_revision, status.requested_revision)
 
+    @app.patch("/api/v1/build-options", response_model=BuildOptions)
+    async def set_build_options(options: BuildOptions, coordinator: CurrentCoordinator) -> BuildOptions:
+        await coordinator.set_build_options(options.model_dump(exclude_unset=True))
+        return BuildOptions.model_validate(coordinator.parameters.model_dump())
+
     def current_cutting_data(coordinator: Coordinator) -> dict:
         return cutting_data(coordinator.cuts, coordinator.materials, coordinator.cutting, coordinator.cutting_jobs,
                             coordinator.cuts_revision == coordinator.status().requested_revision)
@@ -186,6 +197,8 @@ def build_app(
         await coordinator.stop_cutting()
         coordinator.cutting.settings = settings
         coordinator.save_cutting()
+        coordinator.cutting_changed()
+        await coordinator.ensure_cutting()
         return current_cutting_data(coordinator)
 
     @app.put("/api/v1/cutting/options")
@@ -194,6 +207,8 @@ def build_app(
         await coordinator.stop_cutting(update.group)
         coordinator.cutting.options[update.group] = update.options
         coordinator.save_cutting()
+        coordinator.cutting_changed()
+        await coordinator.ensure_cutting()
         return current_cutting_data(coordinator)
 
     @app.post("/api/v1/cutting/layout", status_code=202)

@@ -1,5 +1,9 @@
 # Table storage in this NV200
 
+Current stock is the 18mm pine selected on 6 November 2026. Nominal folded wood and CAD package thicknesses
+are updated below to 36mm and 113mm. Earlier exported-mesh clearance observations remain reference measurements;
+visually confirm the thinner updated assembly before making restraints.
+
 Research and current-design assessment, 27 October 2026. Basis: working tree based on `87d8abb`, live parameters,
 existing exported model geometry, and the sources below. This document proposes storage; it changes no CAD geometry.
 
@@ -19,9 +23,9 @@ The moving-frame clearance and cab-end projection described below still need res
 ### Restraining the package
 
 - Rest a shallow padded wooden cradle on the floor and bolt its brackets to the cross-bench frame's solid end
-  posts. Locate its bottom supports beneath the folded 50mm wooden edge; leave room beside them for the Lagun
+  posts. Locate its bottom supports beneath the folded 36mm wooden edge; leave room beside them for the Lagun
   hardware. Low side lips prevent the bottom moving sideways. Size the clearance from the actual folded wood
-  and padding, rather than making a nominal 50mm slot.
+  and padding, rather than making a nominal 36mm slot.
 - Fit a padded stop at the cab end of the cradle to prevent forward sliding.
 - Anchor a 25mm cam-buckle webbing restraint to the fixed frame. Route it around the rear end of the folded wood
   so tightening pulls the package forward against the stop and sideways against padded frame contact points.
@@ -42,7 +46,7 @@ Gert's requirements:
 - Restraints must limit movement while driving.
 - Storage should consume little useful space.
 
-I have kept the existing 700 × 500mm open tabletop, its two 25mm bamboo leaves and the standard Lagun hardware.
+I have kept the existing 700 × 500mm open tabletop, its two 18mm pine leaves and the standard Lagun hardware.
 The assessment includes the upright and arm. It also considers the chilly bin, chairs, solar bag, cabinet access
 and the moving bed frame. The task is to choose a storage arrangement; fixing sizes and anchor details follow the
 actual hardware measurements and a physical mock-up.
@@ -51,11 +55,11 @@ actual hardware measurements and a physical mock-up.
 
 | Item | Size used here | Evidence and limit |
 |---|---|---|
-| Open bamboo tabletop | 700 × 500 × 25mm | Current live model |
-| Folded bamboo leaves | 700 × 250 × 50mm | Current live model |
+| Open pine tabletop | 700 × 500 × 18mm | Current live model |
+| Folded pine leaves | 700 × 250 × 36mm | Current live model |
 | Standard Lagun mounting-plate extrusion | 240 × 200mm footprint, 30mm profile depth | [Manufacturer drawing](https://lagunofficial.com/wp-content/uploads/sites/2/2024/10/Lagun-General-Technical-drawing-with-meassurments.pdf) |
 | Standard plate including projecting pivot pin | Approximately 76mm below the wood | [Lagun USA's standalone TMP photograph](https://lagunusa.com/wp-content/uploads/2024/06/tmp.jpg) labels this 3 inches; measurements are approximate |
-| Folded top with its fixed plate and pin | Approximately 126–127mm thick overall | 50mm bamboo plus approximately 76mm hardware |
+| Folded top with its fixed plate and pin | Approximately 112–113mm thick overall | 36mm pine plus approximately 76mm hardware |
 | Upright | 500mm body; approximately 552mm including its pin | [Lagun USA dimensions](https://lagunusa.com/product-details/) |
 | Arm | Nominally 400mm overall | Manufacturer drawing |
 
@@ -65,7 +69,7 @@ Routine storage should retain that pin. I have found no manufacturer instruction
 
 At the current mount offset, −53.7%, the modeled packed arm and upright fit within the 700 × 250mm wood outline.
 At a centred mounting position the arm can project slightly beyond a 700mm top. A rack needs clearance for the
-actual knobs, hinge fittings, padding and hand grip; 127mm is a nominal package depth, not a finished slot size.
+actual knobs, hinge fittings, padding and hand grip; 113mm is a nominal package depth, not a finished slot size.
 The model's hardware details remain illustrative. In particular, its simplified pivot belongs geometrically to
 the arm group even though the physical tabletop pin stays with the plate when the arm is detached.
 
@@ -119,8 +123,8 @@ padding and restraint, ending near Y=1245mm. Final dimensions depend on measured
 | Lost storage | No cupboard compartment or drawer volume. The cost is the external projection and the small reduction at the back edge of the left door opening. |
 | Simplicity | Two padded bottom shoes, locating pads and one accessible retaining strap. No telescopic mechanism or special-order storage cassette. |
 
-Use shoes sized for the folded 50mm wooden edge. Many commercial tabletop clips target thinner single panels;
-their compatibility with a 50mm stack must be checked before purchase. Keep the retaining strap's buckle near the
+Use shoes sized for the folded 36mm wooden edge. Many commercial tabletop clips target thinner single panels;
+their compatibility with a 36mm stack must be checked before purchase. Keep the retaining strap's buckle near the
 aisle-facing edge. The strap must also hold the folding leaf shut. A padded loop can provide a carry grip without
 loading a hinge.
 
@@ -176,7 +180,7 @@ with the cradle and restraints included before fixing their positions.
 ### 3. Diagonal storage inside the cross-bench bay
 
 The inner bay has about 684mm across the van, 571mm fore/aft and 372mm below the slats. Standing the packed table
-on its long edge and turning it about 28° gives a bare plan envelope of roughly **678 × 441mm**, height 250mm.
+on its long edge and turning it about 28° gives a bare plan envelope of roughly **671 × 429mm**, height 250mm.
 That is a possible resting position.
 
 The aisle-frame opening is about 451mm long below its upper band. The bare 441mm projection leaves about 10mm
@@ -188,16 +192,16 @@ central storage bay. I would not choose this over the first two positions.
 
 | Location | Reason in this design |
 |---|---|
-| On top of the drawer, below the slats | Gross clearance is 72mm; retained tabletop fittings need about 127mm overall. |
+| On top of the drawer, below the slats | Gross clearance is 72mm; retained tabletop fittings need about 113mm overall. |
 | Inside the rear drawer | A 700mm top can consume drawer space, but the drawer's normal opening requires the rear doors open. It fails the night-conversion requirement. |
 | Front cabinet compartment | The lower shelf interrupts the required 700mm vertical slot. Lying the table flat also exceeds its available plan dimensions. Creating a slot would change the shelves. |
 | Rear cabinet's lower compartment | This is the existing chair bay. Storing the top there requires reallocating the chairs or their access route. |
-| Against the cabinet's aisle face below the mattress | A 127mm projection enters the extended bed's space. |
+| Against the cabinet's aisle face below the mattress | A 113mm projection enters the extended bed's space. |
 | Against rear hatch/doors | Solar bag and rear furniture already occupy the useful region. Inside access would need resolving around them. |
-| Behind the front seats | Commercial microcampers use this, but our cab-seat clearances are estimates and the cross bench reaches forward. No measured 127mm pocket is established. |
+| Behind the front seats | Commercial microcampers use this, but our cab-seat clearances are estimates and the cross bench reaches forward. No measured 113mm pocket is established. |
 | On a front seat at night | Reachable inside, but needs relocation for driving and uses the cab as a temporary storage pile. A fixed rack gives one location for both modes. |
-| Under a seat cushion | 50mm bamboo plus fixed fittings changes the support height or needs a recess through existing slats. |
-| Ceiling or overhead cab shelf | Adds roughly 127mm below a low roof, requires lifting the bamboo overhead, and needs a new rack and anchors. No clear advantage over available low locations. |
+| Under a seat cushion | 36mm pine plus fixed fittings changes the support height or needs a recess through existing slats. |
+| Ceiling or overhead cab shelf | Adds roughly 113mm below a low roof, requires lifting the pine overhead, and needs a new rack and anchors. No clear advantage over available low locations. |
 | Leave the upright mounted and swing the arm aside | The bench-mounted upright still passes through the extended mattress area. It must come off for bed use. |
 | Replace bed slats with the tabletop | The existing comb-bed slats already form the surface. A new infill role would redesign that system. |
 | Change the tabletop's fold direction | Two 350 × 500mm leaves would change the storage shape, but the 552mm leg and mounting-plate direction need repacking, and the mount's usable offset/reach changes. Consider only if the existing-top locations prove unsatisfactory. |
@@ -206,7 +210,7 @@ central storage bay. I would not choose this over the first two positions.
 
 These are 30 separate installations, grouped by their storage arrangements. Several use the same method.
 Their descriptions establish where the owner or builder stores a table. They do not prove that our thicker
-folded bamboo/Lagun package fits there. “Unknown” identifies a detail the source does not establish.
+folded pine/Lagun package fits there. “Unknown” identifies a detail the source does not establish.
 
 | # | Actual installation and source | Storage and evidence limits |
 |---|---|---|
@@ -262,7 +266,7 @@ Before making a permanent rack:
 
 1. Measure the actual folded assembly, including reindexed handles, hinges and the retained tabletop pin.
 2. Check moving-frame clearance and the cab gap above the floor step in the overhang position. Include the cradle,
-   stops and padding beyond the nominal 700 × 250 × 127mm package.
+   stops and padding beyond the nominal 700 × 250 × 113mm package.
 3. Verify inside rearward retrieval with the chilly bin in place and a representative package weight.
 4. Size the cradle, restraint and anchors from those measurements. Show the retained state and removal path in CAD
    before cutting permanent pieces.

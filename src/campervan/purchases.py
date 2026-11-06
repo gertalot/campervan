@@ -1,10 +1,11 @@
 """One purchasing row per stock product, shared across outline views and the BOM."""
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from math import ceil
 from typing import Any
 
-from campervan.materials import ROLES, CutPart, Selection, catalogue
+from campervan.materials import ROLES, CutPart, Selection, active_roles, catalogue
+from campervan.parameters import Parameters
 from campervan.planning import PlanningDocument, PurchaseFilter, PurchaseRecord
 
 
@@ -14,15 +15,20 @@ def money(value: Decimal) -> float:
 
 def purchase_view(
     document: PlanningDocument, materials: dict[str, Selection], cuts: list[CutPart], current: bool = True,
-    *, cutting: dict[str, Any] | None = None,
+    *, parameters: Parameters, cutting: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     products = {product.id: product for product in catalogue()}
     groups: dict[str, dict[str, Any]] = {}
     role_groups: dict[str, str] = {}
+    included = {role.id for role in active_roles(parameters)}
+    inactive_keys = set()
     for role in ROLES:
         selection = materials.get(role.id)
         product = products.get(selection.product_id) if selection and selection.product_id else None
         key = f"product-{product.id}" if product else f"custom-{role.id}"
+        if role.id not in included:
+            inactive_keys.add(key)
+            continue
         role_groups[role.id] = key
         group = groups.setdefault(key, {
             "product": product, "uses": [], "counts": [], "owned": [], "quantities": [], "kind": role.kind,
@@ -51,6 +57,9 @@ def purchase_view(
     for key in dict.fromkeys([*groups, *document.purchases]):
         group = groups.get(key)
         stored = document.purchases.get(key)
+        if key in inactive_keys and group is None and stored is not None:
+            if not (stored.owned or stored.bought or stored.spent is not None):
+                continue  # Preserve notes/overrides in the document for re-enabling, without an active BOM row.
         product = group["product"] if group else None
         if stored is None:
             stored = PurchaseRecord(

@@ -46,10 +46,11 @@ ROLES = [
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
-        id="table-plywood", name="Bamboo tabletop", kind="sheet",
-        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="prempanel-bamboo-25",
-        note="Two 250mm-wide leaves, folding to 250mm and opening to 500mm. Both fit on one 2200 × 600 × 25mm "
-             "bamboo panel. Grain follows the tabletop length. The mounting spacer remains frame plywood.",
+        id="table-plywood", name="Tabletop panel", kind="sheet",
+        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="specrite-pine-18-1200-600",
+        note="Two 700 × 250 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
+             "Grain follows the 700mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
+             "The mounting spacer remains frame plywood.",
     ),
     MaterialRole(
         id="lagun", name="Lagun swivel table leg", kind="hardware", fields={}, quantity=1,
@@ -58,7 +59,7 @@ ROLES = [
     ),
     MaterialRole(
         id="table-hinges", name="Tabletop fold-over hinges", kind="hardware", fields={}, quantity=2,
-        note="Two Homer HOM006136 hinges, supplied as one pair, for the 25mm bamboo leaves. "
+        note="Two Homer HOM006136 hinges, supplied as one pair, for the 18mm pine leaves. "
              "Fosters specifies horizontal support and a 180° fold-over action. "
              "Hinge positions, capacity, mortises, joint gap and fixings remain unconfirmed.",
     ),
@@ -86,7 +87,7 @@ ROLES = [
         kind="timber",
         fields={"width": "cabinet_ledge_size_mm", "thickness": "cabinet_ledge_height_mm"},
         note=(
-            "Ready-made 18 × 18mm untreated clear pine for shelf ledges, corner cleats and latch strike blocks. "
+            "Ready-made 18 × 18mm untreated clear pine for shelf ledges, corner cleats and catch blocks. "
             "Square crosscuts only: wall ledges now meet straight rear rails, with no wall-facing bevels. "
             "No plywood strips to rip. Plan crosscuts with kerf/waste before buying lengths."
         ),
@@ -103,19 +104,21 @@ ROLES = [
 for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
-        "table-plywood": "prempanel-bamboo-25",
+        "table-plywood": "specrite-pine-18-1200-600",
         "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "tigerply-okoume-9",
         "cabinet-partitions": "tigerply-okoume-9",
         "skins": "tigerply-okoume-9",
-        "shelves": "tigerply-okoume-9",
+        "shelves": "tigerply-okoume-6",
         "drawer": "tigerply-12",
         "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
     if role.id == "drawer":
         role.note = "Drawer sides, ends and bottom share 12mm sheets; plan cuts together."
-    elif role.id in {"cabinet-frames", "cabinet-partitions", "shelves", "skins"}:
-        role.note = "Share 9mm sheets across cabinet frames, solid vertical panels, shelves and cross-bench rear skin."
+    elif role.id == "shelves":
+        role.note = "6mm plywood on continuous glued and screwed perimeter ledges for pantry storage."
+    elif role.id in {"cabinet-frames", "cabinet-partitions", "skins"}:
+        role.note = "Share 9mm sheets across cabinet frames, solid vertical panels and cross-bench rear skin."
 
 ROLES.extend(
     [
@@ -138,8 +141,9 @@ ROLES.extend(
             name="Cabinet door plywood",
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
-            default_product_id="bbi-redline-6-1200-1195",
-            note="Nine overlay doors: six drop-down flaps, one front door and the bottom storage pair.",
+            default_product_id="tigerply-okoume-6",
+            note="Nine 6mm overlay doors, sharing Tigerply Okoume sheets with the shelves. "
+                 "Six drop-down flaps, one front door and the bottom storage pair. Through-fix hinges on thin plywood.",
         ),
         MaterialRole(
             id="cabinet-hinges",
@@ -150,7 +154,7 @@ ROLES.extend(
             default_product_id="zenith-butt-35",
             note=(
                 "Two per door. Face-mount the leaves between door rear and aisle frame, within the closing gap. "
-                "Use countersunk through-fixings on the 6mm door. "
+                "Use countersunk through-fixings on the thin plywood door. "
                 "Hole sizes, leaf thickness and fixings still require checking against the physical hinge."
             ),
         ),
@@ -159,13 +163,12 @@ ROLES.extend(
             name="Cabinet door catches",
             kind="hardware",
             fields={},
-            default_product_id="vanlifer-point-ll016",
+            default_product_id="taskmaster-roller-4",
             note=(
-                "One positive push latch per door, including its supplied striker. 50mm from front face to body rear "
-                "means 44mm projects behind 6mm plywood. Five strikers mount under shelf ledges; four 70mm pine "
-                "blocks support the topmost and bottom-storage strikers. No centre post in the storage openings. "
-                "Body/bore dimensions follow the supplier drawing, but striker size, flange thickness "
-                "and fixings need checking on receipt."
+                "One double roller catch with keeper per door; nine sets need three four-packs. "
+                "30mm finger holes have eased rims. CAD catch envelopes are estimates: align the physical "
+                "keepers and rollers before drilling. Check supplied screw lengths against thin plywood; "
+                "use short screws or through-fixings. Roller catches have no verified vehicle holding rating. "
             ),
         ),
         MaterialRole(
@@ -252,6 +255,16 @@ class Selection(BaseModel):
     purchase_quantity: int | None = Field(default=None, ge=0)
 
 
+def active_roles(parameters: Parameters) -> list[MaterialRole]:
+    """Keep optional component selections saved, but omit their purchasing requirements."""
+    excluded = set()
+    if not parameters.drawer_included:
+        excluded.update({"drawer", "slides"})
+    if not parameters.table_included:
+        excluded.update({"table-plywood", "lagun", "table-hinges"})
+    return [role for role in ROLES if role.id not in excluded]
+
+
 class MaterialUpdate(BaseModel):
     role: str
     selection: Selection
@@ -268,6 +281,18 @@ class CutPart(BaseModel):
     holes: list[list[tuple[float, float]]] = Field(default_factory=list)
     profile_note: str = ""
     profile_axes: str = ""
+
+
+def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
+    """Filter manufacturing requirements without removing reference geometry or its hierarchy."""
+    excluded = []
+    if not parameters.drawer_included:
+        excluded.append("Long bench / Rear drawer")
+    if not parameters.table_included:
+        excluded.append("Laptop table")
+    return [cut for cut in cuts if not any(
+        cut.path == root or cut.path.startswith(root + " / ") for root in excluded
+    )]
 
 
 def default_selections() -> dict[str, Selection]:
@@ -323,8 +348,6 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     project.materials.pop("cabinet-stays", None)
     project.materials.pop("lagun-second-bracket", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
-    if project.materials.get("cabinet-catches", Selection()).product_id == "taskmaster-roller-4":
-        project.materials["cabinet-catches"] = Selection(product_id="vanlifer-point-ll016")
     if project.materials.get("ledges", Selection()).product_id == "tigerply-18":
         project.materials["ledges"] = Selection(product_id="pinetrim-18-18-2400")
     if project.materials.get("skins", Selection()).product_id == "tigerply-okoume-4":
@@ -332,8 +355,8 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     if project.materials.get("slides", Selection()).product_id == "instantpanel-1200":
         project.materials["slides"] = Selection(product_id="instantpanel-locking-1200")
     if project.materials.get("table-plywood", Selection()).product_id in {"tigerply-18", "tigerply-12", "tigerply-okoume-9"}:
-        # Replace the superseded single plywood top with Gert's two-leaf bamboo design.
-        project.materials["table-plywood"] = Selection(product_id="prempanel-bamboo-25")
+        # Replace the superseded single plywood top with the two-leaf pine design.
+        project.materials["table-plywood"] = Selection(product_id="specrite-pine-18-1200-600")
         project.parameters = project.parameters.model_copy(update={"table_depth_mm": 250.0})
     project.materials = default_selections() | project.materials
     project.parameters = resolve(project.parameters, project.materials)

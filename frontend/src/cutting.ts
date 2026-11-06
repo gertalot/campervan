@@ -10,7 +10,8 @@ import './cutting.css';
 const methodNames: Record<Mode, string> = { straight: 'Straight saw cuts', nesting: 'Nested shapes' };
 
 export function setupCutting(host: HTMLElement, showInCad: (path: string) => void) {
-  let data: Data | null = null, filter = 'all', loading = false, statusKey = '', modelSession = '', savingFailed = false;
+  let data: Data | null = null, filter = 'all', loading = false, statusKey = '', savingFailed = false;
+  let cuttingRevision = -1;
   let pending = Promise.resolve();
   let refreshPromise: Promise<void> | null = null, selectedPath: string | null = null, pointerX: number | null = null;
   let returnSpot: { path: string; filter: string; scroll: number } | null = null;
@@ -18,7 +19,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   const mirrorTextUpdates = new Map<string, (() => void)[]>();
   const layoutNote = el('p', cabinetSideLabel(mirrored));
   const pieceMenu = createPlanDropdown();
-  const starting = new Set<string>(), errors = new Map<string, string>(), attempted = new Set<string>();
+  const starting = new Set<string>(), errors = new Map<string, string>();
   let progressLoading = false;
   const layoutHosts = new Map<string, HTMLElement>();
   const openDetails = new Set<string>();
@@ -102,15 +103,15 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       data!.sources = fresh.sources; data!.current = fresh.current;
       data!.jobs = fresh.jobs;
       savingFailed = false;
-      if (filter !== 'all') { renderFocus(); startFocusedLayouts(); }
+      if (filter !== 'all') renderFocus();
       else message('Cutting settings saved for the whole project.');
     }).catch(error => { savingFailed = true; message(`Could not save cutting settings: ${error.message}`); });
   }
   function settingsChanged() {
-    attempted.clear(); save('cutting/settings', data!.state.settings);
+    save('cutting/settings', data!.state.settings);
   }
   function stockChanged(g: Group) {
-    attempted.clear(); save('cutting/options', { group: g.key, options: groupOptions(g) });
+    save('cutting/options', { group: g.key, options: groupOptions(g) });
   }
   function details(title: string, key: string) {
     const element = el('details'); element.open = openDetails.has(key); element.append(el('summary', title));
@@ -184,7 +185,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     host.append(filters, feedback, content, inspector);
     if (!data.current) message('These pieces are from the previous CAD model. The updated model is still loading.');
     if (filter === 'all') renderOverview();
-    else { renderFocus(); startFocusedLayouts(); }
+    else renderFocus();
     markSelected();
   }
 
@@ -417,20 +418,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     markSelected();
   }
 
-  function startFocusedLayouts() {
-    if (isStaticSite || !data?.current || filter === 'all' || savingFailed) return;
-    for (const g of filteredGroups()) {
-      if (!g.stock_sourced && !groupOptions(g).confirmed) continue;
-      if (data.jobs[resultKey(g)]?.state === 'paused') continue;
-      const result = data.state.results[resultKey(g)], key = `${resultKey(g)}:${data.sources[g.key]}`;
-      const needsSearch = !result || !isCurrent(g, result) || result.unplaced.length > 0
-        || (!result.optimal && !data.jobs[resultKey(g)]);
-      if (needsSearch && !attempted.has(key)) { attempted.add(key); void generate(g); }
-    }
-  }
   async function generate(g: Group) {
     const key = resultKey(g); if (starting.has(key) || data?.jobs[key]?.state === 'running' || !data?.current) return;
-    attempted.add(`${key}:${data.sources[g.key]}`);
     starting.add(key); errors.delete(key); renderLayouts(g);
     try {
       await pending; if (savingFailed || !starting.has(key)) return;
@@ -473,6 +462,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   void refresh();
   onTab(tab => { if (tab === 'cuts') void refresh(); else { inspector.close(); pieceMenu.close(); } });
   return {
+    refresh,
     setMirrored(value: boolean) {
       if (mirrored === value) return;
       mirrored = value; layoutNote.textContent = cabinetSideLabel(mirrored);
@@ -496,10 +486,16 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       message(`${fullName(group.parts.find(p => p.path === path)!)}${target?.closest('.cut-sheet') ? '' : ' · sheet layout not available in this view'}`);
     },
     onStatus(status: ModelStatus) {
-      if (modelSession !== status.session_id) { modelSession = status.session_id; attempted.clear(); }
-      if (data && !host.hidden && Object.values(data.jobs).some(job => job.state === 'running')) void refreshProgress();
       const key = `${status.session_id}:${status.requested_revision}:${status.state}`;
-      if (key === statusKey) return; statusKey = key;
+      const layoutsChanged = cuttingRevision !== status.cutting_revision;
+      cuttingRevision = status.cutting_revision;
+      if (key === statusKey) {
+        if (data && !host.hidden && (layoutsChanged || Object.values(data.jobs).some(job => job.state === 'running'))) {
+          void refreshProgress();
+        }
+        return;
+      }
+      statusKey = key;
       if (data) data.current = status.state === 'ready';
       if (!host.hidden || status.state === 'ready') void refresh();
     },

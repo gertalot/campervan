@@ -166,7 +166,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     if (hasActiveTool(viewer) || viewer.state.get('animationMode') === 'explode') return null;
     const hit = host.pick(event); if (!hit) return null;
     const groups = viewer.rendered.nestedGroup.groups;
-    if (under(hit.path, TABLE_WOOD) && /\/(Fixed|Folding) bamboo leaf(?:\/|$)/.test(hit.path)
+    if (under(hit.path, TABLE_WOOD) && /\/(Fixed|Folding) tabletop leaf(?:\/|$)/.test(hit.path)
       && host.pose().table_mount === 0 && groups[TABLE_ARM]) {
       return { kind: 'table', path: TABLE_ARM, label: 'Steer table', group: groups[TABLE_ARM], point: hit.point };
     }

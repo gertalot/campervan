@@ -3,7 +3,7 @@
 from build123d import Axis, Color, Compound, Edge, Face, Location, Part, Plane, Side, Solid, Wire
 
 from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
-from campervan.cad.cabinet_doors import build_cabinet_doors, cabinet_aisle_x, cabinet_door_strikes
+from campervan.cad.cabinet_doors import build_cabinet_doors, cabinet_aisle_x, cabinet_door_hardware
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
@@ -315,7 +315,7 @@ def build_cabinet(p: Parameters) -> Compound:
         aisle.label, aisle.color = f"{name} aisle corner cleat", Color(0.88, 0.61, 0.25)
         corner_cleats.append(aisle)
     doors = build_cabinet_doors(p, bay_spans, opening_heights, rear_openings)
-    strikes, strike_blocks = cabinet_door_strikes(p, doors)
+    catches, catch_timber = cabinet_door_hardware(p, doors)
     return Compound(
         label="Cabinet",
         children=[
@@ -324,8 +324,8 @@ def build_cabinet(p: Parameters) -> Compound:
             Compound(label="Rail joint blocks", children=rail_blocks),
             backing,
             doors,
-            strikes,
-            strike_blocks,
+            catches,
+            catch_timber,
             Compound(label="Corner cleats", children=corner_cleats),
             Compound(label="Shelf ledges", children=ledges),
             Compound(label="Shelves", children=shelves),

@@ -15,8 +15,16 @@ from campervan.materials import ROLES, Product, Project, catalogue, resolve, sav
 from campervan.parameter_fit import fit_parameters
 from campervan.paths import LOCAL_DIR
 from campervan.planning import (
-    ContentUpdate, Mutation, PlanningConflict, PlanningDocument, PlanningStore,
-    PurchaseFilter, PurchaseRecord, Record, outline_markdown, parse_document,
+    ContentUpdate,
+    Mutation,
+    PlanningConflict,
+    PlanningDocument,
+    PlanningStore,
+    PurchaseFilter,
+    PurchaseRecord,
+    Record,
+    outline_markdown,
+    parse_document,
 )
 from campervan.purchases import matches, purchase_totals, purchase_view
 from campervan.snapshot import cutting_data
@@ -56,7 +64,9 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
         current = coordinator(request)
         fresh = current.cuts_revision == current.status().requested_revision
         cutting = cutting_data(current.cuts, current.materials, current.cutting, current.cutting_jobs, fresh)
-        return purchase_view(document, current.materials, current.cuts, fresh, cutting=cutting)
+        return purchase_view(
+            document, current.materials, current.cuts, fresh, parameters=current.parameters, cutting=cutting,
+        )
 
     def backup(request: Request) -> Backup:
         current = coordinator(request)
@@ -186,6 +196,8 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
                 await current.accept(project.parameters, project.materials)
             else:
                 save_project(project, project_path)
+                current.cutting_changed()
+                await current.ensure_cutting()
         except OSError:
             current.parameters = previous.parameters
             current.materials = previous.materials

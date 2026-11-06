@@ -14,6 +14,26 @@ The project tabs share one saved project. Switching tabs keeps the camera and vi
 
 The browser remembers the camera, visibility and sidebar choices. Use the viewer toolbar to reset or refit the camera.
 
+### Included in build
+
+The separate **Included in build** section below Visibility controls the **Rear drawer** and **Lagun table**.
+Untick an item to omit it from cut lists and active BOM requirements. Choices save automatically, with an explicit
+**Saving… / Saved** message. They do not require Apply or CAD regeneration. Tick an item to include its requirements again.
+The design, hierarchy, dimensions, motion controls and product selections remain available throughout.
+Excluded items are hidden immediately, without changing their saved eye settings. Re-including an item restores
+its previous visibility, including any hidden subcomponents and table pose. Its eye buttons are disabled while
+excluded. The Visibility checkboxes retain their saved choices as well. A failed save restores the prior inclusion.
+
+The drawer option excludes its tray and sliders from manufacturing and purchasing. The stationary bench support
+remains required because it also supports the bed. The table option excludes both tabletop leaves, its mounting
+spacer, Lagun kit and hinges from manufacturing and purchasing; existing bench-frame requirements stay.
+Saved purchases with ownership, bought quantities or recorded spending remain as **Unused stock**, with zero future
+requirement. Notes and quantity overrides are retained even when their inactive row is hidden.
+Any previous cutting layouts are used only if they still match the included parts; rearrange affected stock as needed.
+
+These native labelled checkboxes sit outside the model-parameter form in a separate `fieldset` and `legend`, following W3C guidance on
+[grouping controls](https://www.w3.org/WAI/tutorials/forms/grouping/). Static exports show the saved choices read only.
+
 ### Dimensions and moving parts
 
 Change dimensions in the sidebar and apply them. The app reports invalid values and explains dependent limits.
@@ -107,11 +127,17 @@ Single-click a piece for its details; double-click to show it in CAD.
 edge trim and grain direction. Set stock sizes, available offcuts and individual grain overrides under each material.
 Custom stock needs confirmed dimensions before arranging it.
 
-Selecting a thickness starts a background layout search. It publishes improvements and saves the best layout.
+The application starts background layout searches automatically for every material with missing, outdated or incomplete
+layouts, once the current CAD cut list is available. This runs on startup and after changes to the design, included
+components, selected materials, stock sizes or cutting settings. Selecting a cut-list tab only chooses what to display.
+Unsourced stock still needs its available dimensions confirmed before calculation can start.
+Each search publishes improvements and saves the best layout; the BOM updates its quantities and costs as results arrive.
 Each search pauses after at most 20 seconds of elapsed time. **Arrange sheets** (or **Arrange timber lengths**) resumes
 that search for another 20 seconds. **Stop optimisation** pauses it early and keeps the best layout. Paused searches
-use no CPU and retain their search state while the backend stays running. Restarting the backend retains the saved
-layout but starts a fresh search. Design or cutting-setting changes discard affected searches and mark previous layouts.
+use no CPU and retain their search state while the backend stays running. Automatic calculation keeps a current, complete
+saved layout without restarting its search. Use Arrange to improve it further. Paused or failed searches do not restart
+for unchanged inputs while the application stays running; Arrange resumes or restarts them.
+Design or cutting-setting changes replace affected searches.
 
 Straight-cut plywood candidates rank by sheet count, then the largest rectangular offcut's area/perimeter ratio,
 then the number of blank-separating cuts. A proven minimum sheet count does not prove the best possible offcut or cut

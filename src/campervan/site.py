@@ -10,7 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from campervan.materials import load_project
+from campervan.materials import active_cuts, load_project
 from campervan.model_cache import model_fingerprint, read_bundle
 from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.planning import parse_document
@@ -70,7 +70,8 @@ async def export_site() -> None:
 
         planning = parse_document(seed_v1().model_dump())
 
-    cutting = cutting_data(bundle.cuts, project.materials, project.cutting, {}, True)
+    cuts = active_cuts(bundle.cuts, project.parameters)
+    cutting = cutting_data(cuts, project.materials, project.cutting, {}, True)
     results = cutting["state"]["results"]
     for key, result in list(results.items()):
         group, _, mode = key.rpartition(":")
@@ -82,13 +83,13 @@ async def export_site() -> None:
         if key not in results:
             print(f"Warning: no current saved cutting layout for {group['name']}; its cut list is included.", flush=True)
 
-    purchases = purchase_view(planning, project.materials, bundle.cuts, cutting=cutting)
+    purchases = purchase_view(planning, project.materials, cuts, parameters=project.parameters, cutting=cutting)
     snapshot = {
         "exported_at": datetime.now(UTC).isoformat(),
         "parameters": parameter_response(
             f"static-{fingerprint[:16]}", project.parameters, "", project.mannequins,
         ).model_dump(mode="json", by_alias=True),
-        "materials": material_data(project.parameters, project.materials, bundle.cuts, 0, 0),
+        "materials": material_data(project.parameters, project.materials, cuts, 0, 0),
         "cutting": cutting,
         "purchases": purchases | {"filtered_totals": purchases["totals"]},
     }

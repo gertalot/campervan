@@ -18,6 +18,7 @@ const categories: Record<string, string[]> = {
 
 interface VisibilityViewer {
   setVisibility(rules: Record<string, boolean>, independentRoots: string[]): void;
+  setExcludedComponents(paths: string[]): void;
   getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed';
 }
 
@@ -47,6 +48,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   const groups = new Map<HTMLButtonElement, { path: string; title: string }>();
   const key = 'campervan.visibility.paths';
   const independentRoots = categories.wheelArches;
+  let excludedRoots: string[] = [];
   const rules: Record<string, boolean> = {
     '/Campervan/Vehicle references/Floor outline': false,
     '/Campervan/Vehicle references/Rear opening/Clear opening': false,
@@ -75,6 +77,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
     }
     for (const [button, { path, title }] of groups) {
       updateVisibilityButton(button, title, viewer.getVisibility([path]));
+      button.disabled = excludedRoots.some(root => path === root || path.startsWith(`${root}/`));
     }
   }
 
@@ -83,12 +86,16 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       for (const existing of Object.keys(rules)) {
         const independent = independentRoots.some(root => root.startsWith(`${path}/`)
           && (existing === root || existing.startsWith(`${root}/`)));
-        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing) && !independent) delete rules[existing];
+        const excluded = excludedRoots.some(root => existing === root || existing.startsWith(`${root}/`));
+        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing) && !independent && !excluded) {
+          delete rules[existing];
+        }
       }
       rules[path] = visible;
     }
     localStorage.setItem(key, JSON.stringify(rules));
     viewer.setVisibility(rules, independentRoots);
+    viewer.setExcludedComponents(excludedRoots);
     refresh();
   }
 
@@ -97,8 +104,17 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   }
 
   return {
+    setBuildInclusion(included: { drawer: boolean; table: boolean }) {
+      excludedRoots = [
+        ...(!included.drawer ? ['/Campervan/Long bench/Rear drawer'] : []),
+        ...(!included.table ? ['/Campervan/Laptop table'] : []),
+      ];
+      viewer.setExcludedComponents(excludedRoots);
+      refresh();
+    },
     restore() {
       viewer.setVisibility(rules, independentRoots);
+      viewer.setExcludedComponents(excludedRoots);
       refresh();
     },
     resetGroups() { groups.clear(); },

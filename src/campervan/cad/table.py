@@ -39,13 +39,15 @@ def tabletop_leaf(p: Parameters, label: str):
     width, length, thickness = p.table_depth_mm, p.table_length_mm, p.table_ply_thickness_mm
     corner, edge = p.table_corner_radius_mm, p.table_edge_radius_mm
     if 2 * corner >= min(width, length) or 2 * edge >= min(thickness, width, length):
-        raise ValueError("Tabletop corner and edge radii must fit within each bamboo leaf.")
+        raise ValueError("Tabletop corner and edge radii must fit within each leaf.")
+    if thickness <= HOMER_VISUAL_THICKNESS + HOMER_VISUAL_PIN_RADIUS:
+        raise ValueError("Tabletop thickness must leave wood below the nominal hinge seats.")
     leaf = panel(width, length, thickness)
     if corner:
         leaf = fillet(leaf.edges().filter_by(Axis.Z), corner)
     if edge:
         leaf = fillet(leaf.edges().filter_by(Axis.Z, reverse=True), edge)
-    leaf.label, leaf.color = label, Color(0.77, 0.62, 0.36)
+    leaf.label, leaf.color = label, Color(0.86, 0.73, 0.49)
     return leaf
 
 
@@ -112,7 +114,7 @@ def _homer_hinge_half(side: int) -> tuple[Compound, Part]:
     blank = fillet(blank.edges().filter_by(Axis.Z), 2)
     plate = blank
     # Four countersunk holes on each half, matching the product photograph.
-    # Positions and diameters are illustrative; no bamboo pilot holes are cut.
+    # Positions and diameters are illustrative; no timber pilot holes are cut.
     for x in (20, 46):
         for y in (-12, 12):
             bore = Cylinder(2.2, depth + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
@@ -126,7 +128,7 @@ def _homer_hinge_half(side: int) -> tuple[Compound, Part]:
     barrel.label, barrel.color = "Pivot barrel · approximate section", SILVER
     bridge = block("Centre link · schematic articulation", (pivot, 14, depth),
                    (min(0, side * pivot), -7, -depth))
-    # Nominal seats prevent the visual metal from overlapping the bamboo.
+    # Nominal seats extend 6mm below the top, leaving 12mm of the 18mm pine.
     # They remain blind pockets and do not change the cutting silhouette.
     seat = blank.fuse(barrel, bridge)
     hardware = Compound(label="Fixed half" if side < 0 else "Folding half", children=[plate, barrel, bridge])
@@ -135,8 +137,8 @@ def _homer_hinge_half(side: int) -> tuple[Compound, Part]:
 
 def _leaves(p: Parameters, open_percent: float) -> Compound:
     width, length, thickness = p.table_depth_mm, p.table_length_mm, p.table_ply_thickness_mm
-    fixed = tabletop_leaf(p, "Fixed bamboo leaf")
-    folding = tabletop_leaf(p, "Folding bamboo leaf")
+    fixed = tabletop_leaf(p, "Fixed tabletop leaf")
+    folding = tabletop_leaf(p, "Folding tabletop leaf")
     fixed_halves, folding_halves = [], []
     for number, y in enumerate((-0.3 * length, 0.3 * length), start=1):
         fixed_half, fixed_seat = _homer_hinge_half(-1)
@@ -148,8 +150,8 @@ def _leaves(p: Parameters, open_percent: float) -> Compound:
         folding_half.location = Location((0, y, 0))
         fixed_halves.append(fixed_half)
         folding_halves.append(folding_half)
-    fixed.label, fixed.color = "Fixed bamboo leaf", Color(0.77, 0.62, 0.36)
-    folding.label, folding.color = "Folding bamboo leaf", Color(0.77, 0.62, 0.36)
+    fixed.label, fixed.color = "Fixed tabletop leaf", Color(0.86, 0.73, 0.49)
+    folding.label, folding.color = "Folding tabletop leaf", Color(0.86, 0.73, 0.49)
     fixed.location = Location((-width / 2, -length / 2, 0))
     folding.location = Location((0, -length / 2, -thickness))
     hinge = Compound(label="Folding leaf", children=[

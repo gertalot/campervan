@@ -10,7 +10,7 @@ const near = (angle: number, reference: number) => reference
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
 /** Bounds in the tabletop joint's coordinates, including the current fold and offset.
- * Only bamboo contributes; hinge details and selection/drag overlays do not move its centre.
+ * Only tabletop leaves contribute; hinge details and selection/drag overlays do not move its centre.
  */
 function tabletopBounds(wood: Object3D, top: Object3D): Box3 {
   const bounds = new Box3();
@@ -20,11 +20,11 @@ function tabletopBounds(wood: Object3D, top: Object3D): Box3 {
     const mesh = object as Mesh;
     if (!mesh.isMesh || !mesh.geometry || mesh.userData.dragOverlay || mesh.renderOrder >= 10000) return;
     fallback.push(mesh);
-    let bamboo = false;
+    let tabletop = false;
     for (let ancestor: Object3D | null = object; ancestor && ancestor !== wood; ancestor = ancestor.parent) {
-      if (ancestor.name.toLowerCase().includes('bamboo leaf')) bamboo = true;
+      if (ancestor.name.toLowerCase().includes('tabletop leaf')) tabletop = true;
     }
-    if (bamboo) leaves.push(mesh);
+    if (tabletop) leaves.push(mesh);
   });
   // Some renderer versions omit labels from Object3D.name. Use their complete local wood envelope.
   for (const mesh of leaves.length ? leaves : fallback) {

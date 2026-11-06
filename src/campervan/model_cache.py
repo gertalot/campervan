@@ -43,7 +43,7 @@ def model_fingerprint(parameters: Parameters) -> str:
         name: value
         for name, value in parameters.model_dump().items()
         if not isinstance(extra := Parameters.model_fields[name].json_schema_extra, dict)
-        or extra.get("control") != "position"
+        or extra.get("control") not in {"position", "build"}
     }
     digest = hashlib.sha256(json.dumps(dimensions, sort_keys=True).encode())
     package = Path(__file__).resolve().parent

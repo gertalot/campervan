@@ -74,6 +74,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   onMannequinStatus: (message: string) => void = () => {},
   onMannequinFit: (pose: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) => void = () => {}) {
   let viewer: CadViewer | undefined;
+  let excludedComponents: string[] = [];
   let unsubscribeTool: (() => void) | undefined;
   let cube: ReturnType<typeof createViewCube> | undefined;
   let socket: WebSocket | undefined;
@@ -539,6 +540,17 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         mannequins['lying-second'] = second;
         scheduleMove();
       }).catch(error => onError(`Mannequin: ${error instanceof Error ? error.message : String(error)}`));
+    },
+    setExcludedComponents(paths: string[]) {
+      const affected = new Set([...excludedComponents, ...paths]);
+      excludedComponents = [...paths];
+      if (!viewer?.ready) return;
+      for (const path of affected) {
+        const group = viewer.rendered.nestedGroup.groups[path];
+        if (group) group.visible = !excludedComponents.includes(path);
+      }
+      (viewer as unknown as PieceViewer).idPicker?.setDirty();
+      viewer.update(true, true);
     },
     getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed' {
       const states = viewer?.ready ? viewer.getStates() : {};

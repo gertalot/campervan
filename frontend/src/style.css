@@ -34,6 +34,13 @@ p { margin: 0; }
 #visibility label { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; cursor: pointer; }
 #visibility input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
 #visibility .see-inside { display: flex; margin-top: 6px; }
+#build-components { margin: 0 0 16px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #34373e; }
+#build-components legend { padding: 0; margin-bottom: 6px; font-size: 11px; color: #929aa6; }
+#build-component-fields { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+#build-component-fields label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+#build-component-fields input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
+#build-components-hint { margin-top: 7px; color: #929aa6; font-size: 10px; }
+#build-components-status { margin-top: 5px; color: #aab3c0; font-size: 10px; white-space: normal; }
 .mannequin-presets { display: flex; gap: 5px; margin: 8px 0; }
 #fields details { min-width: 0; margin-bottom: 10px; padding-left: 14px; }
 #fields details > .parameter-row { margin-left: 14px; }

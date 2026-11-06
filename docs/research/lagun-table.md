@@ -1,17 +1,20 @@
 # Lagun laptop table
 
-Gert's current top has two **700 × 250 × 25mm laminated bamboo leaves**. The second leaf folds onto the first:
-250mm folded width and 500mm open width. The folded stack is 50mm thick; the flat open top is 25mm thick.
+Gert's current top has two **700 × 250 × 18mm laminated pine leaves**. The second leaf folds onto the first:
+250mm folded width and 500mm open width. The folded stack is 36mm thick; the flat open top is 18mm thick.
 The length remains editable. The table is for use with the bed retracted; remove it for sleeping.
 
-The selected stock is the [2200 × 600 × 25mm Prempanel bamboo panel](https://www.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770),
-Bunnings I/N 0221770. On 27 October 2026, Bunnings listed $139 and stock at Lyall Bay, aisle 5/bay 15. Both leaves
-fit side by side on one panel with kerf allowance. Cut the grain along the 700mm length. The mounting spacer
-continues to use the bench's 18mm plywood; it does not use the bamboo panel.
+The selected stock is the [1200 × 600 × 18mm Specrite pine panel](https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619),
+Bunnings I/N 0419619. On 6 November 2026, Bunnings and [SpecRite](https://www.specrite.co.nz/range/timber-panels-boards/0419619-1200-x-600-x-18mm-timber-multi-use-pine-panel)
+listed $47; local store stock was not confirmed. This replaces the $139 Prempanel bamboo selection, saving $92
+on tabletop stock. Both leaves fit side by side on one panel with kerf allowance; run grain along the 700mm length.
+The finger-jointed, laminated radiata pine is sold for interior furniture and tabletops. Finish both faces and all
+edges, including hinge pockets. The nominal 6.2kg full-panel weight gives approximately 3.0kg for the two blanks,
+before rounding, pockets, finish and hardware. The mounting spacer remains the bench's 18mm plywood.
 
 Each leaf has 20mm plan-view corner radii and a 3mm round-over on its top and bottom perimeter edges. These
 design dimensions have controls in the sidebar. The cut list carries the rounded outlines; edge round-over
-is a finishing operation. Nominal blind seats show the hinge fit in CAD; fabrication dimensions and bamboo
+is a finishing operation. Nominal blind seats show the hinge fit in CAD; fabrication dimensions and timber
 pilot holes await measurements of the selected hardware.
 
 The hinge axis follows the long seam at the upper surface of the fixed leaf. **Unfold tabletop** controls a
@@ -27,13 +30,13 @@ are 114mm open length, 42mm maximum width and 38mm pin width.
 
 [Folding-table hinge research](table-hinges.md) records the selection and fitting requirements for this top.
 The CAD shows two tapered, countersunk Homer hinges in both table poses, with their centres at 20% and 80%
-of the tabletop length: 140mm from each end of the current 700mm top. Each half follows its bamboo leaf
+of the tabletop length: 140mm from each end of the current 700mm top. Each half follows its timber leaf
 through the existing fold animation. The 114 × 42mm open footprint and 38mm pin width follow Fosters.
 The 3mm metal thickness, 4mm pivot offsets, 3mm barrel radii, taper, corner radii and hole pattern are visual
-approximations from the photograph. Nominal blind seats keep that metal clear of the bamboo. They provide
+approximations from the photograph. Nominal blind seats extend 6mm below the upper face, leaving 12mm of the 18mm pine beneath them. They provide
 no drilling or routing template. The centre links follow the schematic seam pivot; their motion does not
-establish the physical dual-pin mechanism's clearance or required joint gap. The 50mm folded wood stack
-and nominal 127mm stored assembly remain the existing preview dimensions. Final load capacity, locations,
+establish the physical dual-pin mechanism's clearance or required joint gap. The 36mm folded wood stack
+and nominal 113mm stored assembly remain the existing preview dimensions. Final load capacity, locations,
 recess geometry and fixings still need establishing on the hardware.
 
 ## Model and controls
@@ -65,15 +68,15 @@ would be fastened; it does not add a sliding mechanism. The wood moves relative 
 rotation still rotates both together. The mounting joints and through-fixings still need designing.
 
 Both rotations cover 360°. Height is 620–780mm above the finished wooden floor, initially 700mm for each pose.
-At the selected 25mm top thickness, that range keeps the 500mm upright engaged across the full fixed bracket
-height, 180–350mm above the floor. Tabletop length, folded width and bamboo thickness are shared. Changing those
+At the selected 18mm top thickness, that range keeps the 500mm upright engaged across the full fixed bracket
+height, 180–350mm above the floor. Tabletop length, folded width and timber thickness are shared. Changing those
 dimensions uses normal **Apply** and regeneration.
 
 The **Stowed** group shows the folded tabletop, with the arm still attached to its tabletop pivot and swung
 along the tabletop length. The upright is detached, turned parallel to the arm and placed beneath the mounting
 plate's storage channel. The furniture bracket and plywood spacer remain installed on the bench in both modes.
 Both poses use the same component builders. Only the working pose contributes wood to the cut list; selecting a
-bamboo leaf in the stowed pose links to that same physical leaf's cutting entry.
+timber leaf in the stowed pose links to that same physical leaf's cutting entry.
 
 Stowed has separate live X/Y position, bottom elevation and facing controls. Its initial
 upright preview is in the aisle, at X=800/Y=450mm, with its bottom on the wooden floor. This is an adjustable
@@ -85,7 +88,7 @@ a centred top uses the positive-offset direction. This updates live through a st
 existing offset control. The independent stored-arm angle has been removed. Hardware can extend beyond the wood
 if the tabletop is too short to cover it.
 
-The cut list includes two bamboo leaves and one bench-mount spacer. The BOM has one Lagun kit and one pair
+The cut list includes two timber leaves and one bench-mount spacer. The BOM has one Lagun kit and one pair
 of Homer HOM006136 hinges. Visual hardware and the duplicate storage representation are excluded from cutting layouts.
 
 ### Stowed thickness
@@ -99,13 +102,13 @@ and has been rejected. Cab clearance, bed-frame travel and the restraint geometr
 plate's dovetail channel and that the furniture bracket stays installed. Their
 [installation-clearance diagram](https://lagunusa.com/product-details/) labels dimension H, underside of arm to
 upper face of the standard tabletop plate, as approximately **3 inches (76.2mm)**, and identifies H plus tabletop
-thickness as the storage clearance. With two 25mm leaves folded together, that gives **126.2mm**, approximately
-**12.6cm**. The CAD uses the manufacturer's nominal 30mm fitting plus 47mm arm: **127mm including the bamboo**.
+thickness as the storage clearance. With two 18mm leaves folded together, that gives **112.2mm**, approximately
+**11.2cm**. The CAD uses the manufacturer's nominal 30mm fitting plus 47mm arm: **113mm including the timber**.
 The upright lies alongside the arm, so its full length is not added to that thickness.
 
 The [standalone standard TMP photograph](https://lagunusa.com/wp-content/uploads/2024/06/tmp.jpg) also labels
 76.2mm from the tabletop face to the projecting pin tip. Separating the arm and upright therefore leaves about
-126mm overall thickness for the folded top and its fixed fitting. The 30mm drawing dimension covers the extrusion
+112mm overall thickness for the folded top and its fixed fitting. The 30mm drawing dimension covers the extrusion
 profile. The current simplified CAD assigns the tabletop pin to the arm group; it does not establish the physical
 envelope of a top stored without its arm. The storage assessment retains the projecting pin.
 
@@ -137,14 +140,15 @@ centres. Existing illustrative representations of those parts remain unverified 
 The overall hardware model must not be described as dimensionally exact.
 
 [Lagun USA's product dimensions](https://lagunusa.com/product-details/) give an assembled bottom-of-leg to
-tabletop-plate height of approximately 23 inches, or 584mm. Adding the 25mm fixed leaf makes 609mm; the model's
-upright bottom is therefore the selected open tabletop height minus 609mm. The source explicitly describes its
+tabletop-plate height of approximately 23 inches, or 584mm. Adding the 18mm fixed leaf makes 602mm; the model's
+upright bottom is therefore the selected open tabletop height minus 602mm. The source explicitly describes its
 installation-clearance measurements as approximate; the model's corresponding vertical joint placement is
 approximate too. Another supplied promotional image rounds the under-arm-to-plate stack to 80mm.
 
 [Lagun USA's installation instructions](https://lagunusa.com/instructions/) specify a minimum tabletop thickness
 of 5/8 inch, approximately 15.9mm, for their screw-mounted arrangement. This is that supplier's installation
-guidance. The current top uses two 25mm bamboo leaves.
+guidance. The current top uses two 18mm pine leaves, above that published minimum. For 18mm stock, their stated half-depth
+engagement means at least 9mm into the timber; allow for the plate thickness when selecting screws.
 
 The model helps compare reach, proportions and clearances. It does not establish the strength of either plywood
 mount or prevent the table from being rotated into furniture, a person or the vehicle.
