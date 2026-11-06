@@ -12,11 +12,12 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from campervan.apriltags import AprilTagSettings, generate_pdf
 from campervan.coordinator import Coordinator, ModelStatus, Regenerate
 from campervan.cutting import stock_groups
 from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
-from campervan.materials import ROLES, MaterialUpdate, resolve
 from campervan.mannequins import MannequinSettings
+from campervan.materials import ROLES, MaterialUpdate, resolve
 from campervan.parameter_fit import FitError, fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import PROJECT_PATH
@@ -127,6 +128,19 @@ def build_app(
     async def get_parameters(coordinator: CurrentCoordinator) -> ParameterResponse:
         return parameter_response(
             coordinator.session_id, coordinator.parameters, settings.viewer_url, coordinator.mannequins,
+        )
+
+    @app.post("/api/v1/apriltags/layout")
+    def apriltag_layout(settings: AprilTagSettings) -> dict[str, int | float]:
+        return settings.layout()
+
+    @app.post("/api/v1/apriltags/pdf")
+    def apriltag_pdf(settings: AprilTagSettings) -> Response:
+        last_id = settings.start_id + settings.count - 1
+        filename = f"apriltags-36h11-{settings.start_id}-{last_id}.pdf"
+        return Response(
+            generate_pdf(settings), media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     @app.post("/api/v1/parameters/preview", response_model=ParameterResponse)
@@ -244,6 +258,7 @@ def create_app() -> FastAPI:
         @app.get("/cad", include_in_schema=False)
         @app.get("/plan", include_in_schema=False)
         @app.get("/cuts", include_in_schema=False)
+        @app.get("/apriltags", include_in_schema=False)
         @app.get("/bom", include_in_schema=False)
         @app.get("/bom/{material}", include_in_schema=False)
         async def frontend_view() -> FileResponse:

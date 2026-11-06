@@ -1,0 +1,24 @@
+#apriltags-panel { grid-area: 1 / 1 / -1 / -1; min-height: 0; overflow: auto; padding: 28px; }
+.apriltags-content { max-width: 760px; margin: 0 auto; }
+.apriltags-content h2 { font-size: 24px; color: #e3e7ed; margin-bottom: 10px; }
+.apriltags-content > p { color: #aab3c0; margin-bottom: 22px; }
+#apriltags-form { display: grid; gap: 18px; }
+#apriltags-form fieldset { display: grid; grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: center; gap: 12px 20px; border: 1px solid #454a54; border-radius: 6px; padding: 18px; }
+#apriltags-form legend { padding: 0 6px; font-size: 14px; font-weight: 600; }
+#apriltags-form input[type="number"], #apriltags-form select { width: 100%; min-width: 0; padding: 7px 9px;
+  border: 1px solid #454a54; border-radius: 4px; background: #15171a; color: #e3e7ed; font: inherit; }
+#apriltags-form input:disabled { opacity: 0.5; }
+#apriltags-form .tag-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+#apriltags-form input[type="checkbox"] { accent-color: #8bb7e8; }
+#apriltags-form button { justify-self: start; padding: 9px 18px; }
+#apriltags-form button:disabled { opacity: 0.5; }
+.tag-summary { padding: 14px; background: #252f3d; border-radius: 5px; font-size: 14px; }
+.tag-summary:empty, .tag-error:empty, .tag-feedback:empty { display: none; }
+.tag-help { color: #aab3c0; }
+.tag-error { color: #f09a91; }
+@media (max-width: 600px) {
+  #apriltags-panel { padding: 18px 10px; }
+  #apriltags-form fieldset { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  #apriltags-form input[type="number"], #apriltags-form select { margin-bottom: 8px; }
+}

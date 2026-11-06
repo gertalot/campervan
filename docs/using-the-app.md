@@ -1,6 +1,6 @@
 # Using the application
 
-The four tabs share one saved project. Switching tabs keeps the camera and visibility settings.
+The project tabs share one saved project. Switching tabs keeps the camera and visibility settings.
 
 ## CAD
 
@@ -122,3 +122,25 @@ features afterwards. Nested shapes use the sampled profiles; cut pieces inside h
 Timber uses crosscuts in either mode. Hardware does not appear in the cutting list.
 
 Use **Save drawing** for sheet SVGs, **Export cut list** for CSV and **Print** for the current view.
+
+## AprilTags
+
+Choose the complete printed tag width **including the white border**, quantity, starting ID, paper dimensions,
+page margin and gap. The app calculates the rows, columns and pages automatically without scaling the tags.
+The defaults produce forty unique 36h11 tags (IDs 1–40), 100 mm wide, four per A4 sheet across ten pages.
+Each tag has a separate 6 mm ID label strip below its full white border; cut lines enclose both.
+
+**Generate PDF** downloads a vector PDF. Print at **100% / actual size**, with any fit-to-page option disabled.
+Measure a printed tag before using it. The form and page footer show the RTAB-Map `Marker/Length`: the black square
+is 80% of the complete width, so a 100 mm print uses **0.08 m**. IDs are the actual dictionary IDs, not separate labels.
+The thin grey centre circle and cross default to 10 mm diameter. Adjust the diameter or turn the mark off;
+it overlays encoded cells and may affect detection. Tags are generated in OpenCV's orientation convention
+(`MarkerAprilTag/Upright=0` in RTAB-Map versions exposing that setting).
+
+This generator requires the local Python API and is excluded from static exports.
+
+The form uses visible labels with explicit units, native number constraints and textual error/status feedback,
+following W3C guidance on [labels](https://www.w3.org/WAI/tutorials/forms/labels/) and
+[validation](https://www.w3.org/WAI/tutorials/forms/validation/). Tab navigation reuses the app's shared keyboard controls.
+Patterns come from OpenCV's [predefined dictionary and marker generator](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html);
+tag measurement follows the [AprilTag pose convention](https://github.com/AprilRobotics/apriltag#pose-estimation).

@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => ({
   plugins: mode === 'static' ? [{
     name: 'static-project-views',
     transformIndexHtml(html: string) {
-      return html.replace(/<button id="plan-tab"[^>]*>[\s\S]*?<\/button>/, '')
-        .replace(/<section id="plan-panel"[^>]*>\s*<\/section>/, '');
+      return html.replace(/<button id="(?:plan|apriltags)-tab"[^>]*>[\s\S]*?<\/button>/g, '')
+        .replace(/<section id="(?:plan|apriltags)-panel"[^>]*>\s*<\/section>/g, '');
     },
   }] : [],
   resolve: {

@@ -14,6 +14,7 @@ The model uses parametric Python geometry built with [build123d](https://github.
 | Bill of materials | Track materials, suppliers, costs and purchases, with categories, filters and totals. |
 | Plan | Break the conversion into nested tasks, with notes, tables and linked purchases. |
 | Cut list | See individual pieces and sheet layouts, allowing for kerf, grain direction and available stock. |
+| AprilTags | Generate a PDF of unique 36h11 tags, automatically fitted to the selected paper and print dimensions. |
 
 Double-click a wooden piece to find it in the other view: CAD to cut list, or cut list to CAD.
 

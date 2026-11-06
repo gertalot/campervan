@@ -1,7 +1,7 @@
 import { isStaticSite } from './site-runtime';
 
-export type Tab = 'cad' | 'bom' | 'plan' | 'cuts';
-const tabs: readonly Tab[] = isStaticSite ? ['cad', 'bom', 'cuts'] : ['cad', 'bom', 'plan', 'cuts'];
+export type Tab = 'cad' | 'bom' | 'plan' | 'cuts' | 'apriltags';
+const tabs: readonly Tab[] = isStaticSite ? ['cad', 'bom', 'cuts'] : ['cad', 'bom', 'plan', 'cuts', 'apriltags'];
 type Listener = (tab: Tab, role?: string) => void;
 let current: Tab = 'cad';
 let currentRole: string | undefined;
@@ -52,7 +52,7 @@ export function setupTabs() {
   }
   const restore = () => {
     const path = isStaticSite ? location.hash.slice(1) : location.pathname;
-    const match = path.match(/^\/(cad|bom|plan|cuts)(?:\/([^/]+))?\/?$/);
+    const match = path.match(/^\/(cad|bom|plan|cuts|apriltags)(?:\/([^/]+))?\/?$/);
     const requested = (match?.[1] as Tab) ?? 'cad';
     showTab(requested, match?.[2] ? decodeURIComponent(match[2]) : undefined, false);
     if (isStaticSite && (!location.hash || !tabs.includes(requested))) history.replaceState(null, '', '#/cad');
