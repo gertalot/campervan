@@ -112,6 +112,8 @@ export function setupScan(panel: HTMLElement) {
   let generation = 0;
   let interactionGeneration = 0;
   document.addEventListener('pointerdown', () => { interactionGeneration++; }, true);
+  document.addEventListener('pointermove', event => { if (event.buttons) interactionGeneration++; }, true);
+  document.addEventListener('wheel', () => { interactionGeneration++; }, true);
   document.addEventListener('keydown', () => { interactionGeneration++; }, true);
   document.addEventListener('input', () => { interactionGeneration++; }, true);
   const completion = document.createElement('div'); completion.setAttribute('role', 'status'); completion.setAttribute('aria-live', 'polite');
@@ -125,12 +127,27 @@ export function setupScan(panel: HTMLElement) {
   const camera = createViewerCamera(container, () => viewer, 'campervan.scan.camera.reference', () => loading);
   measure.attach();
   const manager = createScanLibrary({ results: () => scans, currentKey: () => select.value,
-    view: key => changeResult(key), changed: () => refreshScans(), interactionGeneration: () => interactionGeneration,
+    view: key => changeResult(key), changed: preserveSelection => refreshScans(preserveSelection), interactionGeneration: () => interactionGeneration,
+    canAutoOpen: () => !panel.hidden && !measure.hasUnsaved(),
     importCompleted(key, autoOpen) {
-      const announce = () => { completion.replaceChildren('Capture processing complete. '); const button = document.createElement('button');
+      const announce = (detail = 'Capture processing complete.') => { completion.replaceChildren(`${detail} `); const button = document.createElement('button');
         button.type = 'button'; button.textContent = 'Review capture'; button.onclick = () => { void review(false); }; completion.append(button); };
-      const review = async (guard: boolean) => { const token = interactionGeneration; completion.replaceChildren(); await changeResult(key);
-        if (guard && (token !== interactionGeneration || panel.hidden || measure.hasUnsaved())) announce(); else measure.openReview(); };
+      const review = async (guard: boolean) => {
+        if (!guard) { completion.replaceChildren(); await changeResult(key); measure.openReview(); return; }
+        const token = interactionGeneration; const sceneToken = generation; const previousKey = select.value;
+        const previousLayer = layers.value; const previousScan = renderedScan;
+        const valid = () => token === interactionGeneration && sceneToken === generation && !panel.hidden && !measure.hasUnsaved()
+          && select.value === previousKey && layers.value === previousLayer && renderedScan === previousScan
+          && scans.some(item => item.key === key && !item.archived);
+        const scan = scans.find(item => item.key === key && !item.archived); if (!scan || !page || !valid()) { announce(); return; }
+        const layer = preferredLayer(scan);
+        let root: Object3D;
+        try { root = await loadObject(layerUrl(scan, layer), layer.kind, layer.id === 'photo'); }
+        catch (error) { announce(`Could not load the completed capture: ${error instanceof Error ? error.message : String(error)}.`); return; }
+        if (!valid()) { disposeObject(root); announce(); return; }
+        completion.replaceChildren(); await changeResult(key, { layer, root });
+        if (token !== interactionGeneration || panel.hidden || measure.hasUnsaved()) announce(); else measure.openReview();
+      };
       if (autoOpen && !panel.hidden && !measure.hasUnsaved()) void review(true); else announce();
     } });
   panel.querySelector<HTMLButtonElement>('[data-manage]')!.onclick = () => { void manager.open(); };
@@ -142,25 +159,34 @@ export function setupScan(panel: HTMLElement) {
     viewer?.update(true, false);
   };
 
+  function preferredLayer(scan: Scan): Layer {
+    const available = scan.layers?.length ? scan.layers : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }];
+    const previous = layers.value || sessionStorage.getItem('campervan.scan.layer') || '';
+    return available.find(layer => layer.id === previous)
+      ?? ['colour', 'mesh', 'photo', 'cloud'].map(id => available.find(layer => layer.id === id)).find(layer => !!layer)
+      ?? available[0];
+  }
+  function layerUrl(scan: Scan, layer: Layer) {
+    return scan.id
+      ? `/api/v1/scans/runs/${encodeURIComponent(scan.id)}/assets/${layer.asset.split('/').map(encodeURIComponent).join('/')}`
+      : `/api/v1/scans/${encodeURIComponent(scan.name)}`;
+  }
   function layerOptions() {
     const scan = scans.find(item => item.key === select.value);
-    const previousLayer = layers.value || sessionStorage.getItem('campervan.scan.layer') || '';
+    const chosen = scan ? preferredLayer(scan) : undefined;
     layers.replaceChildren();
     if (!scan) { layers.disabled = true; return; }
-    for (const layer of scan?.layers ?? [{ id: 'cloud', label: 'Cloud', asset: scan?.name, kind: 'cloud' }]) {
+    for (const layer of scan.layers?.length ? scan.layers : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }]) {
       layers.add(new Option(layer.id === 'photo' ? 'Photo texture (experimental)' : layer.label, layer.id));
     }
-    const preferred = ['colour', 'mesh', 'photo', 'cloud']
-      .find(id => [...layers.options].some(option => option.value === id));
-    if ([...layers.options].some(option => option.value === previousLayer)) layers.value = previousLayer;
-    else if (preferred) layers.value = preferred;
+    if (chosen) layers.value = chosen.id;
     layers.disabled = layers.options.length < 2;
   }
 
-  async function loadLayer() {
+  async function loadLayer(prepared?: { layer: Layer; root: Object3D }) {
     const scan = scans.find(item => item.key === select.value && !item.archived);
     if (!scan || !page) return;
-    const layer = scan.layers?.find(item => item.id === layers.value)
+    const layer = prepared?.layer ?? scan.layers?.find(item => item.id === layers.value)
       ?? { id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const };
     sessionStorage.setItem('campervan.scan.result', scan.key);
     sessionStorage.setItem('campervan.scan.layer', layer.id);
@@ -172,12 +198,9 @@ export function setupScan(panel: HTMLElement) {
     measure.refresh();
     camera.cancelCameraAnimation();
     status.textContent = `Loading ${scan.display_name} · ${layer.label}…`;
-    const url = scan.id
-      ? `/api/v1/scans/runs/${encodeURIComponent(scan.id)}/assets/${layer.asset.split('/').map(encodeURIComponent).join('/')}`
-      : `/api/v1/scans/${encodeURIComponent(scan.name)}`;
     let root: Object3D | undefined;
     try {
-      root = await loadObject(url, layer.kind, layer.id === 'photo');
+      root = prepared ? prepared.root : await loadObject(layerUrl(scan, layer), layer.kind, layer.id === 'photo');
       if (token !== generation) { disposeObject(root); return; }
       // Navigation during an asset load takes precedence over the earlier snapshot.
       saved = camera.cameraState() ?? saved;
@@ -253,15 +276,16 @@ export function setupScan(panel: HTMLElement) {
     status.textContent = 'No active results — open Manage scans to restore one.';
   }
 
-  async function changeResult(key: string) {
-    if (!scans.some(scan => scan.key === key && !scan.archived)) return;
-    ++generation; select.value = key; layerOptions(); await loadLayer();
+  async function changeResult(key: string, prepared?: { layer: Layer; root: Object3D }) {
+    if (!scans.some(scan => scan.key === key && !scan.archived)) { if (prepared) disposeObject(prepared.root); return; }
+    ++generation; select.value = key; layerOptions(); await loadLayer(prepared);
   }
 
-  async function refreshScans() {
+  async function refreshScans(preserveSelection = false) {
     const previousKey = select.value;
     const preferredKey = previousKey || sessionStorage.getItem('campervan.scan.result');
     const discovered = await readScanResults();
+    const retainedKey = select.value;
     scans = discovered;
     const active = scans.filter(scan => !scan.archived).sort((a, b) =>
       (a.group_name ?? 'Ungrouped').localeCompare(b.group_name ?? 'Ungrouped')
@@ -281,6 +305,13 @@ export function setupScan(panel: HTMLElement) {
         }
         group.append(option);
       } else select.add(option);
+    }
+    if (preserveSelection) {
+      if (active.some(scan => scan.key === retainedKey)) select.value = retainedKey; else select.selectedIndex = -1;
+      select.disabled = !active.length; tags.disabled = !renderedScan?.tags?.length; size.disabled = !renderedScan;
+      layerOptions();
+      const updated = active.find(scan => scan.key === renderedScan?.key); if (updated) renderedScan = updated;
+      return;
     }
     select.disabled = !selected; tags.disabled = !renderedScan?.tags?.length; size.disabled = !selected;
     if (selected) select.value = selected.key;

@@ -9,8 +9,9 @@ interface Host {
   results(): ScanResult[];
   currentKey(): string;
   view(key: string): void;
-  changed(): Promise<void>;
+  changed(preserveSelection?: boolean): Promise<void>;
   interactionGeneration(): number;
+  canAutoOpen(): boolean;
   importCompleted(key: string, autoOpen: boolean): void;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) {
@@ -57,9 +58,10 @@ export function createScanLibrary(host: Host) {
   let focusAfterRender: string | undefined;
   const importer = createScanImport({
     defaultLayout: group => library?.group_layouts?.[group],
-    async changed() { await host.changed(); library = await readScanLibrary(); if (!busy) render(); },
+    async changed() { await host.changed(true); library = await readScanLibrary(); if (!busy) render(); },
     view(key) { side.close(); host.view(key); },
     interactionGeneration: host.interactionGeneration,
+    canAutoOpen: host.canAutoOpen,
     completed(key, autoOpen) { if (autoOpen) side.close({ restoreFocus: false }); host.importCompleted(key, autoOpen); },
     closed(group) {
       if (!dialog.open) return;

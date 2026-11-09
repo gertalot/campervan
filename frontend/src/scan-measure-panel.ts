@@ -3,7 +3,7 @@ import { createMeasureRow } from './scan-measure-row';
 import { pairKey, type MeasurementSession } from './scan-measure-session';
 import { createWorkflow, readWorkflow, readWorkflowArtifact, runWorkflowAction,
   type Pair, type Stage, type WorkflowAction, type MeasurementNetwork, type MeasurementPlan, type PlacementReview,
-  type ScanCorrection, type CorrectionMovement } from './scan-workflow-api';
+  type ScanCorrection, type CorrectionMovement, type PlanGain } from './scan-workflow-api';
 import { createJobView, jobStatus } from './scan-job-status';
 import { readScanImports } from './scan-import-api';
 import { reviseTagLayout } from './scan-workflow-api';
@@ -46,13 +46,16 @@ export function createMeasurePanel(host: Host) {
   targets.oninput = () => { const id = host.session()?.workflow?.workflow.id; if (id) targetDrafts.set(id, { target: target.value, improvement: improvement.value }); };
   targets.onkeydown = event => event.stopPropagation();
   targets.onsubmit = event => { event.preventDefault(); void (async () => {
-    const session = host.session(); const result = await flush(true); const view = session?.workflow;
-    if (!result?.ok || !view || !session) { status.textContent = 'Save or resolve the highlighted draft first.'; return; }
+    const session = host.session(); const workflowId = session?.workflow?.workflow.id;
     const targetValue = Number(target.value); const improvementValue = Number(improvement.value);
+    const submitted = workflowId ? targetDrafts.get(workflowId) : undefined;
+    if (!session || !workflowId) return;
+    const result = await flush(true);
+    if (host.session() !== session || session.workflow?.workflow.id !== workflowId) return;
+    if (!result?.ok) { status.textContent = 'Save or resolve the highlighted draft first.'; return; }
     if (![targetValue, improvementValue].every(value => Number.isFinite(value) && value > 0)) { status.textContent = 'Enter positive target and improvement values.'; return; }
-    const submitted = targetDrafts.get(view.workflow.id);
     try { await session.editMetadata({ target_mm: targetValue, improvement_mm: improvementValue });
-      if (targetDrafts.get(view.workflow.id) === submitted) targetDrafts.delete(view.workflow.id); render(); }
+      if (host.session() === session && session.workflow?.workflow.id === workflowId && targetDrafts.get(workflowId) === submitted) targetDrafts.delete(workflowId); render(); }
     catch (reason) { status.textContent = String(reason); }
   })(); };
   const status = document.createElement('p'); status.setAttribute('role', 'status'); side.status.append(status);
@@ -63,6 +66,8 @@ export function createMeasurePanel(host: Host) {
   const stageBody = document.createElement('section'); side.body.append(stageBody);
   const stageHeading = document.createElement('h3'); const summary = document.createElement('div');
   const actions = document.createElement('div'); stageBody.append(stageHeading, summary, actions);
+  const actionNodes = new Map<string, { button: HTMLButtonElement; reason: HTMLParagraphElement }>();
+  const correctionWarning = document.createElement('p');
   const measurementSection = document.createElement('section'); side.body.append(measurementSection);
   const heading = document.createElement('h3'); heading.textContent = 'Measurements'; measurementSection.append(heading);
   const list = document.createElement('div'); measurementSection.append(list);
@@ -169,9 +174,15 @@ export function createMeasurePanel(host: Host) {
         current_pair: payload.recommended_pairs[0] ?? null, producing_artifact_id: artifactId }]).catch(reason => { stageError = String(reason); render(); });
     })(); }; node.append(batch);
     const list = document.createElement('ul');
+    const gainText = (gain: PlanGain | null) => {
+      if (!gain) return 'Unknown';
+      const number = (value: number | null) => value === null ? 'Unknown' : value.toFixed(2);
+      return `rank reduction ${gain.rank_reduction}, connectivity reduction ${gain.connectivity_reduction}, null-mode energy ${number(gain.null_mode_energy)}, information gain ${number(gain.information_gain)}, largest local tag reduction ${number(gain.max_tag_reduction_mm)} mm${gain.most_improved_tag_id === null ? '' : ` (tag ${gain.most_improved_tag_id})`}, global worst-tag reduction ${number(gain.global_worst_reduction_mm)} mm`;
+    };
     for (const pair of payload.rows) { const item = document.createElement('li');
       const access = pair.manual_exclusion ? `Manually excluded: ${pair.manual_exclusion}` : pair.check_access ? `Check access: ${pair.clearance_reason}` : pair.clearance_reason;
       item.textContent = `Tags ${pair.tag_a} ↔ ${pair.tag_b} · ${pair.state}${pair.recommended_order === null ? '' : ` · recommended ${pair.recommended_order}`} · Scan estimate ${(pair.estimate_m * 1000).toFixed(1)} mm · ${access} · ${pair.reason}`;
+      if (pair.useful) { const gain = document.createElement('p'); gain.textContent = `Baseline gain: ${gainText(pair.baseline_gain)}. Marginal gain: ${gainText(pair.marginal_gain)}.`; item.append(gain); }
       list.append(item); }
     node.append(list);
   }
@@ -260,23 +271,32 @@ export function createMeasurePanel(host: Host) {
       check_accuracy: [{ action: 'check-measurements', label: 'Check measurements' }, { action: 'suggest-more', label: 'Suggest more' }],
       update_reconstruction: [{ action: 'preview-correction', label: 'Preview corrections' }, { action: 'update-mesh', label: 'Update mesh' }],
     };
-    actions.replaceChildren();
-    for (const definition of definitions[stage]) { const button = document.createElement('button'); button.type = 'button'; button.textContent = definition.label;
-      const eligibility = view?.actions[definition.action]; button.disabled = actionPending || !eligibility?.available;
-      button.title = eligibility?.reasons.join(' · ') ?? 'Workflow unavailable'; button.onclick = () => { void dispatch(definition.action); }; actions.append(button);
-      if (eligibility?.reasons.length) { const reason = document.createElement('p'); reason.textContent = eligibility.reasons.join(' · '); actions.append(reason); } }
-    if (stage === 'review_capture') { const next = document.createElement('button'); next.type = 'button'; next.textContent = 'Continue to measurements'; next.disabled = !view;
-      next.onclick = () => { void changeStage('measure'); }; actions.append(next);
-      const add = document.createElement('button'); add.type = 'button'; add.textContent = 'Add replacement captures…'; add.onclick = host.addCaptures; actions.append(add);
-      const revise = document.createElement('button'); revise.type = 'button'; revise.textContent = 'Revise tag layout…'; revise.disabled = !view;
-      revise.onclick = () => { void reviseLayout(); }; actions.append(revise); }
-    if (stage === 'update_reconstruction') { const warning = document.createElement('p'); warning.textContent = 'Corrections can be best effort. Scan-dependent or ambiguous positions require review before updating the mesh.'; actions.append(warning); }
+    const desired: { key: string; label: string; disabled: boolean; reason?: string; run(): void }[] = definitions[stage].map(definition => {
+      const eligibility = view?.actions[definition.action]; return { key: definition.action, label: definition.label,
+        disabled: actionPending || !eligibility?.available, reason: eligibility?.reasons.join(' · ') ?? 'Workflow unavailable',
+        run: () => { void dispatch(definition.action); } };
+    });
+    if (stage === 'review_capture') desired.push(
+      { key: 'continue', label: 'Continue to measurements', disabled: !view, run: () => { void changeStage('measure'); } },
+      { key: 'captures', label: 'Add replacement captures…', disabled: false, run: host.addCaptures },
+      { key: 'revise', label: 'Revise tag layout…', disabled: !view, run: () => { void reviseLayout(); } });
     if (stage === 'update_reconstruction' && view) {
-      const original = document.createElement('button'); original.type = 'button'; original.textContent = 'Show original';
-      original.onclick = () => { void host.view(`run:${view.workflow.source_run_id}`); }; actions.append(original);
-      if (view.workflow.corrected_run_id) { const corrected = document.createElement('button'); corrected.type = 'button'; corrected.textContent = 'Show corrected result';
-        corrected.onclick = () => { void host.view(`run:${view.workflow.corrected_run_id}`); }; actions.append(corrected); }
+      desired.push({ key: 'original', label: 'Show original', disabled: false, run: () => { void host.view(`run:${view.workflow.source_run_id}`); } });
+      if (view.workflow.corrected_run_id) desired.push({ key: 'corrected', label: 'Show corrected result', disabled: false,
+        run: () => { void host.view(`run:${view.workflow.corrected_run_id}`); } });
     }
+    const ordered: HTMLElement[] = [];
+    for (const item of desired) {
+      let nodes = actionNodes.get(item.key);
+      if (!nodes) { const button = document.createElement('button'); button.type = 'button'; const reason = document.createElement('p');
+        nodes = { button, reason }; actionNodes.set(item.key, nodes); }
+      const { button, reason } = nodes; button.textContent = item.label; button.setAttribute('aria-disabled', String(item.disabled));
+      button.title = item.reason ?? ''; button.onclick = () => { if (!item.disabled) item.run(); };
+      reason.textContent = item.reason ?? ''; reason.hidden = !item.reason; ordered.push(button, reason);
+    }
+    if (stage === 'update_reconstruction') { correctionWarning.textContent = 'Corrections can be best effort. Scan-dependent or ambiguous positions require review before updating the mesh.'; ordered.push(correctionWarning); }
+    for (const child of [...actions.children]) if (!ordered.includes(child as HTMLElement)) child.remove();
+    ordered.forEach((node, index) => { if (actions.children[index] !== node) actions.insertBefore(node, actions.children[index] ?? null); });
     if (session && view) showArtifact(session, stage === 'review_capture' ? 'placement_review' : stage === 'measure' ? 'measurement_plan' : stage === 'check_accuracy' ? 'measurement_network' : 'scan_correction');
     else { artifactKey = ''; ++artifactGeneration; summary.textContent = 'Select a capture with a tag layout.'; }
     if (!session) { empty.hidden = false; return; }
@@ -295,7 +315,7 @@ export function createMeasurePanel(host: Host) {
             const all = [...list.children].map(element => rows.get((element as HTMLElement).dataset.pair ?? '')).filter((item): item is ReturnType<typeof createMeasureRow> => !!item);
             const index = all.findIndex(item => item.element.dataset.pair === key);
             const next = all.slice(index + 1).find(item => { const [tag_a, tag_b] = item.element.dataset.pair!.split(':').map(Number);
-              const value = session.draft({ tag_a, tag_b }); return !value.saved || value.state !== 'Saved'; });
+              const value = session.draft({ tag_a, tag_b }); return !item.input.disabled && (!value.saved || value.state !== 'Saved'); });
             next?.input.focus();
           } });
         row.input.addEventListener('focus', () => {

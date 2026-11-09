@@ -648,3 +648,4 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
 .scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
 .scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }
+.scan-measure-panel button[aria-disabled=true] { opacity: .45; cursor: default; }

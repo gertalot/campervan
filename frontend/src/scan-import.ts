@@ -9,6 +9,7 @@ interface Host {
   view(key: string): void;
   closed(group: string): void;
   interactionGeneration(): number;
+  canAutoOpen(): boolean;
   completed(key: string, autoOpen: boolean): void;
 }
 export function createScanImport(host: Host) {
@@ -147,7 +148,7 @@ export function createScanImport(host: Host) {
               if (updated.state !== 'completed' || !updated.result_key) return;
               await createWorkflow(updated.run_id, updated.layout_id);
               const token = handoffs.get(updated.id); const autoOpen = token !== undefined && dialog.open
-                && currentJob?.id === updated.id && token === host.interactionGeneration();
+                && currentJob?.id === updated.id && token === host.interactionGeneration() && host.canAutoOpen();
               if (autoOpen) dialog.close(); host.completed(updated.result_key, autoOpen);
             } catch (reason) { fail(reason); }
           })();
