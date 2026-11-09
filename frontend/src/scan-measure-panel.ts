@@ -112,35 +112,47 @@ export function createMeasurePanel(host: Host) {
   }
   let current: MeasurementSession | null = null; let unsubscribe: (() => void) | undefined;
   let identity = ''; let generation = 0; let measuredRevision = -1;
-  async function changeStage(stage: Stage) {
+  function ownsWorkflow(session: MeasurementSession, workflowId: string, source: string, token: number) {
+    const capture = host.capture();
+    return token === generation && host.session() === session && session.workflow?.workflow.id === workflowId
+      && (capture?.reference_run_id ?? capture?.source_run_id ?? capture?.id) === source;
+  }
+  async function changeStage(stage: Stage, isCurrent = () => true) {
     const session = host.session(); if (!session?.workflow) return;
     host.highlight(null); host.highlightTag(null); host.highlightMovements([]);
-    try { await session.editMetadata({ stage }); } catch (reason) { stageError = String(reason); render(); }
+    try { await session.editMetadata({ stage }); } catch (reason) { if (isCurrent()) { stageError = String(reason); render(); } }
   }
   function watchJob(session: MeasurementSession, id: string) {
     const view = session.workflow; const job = view?.jobs.find(item => item.id === id); if (!view || !job || jobId === id) return;
+    const token = generation; const isCurrent = () => ownsWorkflow(session, view.workflow.id, view.workflow.source_run_id, token);
     jobId = id; unsubscribeJob?.(); jobStatus.publish(job); jobView.element.hidden = false;
-    unsubscribeJob = jobStatus.subscribe(id, update => { jobView.update(update);
+    unsubscribeJob = jobStatus.subscribe(id, update => { if (!isCurrent()) return; jobView.update(update);
       if (update.state !== 'processing') void readWorkflow(view.workflow.id).then(latest => {
-        if (session.workflow?.workflow.id === view.workflow.id && latest.revision >= session.workflow.revision) session.bindWorkflow(latest);
-      }).catch(reason => { stageError = String(reason); render(); }); });
+        if (isCurrent() && session.workflow && latest.revision >= session.workflow.revision) session.bindWorkflow(latest);
+      }).catch(reason => { if (isCurrent()) { stageError = String(reason); render(); } }); });
   }
   async function dispatch(action: WorkflowAction) {
-    const session = host.session(); if (!session || actionPending) return;
-    const result = await flush(); if (!result?.ok) { status.textContent = 'Save or resolve the highlighted draft before continuing.'; return; }
+    const session = host.session(); const bound = session?.workflow; if (!session || !bound || actionPending) return;
+    const token = generation; const isCurrent = () => ownsWorkflow(session, bound.workflow.id, bound.workflow.source_run_id, token);
+    if (!isCurrent()) return;
+    const result = await flush(false, isCurrent); if (!isCurrent()) return;
+    if (!result?.ok) { status.textContent = 'Save or resolve the highlighted draft before continuing.'; return; }
     if (session.document.default_sigma_m == null) {
       const value = Number(precision.value) / 1000;
       if (!Number.isFinite(value) || value <= 0) { precision.setAttribute('aria-invalid', 'true'); status.textContent = 'Enter a positive precision.'; precision.focus(); return; }
-      try { await session.configure({ default_sigma_m: value }); } catch (reason) { status.textContent = String(reason); precision.focus(); return; }
+      try { await session.configure({ default_sigma_m: value }); } catch (reason) { if (isCurrent()) { status.textContent = String(reason); precision.focus(); } return; }
+      if (!isCurrent()) return;
     }
     const view = session.workflow; if (!view) return;
     actionPending = true; stageError = ''; render();
     try {
       const started = await runWorkflowAction(view.workflow.id, action, view.revision, session.document.revision);
+      if (!isCurrent()) return;
       const fresh = await readWorkflow(view.workflow.id);
-      if (session.workflow?.workflow.id === view.workflow.id) session.bindWorkflow(fresh);
+      if (!isCurrent()) return;
+      session.bindWorkflow(fresh);
       watchJob(session, started.id);
-    } catch (reason) { stageError = String(reason); }
+    } catch (reason) { if (isCurrent()) stageError = String(reason); }
     finally { actionPending = false; render(); }
   }
   async function bindWorkflow(session: MeasurementSession, source: string, layout: string, token: number) {
@@ -162,16 +174,19 @@ export function createMeasurePanel(host: Host) {
       consistency: network.consistency, uncertainty: network.uncertainty, solver: network.solver, warnings: network.warnings }, null, 2);
     details.append(label, content); node.append(details);
   }
-  function describePlan(node: HTMLElement, payload: MeasurementPlan, artifactId: string, session: MeasurementSession) {
+  function describePlan(node: HTMLElement, payload: MeasurementPlan, artifactId: string, session: MeasurementSession,
+    workflowId: string, source: string, token: number) {
     const intro = document.createElement('p'); intro.textContent = `Target: ${payload.target_mm} mm longest 95% ellipsoid semi-axis · Meaningful improvement: ${payload.improvement_mm} mm · ${payload.stop_reason}`; node.append(intro);
     const notes = document.createElement('p'); notes.textContent = payload.notes.join(' · '); node.append(notes);
     const batch = document.createElement('button'); batch.type = 'button'; batch.textContent = 'Add recommended checklist';
     batch.disabled = !payload.recommended_pairs.length; batch.onclick = () => { void (async () => {
-      const result = await flush(); if (!result?.ok || host.session() !== session) { status.textContent = 'Save or resolve the highlighted draft first.'; return; }
+      const isCurrent = () => ownsWorkflow(session, workflowId, source, token); if (!isCurrent()) return;
+      const result = await flush(false, isCurrent); if (!isCurrent()) return;
+      if (!result?.ok) { status.textContent = 'Save or resolve the highlighted draft first.'; return; }
       const batches = session.checklistDraft()?.batches ?? session.workflow?.workflow.checklist_batches ?? [];
       if (batches.some(item => item.producing_artifact_id === artifactId)) return;
       void session.setChecklist([...batches, { id: crypto.randomUUID(), kind: payload.mode, ordered_pairs: payload.recommended_pairs,
-        current_pair: payload.recommended_pairs[0] ?? null, producing_artifact_id: artifactId }]).catch(reason => { stageError = String(reason); render(); });
+        current_pair: payload.recommended_pairs[0] ?? null, producing_artifact_id: artifactId }]).catch(reason => { if (isCurrent()) { stageError = String(reason); render(); } });
     })(); }; node.append(batch);
     const list = document.createElement('ul');
     const gainText = (gain: PlanGain | null) => {
@@ -210,7 +225,7 @@ export function createMeasurePanel(host: Host) {
     const state = view?.artifacts[kind];
     const key = `${view?.workflow.id ?? ''}:${kind}:${id ?? ''}:${state?.status ?? ''}:${state?.reasons.join('|') ?? ''}`;
     if (key === artifactKey) return;
-    artifactKey = key; const token = ++artifactGeneration; summary.replaceChildren(); if (kind === 'measurement_plan') plan = null;
+    artifactKey = key; const token = ++artifactGeneration; const workflowGeneration = generation; summary.replaceChildren(); if (kind === 'measurement_plan') plan = null;
     const info = document.createElement('p');
     info.textContent = state ? `${state.status}: ${state.reasons.join(' · ')}` : 'No report yet.'; summary.append(info);
     if (kind === 'placement_review') { const capture = host.capture(); const source = document.createElement('p');
@@ -222,7 +237,8 @@ export function createMeasurePanel(host: Host) {
       info.textContent = `${freshness.status}${freshness.reasons.length ? `: ${freshness.reasons.join(' · ')}` : ''}`;
       const artifactBody = document.createElement('div'); summary.append(artifactBody);
       if (artifact.kind === 'measurement_network') describeNetwork(artifactBody, artifact.payload);
-      else if (artifact.kind === 'measurement_plan') { plan = artifact.payload; describePlan(artifactBody, artifact.payload, artifact.id, session); render(); }
+      else if (artifact.kind === 'measurement_plan') { plan = artifact.payload; describePlan(artifactBody, artifact.payload, artifact.id, session,
+        view.workflow.id, view.workflow.source_run_id, workflowGeneration); render(); }
       else if (artifact.kind === 'placement_review') describePlacement(artifactBody, artifact.payload);
       else if (artifact.kind === 'scan_correction') describeCorrection(artifactBody, artifact.payload);
       else { const details = document.createElement('details'); const label = document.createElement('summary'); label.textContent = 'Report details';
@@ -341,9 +357,11 @@ export function createMeasurePanel(host: Host) {
   form.onsubmit = event => { event.preventDefault(); const session = host.session(); const value = Number(precision.value) / 1000;
     if (!session || !Number.isFinite(value) || value <= 0) { precision.setAttribute('aria-invalid', 'true'); status.textContent = 'Enter a positive precision.'; precision.focus(); return; }
     void session.configure({ default_sigma_m: value }).catch(reason => { status.textContent = String(reason); }); };
-  async function flush(ignoreTargets = false) { const result = await host.session()?.flush();
+  async function flush(ignoreTargets = false, isCurrent = () => true) { const result = await host.session()?.flush();
+    if (!isCurrent()) return;
     if (result && host.otherUnsaved()) { status.textContent = 'Return to the other layout with unsaved measurements.'; return { ...result, ok: false }; }
-    if (result && (!result.ok || (!ignoreTargets && targetDrafts.size)) && host.session()?.workflow?.workflow.stage !== 'measure') await changeStage('measure');
+    if (result && (!result.ok || (!ignoreTargets && targetDrafts.size)) && host.session()?.workflow?.workflow.stage !== 'measure') await changeStage('measure', isCurrent);
+    if (!isCurrent()) return;
     if (result && !ignoreTargets && targetDrafts.size) {
       if (host.session()?.workflow && targetDrafts.has(host.session()!.workflow!.workflow.id)) target.focus();
       else status.textContent = 'Return to the source with unsaved targets.';

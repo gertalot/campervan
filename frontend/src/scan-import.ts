@@ -35,7 +35,7 @@ export function createScanImport(host: Host) {
         <label>Result name <input data-name required maxlength="120" /></label>
         <label>Surface detail <select data-resolution><option value="5">5 mm</option><option value="10">10 mm</option></select></label>
         <label><input type="checkbox" data-photo /> Add photographic texture (slower)</label>
-        <p>Builds a surface with colour texture. Measured-distance correction is not implemented yet.</p>
+        <p>Builds a surface with colour texture. After processing, review the capture and use measured distances to preview corrections and update the mesh.</p>
       </fieldset>
       <button type="submit" data-process>Process captures</button>
     </form>
