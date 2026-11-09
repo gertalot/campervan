@@ -670,6 +670,29 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
   margin: 12px 0; border: 1px solid #577a65; border-radius: 6px; background: #263b30; }
 .scan-workflow-completion > span { display: grid; place-items: center; flex: none; width: 32px; height: 32px;
   border-radius: 50%; color: #15261c; background: #8aceaa; font-size: 20px; }
+.scan-capture-overview { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px;
+  padding: 12px 0 18px; border-bottom: 1px solid #454a54; }
+.scan-capture-overview > strong { font-size: 15px; color: #edf1f7; }
+.scan-capture-overview > details { margin-left: auto; }
+.scan-capture-overview > details[open] { flex-basis: 100%; }
+.scan-capture-overview summary { color: #a8c9ef; font-size: 12px; }
+.scan-detected-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
+.scan-detected-tags button { border-radius: 14px; padding: 3px 9px; font-size: 12px; }
+.scan-review-process { margin: 24px 0 0; padding: 0; list-style: none; }
+.scan-review-process > li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 14px;
+  position: relative; padding-bottom: 28px; }
+.scan-review-process > li:last-child { padding-bottom: 0; }
+.scan-review-process > li:not(:last-child)::before { content: ''; position: absolute; left: 14px; top: 34px;
+  bottom: 4px; width: 2px; background: #48515e; }
+.scan-review-marker { display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box;
+  border: 1px solid #718ba9; border-radius: 50%; color: #cfe4ff; background: #2d4056; font-size: 13px; font-weight: 600; }
+.scan-review-process h4 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;
+  margin: 3px 0 6px; font-size: 15px; color: #edf1f7; }
+.scan-review-optional { font-size: 11px; font-weight: 400; color: #a7b5c7; }
+.scan-review-process h4 + p { margin: 0 0 12px !important; color: #b7c1cf; line-height: 1.5; }
+.scan-review-controls > p { color: #b7c1cf; font-size: 12px; }
+.scan-review-report { font-size: 12px; }
+.scan-review-report details { color: #b7c1cf; }
 .scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
 .scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
 .scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }

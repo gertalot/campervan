@@ -82,9 +82,35 @@ export function createMeasurePanel(host: Host) {
   const completionMark = document.createElement('span'); completionMark.textContent = '✓'; completionMark.setAttribute('aria-hidden', 'true');
   const completionText = document.createElement('p'); completionText.textContent = 'Your corrected reconstruction has been saved. Inspect the result below, or choose Done to close.';
   completion.append(completionMark, completionText); completion.hidden = true;
+  const captureOverview = document.createElement('div'); captureOverview.className = 'scan-capture-overview';
+  let captureOverviewKey = '';
+  const reviewProcess = document.createElement('ol'); reviewProcess.className = 'scan-review-process';
+  reviewProcess.setAttribute('aria-label', 'Review this capture');
+  const reviewSteps = new Map<string, { controls: HTMLElement; report: HTMLElement }>();
+  // Same-page process list, with optional recovery actions after the assessment.
+  // https://designsystem.digital.gov/components/process-list/
+  const reviewDefinitions = [
+    { key: 'review-placement', title: 'Check tag placement', optional: false,
+      description: 'See whether the tags cover the space well and which placements would benefit from changes.' },
+    { key: 'revise', title: 'Record tag changes', optional: true,
+      description: 'If you move, add or remove tags, record that here. Keep measurements between tags that stayed fixed.' },
+    { key: 'captures', title: 'Capture again and import', optional: true,
+      description: 'Take another scan on your phone, then import its database files. If tags changed, choose the new arrangement and only scans taken with it.' },
+  ];
+  for (const [index, step] of reviewDefinitions.entries()) {
+    const item = document.createElement('li');
+    const marker = document.createElement('span'); marker.className = 'scan-review-marker'; marker.textContent = String(index + 1); marker.setAttribute('aria-hidden', 'true');
+    const content = document.createElement('div'); const title = document.createElement('h4'); title.textContent = step.title;
+    if (step.optional) { const optional = document.createElement('span'); optional.className = 'scan-review-optional'; optional.textContent = 'If needed'; title.append(optional); }
+    const explanation = document.createElement('p'); explanation.textContent = step.description;
+    const controls = document.createElement('div'); controls.className = 'scan-review-controls';
+    const report = document.createElement('div'); report.className = 'scan-review-report';
+    content.append(title, explanation, controls, report); item.append(marker, content); reviewProcess.append(item);
+    reviewSteps.set(step.key, { controls, report });
+  }
   const summary = document.createElement('div');
   const actions = document.createElement('div'); actions.className = 'scan-workflow-actions';
-  stageBody.append(stepCount, stageHeading, description, completion, form, targets, summary, actions);
+  stageBody.append(stepCount, stageHeading, description, captureOverview, reviewProcess, completion, form, targets, summary, actions);
   const actionNodes = new Map<string, { button: HTMLButtonElement; reason: HTMLParagraphElement }>();
   const correctionWarning = document.createElement('p');
   const measurementSection = document.createElement('section'); side.body.append(measurementSection);
@@ -101,10 +127,10 @@ export function createMeasurePanel(host: Host) {
   let artifactKey = ''; let artifactGeneration = 0; let plan: MeasurementPlan | null = null;
   let stageError = ''; let actionPending = false; let requestedStage: Stage | null = null;
   const revisionDialog = document.createElement('dialog'); revisionDialog.className = 'scan-import-dialog';
-  revisionDialog.innerHTML = `<form><h2>Revise tag layout</h2><p>Classify every existing tag. Only measurements between two unchanged tags are copied to the new layout; the capture is not rebound.</p>
-    <label>New layout name <input name="name" required maxlength="120"></label><div data-tags></div>
+  revisionDialog.innerHTML = `<form><h2>Record tag changes</h2><p>Create a new tag arrangement for future captures. Only measurements between tags that stayed in place are copied. Existing captures keep their original arrangement.</p>
+    <label>New tag arrangement name <input name="name" required maxlength="120"></label><div data-tags></div>
     <label>Additional tag IDs (comma-separated) <input name="added"></label>
-    <p data-summary></p><p role="alert"></p><button type="submit">Create revised layout</button><button type="button" data-cancel>Cancel</button></form>`;
+    <p data-summary></p><p role="alert"></p><button type="submit">Save tag arrangement</button><button type="button" data-cancel>Cancel</button></form>`;
   document.body.append(revisionDialog);
   revisionDialog.querySelector<HTMLButtonElement>('[data-cancel]')!.onclick = () => revisionDialog.close();
   async function reviseLayout() {
@@ -118,7 +144,9 @@ export function createMeasurePanel(host: Host) {
       const form = revisionDialog.querySelector<HTMLFormElement>('form')!; const tags = form.querySelector<HTMLElement>('[data-tags]')!; tags.replaceChildren();
       for (const id of [...ids].sort((a, b) => a - b)) { const label = document.createElement('label'); label.textContent = `Tag ${id} `;
         const select = document.createElement('select'); select.name = String(id); select.required = true;
-        select.add(new Option('Choose classification', '')); for (const value of ['unchanged', 'moved', 'removed']) select.add(new Option(value, value)); label.append(select); tags.append(label); }
+        select.add(new Option('Choose what changed', ''));
+        for (const [value, caption] of [['unchanged', 'Stayed in place'], ['moved', 'Moved'], ['removed', 'Removed']]) select.add(new Option(caption, value));
+        label.append(select); tags.append(label); }
       const added = form.elements.namedItem('added') as HTMLInputElement; const name = form.elements.namedItem('name') as HTMLInputElement;
       name.value = `${layout.name} revised`; added.value = ''; const summary = form.querySelector<HTMLElement>('[data-summary]')!;
       const alert = form.querySelector<HTMLElement>('[role=alert]')!; alert.textContent = '';
@@ -129,7 +157,7 @@ export function createMeasurePanel(host: Host) {
         groups.added = added.value.trim() ? added.value.split(',').map(value => Number(value.trim())) : [];
         if (groups.added.some(id => !Number.isInteger(id) || id <= 0)) { alert.textContent = 'Enter positive whole-number tag IDs separated by commas.'; return; }
         void reviseTagLayout(layout.id, { name: name.value.trim(), tag_family: '36h11', tag_size_mm: layout.tag_size_mm,
-          revision: session.document.revision, ...groups }).then(created => { revisionDialog.close(); status.textContent = `Created ${created.name}. Choose it when processing replacement captures.`; })
+          revision: session.document.revision, ...groups }).then(created => { revisionDialog.close(); status.textContent = `Saved tag arrangement ${created.name}. Select it when importing the next capture.`; })
           .catch(reason => { alert.textContent = String(reason); }); };
       revisionDialog.showModal();
     } catch (reason) { status.textContent = String(reason); }
@@ -232,11 +260,26 @@ export function createMeasurePanel(host: Host) {
     node.append(list);
   }
   function describePlacement(node: HTMLElement, payload: PlacementReview) {
-    const availability = document.createElement('p'); availability.textContent = 'Optional reviewed scene context: Unavailable unless supplied by the scene. Placement advice does not constitute semantic review.'; node.append(availability);
     for (const tag of payload.tags) { const row = document.createElement('p'); row.textContent = `Tag ${tag.tag_id}: ${tag.recommendation.replace('_', ' ')} · ${tag.reason}`;
       const highlight = document.createElement('button'); highlight.type = 'button'; highlight.textContent = 'Highlight';
       highlight.onclick = () => { host.highlightTag(tag.tag_id); host.highlight(tag.useful_connections.length ? { tag_a: tag.tag_id, tag_b: tag.useful_connections[0] } : null); }; row.append(' ', highlight); node.append(row); }
-    for (const note of payload.notes) { const p = document.createElement('p'); p.textContent = note; node.append(p); }
+    const details = document.createElement('details'); details.append(Object.assign(document.createElement('summary'), { textContent: 'How this advice was calculated' }));
+    const explanation = document.createElement('p'); explanation.textContent = 'Advice uses captured tag positions and camera observations. It does not identify the interior surfaces.'; details.append(explanation);
+    for (const note of payload.notes) { const p = document.createElement('p'); p.textContent = note; details.append(p); }
+    node.append(details);
+  }
+  function showDetectedTags() {
+    const capture = host.capture(); const ids = [...new Set((capture?.tags ?? []).map(tag => tag.id))].sort((a, b) => a - b);
+    const key = `${capture?.id ?? ''}:${ids.join(',')}`; if (key === captureOverviewKey) return;
+    captureOverviewKey = key; captureOverview.replaceChildren();
+    const count = document.createElement('strong'); count.textContent = ids.length ? `${ids.length} tags detected` : 'No tags detected';
+    const details = document.createElement('details'); const toggle = document.createElement('summary'); toggle.textContent = 'Show detected tags';
+    const chips = document.createElement('div'); chips.className = 'scan-detected-tags';
+    for (const id of ids) { const button = document.createElement('button'); button.type = 'button'; button.textContent = `Tag ${id}`;
+      button.setAttribute('aria-label', `Highlight tag ${id} in the scan`); button.onclick = () => host.highlightTag(id); chips.append(button); }
+    details.append(toggle, chips); details.hidden = !ids.length;
+    details.ontoggle = () => { toggle.textContent = details.open ? 'Hide detected tags' : 'Show detected tags'; };
+    captureOverview.append(count, details);
   }
   function describeCorrection(node: HTMLElement, payload: ScanCorrection) {
     const introduction = document.createElement('p'); introduction.textContent = `Registration: ${payload.registration.status} · ${payload.registration.reasons.join(' · ')} · ${payload.inactive_measurement_count} inactive measurements`; node.append(introduction);
@@ -257,14 +300,15 @@ export function createMeasurePanel(host: Host) {
     if (key === artifactKey) return;
     artifactKey = key; const token = ++artifactGeneration; const workflowGeneration = generation; summary.replaceChildren(); if (kind === 'measurement_plan') plan = null;
     const info = document.createElement('p');
-    info.textContent = state ? `${state.status}: ${state.reasons.join(' · ')}` : 'No report yet.'; summary.append(info);
-    if (kind === 'placement_review') { const capture = host.capture(); const source = document.createElement('p');
-      source.textContent = `Captured tags: ${(capture?.tags ?? []).map(tag => tag.id).join(', ') || 'none available'}. Optional reviewed context: ${view?.workflow.source_binding ? 'available' : 'unavailable'}.`;
-      summary.append(source); }
+    const reportStatus = (value?: { status: string; reasons: string[] }) => kind === 'placement_review'
+      ? !value ? 'Analyse tag placement to see recommendations.' : value.status === 'current' ? 'Placement analysis is up to date.'
+        : value.status === 'stale' ? 'Run the analysis again to update these recommendations.' : `Placement analysis is unavailable. ${value.reasons.join(' · ')}`
+      : value ? `${value.status}: ${value.reasons.join(' · ')}` : 'No report yet.';
+    info.textContent = reportStatus(state); info.hidden = kind === 'placement_review' && !state; summary.append(info);
     if (!view || !id) return;
     void readWorkflowArtifact(view.workflow.id, id).then(({ artifact, status: freshness }) => {
       if (token !== artifactGeneration) return;
-      info.textContent = `${freshness.status}${freshness.reasons.length ? `: ${freshness.reasons.join(' · ')}` : ''}`;
+      info.textContent = reportStatus(freshness); info.hidden = false;
       const artifactBody = document.createElement('div'); summary.append(artifactBody);
       if (artifact.kind === 'measurement_network') describeNetwork(artifactBody, artifact.payload);
       else if (artifact.kind === 'measurement_plan') { plan = artifact.payload; describePlan(artifactBody, artifact.payload, artifact.id, session,
@@ -299,6 +343,13 @@ export function createMeasurePanel(host: Host) {
     const checklist = session?.checklistDraft();
     checklistFailure.textContent = checklist?.error ?? ''; retryChecklist.hidden = !checklist?.blocked;
     const view = session?.workflow; const stage = view?.workflow.stage ?? 'review_capture';
+    const reviewingCapture = stage === 'review_capture';
+    captureOverview.hidden = !reviewingCapture; reviewProcess.hidden = !reviewingCapture; actions.hidden = reviewingCapture;
+    if (reviewingCapture) {
+      showDetectedTags();
+      const report = reviewSteps.get('review-placement')!.report;
+      if (summary.parentElement !== report) report.append(summary);
+    } else if (summary.parentElement !== stageBody) stageBody.insertBefore(summary, actions);
     const stageIndex = stages.findIndex(item => item.id === stage);
     const finalStep = stageIndex === stages.length - 1;
     const finished = view?.stages.update_reconstruction === 'Complete';
@@ -340,7 +391,7 @@ export function createMeasurePanel(host: Host) {
       target.value = draft?.target ?? String(view.workflow.target_mm); improvement.value = draft?.improvement ?? String(view.workflow.improvement_mm);
     }
     const definitions: Record<Stage, { action: WorkflowAction; label: string }[]> = {
-      review_capture: [{ action: 'review-placement', label: 'Review placement' }],
+      review_capture: [{ action: 'review-placement', label: 'Analyse tag placement' }],
       measure: [{ action: 'plan-measurements', label: 'Generate checklist' }],
       check_accuracy: [{ action: 'check-measurements', label: 'Check measurements' }, { action: 'suggest-more', label: 'Suggest more' }],
       update_reconstruction: [{ action: 'preview-correction', label: 'Preview corrections' }, { action: 'update-mesh', label: 'Update mesh' }],
@@ -353,8 +404,8 @@ export function createMeasurePanel(host: Host) {
         run: () => { void dispatch(definition.action); } };
     });
     if (stage === 'review_capture') desired.push(
-      { key: 'captures', label: 'Add replacement captures…', disabled: false, run: host.addCaptures },
-      { key: 'revise', label: 'Revise tag layout…', disabled: !view, run: () => { void reviseLayout(); } });
+      { key: 'revise', label: 'Record tag changes…', disabled: !view, run: () => { void reviseLayout(); } },
+      { key: 'captures', label: 'Import capture databases…', disabled: false, run: host.addCaptures });
     if (stage === 'update_reconstruction' && view) {
       desired.push({ key: 'original', label: 'Show original', disabled: false, run: () => { void host.view(`run:${view.workflow.source_run_id}`); } });
       if (view.workflow.corrected_run_id) desired.push({ key: 'corrected', label: 'Show corrected result', disabled: false,
@@ -367,7 +418,12 @@ export function createMeasurePanel(host: Host) {
         nodes = { button, reason }; actionNodes.set(item.key, nodes); }
       const { button, reason } = nodes; button.textContent = item.label; button.setAttribute('aria-disabled', String(item.disabled));
       button.title = item.reason ?? ''; button.onclick = () => { if (!item.disabled) item.run(); };
-      reason.textContent = item.reason ?? ''; reason.hidden = !item.reason; ordered.push(button, reason);
+      reason.textContent = item.reason ?? ''; reason.hidden = !item.reason;
+      const slot = reviewingCapture ? reviewSteps.get(item.key)?.controls : undefined;
+      if (slot) {
+        if (slot.children[0] !== button) slot.insertBefore(button, slot.children[0] ?? null);
+        if (slot.children[1] !== reason) slot.insertBefore(reason, slot.children[1] ?? null);
+      } else ordered.push(button, reason);
     }
     if (stage === 'update_reconstruction') { correctionWarning.textContent = 'Corrections can be best effort. Scan-dependent or ambiguous positions require review before updating the mesh.'; ordered.push(correctionWarning); }
     for (const child of [...actions.children]) if (!ordered.includes(child as HTMLElement)) child.remove();

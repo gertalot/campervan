@@ -122,7 +122,8 @@ export function setupScan(panel: HTMLElement) {
   let renderedScan: Scan | undefined;
   const measure = createScanMeasure({ panel, container, bar: panel.querySelector<HTMLElement>('[data-measure-bar]')!,
     capture: () => renderedScan, overlay: () => tagOverlay, loading: () => loading,
-    view: async key => { await refreshScans(); await changeResult(key); }, addCaptures: () => { void manager.open(); },
+    view: async key => { await refreshScans(); await changeResult(key); },
+    addCaptures: () => { void manager.addCaptures(renderedScan?.key ?? select.value); },
     layoutTagIds: layout => scans.filter(scan => scan.tag_layout_id === layout).flatMap(scan => (scan.tags ?? []).map(tag => tag.id)) });
   const camera = createViewerCamera(container, () => viewer, 'campervan.scan.camera.reference', () => loading);
   measure.attach();

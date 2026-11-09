@@ -160,7 +160,7 @@ best-effort correction when the required source inputs exist.
 
 | Stage | Action |
 | --- | --- |
-| Review capture | Inspect the scan and tags; use **Review placement** for coverage and geometry advice. |
+| Review capture | Inspect detected tags and **Analyse tag placement**; optionally record tag changes and import a new capture. |
 | Measure | Set precision, **Generate checklist**, and enter physical centre-to-centre distances. |
 | Check accuracy | **Check measurements** assesses physical ranges; **Suggest more** offers pairs and rechecks. |
 | Update reconstruction | Inspect **Preview corrections**, then explicitly **Update mesh** for a new result. |

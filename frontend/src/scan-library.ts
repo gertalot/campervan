@@ -409,13 +409,25 @@ export function createScanLibrary(host: Host) {
   async function refresh() {
     library = await readScanLibrary(); await importer.refresh(); if (dialog.open) render();
   }
+  async function open() {
+    alert.textContent = ''; list.replaceChildren(); editor.hidden = true; newGroup.disabled = false;
+    side.open(); search.focus();
+    pending(true);
+    try { await refresh(); pending(false); render(); if (dialog.open) search.focus(); }
+    catch (error) { pending(false); newGroup.disabled = true; message(error); if (dialog.open) close.focus(); }
+  }
   return {
-    async open() {
-      alert.textContent = ''; list.replaceChildren(); editor.hidden = true; newGroup.disabled = false;
-      side.open(); search.focus();
-      pending(true);
-      try { await refresh(); pending(false); render(); if (dialog.open) search.focus(); }
-      catch (error) { pending(false); newGroup.disabled = true; message(error); if (dialog.open) close.focus(); }
+    open,
+    async addCaptures(resultKey: string) {
+      try {
+        library = await readScanLibrary();
+        const entry = library.entries[resultKey];
+        const group = entry ? entry.group_id : host.results().find(result => result.key === resultKey)?.group_id;
+        if (!group || !library.groups[group]) {
+          await open(); message('Choose or create a capture group, then select Add capture databases.'); return;
+        }
+        await importer.open(group, library.groups[group]);
+      } catch (error) { await open(); message(error); }
     },
     refresh,
   };

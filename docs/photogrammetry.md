@@ -107,10 +107,16 @@ belong inside the Measure step. This follows the navigation/progress separation 
 
 ### 1. Review capture
 
-Inspect the surface, tags and coverage. **Review placement** evaluates the tag arrangement and explains weak geometry,
+Inspect the surface, tags and coverage. A compact count opens a list of clickable detected tags. **Analyse tag placement** evaluates the tag arrangement and explains weak geometry,
 coverage and expected measuring effort through the same planner used for checklists. Captured positions are planning
-estimates, not evidence of physical accuracy. Missing reviewed scene context is stated explicitly; this workflow does
-not recognise regions or install a recognition model.
+estimates, not evidence of physical accuracy. Analysis assumptions and missing surface evidence are available under
+**How this advice was calculated**; this workflow does not recognise regions or install a recognition model.
+
+The same page presents three connected vertical steps: **Check tag placement**, then **Record tag changes** and
+**Capture again and import**, both marked **If needed**. Record moved, added or removed tags before importing a capture
+made with the new arrangement. **Import capture databases…** opens the existing database import dialog for this result's
+capture group. Ungrouped results first ask you to choose or create a capture group. If the current capture is usable,
+choose **Continue** to Measure without recapturing.
 
 After **Process captures**, **Review capture** opens the completed result and this stage. Completion should preserve
 another selected result or an active edit; use the offered result action when ready. Processing progress and errors
@@ -165,7 +171,7 @@ The generic topology certificate is probabilistic and is reported separately fro
 Sparse, disconnected, coincident or poorly distributed inputs expose diagnostics rather than invented finite precision.
 A physical fit cannot establish LiDAR calibration or accuracy of unmeasured surfaces.
 
-**Suggest more** uses the same all-useful-pairs planner as **Generate checklist** and **Review placement**. It considers
+**Suggest more** uses the same all-useful-pairs planner as **Generate checklist** and **Analyse tag placement**. It considers
 all eligible unmeasured pairs, including possible connections across weak/disconnected parts, rather than a fixed
 shortlist. It explains geometry/rank improvements before finite precision where necessary, and separates rechecks of
 existing observations from new information. The independent **5 mm meaningful-improvement threshold** controls useful
@@ -213,7 +219,7 @@ Managed layout definitions and separate measurement documents live under `data/s
 The original trial uses `data/scan-measurements.json`. `--measurements FILE` on `scan process` or `scan align` records
 the intended physical layout without applying its distances. Reuse it only while the tags remain fixed.
 
-When tags move, choose **Revise tag layout…** and classify unchanged, moved, removed and added IDs. Only observations
+When tags move, choose **Record tag changes…** and classify unchanged, moved, removed and added IDs. Only observations
 and exclusions whose two endpoints are confirmed unchanged are copied, with their original precision/provenance;
 the old layout remains intact. Existing captures are not rebound: choose the new layout for replacement captures.
 New layouts do not inherit vehicle-axis roles. Reviewed context references need reconfirmation for the revised layout. A fresh layout instead starts with an empty physical measurement document.
