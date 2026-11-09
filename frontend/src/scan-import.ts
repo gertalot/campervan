@@ -187,6 +187,7 @@ export function createScanImport(host: Host) {
   }
   return {
     open, refresh,
+    captures: () => data.captures,
     activity(id: string, label: string) {
       const node = document.createElement('div'); node.className = 'scan-import-activity';
       activities.add({ group: id, name: label, node });

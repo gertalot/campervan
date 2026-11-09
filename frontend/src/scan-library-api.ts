@@ -24,3 +24,7 @@ export const readScanLibrary = () => request<ScanLibraryDocument>('scans/library
 export const saveScanLibrary = (candidate: ScanLibraryDocument) => request<ScanLibraryDocument>('scans/library', 'PUT', candidate);
 export const deleteScanResult = (key: string, revision: number) =>
   request<ScanLibraryDocument>('scans/library/result', 'DELETE', { key, revision });
+export const deleteCaptureGroup = (group_id: string, revision: number) =>
+  request<ScanLibraryDocument>('scans/library/group', 'DELETE', { group_id, revision });
+export const moveScanItem = (kind: 'result' | 'capture', key: string, group_id: string | null, revision: number) =>
+  request<ScanLibraryDocument>('scans/library/move', 'POST', { kind, key, group_id, revision });

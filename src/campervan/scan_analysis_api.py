@@ -80,6 +80,7 @@ def register_scan_analysis(
                 raise MeasurementConflict("The selected run/layout or measurements changed. Refresh before analysis.")
             if document.default_sigma_m is None:
                 raise ValueError("Set typical measuring precision before analysis.")
+            preference = processing.library.read().entries.get(f"run:{request.run_id}")
             value = str(uuid4())
             directory = location(value)
             directory.mkdir(parents=True)
@@ -99,9 +100,10 @@ def register_scan_analysis(
                 worker("analyse", directory),
                 {
                     "run_id": request.run_id,
+                    "source_run_id": request.run_id,
                     "layout_id": request.tag_layout_id,
                     "name": "Analyse uncertainty",
-                    "group_id": None,
+                    "group_id": preference.group_id if preference else None,
                 },
             )
             return {"id": value}
@@ -176,6 +178,7 @@ def register_scan_analysis(
                 worker("rebuild", directory, run_id),
                 {
                     "run_id": run_id,
+                    "source_run_id": request["run_id"],
                     "layout_id": request["tag_layout_id"],
                     "group_id": preference.group_id if preference else None,
                     "name": corrected_name,
@@ -208,6 +211,7 @@ def register_scan_analysis(
             directory, request, result = context(analysis_id)
             if not current(request, result):
                 raise MeasurementConflict("Analysis is stale. Analyse again before requesting suggestions.")
+            preference = processing.library.read().entries.get(f"run:{request['run_id']}")
             value = str(uuid4())
             processing.start_action(
                 value,
@@ -215,9 +219,10 @@ def register_scan_analysis(
                 worker("suggest", directory, str(edit.threshold_mm)),
                 {
                     "run_id": request["run_id"],
+                    "source_run_id": request["run_id"],
                     "layout_id": request["tag_layout_id"],
                     "name": "Suggest more measurements",
-                    "group_id": None,
+                    "group_id": preference.group_id if preference else None,
                 },
             )
             write_json(directory / "suggestion-job.json", {"id": value})

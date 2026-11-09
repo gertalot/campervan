@@ -54,6 +54,13 @@ class ScanProcessing:
             data.update(
                 state="interrupted", error="Processing was interrupted. The imported databases can be processed again."
             )
+        if data.get("source_run_id"):
+            source = self.library.read().entries.get(f"run:{data['source_run_id']}")
+            data["group_id"] = source.group_id if source else None
+        elif data.get("result_key"):
+            result = self.library.read().entries.get(data["result_key"])
+            if result is not None:
+                data["group_id"] = result.group_id
         if data.get("result_key") and not (SCAN_RUNS / data["run_id"] / "run.json").is_file():
             data.pop("result_key")
         log = self.jobs / f"{value}.log"
@@ -175,7 +182,13 @@ class ScanProcessing:
                         self._save(job)
                 code = await process.wait()
             if job.get("kind") != "analysis" and (output / "run.json").is_file():
-                self.library.associate(job["group_id"], job["layout_id"], (f"run:{job['run_id']}", job["name"]))
+                source = job.get("source_run_id")
+                job["group_id"] = self.library.associate(
+                    job["group_id"],
+                    job["layout_id"],
+                    (f"run:{job['run_id']}", job["name"]),
+                    source_result=f"run:{source}" if source else None,
+                )
                 job["result_key"] = f"run:{job['run_id']}"
             if code:
                 raise RuntimeError(f"Processing exited with code {code}. See the processing log below.")

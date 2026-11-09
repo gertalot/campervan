@@ -110,7 +110,6 @@ export function setupScan(panel: HTMLElement) {
   let loading = false;
   let initialized = false;
   let generation = 0;
-  let currentFrame = '';
   let tagOverlay: ReturnType<typeof createScanTags> | undefined;
   let renderedScan: Scan | undefined;
   const measure = createScanMeasure({ panel, container, bar: panel.querySelector<HTMLElement>('[data-measure-bar]')!,
@@ -144,7 +143,7 @@ export function setupScan(panel: HTMLElement) {
     layers.disabled = layers.options.length < 2;
   }
 
-  async function loadLayer(restoreCamera = false) {
+  async function loadLayer() {
     const scan = scans.find(item => item.key === select.value && !item.archived);
     if (!scan || !page) return;
     const layer = scan.layers?.find(item => item.id === layers.value)
@@ -152,11 +151,9 @@ export function setupScan(panel: HTMLElement) {
     sessionStorage.setItem('campervan.scan.result', scan.key);
     sessionStorage.setItem('campervan.scan.layer', layer.id);
     const token = ++generation;
-    const key = scan.reference_run_id ?? scan.id ?? scan.name;
     const aligned = scan.alignment?.status === 'aligned' && !!scan.alignment.matrix;
-    const frame = aligned ? `reference:${scan.alignment!.target_frame}` : `scan:${key}`;
-    let saved = currentFrame === frame ? camera.cameraState() : restoreCamera && aligned
-      ? JSON.parse(localStorage.getItem('campervan.scan.camera.reference') ?? 'null') as CameraState | null : null;
+    let saved = camera.cameraState()
+      ?? JSON.parse(localStorage.getItem('campervan.scan.camera.reference') ?? 'null') as CameraState | null;
     loading = true;
     measure.refresh();
     camera.cancelCameraAnimation();
@@ -168,7 +165,8 @@ export function setupScan(panel: HTMLElement) {
     try {
       root = await loadObject(url, layer.kind, layer.id === 'photo');
       if (token !== generation) { disposeObject(root); return; }
-      if (currentFrame === frame) saved = camera.cameraState() ?? saved;
+      // Navigation during an asset load takes precedence over the earlier snapshot.
+      saved = camera.cameraState() ?? saved;
       if (aligned) root.applyMatrix4(new Matrix4().fromArray(scan.alignment!.matrix!.flat()).transpose());
       const bounds = new Box3().setFromObject(root);
       if (bounds.isEmpty()) throw new Error('The scan contains no geometry.');
@@ -180,7 +178,7 @@ export function setupScan(panel: HTMLElement) {
             size: Number(size.value), color: '#ffffff', shape: { obj_vertices: [] } }],
         } },
         config: { theme: 'dark', tools: false, glass: false, control: 'orbit', up: 'Z',
-          ortho: saved?.ortho ?? false, zoom: 0.65, resetCamera: 'reset', axes: true, axes0: true,
+          ...(saved ?? { ortho: false, zoom: 0.65 }), resetCamera: 'keep', axes: true, axes0: true,
           grid: [false, false, false] },
       });
       // Let the existing renderer own the bulk layer without registering millions of CAD components.
@@ -219,7 +217,6 @@ export function setupScan(panel: HTMLElement) {
           : scan.alignment?.reason ?? 'unaligned scan coordinates')
         + (scan.pose_source === 'gtsam_measured_distances' ? ' · distance-adjusted'
           : scan.measured === false ? ' · unmeasured trial' : '');
-      currentFrame = frame;
       root = undefined; // The native renderer disposes the attached layer when it replaces the scene.
     } catch (error) {
       if (root) disposeObject(root);
@@ -306,7 +303,7 @@ export function setupScan(panel: HTMLElement) {
         send(command: string) { if (command === 'status') camera.saveCamera(); },
       });
       new ResizeObserver(() => { if (viewer?.ready && !panel.hidden) page!.resize(); }).observe(container);
-      await loadLayer(true);
+      await loadLayer();
     } catch (error) { status.textContent = error instanceof Error ? error.message : String(error); }
   }
 

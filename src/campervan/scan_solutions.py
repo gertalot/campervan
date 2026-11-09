@@ -33,3 +33,17 @@ class ScanSolutions:
             write_json(temporary, document)
             temporary.replace(self.path)
             return document
+
+    def remove_runs(self, run_ids: set[str]) -> None:
+        with self.lock:
+            document = self.read()
+            retained = {
+                key: entry for key, entry in document["entries"].items()
+                if entry.get("source_run_id") not in run_ids and entry.get("result_run_id") not in run_ids
+            }
+            if retained != document["entries"]:
+                document["entries"] = retained
+                document["revision"] += 1
+                temporary = self.path.with_suffix(".tmp")
+                write_json(temporary, document)
+                temporary.replace(self.path)

@@ -124,11 +124,25 @@ The **Result** selector shows active results. **Manage scans…** opens a panel 
 details, renaming results, organising capture groups and choosing the startup default. Renames are display labels;
 original filenames and run IDs stay unchanged. Reloading this tab preserves its selected result and layer. The startup
 default applies to a fresh tab, or when the remembered result is unavailable or archived.
+Scan changes, layer changes and page reloads preserve the camera position, pan, zoom and projection, including for
+unaligned scans. Use the viewer's **Fit** control when you want to frame a different result automatically.
 Each compact row describes its reconstruction method and frame count. **Show in viewer** displays it;
 **Inspect result** expands its processing details and management actions.
 The **pencil** beside each result edits its display name. The **trash can** opens a confirmation naming the result
 and its location. Confirming permanently deletes that generated result directory (or preview PLY) and removes its
 library entry. Original capture databases and physical measurements are retained.
+
+Capture groups use larger section headings above their databases and results. The group's **trash can** confirms
+deletion of the group, its imported database copies, generated results, linked corrections and processing history.
+Reusable tag layouts/physical measurements and source files outside the app's capture storage are retained.
+Expand **Imported databases** to see the raw captures. Drag a database or result onto another group. For keyboard
+use, focus a database row and press **Enter** to choose a group; results retain **Change capture group…** in their
+details. Moving a result moves its source/corrected-result family together;
+correction jobs use the source's current group when publishing their result.
+
+Group and result deletion reuse one named confirmation dialog, focus **Cancel** initially and restore focus on
+close, following the relevant [WAI modal-dialog guidance](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/).
+The keyboard actions provide an alternative to dragging; this is not a claim of a complete accessibility audit.
 
 **Archive** hides a result from the selector without deleting any files. Use the manager's Archived filter to restore
 it. If you archive the current result, the viewer selects an active fallback, or clears when none remains. New results

@@ -60,17 +60,20 @@ def register_scan_processing(app: FastAPI, processing: ScanProcessing, layouts: 
                 if previous["group_id"] == group_id and previous.get("sha256") == fingerprint:
                     shutil.rmtree(directory)
                     return previous
-            temporary.rename(directory / filename)
-            capture = {
-                "id": value,
-                "group_id": group_id,
-                "filename": filename,
-                "bytes": (directory / filename).stat().st_size,
-                "frames": len(info["node_ids"]),
-                "database_version": info["version"],
-                "sha256": fingerprint,
-            }
-            write_json(directory / "capture.json", capture)
+            with processing.library.lock:
+                if group_id not in processing.library.read().groups:
+                    raise ValueError("The capture group was deleted during upload.")
+                temporary.rename(directory / filename)
+                capture = {
+                    "id": value,
+                    "group_id": group_id,
+                    "filename": filename,
+                    "bytes": (directory / filename).stat().st_size,
+                    "frames": len(info["node_ids"]),
+                    "database_version": info["version"],
+                    "sha256": fingerprint,
+                }
+                write_json(directory / "capture.json", capture)
             return capture
         except BaseException as error:
             shutil.rmtree(directory)

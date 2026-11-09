@@ -2,7 +2,7 @@
 import { ApiError } from './api';
 import { createScanImport } from './scan-import';
 import { createSidePanel } from './side-panel';
-import { readScanLibrary, saveScanLibrary, deleteScanResult,
+import { readScanLibrary, saveScanLibrary, deleteScanResult, deleteCaptureGroup, moveScanItem,
   type ScanLibraryDocument, type ScanResult } from './scan-library-api';
 
 interface Host {
@@ -36,7 +36,7 @@ export function createScanLibrary(host: Host) {
     onClose: () => { editor.hidden = true; } });
   const dialog = side.element; dialog.classList.add('scan-library-dialog');
   const close = side.closeButton;
-  const description = element('p', 'Each row is a processed result, not a separate capture. Several results can use the same databases.');
+  const description = element('p', 'Groups contain imported databases and processed results. Drag an item onto another group to move it. Corrections stay with their source result.');
   const filters = element('div'); filters.className = 'scan-library-filters';
   const searchLabel = element('label', 'Search '); const search = element('input'); search.type = 'search';
   search.placeholder = 'Name, group or identifier'; searchLabel.append(search);
@@ -125,59 +125,98 @@ export function createScanLibrary(host: Host) {
       void commit(candidate => { candidate.groups[key] = value; });
     });
   }
-  function move(row: ScanResult) {
+  async function transfer(kind: 'result' | 'capture', key: string, group: string | null) {
+    if (!library || busy) return;
+    pending(true); alert.textContent = '';
+    try {
+      library = await moveScanItem(kind, key, group, library.revision);
+      await host.changed(); await importer.refresh();
+      editor.hidden = true; editor.replaceChildren();
+    } catch (error) {
+      message(error);
+      try { library = await readScanLibrary(); await host.changed(); await importer.refresh(); }
+      catch (reloadError) { message(reloadError); }
+    } finally { pending(false); render(); if (dialog.open) filter.focus(); }
+  }
+  function move(kind: 'result' | 'capture', key: string, name: string, current: string | null) {
     editor.replaceChildren(); editor.hidden = false;
-    const form = element('form'); const label = element('label', `Move ${row.display_name} to `);
-    const group = element('select'); group.add(new Option('Ungrouped', ''));
+    const form = element('form'); const label = element('label', `Move ${name} to `);
+    const group = element('select');
+    if (kind === 'result') group.add(new Option('Ungrouped', ''));
     for (const [id, name] of Object.entries(library?.groups ?? {}).sort((a, b) => a[1].localeCompare(b[1]))) {
       group.add(new Option(name, id));
     }
-    group.value = row.group_id ?? ''; label.append(group);
+    group.value = current ?? ''; label.append(group);
     const save = element('button', 'Save'); save.type = 'submit';
     form.append(label, save, button('Cancel', cancelEditing));
-    form.onsubmit = event => { event.preventDefault(); void commit(candidate => { preference(candidate, row.key).group_id = group.value || null; }); };
+    form.onsubmit = event => { event.preventDefault(); void transfer(kind, key, group.value || null); };
     editor.append(form); group.focus();
   }
   function confirmRemoval(row: ScanResult, available: boolean) {
+    confirmDeletion({
+      title: `Delete “${row.display_name}”?`,
+      description: available
+        ? row.id ? 'Permanently delete this generated result, including its meshes, textures, exported frames and working copies.'
+          : 'Permanently delete this point-cloud preview file.'
+        : 'Remove this unavailable result and its saved library preferences. Any remaining published result files will also be deleted.',
+      location: row.id ? `.local/scans/${row.id}/` : row.name,
+      retained: 'Original capture databases and saved tag measurements are kept. This cannot be undone.',
+      action: 'Delete result', run: revision => deleteScanResult(row.key, revision),
+      restore: () => [...list.querySelectorAll<HTMLElement>('article')].find(node => node.dataset.key === row.key)
+        ?.querySelector<HTMLButtonElement>('.scan-result-trash') ?? filter,
+    });
+  }
+  function confirmGroupRemoval(id: string, name: string) {
+    confirmDeletion({
+      title: `Delete capture group “${name}”?`,
+      description: 'Permanently delete this group, its imported database copies, generated results and linked corrections, including meshes, textures and processing history.',
+      retained: 'Reusable tag layouts and physical measurements are kept. Original files outside the app’s capture storage are kept. This cannot be undone.',
+      action: 'Delete capture group', run: revision => deleteCaptureGroup(id, revision),
+      restore: () => [...list.querySelectorAll<HTMLElement>('section')].find(node => node.dataset.groupId === id)
+        ?.querySelector<HTMLButtonElement>('.scan-result-trash') ?? newGroup,
+    });
+  }
+  function confirmDeletion(options: {
+    title: string; description: string; location?: string; retained: string; action: string;
+    run(revision: number): Promise<ScanLibraryDocument>; restore(): HTMLElement;
+  }) {
     if (busy || !library) return;
     confirmation.replaceChildren();
-    const heading = element('h2', `Delete “${row.display_name}”?`); heading.id = 'scan-delete-title';
-    const explanation = element('p', available
-      ? row.id ? 'Permanently delete this generated result, including its meshes, textures, exported frames and working copies.'
-        : 'Permanently delete this point-cloud preview file.'
-      : 'Remove this unavailable result and its saved library preferences. Any remaining published result files will also be deleted.');
+    const heading = element('h2', options.title); heading.id = 'scan-delete-title';
+    const explanation = element('p', options.description);
     explanation.id = 'scan-delete-description';
-    const location = element('code', row.id ? `.local/scans/${row.id}/` : row.name);
-    const retained = element('p', 'Original capture databases and saved tag measurements are kept. This cannot be undone.');
+    const location = element('code', options.location); location.hidden = !options.location;
+    const retained = element('p', options.retained);
     const error = element('p'); error.setAttribute('role', 'alert');
     const controls = element('div'); controls.className = 'scan-delete-actions';
     const cancel = button('Cancel', () => confirmation.close());
-    const remove = button('Delete result', () => { void performRemoval(); }); remove.className = 'scan-delete-confirm';
+    const remove = button(options.action, () => { void performRemoval(); }); remove.className = 'scan-delete-confirm';
     controls.append(cancel, remove); confirmation.append(heading, explanation, location, retained, error, controls);
+    confirmation.oncancel = event => { if (busy) event.preventDefault(); };
     confirmation.addEventListener('close', () => {
       if (!dialog.open) return;
-      const current = [...list.querySelectorAll<HTMLElement>('article')].find(node => node.dataset.key === row.key);
-      (current?.querySelector<HTMLButtonElement>('.scan-result-trash') ?? filter).focus();
+      options.restore().focus();
     }, { once: true });
     confirmation.showModal(); cancel.focus();
     async function performRemoval() {
       if (busy || !library) return;
       const revision = library.revision;
-      pending(true); remove.disabled = true; error.textContent = ''; remove.textContent = 'Deleting…';
+      pending(true); remove.disabled = true; cancel.disabled = true; error.textContent = ''; remove.textContent = 'Deleting…';
       try {
-        library = await deleteScanResult(row.key, revision);
-        await host.changed(); confirmation.close(); editor.hidden = true; editor.replaceChildren();
+        library = await options.run(revision);
+        await host.changed(); await importer.refresh(); confirmation.close(); editor.hidden = true; editor.replaceChildren();
         pending(false); render(); if (dialog.open) filter.focus();
       } catch (reason) {
         // A filesystem operation can fail after removing some files; always reflect current discovery.
-        try { library = await readScanLibrary(); await host.changed(); }
+        try { library = await readScanLibrary(); await host.changed(); await importer.refresh(); }
         catch (reloadError) { message(reloadError); }
         pending(false); render();
+        cancel.disabled = false;
         error.textContent = reason instanceof Error ? reason.message : String(reason);
         if (reason instanceof ApiError && reason.status === 409) {
           error.textContent += ' Cancel and review the refreshed results before trying again.';
         } else remove.disabled = false;
-        remove.textContent = 'Delete result';
+        remove.textContent = options.action;
       }
     }
   }
@@ -219,6 +258,44 @@ export function createScanLibrary(host: Host) {
     if (row.frame_count != null) parts.push(`${row.frame_count.toLocaleString()} frames`);
     return parts.join(' · ');
   }
+  const dragType = 'application/x-campervan-scan-item';
+  function draggable(node: HTMLElement, kind: 'result' | 'capture', key: string) {
+    node.draggable = true;
+    node.ondragstart = event => {
+      if (busy || !event.dataTransfer) { event.preventDefault(); return; }
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData(dragType, JSON.stringify({ kind, key }));
+    };
+  }
+  function dropTarget(section: HTMLElement, id: string, name: string) {
+    section.ondragover = event => {
+      if (busy || !event.dataTransfer) return;
+      const internal = event.dataTransfer.types.includes(dragType);
+      if (internal || (id && event.dataTransfer.types.includes('Files'))) {
+        event.preventDefault(); event.dataTransfer.dropEffect = internal ? 'move' : 'copy';
+        section.classList.add('scan-group-drop-target');
+      }
+    };
+    section.ondragleave = event => {
+      if (!(event.relatedTarget instanceof Node) || !section.contains(event.relatedTarget)) {
+        section.classList.remove('scan-group-drop-target');
+      }
+    };
+    section.ondrop = event => {
+      section.classList.remove('scan-group-drop-target');
+      if (busy) { event.preventDefault(); return; }
+      const payload = event.dataTransfer?.getData(dragType);
+      if (!payload) { if (id) importer.drop(event, id, name); return; }
+      event.preventDefault();
+      try {
+        const item = JSON.parse(payload);
+        if ((item.kind !== 'capture' && item.kind !== 'result') || typeof item.key !== 'string') {
+          throw new Error('This item cannot be moved to a capture group.');
+        }
+        void transfer(item.kind, item.key, id || null);
+      } catch (error) { message(error); }
+    };
+  }
   function render() {
     if (!library) return;
     list.replaceChildren();
@@ -235,31 +312,53 @@ export function createScanLibrary(host: Host) {
     const needle = search.value.trim().toLocaleLowerCase();
     const filtered = rows.filter(row => (filter.value === 'All' || row.archived === (filter.value === 'Archived'))
       && `${row.display_name} ${row.name} ${row.id ?? ''} ${row.group_name ?? 'Ungrouped'}`.toLocaleLowerCase().includes(needle));
-    // Include empty groups so they can be renamed before any results are moved into them.
+    // Keep empty groups manageable before databases/results are added.
     const groups = new Map<string, string>(Object.entries(library.groups)); groups.set('', 'Ungrouped');
     for (const [id, name] of [...groups].sort((a, b) => a[1].localeCompare(b[1]))) {
       const groupRows = filtered.filter(row => (row.group_id ?? '') === id).sort((a, b) => a.display_name.localeCompare(b.display_name) || a.key.localeCompare(b.key));
-      if (!groupRows.length && (needle || filter.value === 'Archived' || !id)) continue;
-      const section = element('section'); const heading = element('div'); heading.className = 'scan-library-group';
-      heading.append(element('h3', name));
+      const captures = importer.captures().filter(capture => capture.group_id === id
+        && (!needle || `${name} ${capture.filename}`.toLocaleLowerCase().includes(needle)));
+      if (!groupRows.length && !captures.length && (needle || filter.value === 'Archived' || !id)) continue;
+      const section = element('section'); section.className = 'scan-library-section'; section.dataset.groupId = id;
+      const heading = element('div'); heading.className = 'scan-library-group';
+      const title = element('div'); title.className = 'scan-group-title';
+      title.append(element('span', id ? 'Capture group' : 'Ungrouped results'), element('h3', name)); heading.append(title);
       if (id) {
         const groupActions = element('div'); groupActions.className = 'scan-result-tools';
         const add = button('Add capture databases…', () => { void importer.open(id, name); });
         add.dataset.importGroup = id;
         add.title = `Add .db files to ${name}, or drop files onto this capture group`;
         groupActions.append(add,
-          iconButton('pencil', `Rename capture group: ${name}`, () => editGroup(id)));
+          iconButton('pencil', `Rename capture group: ${name}`, () => editGroup(id)),
+          iconButton('trash', `Delete capture group: ${name}`, () => confirmGroupRemoval(id, name)));
         heading.append(groupActions);
-        section.ondragover = event => {
-          if (event.dataTransfer?.types.includes('Files')) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; }
-        };
-        section.ondrop = event => importer.drop(event, id, name);
       }
+      dropTarget(section, id, name);
       section.append(heading);
       if (id) section.append(importer.activity(id, name));
+      if (captures.length) {
+        const databases = element('details'); databases.className = 'scan-group-captures';
+        databases.append(element('summary', `Imported databases (${captures.length})`));
+        for (const capture of captures) {
+          const row = element('div'); row.className = 'scan-capture-row'; draggable(row, 'capture', capture.id);
+          const label = element('span', `${capture.filename} · ${capture.frames} frames`);
+          row.tabIndex = 0;
+          row.title = 'Drag to another capture group. Press Enter to choose a group with the keyboard.';
+          row.setAttribute('aria-label', `${capture.filename}, ${capture.frames} frames. Drag to another group, or press Enter to choose a group.`);
+          row.setAttribute('aria-keyshortcuts', 'Enter');
+          row.onkeydown = event => {
+            if (event.key === 'Enter' && !busy) {
+              event.preventDefault(); move('capture', capture.id, capture.filename, capture.group_id);
+            }
+          };
+          row.append(label); databases.append(row);
+        }
+        section.append(databases);
+      }
       for (const row of groupRows) {
         const available = discovered.has(row.key);
         const article = element('article'); article.dataset.key = row.key;
+        draggable(article, 'result', row.key);
         const identity = element('div'); identity.className = 'scan-result-identity';
         const caption = element('h4', row.display_name);
         const state = [row.key === host.currentKey() ? 'In viewer' : '', row.is_default ? 'Opens at startup' : '',
@@ -280,7 +379,9 @@ export function createScanLibrary(host: Host) {
         const archive = button(row.archived ? 'Restore to selector' : 'Archive result', () => { focusAfterRender = row.key;
           void commit(candidate => { preference(candidate, row.key).archived = !row.archived;
             if (!row.archived && candidate.default_key === row.key) candidate.default_key = null; }); });
-        actions.append(button('Change capture group…', () => { focusAfterRender = row.key; move(row); }));
+        actions.append(button('Change capture group…', () => {
+          focusAfterRender = row.key; move('result', row.key, row.display_name, row.group_id);
+        }));
         if (!row.is_default) actions.append(setDefault);
         actions.append(archive);
         const inspect = details(row, available);
@@ -292,7 +393,7 @@ export function createScanLibrary(host: Host) {
       }
       list.append(section);
     }
-    if (!filtered.length) list.prepend(element('p', 'No results match. Change the filter or restore an archived result.'));
+    if (!filtered.length) list.prepend(element('p', 'No processed results match. Imported databases are listed within their capture groups.'));
     if (focusAfterRender && dialog.open) {
       const row = [...list.querySelectorAll<HTMLElement>('article')].find(node => node.dataset.key === focusAfterRender);
       (row?.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? filter).focus(); focusAfterRender = undefined;

@@ -119,11 +119,12 @@ def build_app(
     scan_library = ScanLibraryStore(project_path.with_name("scan-library.json"))
     scan_layouts = ScanLayouts(project_path.with_name("scan-measurements.json"))
     scan_processing = ScanProcessing(scan_library, scan_layouts)
+    scan_solutions = ScanSolutions(project_path.with_name("scan-solutions.json"))
     register_scan_measurements(app, scan_layouts)
-    read_scan_library = register_scan_library(app, scan_library)
+    read_scan_library = register_scan_library(app, scan_library, scan_processing, scan_solutions)
     register_scan_processing(app, scan_processing, scan_layouts)
     register_scan_analysis(
-        app, scan_processing, scan_layouts, ScanSolutions(project_path.with_name("scan-solutions.json"))
+        app, scan_processing, scan_layouts, scan_solutions
     )
     register_planning(app, project_path)
     package = find_spec("ocp_viewer")

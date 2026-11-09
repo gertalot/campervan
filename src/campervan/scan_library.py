@@ -84,18 +84,37 @@ class ScanLibraryStore:
         temporary.replace(self.path)
         return document
 
-    def associate(self, group_id: str | None, layout_id: str, result: tuple[str, str] | None = None) -> None:
+    def edit(self, expected_revision: int, change: Callable[[ScanLibraryDocument], None]) -> ScanLibraryDocument:
+        with self.lock:
+            document = self.read()
+            if document.revision != expected_revision:
+                raise ScanLibraryConflict("Scan library changed. Review the refreshed library before continuing.")
+            change(document)
+            document = ScanLibraryDocument.model_validate(document.model_dump())
+            return self._write(document, expected_revision + 1)
+
+    def associate(
+        self,
+        group_id: str | None,
+        layout_id: str,
+        result: tuple[str, str] | None = None,
+        *, source_result: str | None = None,
+    ) -> str | None:
         """Merge a processing update with current preferences, preserving intervening user edits."""
         with self.lock:
             document = self.read()
+            if source_result is not None:
+                source = document.entries.get(source_result)
+                group_id = source.group_id if source else None
             if group_id is not None and group_id not in document.groups:
                 raise ValueError("Unknown capture group.")
-            if group_id is not None:
+            if group_id is not None and source_result is None:
                 document.group_layouts[group_id] = layout_id
             if result:
                 key, name = result
                 document.entries[key] = ScanEntryPreferences(display_name=name, group_id=group_id)
             self._write(document, document.revision + 1)
+            return group_id
 
     def restore_result(self, key: str) -> None:
         with self.lock:
