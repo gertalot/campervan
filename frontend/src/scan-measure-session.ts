@@ -18,6 +18,8 @@ export interface MeasurementSettings { default_sigma_m?: number | null; pair_sig
 export function createMeasurementSession(initial: MeasurementDocument, source: () => string | undefined) {
   let document = initial;
   let workflow: WorkflowView | null = null;
+  const workflowViews = new Map<string, WorkflowView>();
+  const checklists = new Map<string, { batches: ChecklistBatch[]; error: string; blocked: boolean; version: number; attempt: number }>();
   const drafts = new Map<string, Draft>();
   const precisionDrafts = new Map<string, string>();
   let settingsError = '';
@@ -58,6 +60,7 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
     let distance: number;
     try { distance = parseDistance(text); } catch (reason) { value.state = 'Not saved'; value.error = (reason as Error).message; notify(); return Promise.resolve(false); }
     const sourceId = source();
+    const workflowId = workflow && workflow.workflow.source_run_id === sourceId ? workflow.workflow.id : undefined;
     if (!sourceId) { value.state = 'Not saved'; value.error = 'Select a capture before saving.'; notify(); return Promise.resolve(false); }
     value.state = 'Saving'; value.error = ''; notify();
     const conflictVersion = conflicts.get(key) ?? 0;
@@ -67,8 +70,12 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
         if (pending.get(key)?.promise === promise) pending.delete(key); notify(); return false;
       }
       try {
+        if (!record(pair) && !workflowId) throw new Error('Wait for this capture’s workflow to load before saving.');
+        if (!record(pair) && precisionDrafts.has(key)) throw new Error('Save the pair precision before saving this distance.');
+        const candidate = workflowId ? workflowViews.get(workflowId)?.workflow.candidate_sigmas[key] : undefined;
         document = await saveMeasurement(document, { tag_a: Math.min(pair.tag_a, pair.tag_b), tag_b: Math.max(pair.tag_a, pair.tag_b),
-          distance_m: distance, entered_text: text.trim(), source_run_id: sourceId });
+          distance_m: distance, entered_text: text.trim(), source_run_id: sourceId,
+          ...(!record(pair) && candidate !== undefined ? { sigma_m: candidate } : {}) });
         value.saved = text.trim(); if (value.text === text) value.text = value.saved;
         value.state = value.text === value.saved ? 'Saved' : 'Not saved'; value.error = ''; return true;
       } catch (reason) {
@@ -87,35 +94,66 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
       catch (reason) { if (reason instanceof ApiError && reason.status === 409) await refresh(); throw reason; }
     });
   }
+  function saveChecklist(id: string, draft: { batches: ChecklistBatch[]; error: string; blocked: boolean; version: number; attempt: number }) {
+    const submitted = draft.batches; const version = draft.version; const attempt = draft.attempt;
+    return enqueue(async () => {
+      if (draft.blocked || draft.attempt !== attempt) throw new Error(draft.error || 'Retry saving checklist progress.');
+      const current = workflowViews.get(id);
+      if (!current) throw new Error('Workflow is unavailable.');
+      try {
+        const saved = await editWorkflow(id, { revision: current.revision, checklist_batches: submitted });
+        workflowViews.set(id, saved); if (workflow?.workflow.id === id) workflow = saved;
+        if (draft.version === version) checklists.delete(id);
+        notify(); return saved;
+      } catch (reason) {
+        draft.blocked = true; draft.attempt++;
+        draft.error = `${reason instanceof Error ? reason.message : String(reason)} Retry saving checklist progress.`;
+        if (reason instanceof ApiError && reason.status === 409) {
+          try { const refreshed = await readWorkflow(id); workflowViews.set(id, refreshed);
+            if (workflow?.workflow.id === id) workflow = refreshed; } catch { /* retain the original conflict */ }
+        }
+        notify(); throw reason;
+      }
+    });
+  }
   return {
     get document() { return document; }, get workflow() { return workflow; }, draft, setDraft, commit,
     precisionDraft(key: string) { return precisionDrafts.get(key); },
     setPrecisionDraft(key: string, text: string) { precisionDrafts.set(key, text); notify(); },
-    bindWorkflow(view: WorkflowView | null) { workflow = view; notify(); },
+    bindWorkflow(view: WorkflowView | null) { workflow = view; if (view) workflowViews.set(view.workflow.id, view); notify(); },
+    checklistDraft() { return workflow ? checklists.get(workflow.workflow.id) : undefined; },
     setChecklist(batches: ChecklistBatch[]) {
       const bound = workflow; if (!bound) return Promise.reject(new Error('Workflow is unavailable.'));
-      return enqueue(async () => {
-        try { const saved = await editWorkflow(bound.workflow.id, { revision: workflow?.workflow.id === bound.workflow.id ? workflow.revision : bound.revision, checklist_batches: batches });
-          if (workflow?.workflow.id === bound.workflow.id) { workflow = saved; notify(); } return saved;
-        } catch (reason) { if (reason instanceof ApiError && reason.status === 409) { const refreshed = await readWorkflow(bound.workflow.id);
-          if (workflow?.workflow.id === bound.workflow.id) { workflow = refreshed; notify(); } } throw reason; }
-      });
+      const id = bound.workflow.id;
+      let draft = checklists.get(id);
+      if (!draft) { draft = { batches, error: '', blocked: false, version: 0, attempt: 0 }; checklists.set(id, draft); }
+      else { draft.batches = batches; draft.version++; }
+      notify();
+      if (draft.blocked) return Promise.reject(new Error(draft.error));
+      return saveChecklist(id, draft);
+    },
+    retryChecklist() {
+      const id = workflow?.workflow.id; const draft = id ? checklists.get(id) : undefined;
+      if (!id || !draft) return Promise.reject(new Error('No checklist changes to retry.'));
+      draft.blocked = false; notify(); return saveChecklist(id, draft);
     },
     setCandidateSigma(pair: Pair, sigma: number | null) {
       const bound = workflow; if (!bound) return Promise.reject(new Error('Workflow is unavailable.'));
       const key = pairKey(pair); const submitted = precisionDrafts.get(key);
       return enqueue(async () => {
         try {
-          const current = workflow?.workflow.id === bound.workflow.id ? workflow : bound;
+          const current = workflowViews.get(bound.workflow.id) ?? bound;
           const candidate_sigmas = { ...current.workflow.candidate_sigmas };
           if (sigma === null) delete candidate_sigmas[key]; else candidate_sigmas[key] = sigma;
           const saved = await editWorkflow(bound.workflow.id, { revision: current.revision, candidate_sigmas });
+          workflowViews.set(bound.workflow.id, saved);
           if (workflow?.workflow.id === bound.workflow.id) workflow = saved;
           if (precisionDrafts.get(key) === submitted) precisionDrafts.delete(key);
           settingsError = ''; notify(); return saved;
         } catch (reason) {
           if (reason instanceof ApiError && reason.status === 409) {
             const refreshed = await readWorkflow(bound.workflow.id);
+            workflowViews.set(bound.workflow.id, refreshed);
             if (workflow?.workflow.id === bound.workflow.id) workflow = refreshed;
           }
           settingsError = reason instanceof Error ? reason.message : String(reason); notify(); throw reason;
@@ -143,10 +181,12 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
       } catch (reason) { settingsError = reason instanceof Error ? reason.message : String(reason); notify(); throw reason; }
     },
     async flush() { await queue; const unsaved = [...drafts.entries()].filter(([, value]) => value.state !== 'Saved' || value.text !== value.saved);
-      return { ok: !unsaved.length && !precisionDrafts.size && !settingsError, settingsError, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
+      const checklist = workflow ? checklists.get(workflow.workflow.id) : undefined;
+      const checklistFailures = [...checklists].map(([workflowId, value]) => ({ workflowId, error: value.error }));
+      return { ok: !unsaved.length && !precisionDrafts.size && !settingsError && !checklists.size, settingsError, checklistError: checklist?.error ?? '', checklistFailures, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
     refresh() { return enqueue(refresh); },
     subscribe(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener); },
-    hasUnsaved() { return !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
+    hasUnsaved() { return !!checklists.size || !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
   };
 }
 export type MeasurementSession = ReturnType<typeof createMeasurementSession>;

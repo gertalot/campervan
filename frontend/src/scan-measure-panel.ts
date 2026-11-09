@@ -18,6 +18,10 @@ export function createMeasurePanel(host: Host) {
   const precision = document.createElement('input'); precision.type = 'number'; precision.min = '0.01'; precision.step = 'any'; label.append(precision);
   const save = document.createElement('button'); save.textContent = 'Save precision'; save.type = 'submit'; form.append(label, save); side.actions.append(form);
   const status = document.createElement('p'); status.setAttribute('role', 'status'); side.status.append(status);
+  const checklistFailure = document.createElement('p'); checklistFailure.setAttribute('role', 'alert');
+  const retryChecklist = document.createElement('button'); retryChecklist.type = 'button'; retryChecklist.textContent = 'Retry saving checklist progress';
+  retryChecklist.onclick = () => { void host.session()?.retryChecklist().catch(() => undefined); };
+  side.status.append(checklistFailure, retryChecklist);
   const heading = document.createElement('h3'); heading.textContent = 'Saved measurements'; side.body.append(heading);
   const list = document.createElement('div'); side.body.append(list);
   const empty = document.createElement('p'); empty.textContent = 'No measured distances saved for this layout.'; side.body.append(empty);
@@ -41,8 +45,10 @@ export function createMeasurePanel(host: Host) {
     if (changed) { identity = nextIdentity; generation++; session?.bindWorkflow(null);
       if (session && capture?.id && capture.tag_layout_id) void bindWorkflow(session, capture.id, capture.tag_layout_id, generation); }
     status.textContent = host.error();
+    const checklist = session?.checklistDraft();
+    checklistFailure.textContent = checklist?.error ?? ''; retryChecklist.hidden = !checklist?.blocked;
     if (!session) { empty.hidden = false; return; }
-    const batches = session.workflow?.workflow.checklist_batches ?? [];
+    const batches = session.checklistDraft()?.batches ?? session.workflow?.workflow.checklist_batches ?? [];
     const pairs: Pair[] = []; const seen = new Set<string>();
     for (const pair of [...batches.flatMap(batch => batch.ordered_pairs), ...session.document.distances]) {
       const key = pairKey(pair); if (!seen.has(key)) { seen.add(key); pairs.push(pair); }
@@ -60,7 +66,7 @@ export function createMeasurePanel(host: Host) {
             next?.input.focus();
           } });
         row.input.addEventListener('focus', () => {
-          const batches = session.workflow?.workflow.checklist_batches ?? [];
+          const batches = session.checklistDraft()?.batches ?? session.workflow?.workflow.checklist_batches ?? [];
           const updated = batches.map(batch => batch.ordered_pairs.some(item => pairKey(item) === key)
             && (!batch.current_pair || pairKey(batch.current_pair) !== key) ? { ...batch, current_pair: pair } : batch);
           if (updated.some((batch, index) => batch !== batches[index])) {
@@ -81,5 +87,5 @@ export function createMeasurePanel(host: Host) {
     if (!session || !Number.isFinite(value) || value <= 0) { status.textContent = 'Enter a positive precision.'; precision.focus(); return; }
     void session.configure({ default_sigma_m: value }).catch(reason => { status.textContent = String(reason); }); };
   return { open() { side.open(); render(); }, refresh: render, render, hide: () => side.close(),
-    async flush() { const result = await host.session()?.flush(); if (result && !result.ok) { if (result.pairs.length) rows.get(pairKey(result.pairs[0]))?.input.focus(); else if (result.precision[0] && result.precision[0] !== 'default') rows.get(result.precision[0])?.sigma.focus(); else precision.focus(); } return result; } };
+    async flush() { const result = await host.session()?.flush(); if (result && !result.ok) { if (result.checklistError) retryChecklist.focus(); else if (result.pairs.length) rows.get(pairKey(result.pairs[0]))?.input.focus(); else if (result.precision[0] && result.precision[0] !== 'default') rows.get(result.precision[0])?.sigma.focus(); else precision.focus(); } return result; } };
 }

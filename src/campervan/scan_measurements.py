@@ -94,7 +94,8 @@ class MeasurementStore:
             document = self._current(expected_revision, tag_layout_id)
             pair = (record.tag_a, record.tag_b)
             previous = next((r for r in document.distances if (r.tag_a, r.tag_b) == pair), None)
-            record = record.model_copy(update={"sigma_m": previous.sigma_m if previous else None})
+            if previous is not None:
+                record = record.model_copy(update={"sigma_m": previous.sigma_m})
             document.distances = [r for r in document.distances if (r.tag_a, r.tag_b) != pair] + [record]
             document.distances.sort(key=lambda r: (r.tag_a, r.tag_b))
             return self._save(document)

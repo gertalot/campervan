@@ -12,7 +12,7 @@ export interface MeasurementResponse { configured: boolean; document: Measuremen
 export const readMeasurements = (layout?: string | null) => request<MeasurementResponse>(
   `scans/measurements${layout ? `?tag_layout_id=${encodeURIComponent(layout)}` : ''}`,
 );
-export function saveMeasurement(document: MeasurementDocument, record: Omit<DistanceMeasurement, 'sigma_m'>) {
+export function saveMeasurement(document: MeasurementDocument, record: Omit<DistanceMeasurement, 'sigma_m'> & { sigma_m?: number | null }) {
   const { tag_a, tag_b, ...values } = record;
   return request<MeasurementDocument>(`scans/measurements/${tag_a}/${tag_b}`, 'PUT', {
     ...values, revision: document.revision, tag_layout_id: document.tag_layout_id,

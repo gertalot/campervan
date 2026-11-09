@@ -22,6 +22,7 @@ class EditDistance(BaseModel):
     distance_m: float = Field(gt=0)
     entered_text: str = Field(min_length=1, max_length=128)
     source_run_id: str = Field(min_length=1)
+    sigma_m: float | None = Field(default=None, gt=0)
 
 
 class RemoveDistance(BaseModel):
@@ -79,7 +80,10 @@ def register_scan_measurements(app: FastAPI, layouts: ScanLayouts) -> None:
             lambda: layouts.measurements(edit.tag_layout_id).upsert(
                 edit.revision,
                 edit.tag_layout_id,
-                DistanceMeasurement(tag_a=tag_a, tag_b=tag_b, **edit.model_dump(exclude={"revision", "tag_layout_id"})),
+                DistanceMeasurement(
+                    tag_a=tag_a, tag_b=tag_b,
+                    **edit.model_dump(exclude={"revision", "tag_layout_id"}, exclude_unset=True),
+                ),
             )
         )
 
