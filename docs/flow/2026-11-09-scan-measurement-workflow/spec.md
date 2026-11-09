@@ -1,9 +1,9 @@
 # Scan review, measurement and reconstruction workflow
 
-**Status:** reviewed draft; design decisions consolidated, final written-spec approval pending.
+**Status:** approved by Gert, 9 November 2026; implementation planning has not started.
 **Flow folder:** [2026-11-09-scan-measurement-workflow](./).
 **Research:** [repository evidence and UX sources](research.md).
-**Approach approved:** staged side panel, 9 November 2026. This written specification is not yet approved.
+**Approval:** staged side panel and consolidated written specification, including the normative scene-review contract.
 
 ## 1. Outcome and boundary
 

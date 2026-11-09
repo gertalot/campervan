@@ -1,6 +1,6 @@
 # Scene understanding and review — specification contract
 
-Status: normative part of [spec.md](spec.md), awaiting its final written-spec approval. Gert approved the review
+Status: normative part of [spec.md](spec.md), approved by Gert on 9 November 2026. Gert approved the review
 interaction and proposed processing approach during D5; the numerical defaults below are explicit engineering
 choices for that design, not measured guarantees. This document is not an implementation plan and authorises no
 additional model runs, downloads or application changes during planning. Written 9 November 2026.

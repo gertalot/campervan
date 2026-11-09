@@ -1,6 +1,6 @@
 # Specification review record
 
-Spec: [spec.md](spec.md). Status: six reviews and the decision walkthrough complete; final written-spec approval pending.
+Spec: [spec.md](spec.md). Status: six reviews, decision walkthrough and final written-spec approval complete.
 
 ## Author self-review
 
@@ -11,7 +11,8 @@ It names shared UI owners and the superseded combined-analysis behavior. It pres
 original data and the repository's prohibition on tests/service launches.
 
 The staged panel approach was approved by Gert before drafting. Subsequent discussion explicitly approved
-best-effort partial-network progress and the app-managed RTAB-Map direction. The whole written spec is not approved.
+best-effort partial-network progress and the app-managed RTAB-Map direction. Gert subsequently approved the consolidated
+written spec and its normative scene-review contract on 9 November 2026.
 
 ## Review boundary
 
@@ -169,4 +170,5 @@ The two-view target-directed 9B trial establishes useful proposals and local run
 floor/door-panel detection. It does not establish whole-capture quality, correspondence reliability or throughput.
 The numerical defaults are engineering choices to review, not sensor calibration or measured accuracy. The native
 investigation establishes source-level integration points and the broad installed linkage baseline, not a working
-isolated package or guaranteed disk saving. Final written-spec approval is still required before implementation planning.
+isolated package or guaranteed disk saving. Gert gave final written-spec approval on 9 November 2026. This completes
+flow:plan; implementation planning remains a separate user-invoked phase.
