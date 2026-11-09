@@ -8,18 +8,20 @@ import numpy as np
 from campervan.scans import read_json
 
 
-def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int, Any], moved: dict[int, float]) -> None:
-    import cv2
-    import open3d as o3d
-
-    manifest = read_json(run / "run.json")
+def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int, Any], moved: dict[int, float],
+                    *, manifest: dict[str, Any]) -> None:
+    """Annotate observed geometry separately from a pair's manual_exclusion reason."""
     voxel = float(manifest["settings"]["voxel_mm"]) / 1000
     tolerance = 2 * voxel
     for pair in pairs:
-        pair.update(clearance="unknown", clearance_reason="Insufficient surface/depth evidence.", tolerance_m=tolerance)
-    if not (run / "mesh.ply").is_file() or not (run / "frames.json").is_file():
+        pair.update(clearance="unknown", clearance_reason="Insufficient surface/depth evidence.",
+                    tolerance_m=tolerance, hit=None, observed_fraction=None)
+    if not (run / "mesh.ply").is_file():
         return
-    mesh = o3d.io.read_triangle_mesh(run / "mesh.ply")
+    import cv2
+    import open3d as o3d
+
+    mesh = o3d.io.read_triangle_mesh(str(run / "mesh.ply"))
     if not len(mesh.triangles):
         return
     scene = o3d.t.geometry.RaycastingScene()
@@ -30,9 +32,12 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
     eligible = []
     for pair in pairs:
         a, b = pair["tag_a"], pair["tag_b"]
-        if max(moved.get(a, 0), moved.get(b, 0)) > tolerance:
+        if a not in positions or b not in positions or a not in moved or b not in moved:
+            pair["clearance_reason"] = "An endpoint has no source-associated position."
+            continue
+        if max(moved[a], moved[b]) > tolerance:
             pair["clearance_reason"] = (
-                "Proposed tags moved relative to the original surface. Apply/rebuild before checking clearance."
+                "Registered endpoints differ from their source surface beyond the scan tolerance. Check access."
             )
             continue
         start, finish = positions[a], positions[b]
@@ -76,6 +81,10 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
         eligible.append(pair)
     if not samples:
         return
+    if not (run / "frames.json").is_file() or not (run / "poses.json").is_file():
+        for pair in eligible:
+            pair["clearance_reason"] = "No mesh hit; original depth or camera-pose evidence is missing."
+        return
     world = np.concatenate(samples)
     covered = np.zeros(len(world), dtype=bool)
     frames = read_json(run / "frames.json")
@@ -86,6 +95,8 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
         pending = np.flatnonzero(~covered)
         if not len(pending):
             break
+        if str(frame["id"]) not in poses:
+            continue
         pose = np.asarray(poses[str(frame["id"])])
         camera = (world[pending] - pose[:3, 3]) @ pose[:3, :3]
         front = camera[:, 2] > 0

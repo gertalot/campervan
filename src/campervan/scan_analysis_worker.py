@@ -20,6 +20,26 @@ def main() -> None:
                                   request["settings"], directory)
         artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
         write_json(directory / "artifact.json", artifact.model_dump())
+    elif kind in ("plan-measurements", "suggest-more", "review-placement"):
+        from campervan.scan_network import NETWORK_SETTINGS, analyse_network
+        from campervan.scan_placement import review_placement
+        from campervan.scan_suggestions import plan_measurements, suggest_more
+        from campervan.scan_workflow_models import ArtifactEnvelope
+
+        measurements = MeasurementDocument.model_validate(request["measurements"])
+        network = request["network"]
+        if network is None:
+            network = analyse_network(request["run"], measurements, NETWORK_SETTINGS, directory)
+        else:
+            write_json(directory / "network.json", network)
+        if kind == "review-placement":
+            payload = review_placement(source, request["run"], measurements, network, request["planning"],
+                                       request["context"], directory)
+        else:
+            planner = suggest_more if kind == "suggest-more" else plan_measurements
+            payload = planner(source, request["run"], measurements, network, request["planning"], directory)
+        artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
+        write_json(directory / "artifact.json", artifact.model_dump())
     elif kind == "analyse":
         from campervan.scan_analysis import analyse
 
@@ -28,10 +48,6 @@ def main() -> None:
         from campervan.scan_rebuild import rebuild
 
         rebuild(source, directory, SCAN_RUNS / sys.argv[3])
-    elif kind == "suggest":
-        from campervan.scan_suggestions import suggest
-
-        suggest(source, directory, float(sys.argv[3]))
     else:
         raise ValueError("Unknown scan analysis task.")
 

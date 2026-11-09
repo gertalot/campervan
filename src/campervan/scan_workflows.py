@@ -141,6 +141,7 @@ def capture_inputs(item: Any, document: WorkflowDocument, layouts: Any, kind: st
     planning = None
     if kind in ("measurement_plan", "placement_review"):
         planning = {"exclusions": sorted((p.tag_a, p.tag_b, p.reason) for p in measurements.excluded_pairs),
+                    "default_sigma_m": measurements.default_sigma_m,
                     "candidate_sigmas": item.candidate_sigmas, "target_mm": item.target_mm,
                     "improvement_mm": item.improvement_mm}
     inputs = {"physical": physical, "source": source, "context": context, "planning": planning, "settings": settings}

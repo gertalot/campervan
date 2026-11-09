@@ -9,7 +9,11 @@ export interface Pair { tag_a: number; tag_b: number }
 export interface ProfileRef { profile_id: string; revision: number }
 export interface Relationship { kind: string; region_ids: string[]; enabled: boolean; sigma: number | null; units: string | null; support: string[] }
 export interface ProfileRevision { profile_id: string; revision: number; layout_id: string; context_text: string; target_classes: string[]; relationships: Relationship[]; tag_references: Record<string, unknown>[] }
-export interface SourceBinding { source_run_id: string; profile_ref: ProfileRef; revision: number; regions: { id: string; label: string; support: { frame_id: string; asset: string; observed_xyz: [number, number, number] | null }[]; correction_revision: number }[]; masks: { frame_id: string; asset: string; revision: number }[]; relationships: Relationship[] }
+export interface PlacementCandidate {
+  id: string; tag_id: number; region_id: string; support_index: number; mounting_confirmed: boolean;
+  access_confirmed: boolean; interior_confirmed: boolean; sigma_m: number; connects_to: number[];
+}
+export interface SourceBinding { source_run_id: string; profile_ref: ProfileRef; revision: number; regions: { id: string; label: string; support: { frame_id: string; asset: string; observed_xyz: [number, number, number] | null }[]; correction_revision: number }[]; masks: { frame_id: string; asset: string; revision: number }[]; relationships: Relationship[]; placement_candidates: PlacementCandidate[] }
 export interface ChecklistBatch { id: string; kind: 'initial' | 'additional' | 'recheck'; ordered_pairs: Pair[]; current_pair: Pair | null; producing_artifact_id: string }
 export interface Workflow { id: string; source_run_id: string; layout_id: string; group_id: string | null; profile_ref: ProfileRef | null; source_binding: SourceBinding | null; stage: Stage; target_mm: number; improvement_mm: number; candidate_sigmas: Record<string, number>; checklist_batches: ChecklistBatch[]; artifact_refs: Partial<Record<ArtifactKind, string>>; corrected_run_id: string | null; review_decisions: Record<string, unknown> }
 export interface ArtifactStatus { status: 'current' | 'stale' | 'unavailable'; reasons: string[]; available_actions: string[] }
@@ -68,8 +72,66 @@ export interface MeasurementNetwork {
   settings: NetworkSettings; warnings: string[];
   runtime: { dependencies: Record<string, string | null>; dependency_import_s: number; fit_s: number; rigidity_s: number; total_s: number };
 }
+export interface PlanGain {
+  rank_reduction: number; connectivity_reduction: number; null_mode_energy: number;
+  information_gain: number | null; max_tag_reduction_mm: number | null; global_worst_reduction_mm: number | null;
+  most_improved_tag_id: number | null; tag_reductions_mm: Record<string, number>;
+}
+export interface SegmentAssessment {
+  clearance: 'unknown' | 'no_obstruction_detected' | 'obstructed'; clearance_reason: string;
+  manual_exclusion: string | null; hit: number[] | null; observed_fraction: number | null;
+  tolerance_m: number | null; check_access: boolean;
+}
+export interface PlanPair extends Pair, SegmentAssessment {
+  state: 'measured' | 'recheck' | 'proposed'; estimate_m: number; sigma_m: number | null;
+  eligible: boolean; useful: boolean; recommended_order: number | null;
+  baseline_gain: PlanGain | null; marginal_gain: PlanGain | null; overlaps_with: Pair[]; reason: string;
+}
+export interface PlanSummary {
+  status: 'finite' | 'unbounded' | 'unknown'; components: number[][]; rank: number;
+  shape_dimension: number; remaining_motions: number; generic_rigidity: NetworkTopology | null;
+  adequate_3d_geometry: boolean; poorly_conditioned: boolean; condition_number: number | null;
+  ellipsoids: NetworkEllipsoid[]; local_worst_tag: NetworkEllipsoid | null; worst_tag: NetworkEllipsoid | null;
+  target_met: boolean; measurement_count: number; retained_tag_ids: number[]; unknown_precision_pairs: Pair[];
+}
+export interface PlannerSettings {
+  network: NetworkSettings; selection: string; reverse_delete: string; overlap_cosine: number;
+  confidence: number; visibility: string; registration: string;
+}
+export interface MeasurementPlan {
+  mode: 'initial' | 'additional'; tag_ids: number[]; target_mm: number; improvement_mm: number;
+  default_sigma_m: number | null; rows: PlanPair[]; recommended_pairs: Pair[]; alternatives: Pair[]; rechecks: Pair[];
+  baseline: PlanSummary; predicted: PlanSummary; stop_reason: string; settings: PlannerSettings;
+  registration: { status: 'registered' | 'scan_dependent'; reasons: string[]; scan_dependent_tag_ids: number[] };
+  notes: string[];
+}
+export interface PlacementTag {
+  tag_id: number; source_position_m: number[]; recommendation: 'keep' | 'consider_moving'; reason: string;
+  useful_connections: number[];
+  observation_support: { observation_count: number | null; viewpoint_count: number | null;
+    maximum_view_angle_deg: number | null; consistency: string; missing: string[] };
+  weak_modes: { direction: number[]; null_energy: number }[];
+}
+export interface PlacementCandidateReview {
+  id: string; tag_id: number; region_id: string; status: 'unsupported' | 'assessed'; reason: string | null;
+  source_position_m: number[] | null; sigma_m: number; assumed_connections: number[]; common_budget: number;
+  before_at_budget: PlanSummary; after_at_budget: PlanSummary | null;
+  target_measurement_count_before: number | null; target_measurement_count_after: number | null;
+  selected_pairs: Pair[]; target_pairs: Pair[];
+  pairs: (Pair & SegmentAssessment & { state: 'proposed'; estimate_m: number; sigma_m: number; eligible: boolean })[];
+  coverage_preserved: true; retained_tag_ids: number[]; assumptions: string[];
+}
+export interface PlacementReview {
+  tag_ids: number[]; tags: PlacementTag[]; extent_m: number[]; extent_directions: number[][];
+  direction_frame: 'source';
+  geometry_singular_values_m: number[];
+  weak_regions: { tag_id: number; source_position_m: number[]; reason: string; directions: number[][] }[];
+  candidates: PlacementCandidateReview[]; baseline_plan: MeasurementPlan; common_budget: number; retained_tag_ids: number[];
+  settings: { planner: PlannerSettings; comparison: string; candidate_source: string }; notes: string[];
+}
 export type ArtifactEnvelope = { [K in ArtifactKind]: ArtifactBase & {
-  kind: K; payload: K extends 'measurement_network' ? MeasurementNetwork : Record<string, unknown>
+  kind: K; payload: K extends 'measurement_network' ? MeasurementNetwork :
+    K extends 'measurement_plan' ? MeasurementPlan : K extends 'placement_review' ? PlacementReview : Record<string, unknown>
 } }[ArtifactKind];
 export interface WorkflowView { revision: number; workflow: Workflow; measurement: MeasurementDocument | null; source_available: boolean; profile: ProfileRevision | null; actions: Record<WorkflowAction, { available: boolean; reasons: string[] }>; artifacts: Partial<Record<ArtifactKind, ArtifactStatus>>; stages: Record<Stage, 'Not started' | 'In progress' | 'Complete' | 'Needs updating'>; jobs: ProcessingJob[] }
 export interface WorkflowEdit { revision: number; stage?: Stage; target_mm?: number; improvement_mm?: number; candidate_sigmas?: Record<string, number>; checklist_batches?: ChecklistBatch[]; review_decisions?: Record<string, unknown>; profile?: ProfileRevision; profile_ref?: ProfileRef | null; source_binding?: SourceBinding }
@@ -77,6 +139,6 @@ const base = 'scans/workflows';
 export const createWorkflow = (source_run_id: string, layout_id: string) => request<WorkflowView>(base, 'POST', { source_run_id, layout_id });
 export const readWorkflow = (id: string) => request<WorkflowView>(`${base}/${encodeURIComponent(id)}`);
 export const editWorkflow = (id: string, edit: WorkflowEdit) => request<WorkflowView>(`${base}/${encodeURIComponent(id)}`, 'PATCH', edit);
-export const runWorkflowAction = (id: string, action: WorkflowAction, revision: number, measurement_revision: number) => request<{ id: string }>(`${base}/${encodeURIComponent(id)}/actions/${action}`, 'POST', { revision, measurement_revision });
+export const runWorkflowAction = (id: string, action: WorkflowAction, revision: number, measurement_revision: number) => request<{ id: string; artifact_id: string }>(`${base}/${encodeURIComponent(id)}/actions/${action}`, 'POST', { revision, measurement_revision });
 export const readWorkflowArtifact = (id: string, artifact: string) => request<{ artifact: ArtifactEnvelope; status: ArtifactStatus }>(`${base}/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifact)}`);
 export const reviseTagLayout = (id: string, body: { name: string; tag_family: '36h11'; tag_size_mm: number; revision: number; unchanged: number[]; moved: number[]; removed: number[]; added: number[] }) => request<TagLayout>(`scans/layouts/${encodeURIComponent(id)}/revise`, 'POST', body);

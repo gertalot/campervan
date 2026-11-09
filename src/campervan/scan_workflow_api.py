@@ -10,7 +10,9 @@ from pydantic import Field
 from campervan.scan_layouts import ReviseTagLayout, ScanLayouts
 from campervan.scan_library import ScanLibraryStore
 from campervan.scan_network import ALGORITHM_VERSION, NETWORK_SETTINGS
+from campervan.scan_placement import PLACEMENT_ALGORITHM_VERSION, PLACEMENT_SETTINGS
 from campervan.scan_processing import ScanProcessing, identifier
+from campervan.scan_suggestions import PLANNER_ALGORITHM_VERSION, PLANNER_SETTINGS
 from campervan.scan_workflow_models import (
     ArtifactEnvelope, ArtifactStatus, ChecklistBatch, Model, ProfileRef, ProfileRevision, SourceBinding, Stage, Workflow,
 )
@@ -44,6 +46,15 @@ class ActionRequest(Model):
 Action = Literal["review-placement", "plan-measurements", "check-measurements", "suggest-more",
                  "preview-correction", "update-mesh"]
 
+PRODUCERS = {
+    "check-measurements": ("measurement_network", ALGORITHM_VERSION, NETWORK_SETTINGS, False, "Check measurements"),
+    "plan-measurements": ("measurement_plan", PLANNER_ALGORITHM_VERSION,
+                          PLANNER_SETTINGS | {"mode": "initial"}, False, "Generate checklist"),
+    "suggest-more": ("measurement_plan", PLANNER_ALGORITHM_VERSION,
+                     PLANNER_SETTINGS | {"mode": "additional"}, False, "Suggest more"),
+    "review-placement": ("placement_review", PLACEMENT_ALGORITHM_VERSION, PLACEMENT_SETTINGS, True, "Review placement"),
+}
+
 
 def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: ScanLayouts,
                             library: ScanLibraryStore, processing: ScanProcessing) -> None:
@@ -65,11 +76,13 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             raise HTTPException(404, "Artifact not found for this workflow.")
         try:
             # Compare against the current producer, never replay a saved version/settings as current policy.
-            algorithm = ALGORITHM_VERSION if artifact.kind == "measurement_network" else artifact.algorithm_version
-            settings = NETWORK_SETTINGS if artifact.kind == "measurement_network" else artifact.assumptions.get("settings")
+            action_name = artifact.assumptions.get("action", "check-measurements" if artifact.kind == "measurement_network" else "")
+            producer = PRODUCERS.get(action_name)
+            if producer is None or producer[0] != artifact.kind:
+                return artifact, ArtifactStatus(status="unavailable", reasons=["Artifact producer is unavailable."])
+            _, algorithm, settings, context_used, _ = producer
             current = capture_inputs(item, document, layouts, artifact.kind, algorithm,
-                                     settings=settings,
-                                     context_used=artifact.assumptions.get("context_used", True))["fingerprints"]
+                                     settings=settings, context_used=context_used)["fingerprints"]
         except (ValueError, OSError, KeyError) as error:
             return artifact, ArtifactStatus(status="unavailable", reasons=[f"Source evidence unavailable: {error}"])
         return artifact, artifact_status(artifact, current)
@@ -81,7 +94,8 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
         reasons = ([] if source_available else ["Source capture is unavailable."])
         if any(not task.done() for task in processing.tasks.values()):
             reasons.append("Another scan task is running. Wait for it to finish.")
-        result["check-measurements"] = {"available": not reasons, "reasons": reasons}
+        for name in PRODUCERS:
+            result[name] = {"available": not reasons, "reasons": reasons}
         return result
 
     def view(document, item: Workflow) -> dict[str, Any]:
@@ -94,9 +108,11 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
         except (ValueError, OSError, KeyError):
             available = False
         artifacts = {}
+        reports = {}
         for kind, value in item.artifact_refs.items():
             try:
-                _, status = read_artifact(item, document, value)
+                envelope, status = read_artifact(item, document, value)
+                reports[kind] = envelope.payload
             except (HTTPException, ValueError, OSError):
                 status = ArtifactStatus(status="unavailable", reasons=["Artifact is missing or invalid."])
             artifacts[kind] = status
@@ -110,6 +126,15 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             stages[stage] = ("In progress" if any(j.get("artifact_kind") == kind and j["state"] == "processing" for j in jobs)
                              else "Not started" if status is None else "Complete" if status.status == "current"
                              else "Needs updating")
+        # A generated checklist is advice; completion means its physical entries were acknowledged.
+        measured_pairs = {(record.tag_a, record.tag_b) for record in measurement.distances}
+        checklist = [(pair.tag_a, pair.tag_b) for batch in item.checklist_batches for pair in batch.ordered_pairs]
+        if checklist and stages["measure"] != "In progress":
+            stages["measure"] = "Complete" if all(pair in measured_pairs for pair in checklist) else "In progress"
+        elif reports.get("measurement_plan", {}).get("recommended_pairs") and stages["measure"] == "Complete":
+            planned = reports["measurement_plan"]["recommended_pairs"]
+            stages["measure"] = ("Complete" if all((pair["tag_a"], pair["tag_b"]) in measured_pairs for pair in planned)
+                                 else "In progress")
         return {"revision": document.revision, "workflow": displayed, "measurement": measurement,
                 "source_available": available, "profile": (document.profiles[item.profile_ref.profile_id][item.profile_ref.revision - 1] if item.profile_ref else None),
                 "artifacts": artifacts, "stages": stages, "jobs": jobs,
@@ -185,26 +210,39 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             scan_manifest(item.source_run_id)
             eligibility = actions(True)[action]
             if not eligibility["available"]:
-                raise HTTPException(409 if action == "check-measurements" else 503, " ".join(eligibility["reasons"]))
-            snapshot = capture_inputs(item, document, layouts, "measurement_network", ALGORITHM_VERSION,
-                                      settings=NETWORK_SETTINGS, context_used=False)
+                raise HTTPException(409 if action in PRODUCERS else 503, " ".join(eligibility["reasons"]))
+            artifact_kind, algorithm, settings, context_used, title = PRODUCERS[action]
+            snapshot = capture_inputs(item, document, layouts, artifact_kind, algorithm,
+                                      settings=settings, context_used=context_used)
             if snapshot["measurement_revision"] != request.measurement_revision:
                 raise HTTPException(409, "Measurements changed. Refresh and retry.")
             value = str(uuid4())
             directory = artifact_directory / value
             directory.mkdir(parents=True)
             envelope = ArtifactEnvelope(
-                id=value, kind="measurement_network", algorithm_version=ALGORITHM_VERSION,
+                id=value, kind=artifact_kind, algorithm_version=algorithm,
                 workflow_id=item.id, source_run_id=item.source_run_id, layout_id=item.layout_id,
-                measurement_revision=snapshot["measurement_revision"], profile_ref=None,
+                measurement_revision=snapshot["measurement_revision"], profile_ref=item.profile_ref if context_used else None,
                 fingerprints=snapshot["fingerprints"], job_id=value, payload={},
-                assumptions={"settings": NETWORK_SETTINGS, "context_used": False,
+                assumptions={"action": action, "settings": settings, "context_used": context_used,
                              "physical_inputs": snapshot["inputs"]["physical"],
-                             "capture_role": "Initial coordinates and display mirror convention only."},
+                             "capture_role": "Initial coordinates, display orientation and source-dependent planning only."},
             )
+            network = None
+            network_id = item.artifact_refs.get("measurement_network")
+            if action != "check-measurements" and network_id:
+                try:
+                    previous, status = read_artifact(item, document, network_id)
+                    if (status.status == "current" and
+                            previous.fingerprints.get("physical") == snapshot["fingerprints"]["physical"]):
+                        network = previous.payload
+                except (HTTPException, ValueError, OSError):
+                    pass  # Missing saved evidence is recomputed from the captured authoritative inputs.
             write_json(directory / "request.json", {
                 "run_id": item.source_run_id, "run": snapshot["run"],
-                "measurements": snapshot["measurements"], "settings": NETWORK_SETTINGS,
+                "measurements": snapshot["measurements"], "settings": settings,
+                "planning": snapshot["inputs"]["planning"], "context": snapshot["inputs"]["context"],
+                "network": network,
                 "artifact": envelope.model_dump(),
             })
 
@@ -221,11 +259,11 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             preference = library.read().entries.get(f"run:{item.source_run_id}")
             processing.start_action(
                 value, "analysis",
-                [sys.executable, "-u", "-m", "campervan.scan_analysis_worker", "check-measurements",
+                [sys.executable, "-u", "-m", "campervan.scan_analysis_worker", action,
                  str(directory.resolve())],
                 {"run_id": item.source_run_id, "source_run_id": item.source_run_id,
-                 "workflow_id": item.id, "layout_id": item.layout_id, "artifact_kind": "measurement_network",
-                 "group_id": preference.group_id if preference else None, "name": "Check measurements"},
+                 "workflow_id": item.id, "layout_id": item.layout_id, "artifact_kind": artifact_kind,
+                 "group_id": preference.group_id if preference else None, "name": title},
                 publish=publish,
             )
             return {"id": value, "artifact_id": value}
