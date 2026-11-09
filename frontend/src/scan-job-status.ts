@@ -27,13 +27,23 @@ export function createJobStatus() {
     } };
 }
 export function createJobView(retry: () => void) {
-  const element = document.createElement('section');
+  const element = document.createElement('section'); element.className = 'scan-job-status';
   const status = document.createElement('p'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  // No value means indeterminate progress, not an invented completion percentage.
+  // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/progress
+  const progress = document.createElement('progress'); progress.hidden = true;
+  progress.setAttribute('aria-label', 'Scan processing progress');
   const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Show processing log';
   const log = document.createElement('pre'); details.append(summary, log);
   const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Retry'; button.onclick = retry;
-  element.append(status, button, details);
-  return { element, update(job: ProcessingJob) { status.textContent = `${job.name} · ${job.stage}${job.error ? ` · ${job.error}` : ''}`;
+  element.append(status, progress, button, details);
+  return { element,
+    pending(message: string) { status.textContent = message; progress.hidden = false; progress.setAttribute('aria-label', message);
+      element.setAttribute('aria-busy', 'true'); button.hidden = true; details.hidden = true; },
+    update(job: ProcessingJob) { status.textContent = `${job.name} · ${job.stage}${job.error ? ` · ${job.error}` : ''}`;
+    const working = job.state === 'processing' && !job.error;
+    progress.hidden = !working; progress.setAttribute('aria-label', `${job.name} progress`);
+    element.setAttribute('aria-busy', String(working)); details.hidden = false;
     log.textContent = job.log_tail ?? ''; button.hidden = !job.error && job.state !== 'failed' && job.state !== 'interrupted'; } };
 }
 

@@ -112,7 +112,7 @@ export function createScanImport(host: Host) {
       : job.state === 'processing' ? job.stage : job.state;
   }
   function showJob(job: ProcessingJob) {
-    currentJob = job; progressPanel.hidden = false; jobView.element.hidden = false; jobView.update(job); stage.hidden = true; meter.removeAttribute('value'); meter.hidden = job.state !== 'processing';
+    currentJob = job; progressPanel.hidden = false; jobView.element.hidden = false; jobView.update(job); stage.hidden = true; meter.removeAttribute('value'); meter.hidden = true;
     view.hidden = !job.result_key;
     view.textContent = job.state === 'completed' ? 'Show result in viewer' : 'Show available result in viewer';
     view.onclick = () => { if (job.result_key) { dialog.close(); host.view(job.result_key); } };

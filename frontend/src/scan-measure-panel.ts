@@ -202,7 +202,9 @@ export function createMeasurePanel(host: Host) {
       if (!isCurrent()) return;
     }
     const view = session.workflow; if (!view) return;
-    actionPending = true; stageError = ''; render();
+    actionPending = true; stageError = '';
+    jobView.pending(action === 'review-placement' ? 'Analysing tag placement…' : 'Starting scan task…');
+    jobView.element.hidden = false; render();
     try {
       const started = await runWorkflowAction(view.workflow.id, action, view.revision, session.document.revision);
       if (!isCurrent()) return;
@@ -210,7 +212,7 @@ export function createMeasurePanel(host: Host) {
       if (!isCurrent()) return;
       session.bindWorkflow(fresh);
       watchJob(session, started.id);
-    } catch (reason) { if (isCurrent()) stageError = String(reason); }
+    } catch (reason) { if (isCurrent()) { jobView.element.hidden = true; stageError = String(reason); } }
     finally { actionPending = false; render(); }
   }
   async function bindWorkflow(session: MeasurementSession, source: string, layout: string, token: number) {
@@ -384,7 +386,7 @@ export function createMeasurePanel(host: Host) {
       else if (finished) side.close();
       else void dispatch(finalAction);
     };
-    footerReason.textContent = nextEligibility?.reasons.join(' · ') ?? '';
+    footerReason.textContent = activeJob ? '' : nextEligibility?.reasons.join(' · ') ?? '';
     footerReason.hidden = !footerReason.textContent;
     if (view && document.activeElement !== target && document.activeElement !== improvement) {
       const draft = targetDrafts.get(view.workflow.id);
@@ -400,7 +402,8 @@ export function createMeasurePanel(host: Host) {
       .filter(definition => !finalStep || (definition.action !== 'update-mesh' && (finished || definition.action !== finalAction)))
       .map(definition => {
       const eligibility = view?.actions[definition.action]; return { key: definition.action, label: definition.label,
-        disabled: actionPending || !eligibility?.available, reason: eligibility?.reasons.join(' · ') ?? 'Workflow unavailable',
+        disabled: actionPending || !eligibility?.available,
+        reason: activeJob ? undefined : eligibility?.reasons.join(' · ') ?? 'Workflow unavailable',
         run: () => { void dispatch(definition.action); } };
     });
     if (stage === 'review_capture') desired.push(
@@ -426,6 +429,10 @@ export function createMeasurePanel(host: Host) {
       } else ordered.push(button, reason);
     }
     if (stage === 'update_reconstruction') { correctionWarning.textContent = 'Corrections can be best effort. Scan-dependent or ambiguous positions require review before updating the mesh.'; ordered.push(correctionWarning); }
+    if (reviewingCapture) {
+      const controls = reviewSteps.get('review-placement')!.controls;
+      if (jobView.element.parentElement !== controls) controls.append(jobView.element);
+    } else ordered.push(jobView.element);
     for (const child of [...actions.children]) if (!ordered.includes(child as HTMLElement)) child.remove();
     ordered.forEach((node, index) => { if (actions.children[index] !== node) actions.insertBefore(node, actions.children[index] ?? null); });
     if (session && view) showArtifact(session, stage === 'review_capture' ? 'placement_review' : stage === 'measure' ? 'measurement_plan' : stage === 'check_accuracy' ? 'measurement_network' : 'scan_correction');

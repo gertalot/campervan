@@ -693,6 +693,9 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-review-controls > p { color: #b7c1cf; font-size: 12px; }
 .scan-review-report { font-size: 12px; }
 .scan-review-report details { color: #b7c1cf; }
+.scan-job-status { margin: 12px 0; }
+.scan-job-status progress { display: block; width: 100%; height: 7px; margin: 8px 0 12px; accent-color: #8bb7e8; }
+.scan-job-status progress[hidden] { display: none; }
 .scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
 .scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
 .scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }
