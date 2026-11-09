@@ -23,6 +23,7 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
   const drafts = new Map<string, Draft>();
   const precisionDrafts = new Map<string, string>();
   const candidateDrafts = new Map<string, Map<string, string>>();
+  const candidateErrors = new Map<string, Map<string, string>>();
   const exclusions = new Map<string, { pair: Pair; reason: string | null; error: string; blocked: boolean; version: number; attempt: number }>();
   let settingsError = '';
   const pending = new Map<string, { text: string; promise: Promise<boolean> }[]>();
@@ -148,6 +149,12 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
         let values = candidateDrafts.get(id); if (!values) { values = new Map(); candidateDrafts.set(id, values); } values.set(key, text);
       } else precisionDrafts.set(key, text); notify();
     },
+    candidateError(key: string) { return workflow ? candidateErrors.get(workflow.workflow.id)?.get(key) : undefined; },
+    discardCandidatePrecision(key: string) {
+      if (!workflow) return; const id = workflow.workflow.id;
+      const values = candidateDrafts.get(id); values?.delete(key); if (values && !values.size) candidateDrafts.delete(id);
+      const errors = candidateErrors.get(id); errors?.delete(key); if (errors && !errors.size) candidateErrors.delete(id); notify();
+    },
     bindWorkflow(view: WorkflowView | null) { workflow = view; if (view) workflowViews.set(view.workflow.id, view); notify(); },
     checklistDraft() { return workflow ? checklists.get(workflow.workflow.id) : undefined; },
     setChecklist(batches: ChecklistBatch[]) {
@@ -179,14 +186,22 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
           if (values && candidateDrafts.get(bound.workflow.id) === values && values.get(key) === submitted) {
             values.delete(key); if (!values.size) candidateDrafts.delete(bound.workflow.id);
           }
-          settingsError = ''; notify(); return saved;
+          const errors = candidateErrors.get(bound.workflow.id); errors?.delete(key);
+          if (errors && !errors.size) candidateErrors.delete(bound.workflow.id);
+          notify(); return saved;
         } catch (reason) {
           if (reason instanceof ApiError && reason.status === 409) {
-            const refreshed = await readWorkflow(bound.workflow.id);
-            workflowViews.set(bound.workflow.id, refreshed);
-            if (workflow?.workflow.id === bound.workflow.id) workflow = refreshed;
+            try { const refreshed = await readWorkflow(bound.workflow.id);
+              workflowViews.set(bound.workflow.id, refreshed);
+              if (workflow?.workflow.id === bound.workflow.id) workflow = refreshed;
+            } catch { /* retain the original conflict */ }
           }
-          settingsError = reason instanceof Error ? reason.message : String(reason); notify(); throw reason;
+          if (values && candidateDrafts.get(bound.workflow.id) === values && values.has(key)) {
+            let errors = candidateErrors.get(bound.workflow.id);
+            if (!errors) { errors = new Map(); candidateErrors.set(bound.workflow.id, errors); }
+            errors.set(key, reason instanceof Error ? reason.message : String(reason));
+          }
+          notify(); throw reason;
         }
       });
     },
@@ -222,10 +237,10 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
       const checklistFailures = [...checklists].map(([workflowId, value]) => ({ workflowId, error: value.error }));
       const candidatePrecision = [...candidateDrafts].flatMap(([workflowId, values]) => [...values.keys()].map(key => ({ workflowId, key })));
       const exclusionDrafts = [...exclusions.values()].map(({ pair, reason, error }) => ({ pair, reason, error }));
-      return { ok: !unsaved.length && !precisionDrafts.size && !candidatePrecision.length && !exclusions.size && !settingsError && !checklists.size, candidatePrecision, exclusionDrafts, settingsError, checklistError: checklist?.error ?? '', checklistFailures, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
+      return { ok: !unsaved.length && !precisionDrafts.size && !candidatePrecision.length && !candidateErrors.size && !exclusions.size && !settingsError && !checklists.size, candidatePrecision, exclusionDrafts, settingsError, checklistError: checklist?.error ?? '', checklistFailures, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
     refresh() { return enqueue(refresh); },
     subscribe(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener); },
-    hasUnsaved() { return !!exclusions.size || !!candidateDrafts.size || !!checklists.size || !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
+    hasUnsaved() { return !!exclusions.size || !!candidateDrafts.size || !!candidateErrors.size || !!checklists.size || !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
   };
 }
 export type MeasurementSession = ReturnType<typeof createMeasurementSession>;

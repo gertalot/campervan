@@ -14,6 +14,10 @@ export function createMeasureRow(options: MeasureRowOptions) {
   input.setAttribute('aria-label', `Physical distance between tags ${pair.tag_a} and ${pair.tag_b}`); label.append(input);
   const sigmaLabel = document.createElement('label'); sigmaLabel.textContent = 'Precision (mm) ';
   const sigma = document.createElement('input'); sigma.type = 'number'; sigma.min = '0.01'; sigma.step = 'any'; sigma.placeholder = 'Default'; sigmaLabel.append(sigma);
+  const candidateNotice = document.createElement('span');
+  const discardCandidate = document.createElement('button'); discardCandidate.type = 'button';
+  discardCandidate.textContent = 'Discard candidate precision draft';
+  discardCandidate.onclick = () => session.discardCandidatePrecision(pairKey(pair));
   const save = document.createElement('button'); save.type = 'button'; save.textContent = 'Save';
   const highlight = document.createElement('button'); highlight.type = 'button'; highlight.textContent = 'Highlight'; highlight.onclick = options.highlight;
   const excluded = document.createElement('button'); excluded.type = 'button';
@@ -22,7 +26,7 @@ export function createMeasureRow(options: MeasureRowOptions) {
   const exclusionError = document.createElement('span'); exclusionError.setAttribute('role', 'alert');
   const status = document.createElement('span'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   const error = document.createElement('span'); error.setAttribute('role', 'alert'); error.className = 'measurement-field-error';
-  element.append(title, estimate, label, sigmaLabel, save, highlight, excluded, retryExclusion, exclusionError, status, error);
+  element.append(title, estimate, label, sigmaLabel, candidateNotice, discardCandidate, save, highlight, excluded, retryExclusion, exclusionError, status, error);
 
   let sigmaWorkflow: string | undefined;
   let editingWorkflow: string | undefined;
@@ -33,6 +37,10 @@ export function createMeasureRow(options: MeasureRowOptions) {
     const nextWorkflow = row ? undefined : session.workflow?.workflow.id;
     if (document.activeElement !== sigma || nextWorkflow !== sigmaWorkflow) sigma.value = session.precisionDraft(pairKey(pair), !row) ??
       (row?.sigma_m ? String(row.sigma_m * 1000) : candidateSigma ? String(candidateSigma * 1000) : '');
+    const candidateDraft = session.precisionDraft(pairKey(pair), true);
+    const orphaned = !!row && candidateDraft !== undefined && candidateDraft !== null;
+    candidateNotice.textContent = orphaned ? `Unsaved candidate precision: ${candidateDraft || '(blank)'} mm. This pair now has a physical measurement. ${session.candidateError(pairKey(pair)) ?? ''}` : '';
+    discardCandidate.hidden = !orphaned;
     sigmaWorkflow = nextWorkflow; sigma.disabled = !row && !session.workflow;
     const scan = options.estimate(); estimate.textContent = scan === null ? 'Scan estimate: unavailable' : `Scan estimate: ${(scan * 1000).toFixed(1)} mm`;
     highlight.disabled = scan === null;
@@ -41,7 +49,8 @@ export function createMeasureRow(options: MeasureRowOptions) {
     const pendingExclusion = session.exclusionDraft(pair);
     exclusionError.textContent = pendingExclusion?.error ?? ''; retryExclusion.hidden = !pendingExclusion?.blocked;
     if (pendingExclusion) excluded.textContent = pendingExclusion.reason ? `Not saved: ${pendingExclusion.reason}` : 'Allow measurement not saved';
-    status.textContent = value.state; error.textContent = value.error; input.setAttribute('aria-invalid', String(!!value.error));
+    status.textContent = value.state; error.textContent = value.error || (!row ? session.candidateError(pairKey(pair)) ?? '' : '');
+    input.setAttribute('aria-invalid', String(!!value.error));
   }
   input.oninput = () => session.setDraft(pair, input.value);
   input.onkeydown = event => {
@@ -73,5 +82,5 @@ export function createMeasureRow(options: MeasureRowOptions) {
     void session.setExclusion(pair, reason?.trim() ?? null).catch(failure => { error.textContent = String(failure); });
   };
   const unsubscribe = session.subscribe(update); update();
-  return { element, input, sigma, retryExclusion, update, destroy: unsubscribe };
+  return { element, input, sigma, discardCandidate, retryExclusion, update, destroy: unsubscribe };
 }

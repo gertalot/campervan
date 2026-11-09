@@ -89,6 +89,6 @@ export function createMeasurePanel(host: Host) {
   return { open() { side.open(); render(); }, refresh: render, render, hide: () => side.close(),
     async flush() { const result = await host.session()?.flush(); if (result && !result.ok) { if (result.exclusionDrafts.length) rows.get(pairKey(result.exclusionDrafts[0].pair))?.retryExclusion.focus(); else if (result.checklistError) retryChecklist.focus(); else if (result.pairs.length) rows.get(pairKey(result.pairs[0]))?.input.focus(); else if (result.precision[0] && result.precision[0] !== 'default') rows.get(result.precision[0])?.sigma.focus(); else if (result.candidatePrecision.length) {
       const candidate = result.candidatePrecision.find(item => item.workflowId === host.session()?.workflow?.workflow.id);
-      if (candidate) rows.get(candidate.key)?.sigma.focus(); else status.textContent = 'Return to the source with unsaved candidate precision.';
+      if (candidate) { const row = rows.get(candidate.key); if (row && !row.discardCandidate.hidden) row.discardCandidate.focus(); else row?.sigma.focus(); } else status.textContent = 'Return to the source with unsaved candidate precision.';
     } else precision.focus(); } return result; } };
 }
