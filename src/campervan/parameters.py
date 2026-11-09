@@ -28,6 +28,15 @@ RETIRED_PARAMETERS = frozenset(
         "table_stowed_arm_deg",
         "cabinet_upper_doors_open_percent",
         "cabinet_storage_doors_open_percent",
+        "cabinet_door_overlap_mm",
+        "cabinet_back_thickness_mm",
+        "cabinet_frame_step_height_mm",
+        "cabinet_ledge_size_mm",
+        "cabinet_ledge_height_mm",
+        "cabinet_module_timber_width_mm",
+        "cabinet_module_timber_height_mm",
+        "cabinet_return_width_mm",
+        "cabinet_return_thickness_mm",
     }
 )
 
@@ -36,85 +45,142 @@ class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
 
     drawer_included: float = Field(
-        default=1, ge=0, le=1, multiple_of=1, title="Rear drawer",
+        default=1,
+        ge=0,
+        le=1,
+        multiple_of=1,
+        title="Rear drawer",
         description="Include the drawer tray and sliders in cut lists and the BOM. The design remains in CAD.",
         json_schema_extra={"unit": "", "group": ["Included in build"], "control": "build"},
     )
     table_included: float = Field(
-        default=1, ge=0, le=1, multiple_of=1, title="Lagun table",
+        default=1,
+        ge=0,
+        le=1,
+        multiple_of=1,
+        title="Lagun table",
         description="Include the tabletop, spacer, Lagun kit and hinges in cut lists and the BOM. "
-                    "The design remains in CAD.",
+        "The design remains in CAD.",
         json_schema_extra={"unit": "", "group": ["Included in build"], "control": "build"},
     )
 
     table_mount: float = Field(
-        default=0, ge=0, le=2, multiple_of=2, title="Show table",
+        default=0,
+        ge=0,
+        le=2,
+        multiple_of=2,
+        title="Show table",
         description="Switch instantly between the working table and the folded, disassembled storage preview.",
-        json_schema_extra={"unit": "", "group": ["Laptop table"], "control": "position", "options": [
-            {"value": 0, "label": "Bench mount"},
-            {"value": 2, "label": "Stowed"},
-        ]},
+        json_schema_extra={
+            "unit": "",
+            "group": ["Laptop table"],
+            "control": "position",
+            "options": [
+                {"value": 0, "label": "Bench mount"},
+                {"value": 2, "label": "Stowed"},
+            ],
+        },
     )
     table_height_mm: float = Field(
-        default=700, ge=620, le=780, title="Tabletop height (open)",
+        default=700,
+        ge=620,
+        le=780,
+        title="Tabletop height (open)",
         description="Open surface above the wooden floor. Folding the leaf onto the top adds one panel thickness.",
         json_schema_extra={"unit": "mm", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_arm_swivel_deg: float = Field(
-        default=180, ge=0, le=360, title="Arm swivel",
+        default=180,
+        ge=0,
+        le=360,
+        title="Arm swivel",
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_top_rotation_deg: float = Field(
-        default=0, ge=0, le=360, title="Tabletop rotation",
+        default=0,
+        ge=0,
+        le=360,
+        title="Tabletop rotation",
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_top_offset_percent: float = Field(
-        default=0, ge=-100, le=100, title="Mount towards short edge",
+        default=0,
+        ge=-100,
+        le=100,
+        title="Mount towards short edge",
         description="0 centres the mount. ±100 places the 240mm plate's end flush with either short tabletop edge. "
-                    "The plate's 240mm axis runs along the tabletop length. This previews mounting positions.",
+        "The plate's 240mm axis runs along the tabletop length. This previews mounting positions.",
         json_schema_extra={"unit": "%", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_fold_open_percent: float = Field(
-        default=0, ge=0, le=100, title="Unfold tabletop",
+        default=0,
+        ge=0,
+        le=100,
+        title="Unfold tabletop",
         description="0: two leaves stacked, 250mm wide. 100: flat, 500mm wide. Uses a 180° fold-over hinge axis.",
         json_schema_extra={"unit": "%", "group": ["Laptop table", "Bench mount"], "control": "position"},
     )
     table_stowed_x_mm: float = Field(
-        default=800, ge=-1000, le=2500, title="X position",
+        default=800,
+        ge=-1000,
+        le=2500,
+        title="X position",
         description="Storage preview position across the van; final storage location remains undecided.",
         json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_stowed_y_mm: float = Field(
-        default=450, ge=-1000, le=2500, title="Y position",
+        default=450,
+        ge=-1000,
+        le=2500,
+        title="Y position",
         json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_stowed_z_mm: float = Field(
-        default=0, ge=0, le=1500, title="Bottom above floor",
+        default=0,
+        ge=0,
+        le=1500,
+        title="Bottom above floor",
         json_schema_extra={"unit": "mm", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_stowed_yaw_deg: float = Field(
-        default=0, ge=0, le=360, title="Facing",
+        default=0,
+        ge=0,
+        le=360,
+        title="Facing",
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_length_mm: float = Field(
-        default=700, ge=240, title="Tabletop length",
+        default=700,
+        ge=240,
+        title="Tabletop length",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_depth_mm: float = Field(
-        default=250, ge=200, title="Folded width",
+        default=250,
+        ge=200,
+        title="Folded width",
         description="Width of each leaf; the open tabletop is twice this width.",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_ply_thickness_mm: float = Field(
-        default=18, gt=0, le=25, title="Tabletop thickness",
+        default=18,
+        gt=0,
+        le=25,
+        title="Tabletop thickness",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_corner_radius_mm: float = Field(
-        default=20, ge=0, le=80, title="Corner radius",
+        default=20,
+        ge=0,
+        le=80,
+        title="Corner radius",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_edge_radius_mm: float = Field(
-        default=3, ge=0, le=10, title="Edge round-over",
+        default=3,
+        ge=0,
+        le=10,
+        title="Edge round-over",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
 
@@ -1055,21 +1121,39 @@ class Parameters(BaseModel):
     )
 
     cabinet_frame_thickness_mm: float = Field(
-        default=9.0,
+        default=18.0,
         gt=0,
-        title="Frame plywood thickness",
-        description="Cabinet aisle frame, rear rails and narrow rear upright share 9mm plywood with the partitions.",
+        title="Timber thickness",
+        description="40 × 18mm dressed pine front frame, local cleats, module joints and hardware backing.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
-
+    cabinet_frame_width_mm: float = Field(
+        default=40.0,
+        gt=0,
+        title="Timber face width",
+        description="Purchased 40mm face; shelf cleats stand with this dimension vertical.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+    )
+    cabinet_bridge_height_mm: float = Field(
+        default=90.0,
+        gt=0,
+        title="Wheel-arch bridge depth",
+        description="90 × 18mm pine rail spans between end panels and carries the centre divider above the wheel arch.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+    )
+    cabinet_bridge_thickness_mm: float = Field(
+        default=18.0,
+        gt=0,
+        title="Wheel-arch bridge thickness",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+    )
     cabinet_partition_thickness_mm: float = Field(
         default=9.0,
         gt=0,
-        title="Solid vertical plywood thickness",
-        description="Middle, cab-end and rear upper panels share 9mm plywood with the shelves.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
+        title="Fixed cabinet panel thickness",
+        description="Supporting plywood end panels and centre divider, with local timber cleats and backing.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Skin"]},
     )
-
     cabinet_door_thickness_mm: float = Field(
         default=6.0,
         gt=0,
@@ -1079,25 +1163,18 @@ class Parameters(BaseModel):
     cabinet_door_gap_mm: float = Field(
         default=2.0,
         gt=0,
-        title="Closing gap",
-        description="Between each closed door and the aisle frame; the carcass moves wallward to retain bed clearance.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
-    )
-    cabinet_door_overlap_mm: float = Field(
-        default=15.0,
-        gt=0,
-        title="Opening overlap",
-        description="Overlap beyond each individual opening; each shelf compartment has its own door.",
+        title="Inset door reveal",
+        description="Clearance around each inset door; visible hinge leaves attach to the front faces.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
     )
     cabinet_door_corner_radius_mm: float = Field(
-        default=12.0,
+        default=2.0,
         gt=0,
         title="Door corner radius",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
     )
     cabinet_door_edge_radius_mm: float = Field(
-        default=2.0,
+        default=1.0,
         gt=0,
         title="Door edge roundover",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Doors"]},
@@ -1176,10 +1253,10 @@ class Parameters(BaseModel):
     )
 
     cabinet_ceiling_gap_mm: float = Field(
-        default=3.0,
+        default=5.0,
         ge=0,
-        title="Ceiling gap",
-        description="Cabinet height follows the finished ceiling. Zero reaches it; this gap leaves fitting clearance.",
+        title="Frame ceiling clearance",
+        description="Clearance for timber only. Supporting plywood panels are scribed to the finished ceiling.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
@@ -1191,14 +1268,6 @@ class Parameters(BaseModel):
             "Along the van from the furniture rear gap. "
             "Original 1000mm cabinet length puts its cab-end panel 1100mm from the rear pillar datum."
         ),
-        json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
-    )
-
-    cabinet_frame_step_height_mm: float = Field(
-        default=750.0,
-        gt=0,
-        title="Upper shelf reference height",
-        description="The upper shelf rail is halfway from this reference level to the cabinet top.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
@@ -1233,47 +1302,32 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelves"]},
     )
 
-    @property
-    def cabinet_lower_rail_top_mm(self) -> float:
-        return (
-            self.platform_height_mm
-            + self.foam_thickness_mm
-            + self.cabinet_mattress_clearance_mm
-            + self.member_width_mm
-            - self.cabinet_ledge_height_mm
-            - self.cabinet_shelf_thickness_mm
-        )
-
-    cabinet_back_thickness_mm: float = Field(
-        default=3.0,
-        gt=0,
-        title="Thickness",
-        description="Selected flute-board stock thickness, measured normal to the curved backing.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Back lining"]},
-    )
-
     cabinet_back_clearance_mm: float = Field(
         default=1.0,
         gt=0,
-        title="Vehicle clearance",
-        description="Gap to the projecting wall/pillar contour and rear corner. The top meets the plywood ceiling.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Back lining"]},
+        title="Frame wall clearance",
+        description="Clearance for timber only. Plywood panels and shelves follow the actual van contour.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
 
-    cabinet_ledge_size_mm: float = Field(
-        default=18.0,
+    cabinet_module_guide_height_mm: float = Field(
+        default=20.0,
         gt=0,
-        title="Ledge width",
-        description="Horizontal width of the timber supporting the shelves.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
+        title="Alignment lip height",
+        description="Lower panel lips guide the upper panels during horizontal assembly.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Module joint"]},
+    )
+    cabinet_module_clearance_mm: float = Field(
+        default=0.5,
+        gt=0,
+        title="Module fitting clearance",
+        description="Clearance at panel seams and module alignment faces.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Module joint"]},
     )
 
-    cabinet_ledge_height_mm: float = Field(
-        default=18.0,
-        gt=0,
-        title="Ledge height",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Shelf ledges"]},
-    )
+    @property
+    def cabinet_module_split_height_mm(self) -> float:
+        return self.cabinet_rear_storage_height_mm + self.cabinet_frame_width_mm
 
     solar_bag_width_mm: float = Field(
         default=830.0,
@@ -1328,41 +1382,62 @@ class Parameters(BaseModel):
         json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Solar panel bag"]},
     )
     chilly_bin_width_mm: float = Field(
-        default=470.0, gt=0, title="Width",
+        default=470.0,
+        gt=0,
+        title="Width",
         description="Owner-measured closed bin width, excluding the carry handle.",
         json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_depth_mm: float = Field(
-        default=280.0, gt=0, title="Depth",
+        default=280.0,
+        gt=0,
+        title="Depth",
         description="Owner-measured closed bin depth, excluding the carry handle.",
         json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_height_mm: float = Field(
-        default=410.0, gt=0, title="Height",
+        default=410.0,
+        gt=0,
+        title="Height",
         description="Owner-measured height including the closed lid, excluding the carry handle.",
         json_schema_extra={"unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_x_mm: float = Field(
-        default=750.0, ge=-1000, le=2500, title="Centre X",
+        default=750.0,
+        ge=-1000,
+        le=2500,
+        title="Centre X",
         description="Footprint centre across the van, from the left inner wall.",
         json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_y_mm: float = Field(
-        default=1050.0, ge=-1000, le=3000, title="Centre Y",
+        default=1050.0,
+        ge=-1000,
+        le=3000,
+        title="Centre Y",
         description="Footprint centre forward of the rear opening; initial aisle placement.",
         json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_z_mm: float = Field(
-        default=0.0, ge=0, le=1300, title="Bottom above floor",
+        default=0.0,
+        ge=0,
+        le=1300,
+        title="Bottom above floor",
         json_schema_extra={"control": "position", "unit": "mm", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_yaw_deg: float = Field(
-        default=90.0, ge=-180, le=180, title="Rotation",
+        default=90.0,
+        ge=-180,
+        le=180,
+        title="Rotation",
         description="0 faces the wide red side toward the rear; 90 turns it along the van.",
         json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chilly bin"]},
     )
     chilly_bin_handle_angle_deg: float = Field(
-        default=0.0, ge=0, le=135, title="Handle folded",
+        default=0.0,
+        ge=0,
+        le=135,
+        title="Handle folded",
         description="0 is upright; 135 folds forward beside the bin. Handle dimensions and travel are photo estimates.",
         json_schema_extra={"control": "position", "unit": "°", "group": ["Stored gear", "Chilly bin", "Handle"]},
     )

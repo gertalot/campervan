@@ -146,23 +146,18 @@ Campervan
 │   └── Cushions
 │       └── Cross seat
 └── Cabinet
-    ├── Aisle frame
-    ├── Middle panel
-    ├── Cab-end panel
-    ├── Wall lower frame
-    ├── Wall upper frame
-    ├── Back lining
-    ├── Doors
-    │   ├── Rear upper 1/2 → Plywood door + roller catch keeper
-    │   ├── Cab-end upper 1/2 → Plywood door + roller catch keeper
-    │   ├── Cab-end lower 1/2 → Plywood door + roller catch keeper
-    │   ├── Rear storage aft/fore → Plywood door + roller catch keeper
-    │   └── Rear storage upper aft/fore → Plywood door + roller catch keeper
-    ├── Roller catch bodies
-    ├── Catch timber
-    ├── Corner cleats
-    ├── Shelf ledges
-    └── Shelves
+    ├── Lower module
+    │   ├── Frames → front frame, cleats, arch bridge, bearing/catch blocks, rear jamb
+    │   │   └── Module joint → four lower side rails and eight M5 × 90mm bolt sets
+    │   ├── Skin → 9mm centre/cab-end panels and rear loading jamb panel
+    │   ├── Shelves → lower forward and both middle shelves
+    │   └── Doors → lower flaps, storage pair and fixed hardware
+    └── Upper module
+        ├── Frames → front frame, shelf cleats and catch blocks
+        │   └── Module joint → four upper side rails
+        ├── Skin → 9mm centre/cab-end/rear supporting panels
+        ├── Shelves → both upper shelves
+        └── Doors → Rear/Cab-end upper 1/2 and fixed hardware
 ```
 
 The [Japanese 2017 NV200 body research](research/nv200/README.md) records the actual van variant, Nissan dimensions,
@@ -382,175 +377,67 @@ Its conversion slider is removed. The green backrests sit along the cross bench�
 then move with the long-bench control into the outer bed strip.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
-`cabinet.py` builds the left-side cabinet in furniture-local coordinates, before the common mirror/placement.
-Its closed-door footprint starts at X = 1070, Y = 0–1000, narrowed by the vehicle envelope and wall support. With the
-100mm rear gap it spans vehicle Y = 100–1100, restoring the original cabinet length. Length changes preserve the
-rear end. The centre partition starts at `cabinet_rear_bay_length_mm` (560mm), measured from the open rear end,
-following the requested 90mm rearward move. The owned folded chairs measure 600 × 700 × 100mm; their placement is
-shown by the Stored gear live positions, with an open rear entrance. The forward bay uses the remaining space.
-Rear upper shelves have 551mm clear length between panels, and the forward bay has 422mm clear length.
-The cab end's outer face is at local Y = 1000, vehicle Y = 1100.
+`cabinet.py` builds a panel-and-cleat cabinet in two modules. Both retain Frames, Skin, Shelves and Doors
+visibility groups. Skin now contains supporting 9mm Tigerply Okoume end panels and the centre divider, using the
+existing Bunnings product. It is not 3mm cladding over a separate timber skeleton. The front frame, shelf cleats,
+joining rails and hardware blocks use the existing 40 × 18mm pine. The arch bridge remains 90 × 18mm pine.
 
-`cabinet_partition_thickness_mm` supplies the three solid vertical panels from 9mm Tigerply Okoume stock,
-shared with the cross-bench rear skin. The five shelves and nine doors share 6mm Tigerply Okoume stock. `cabinet_frame_thickness_mm` independently supplies
-the aisle frame, rear rails and narrow rear upright from the same 9mm Tigerply Okoume stock; the bed retains its 18mm stock.
-Shelf ledges, rail joint blocks and corner cleats follow the thinner partitions' inner faces. The aisle frame's
-middle post follows the centre of the middle partition. The aisle frame retains its rounded openings and door
-mounting posts. The centre and cab-end partitions are solid, scribed against the lining and vehicle fitting volume.
-The aisle frame's top rail extends to the finished plywood underside, following its curve across the frame thickness.
-It has no ceiling gap. Door openings and hinge elevations retain their existing heights; the top rail grows upward.
-The centre panel has the wheel-arch notch with 3mm clearance and reaches the floor inside the arch. The cab-end
-panel follows the plywood ceiling with the selected 3mm fitting gap. The `Rear upper panel` uses the same 9mm
-stock at Y = 0–9, starting at `cabinet_rear_storage_height_mm` (730mm). Its outline is taken at the restrictive
-rear face of the body/ceiling fitting volume and extruded square through the plywood thickness. Both faces have
-the same outline: template and jigsaw the curves, without a compound bevel or sculpted edge. The opening widens
-toward the cab, leaving fitting clearance behind the wall-side edge.
-It closes the two upper rear compartments while leaving the full lower chair entrance open. Rear shelves start
-at its inner face, Y = 9; they have rear-panel ledges with their outer ends scribed around the rear pillar.
-There are no cabinet skins, full-height transverse rear frame, bottom threshold or lower rear crossbar.
-The van floor is the bottom.
+Middle and cab-end panels have full-depth, jigsaw-scribed profiles against the actual side, pillars and finished
+ceiling. The rear upper panel follows the same contour and extends down to Z730. A lower rear jamb panel and
+reinforcing timber leave at least 230 × 730mm chair-loading clearance, without a bottom sill. There are no rear
+ladders, raked rear posts, return frames or uprights inside shelf bays. No full wall-facing back or top is added.
+The van closes the wall-facing back. Front edges of supporting panels butt behind the front frame; no skin
+landing grooves are needed. Fix panel faces into the adjoining timber, not screws into thin plywood edges.
 
-The lowest rear shelf supports start at `cabinet_rear_storage_height_mm` (730mm); shelf underside/top are at
-748/754mm. The forward middle shelf shares this elevation, so both bays' middle beams run at 730–790mm.
-The upper rear shelf and three forward shelves remain. The lower forward shelf top retains its mattress clearance;
-the other shelf tops follow the selected shelf thickness. The closed doors retain their 1070mm bed envelope.
+`cabinet_layout.py` supplies the real fitting volumes and shelf/door datums. Its lower-back datum locates only the
+rear jamb and arch bridge; it does not truncate the plywood or prescribe another back frame. `scribed_sheet`
+intersects face/mid-plane templates and extrudes one constant-thickness outline. Each square-cut shelf cleat is
+fitted across its whole height and the combined thickness of the receiving panel and timber, leaving 1mm wall
+clearance. This keeps its full mating face on the supporting panel rather than sticking past the panel contour.
 
-The wall-side support is a separate `Wall supports` group: eight straight 9 × 60mm plywood rails and one narrow
-transverse rear upright. Each bay has a top rail and matching lower, middle and upper rails.
-Rails butt into the centre/cab-end partitions and rear upright rather than fastening to the vehicle. Each rail
-is vertical rectangular stock, set inboard of the lining over its full height; higher rails sit further inward.
-The rear lower crossbeam joins the rear upright to the centre partition at the forward bay's lower-rail height.
-The rear chair compartment has no shelf at this level.
-The lowest forward rail follows the raised shelf and clears the wheel arch by at least 3mm.
-Its top is `cabinet_lower_rail_top_mm`: platform + foam + shelf clearance + member width − ledge height − shelf thickness.
-The rear aisle frame has the same extra crossbeam; the wall-side rail now matches its height.
+Five 6mm shelves retain their levels. The lowest forward shelf follows platform + foam + mattress clearance;
+the middle shelf tops/interface are at storage height + frame width (770mm), and the upper level follows the
+available module height. Shelves butt behind the front frame and between the 9mm panels. Both ends of each shelf
+have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edges remain scribed to the van.
+There are no internal post cutouts. The front frame ties the panels together and stiffens the front shelf edge.
 
-The rear upright stands on the floor immediately ahead of the rear pillar, at the start of the back lining.
-It is a 9mm transverse plywood strip, nominally 60mm wide across X at each height, with its profile approximating
-the wall. The rear shelf edges are notched around it. It leaves the rear chair-loading route clear.
-The solid partitions are bounded by the lining/vehicle fitting volume; shelves end at their own rail's inboard face.
-The old `cabinet_frame_step_height_mm` parameter is retained for saved projects, now labelled **Upper shelf reference
-height**: the upper shelf rail remains halfway between this reference and the cabinet top.
+The middle panel has an open-bottom wheel-arch clearance extending to the bridge top, avoiding dangling panel
+feet or a closed slot around the bridge. Two face-mounted blocks transfer its rear portion onto the bridge.
+The bridge meets the floor-supported rear timber jamb at one end and rests on a cab-end panel bearing block at
+the other. Its end block and divider blocks attach through the 9mm panel faces into the timber. This establishes
+an explicit support arrangement, not a verified complete cabinet load rating.
 
-The five 6mm shelves form a bonded assembly: glue and screw shelves onto their continuous perimeter ledges,
-and bond the ledges to the
-partitions, aisle frame and rear rails. The separate `Rail joint blocks` group contains sixteen vertical pine
-blocks, one at each rail end, against the rail face and the adjacent upright or partition. They use ready-made
-18 × 18mm stock. At the five shelf levels, ten blocks start at the shelf top and extend to the rail top:
-36mm high with 18mm ledges and 6mm shelves. The six blocks on the top rails and the rear lower rail remain 60mm high.
-Glue both mating faces; predrill assembly screws through the plywood faces into the blocks, staggering perpendicular screws.
-Crosswise shelf ledges extend the full shelf depth into the corners, and longitudinal ledges butt between them.
-At the rear pillar the wall ledge starts against the rear upright. The shelves have no notches for joint blocks;
-their vehicle-fitting profiles and rear-upright cutouts remain. The blocks replace the two former wall corner cleats.
-Two 60mm-high aisle cleats remain above the lowest forward shelf. The rear lower rail has matching end blocks;
-the other rear rail blocks remain above the chair bay's 730mm clear height. Glue layers and assembly screws are not
-modelled. The BoM includes an initial 250ml bottle
-of Selleys Aquadhere Exterior PVA from Bunnings NZ. Use close-fitting bare-wood joints and clamp while curing;
-leave unstressed for 24 hours. This adhesive is for furniture joints, not vehicle anchorage.
+Four pairs of straight transverse side joining rails retain the detachable joint. Lower rails have shallow
+shelf seats with solid lands around their two bolts; upper rails bear directly on those lands. Eight M5 × 90mm
+countersunk screw envelopes remain side-only. There are no front/rear longitudinal joining rails. The existing
+20mm lower panel guides and 0.5mm seam clearance remain at the middle/cab-end sides. The upper rear panel extends
+below the joint beside the lower rear header; this is an unglued locating overlap. Keep every detachable mating
+surface unglued. Module rails and fasteners remain in the Module joint subgroup under Frames.
 
-This is a visual construction proposal, not a fabrication template or load rating. Template the rear upright
-and partition profiles in the real van and establish fitting clearance along each rail before cutting finished
-parts. The vehicle model is approximate. The flute board carries no structural load, and vehicle restraint must
-be designed separately using existing mounting points only; no new vehicle holes or wall attachments are modelled.
+`cabinet_doors.py` retains nine 6mm inset doors, two face-mounted hinge envelopes per door, finger holes and roller
+catches. Six doors are drop-down flaps; the lowest rear pair and lowest forward door have vertical hinges. Fixed
+hinges through-bolt to the full 18mm front frame. Moving leaves and catch keepers bolt through plywood faces.
+Local front-edge shelf clearances accommodate hinge lands and nuts; no fixing goes into a 6mm plywood edge.
+Catch plates mount beneath square 40 × 40 × 18mm blocks attached to the front headers. Fixed and moving hardware
+follow Doors visibility; timber mounting blocks follow Frames. Door controls and motion paths remain unchanged.
 
-The rear bay loads from the rear and through its paired aisle doors. A 230 × 730mm loading envelope, starting
-3mm behind the latch bodies, extends from the rear aperture through the 650mm bay. Geometry checks include the
-rear corner pillar and wheel arch. Stored chair and solar-panel poses are unchanged.
-Both rear and forward shelves have aisle/wall and two transverse ledges. The rear-panel ledges remain at or above
-the storage clear height; nothing crosses the lower rear entrance. The 20 shelf ledges use ready-made 18 × 18mm untreated
-clear pine; ledge bottoms align with their rail bottoms, leaving a 33mm retaining lip at defaults. All ledges and
-corner cleats are rectangular crosscuts; no wall-facing bevels are needed.
-The BOM records the purchased rectangular section and crosscut lengths, including the two 70mm latch blocks.
-The selected Bunnings product is Pinetrim 18 × 18 × 2400mm D4S untreated clear pine (0293156), listed at $12.27
-per length on 2026-10-20; Lyall Bay stock is unconfirmed. No table-saw ripping is required for these battens.
-Vehicle mounting hardware remains unmodelled; glue joints and material volume checks do not establish load capacity.
+The BOM retains eighteen hinges, nine catch sets, eight module screw sets, 36 M3 × 25 frame bolt sets, 54 M3 × 12
+door/keeper sets, ninety backing washers and eighteen catch-block screws. Hardware geometry is still an estimated
+mounting envelope, not a manufacturer drilling template. Flap chains, cleat fixing holes and vehicle anchorage
+hardware remain to detail. Glue/clamp shelf cleats and supporting panels on the bench, dry-fit the module in the
+van, then complete the fixed joints. The four existing visibility filters and material role IDs remain stable.
 
-At the owner's saved 390mm platform height, the compared centre/cab-end frame-plus-skin construction contained
-8.687 litres of plywood versus 9.596 litres in the solid 12mm partitions. Enlarging the forward shelves and ledges
-added 0.111 litres, for a 1.020-litre increase before corner cleats and extending the wall supports to the cab end.
-This is a material-volume comparison, not a measured weight saving. The forward clear length increases 318→326mm.
-The initial all-plywood implementation added 1.159 litres, including corner cleats and the wall supports extended
-to the cab end. The ledges, corner cleats and latch blocks have since changed to ready-made pine; that historical
-volume comparison is not a weight comparison for the mixed-material assembly.
+The Visibility section provides independent Cabinet shelves, Cabinet doors, Cabinet skin and Cabinet frames
+checkboxes, each covering both modules. Hinges follow Doors, including their stationary leaves. These are local
+viewer controls and require no server roundtrip or regeneration. Their saved preferences survive hiding/showing
+the whole cabinet. Parameter-group eye buttons use the same actual component paths.
 
-The wall-facing back lining is Bunnings Tunnelcore 3mm white polypropylene flute board
-(2440 × 1220mm, item 0999179). It bends across its height, follows the general wall curvature, and bridges the
-window recess. The most projecting side-pillar profile within the cabinet span determines its position, with
-1mm normal clearance. Its top meets the plywood ceiling; it stops 1mm ahead of the rear corner transition,
-never wrapping around that pillar. Its cab end follows the cabinet end. A bottom notch uses the cabinet's
-existing wheel-arch cutout and 3mm allowance. At defaults it spans Y = 201–1100 in the vehicle.
-The rear rails and upright fit inside the backing's inner face; shelf depths meet their individual rails.
-The partitions follow the fitting volume rather than the former two broad support planes. The space behind the
-sheet is excluded from the carcass fitting volume.
-Thickness comes from the selected product; clearance has its own Cabinet / Back lining control and visibility eye.
-The Visibility section also has a Cabinet backing checkbox; its saved preference survives hiding/showing the cabinet.
-Cabinet shelves independently filters `/Campervan/Cabinet/Shelves`, covering all five shelf panels without their
-support ledges. Like Cabinet backing, its saved setting survives Cabinet toggles; hiding Cabinet hides both.
-It uses the same native labelled checkbox and keyboard behaviour described in the visibility guidance below.
-The BOM records the sheet separately from plywood and uses its developed centre-curve length for the cut rectangle,
-not the curved part's bounding-box depth. Confirm flute orientation and physical fit before cutting.
-There is no top panel. Shelf fasteners are not modelled.
-
-`cabinet_doors.py` makes nine 6mm plywood overlay doors. The four upper shelf openings each have a
-bottom-hinged flap, intended to stop horizontally on two short chain restraints. The front bottom door retains its vertical hinge; its above-bed neighbour is bottom-hinged, with separate live controls. All edges overlap the openings by
-15mm, with 12mm plan corner radii and 2mm face roundovers. The four upper flaps follow their respective bay widths.
-The rear storage has an opposed bottom pair and one full-width bottom-hinged flap above the raised shelf rail. The aisle crossbeam divides
-access without adding a shelf or rear crossbar. The rear chair-loading entrance remains 730mm high.
-
-`cabinet_mattress_clearance_mm` places the front lower shelf top 10mm above the uncompressed mattress. At the
-saved platform height 390mm and foam thickness 100mm, the shelf top is 500mm, the beam spans 473–533mm, and the
-above-bed doors begin at 518mm. Clear access openings above that beam are 197mm high. The two front lower doors
-are 375.5 × 443mm and 375.5 × 227mm; the bottom rear storage leaves are 251.25 × 443mm and the merged above-bed flap is
-504.5 × 227mm.
-These dimensions follow bed height, foam, clearance, stock sizes and overlay instead of fixed elevations.
-
-The closed door fronts stay at X = `bed_width_mm` (1070mm), and backs at X = 1076. The aisle frame starts at
-X = 1078, giving a 2mm gap for folded surface-mounted hinge leaves. `cabinet_aisle_x` is this actual front-face
-coordinate, independent of bench skin thickness. Shelf and partition depths derive from it; the wall-side
-support and flute-board lining retain their existing contour and position.
-
-Door groups have hinge-centred origins and native plywood children, keeping cutting sizes independent of pose.
-The four upper flaps have independent `cabinet_rear_upper_1_open_percent`, `cabinet_rear_upper_2_open_percent`,
-`cabinet_cab_end_upper_1_open_percent` and `cabinet_cab_end_upper_2_open_percent` controls. Each rotates about Y
-from 0 to −90 degrees before mirroring. The bottom rear pair has independent `cabinet_storage_aft_open_percent`
-and `cabinet_storage_fore_open_percent` controls, rotating about Z by +90 and −90 degrees before mirroring.
-The viewer reuses these tracks through the existing mirrored motion mechanism, without regeneration.
-`cabinet_storage_upper_doors_open_percent` independently drops the above-bed rear flap about Y through −90 degrees before mirroring. The front bottom door
-uses `cabinet_lower_doors_open_percent`; its raised neighbour uses `cabinet_front_upper_door_open_percent`.
-The two above-bed drop-down flaps clear the flat uncompressed mattress in the fully made-up bed.
-Bottom doors still require the bed stowed for physical access; the preview permits overlapping furniture.
-Python saved-parameter loading and browser position loading migrate the former grouped upper/storage values to
-their individual doors. Explicit individual values take precedence. Controls are grouped under Cabinet → Doors;
-the subgroup headings describe controls rather than introducing extra assembly visibility paths.
-
-The BoM includes eighteen Zenith 35mm fixed-pin butt hinges, nine Taskmaster zinc double roller catch sets
-(three four-packs, NZ$14.19 at the 6 November 2026 listed price), and two 3m
-packs of Pinnacle 2mm double jack chain. The six drop-down flaps each require two chain restraints; cut lengths
-depend on actual anchor positions (roughly 240–300mm each as an initial allowance).
-
-Each door has a 30mm circular finger hole with the existing door edge roundover on both rims. Flap pulls are
-centred; side-hinged door pulls sit near their free upper corners. The former Point keyed bores, flanges and
-50mm latch bodies are removed. Roller keepers follow the doors; fixed bodies remain on the cabinet. Only the
-keeper counts towards purchasing, so each roller/keeper pair is one catch set. Catch geometry is an estimated
-clearance envelope, not a drilling template. Confirm mounting orientation and screw lengths on the physical
-[Taskmaster catch](https://www.bunnings.co.nz/taskmaster-zinc-double-roller-catch-4-pack_p0035579).
-Five catches use the existing shelf ledges; four use 50mm blocks of the selected pine batten behind the frame.
-
-Chains restrain open flaps; they do not hold closed doors shut.
-
-Other hardware bodies, chain restraints, anchors and fasteners are not modelled.
-Hinge leaves face-mount in the closing gap. Through-fix the thin plywood door faces with flush countersunk heads. Check the actual
-leaf thickness/holes and select fixings before drilling. Fasten cabinet-side chain anchors into frame members and
-through-fix the door-side anchors. Check that slack chain
-stows inside the opening without being pinched when the door closes. The hinge-centred preview stops at
-90 degrees; it does not simulate flexible chain or verify the final anchor/load capacity.
-
-Bunnings product pages were checked on 20 October 2026: door plywood item 0345104 ($58/sheet), hinges
-4161393 ($1.45 each), catches 0035579 ($4.73/4-pack) and
-[chain 0581686](https://www.bunnings.co.nz/pinnacle-2mm-x-3m-zinc-plated-double-jack-chain_p0581686)
-($7.91/3m pack). These are Bunnings New Zealand listings; local Lyall Bay stock is unconfirmed. No overseas-only
-stay remains in the purchase list. Loading a project removes the superseded `cabinet-stays` selection and adds
-the `cabinet-chains` default, preventing the rejected stays from returning with saved project data.
+Loading an old project replaces the cabinet's obsolete 3mm skin selection with the existing 9mm Bunnings product
+and discards retired cabinet ledge, overlay and module-section fields. The cut list uses the timber stock sections,
+native sheet profiles and the new module structure. This initial model does not establish finished joinery,
+anchorage capacity, a weight saving or a fabrication-ready cutting schedule. Check the actual model visually,
+then template the vehicle and confirm physical hinge/fastener dimensions before fabrication. See
+[the construction rationale](research/cabinet-redesign.md).
 
 `gear.py` adds a separate Stored gear assembly for the owner's folded solar-panel bag (830 × 760 × 80mm),
 two folding chairs (600 × 700 × 100mm each), and a red-and-white chilly bin. These are owned reference objects, excluded from the cut list
@@ -832,19 +719,18 @@ Cut rectangles are not a nesting plan: they exclude saw kerf, grain constraints 
 purchase quantities require a cutting layout; roles selecting the same product may share stock.
 
 Bed frame supports, cross-bench support rails and bed guide ledges use the selected 18mm plywood.
-Cabinet ledges, corner cleats and catch blocks share ready-made 18 × 18mm untreated pine.
-Cabinet aisle frames, rear rails, rear upright and solid vertical panels share 9mm sheets with the
-cross-bench rear skin. The drawer uses 12mm sheets. The cabinet frame, partition and shelf roles
-retain their actual flat profiles in the cut list, including the partitions' wall curves and wheel-arch notch.
+Cabinet front frame, cleats, joining rails and catch blocks share 40 × 18mm pine; the bridge uses 90 × 18mm pine.
+The cabinet uses 9mm scribed supporting panels and 6mm door/shelf plywood. The cross-bench rear skin remains 9mm plywood;
+the drawer uses 12mm sheets. Plywood parts retain their scribed profiles and openings in the cut list.
 The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
-Both cabinet batten section dimensions come from the selected timber product, with measured overrides.
+Cabinet stock sections come from their selected timber products, with measured overrides.
 
 The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, listed at $33.47 per
 1200 × 1195mm panel on 1 November 2026. The cutting stock uses the product title's 1195mm width rather than
 the specification table's rounded 1200mm. Wellington branch stock remains unconfirmed. Door hinges use
 through-fixings in the 6mm faces; their fixing details still depend on the physical hinges.
 
-The cross-bench rear skin shares 9mm Tigerply Okoume-faced poplar-core plywood with the cabinet verticals and shelves. Its material
+The cross-bench rear skin uses 9mm Tigerply Okoume-faced poplar-core plywood independently of cabinet stock. Its material
 role retains the `skins` ID and sets `cross_bench_skin_thickness_mm`. Projects selecting the former 4mm special-order
 skin product migrate to the 9mm product. The long bench has no cab-end skin. Slat and long-bench frame positions use
 their retained construction inset rather than skin thickness.

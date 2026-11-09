@@ -9,6 +9,7 @@
   <body>
     <header><h1>Campervan CAD</h1><nav aria-label="Project views">
       <button id="cad-tab" aria-controls="cad-panel" aria-pressed="true">CAD</button>
+      <button id="scan-tab" aria-controls="scan-panel" aria-pressed="false">Scan</button>
       <button id="bom-tab" aria-controls="bom-panel" aria-pressed="false">Bill of materials</button>
       <button id="plan-tab" aria-controls="plan-panel" aria-pressed="false">Plan</button>
       <button id="cuts-tab" aria-controls="cuts-panel" aria-pressed="false">Cut list</button>
@@ -36,7 +37,9 @@
           <label><input type="checkbox" name="cushions" checked /> Cushions</label>
           <label><input type="checkbox" name="cabinet" checked /> Cabinet</label>
           <label><input type="checkbox" name="cabinetShelves" checked /> Cabinet shelves</label>
-          <label><input type="checkbox" name="cabinetBacking" checked /> Cabinet backing</label>
+          <label><input type="checkbox" name="cabinetDoors" checked /> Cabinet doors</label>
+          <label><input type="checkbox" name="cabinetSkin" checked /> Cabinet skin</label>
+          <label><input type="checkbox" name="cabinetFrames" checked /> Cabinet frames</label>
           <label><input type="checkbox" name="storedGear" checked /> Stored gear</label>
           <label><input type="checkbox" name="longBench" checked /> Long bench</label>
           <label><input type="checkbox" name="crossBench" checked /> Cross bench</label>
@@ -67,6 +70,7 @@
       <div id="viewer" aria-label="Interactive CAD viewer"></div>
     </section>
     <section id="plan-panel" aria-label="Conversion plan" hidden></section>
+    <section id="scan-panel" aria-label="Scan reconstruction" hidden></section>
     <section id="bom-panel" aria-label="Bill of materials" hidden></section>
     <section id="cuts-panel" aria-label="Cut list and layouts" hidden></section>
     <section id="apriltags-panel" aria-label="AprilTag PDF generator" hidden></section>

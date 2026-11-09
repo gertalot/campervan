@@ -179,7 +179,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
       if (field === 'drawer_extension_percent' && track.path.endsWith('/Rear drawer/Tray')) {
         return { kind: 'linear', field, track, path: track.path, label: 'Extend drawer', group, point: hit.point };
       }
-      if (track.kind === 'rotation' && track.path.includes('/Cabinet/Doors/')) {
+      if (track.kind === 'rotation' && /\/Cabinet\/(?:(?:Lower|Upper) module\/)?Doors\//.test(track.path)) {
         return { kind: 'hinge', field, track, path: track.path,
           label: `Open ${track.path.split('/').at(-1)}`, group, point: hit.point };
       }

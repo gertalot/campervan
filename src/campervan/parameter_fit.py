@@ -50,12 +50,7 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
     ]
     limits.append(
         (
-            p.arch_height_mm
-            + 3
-            - p.foam_thickness_mm
-            - p.cabinet_mattress_clearance_mm
-            + p.cabinet_ledge_height_mm
-            + p.cabinet_shelf_thickness_mm,
+            p.arch_height_mm + 3 - p.foam_thickness_mm - p.cabinet_mattress_clearance_mm + p.cabinet_frame_width_mm,
             "Cabinet shelf rail: its underside must clear the wheel arch by 3mm.",
         )
     )
@@ -64,23 +59,16 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
     # next shelf. Its height follows the uncompressed mattress and sourced stock.
     maximum = (
         p.cabinet_rear_storage_height_mm
-        - 2 * radius
+        - 85
+        - 2 * p.cabinet_door_gap_mm
         - 0.1
         - p.foam_thickness_mm
         - p.cabinet_mattress_clearance_mm
-        - member
-        + p.cabinet_ledge_height_mm
-        + p.cabinet_shelf_thickness_mm
     )
     member_minimum, member_reason = max(
         (
             (2 * p.frame_thickness_mm, "the tie strip and guide thicknesses"),
             (p.bracket_arm_mm + p.bracket_clearance_mm + 0.1, "the bed angle brackets and their clearance"),
-            (
-                p.cabinet_shelf_thickness_mm + p.cabinet_ledge_height_mm + p.cabinet_door_overlap_mm,
-                "the shelf, its ledge and door overlap above the mattress",
-            ),
-            (2 * p.cabinet_door_overlap_mm + p.cabinet_door_gap_mm + 0.1, "the cabinet door overlaps and gap"),
         ),
         key=lambda item: item[0],
     )

@@ -17,6 +17,11 @@ environment. The local API restores saved project data after a reload; the front
 The model cache contains viewer geometry, measurement shapes, motion tracks and cut parts. Its fingerprint includes
 dimensions, CAD/publishing source and installed CAD/viewer versions. Live pose changes reuse the existing geometry.
 Failed construction retains the previous complete model and reports the error in the app.
+Reconnecting after an API reload replays the last saved model, even if CAD source has changed. It does not restart
+an interrupted rebuild. Use Regenerate or apply dimensional/material changes to build the current design; an initial
+build still starts automatically when there is no saved model.
+The load action also picks up a newly saved bundle matching the current model fingerprint, allowing an offline
+CAD build to finish independently of API reloads and then refresh the viewer and cut lists without another build.
 
 ## Checks and formatting
 

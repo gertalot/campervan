@@ -1,0 +1,326 @@
+/** Inspect loose clouds and completed RGB-D reconstruction runs in the installed CAD renderer. */
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import {
+  Box3, LoadingManager, Matrix4, Mesh, MeshBasicMaterial, Points, PointsMaterial,
+  type Material, type Object3D, type Texture, type MeshPhongMaterial, type Camera,
+} from 'three';
+import * as library from './renderer';
+import { createViewerCamera, type CameraViewer, type CameraState } from './viewer-camera';
+import { onTab } from './tabs';
+import { assetUrl } from './site-runtime';
+import { createScanTags } from './scan-tags';
+import { createScanMeasure } from './scan-measure';
+import { readScanResults, type ScanResult as Scan, type ScanLayer as Layer } from './scan-library-api';
+import { createScanLibrary } from './scan-library';
+
+interface ScanViewer extends CameraViewer {
+  rendered: CameraViewer['rendered'] & {
+    nestedGroup: { groups: Record<string, Object3D> };
+    orientationMarker: { setVisible(visible: boolean): void };
+  };
+  update(marker: boolean, notify: boolean): void;
+}
+
+function disposeObject(root: Object3D) {
+  root.traverse(object => {
+    if (!(object instanceof Mesh || object instanceof Points)) return;
+    object.geometry.dispose();
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+      for (const value of Object.values(material)) if ((value as Texture)?.isTexture) (value as Texture).dispose();
+      material.dispose();
+    }
+  });
+}
+
+async function loadObject(url: string, kind: Layer['kind'], photo = false): Promise<Object3D> {
+  if (kind !== 'obj') {
+    const geometry = await new PLYLoader().loadAsync(url);
+    if (!geometry.getAttribute('position')?.count) { geometry.dispose(); throw new Error('The scan has no geometry.'); }
+    return kind === 'cloud'
+      ? new Points(geometry, new PointsMaterial({ size: 2, sizeAttenuation: false,
+        color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }))
+      : new Mesh(geometry, new MeshBasicMaterial({ color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }));
+  }
+  // Keep the native manager open while MTL, OBJ and their texture images are loaded.
+  const manager = new LoadingManager();
+  let assetError = '';
+  const complete = new Promise<void>(resolve => { manager.onLoad = resolve; });
+  manager.onError = failed => { assetError = `Could not load scan asset: ${failed}`; };
+  manager.itemStart('scan');
+  let root: Object3D | undefined;
+  try {
+    // OpenMVS writes Tr=1 for opaque surfaces; its convention is the inverse of standard MTL.
+    const materialLoader = new MTLLoader(manager);
+    materialLoader.setMaterialOptions({ invertTrProperty: photo });
+    const materials = await materialLoader.loadAsync(url.replace(/\.obj$/, '.mtl'));
+    materials.preload();
+    root = await new OBJLoader(manager).setMaterials(materials).loadAsync(url);
+    manager.itemEnd('scan');
+    await complete;
+    if (assetError) throw new Error(assetError);
+    root.traverse(object => {
+      if (!(object instanceof Mesh)) return;
+      const unlit = (original: Material) => {
+        const source = original as MeshPhongMaterial;
+        const material = new MeshBasicMaterial({ color: source.color, map: source.map,
+          opacity: source.opacity, transparent: source.transparent, vertexColors: !source.map && source.vertexColors });
+        original.dispose();
+        return material;
+      };
+      object.material = Array.isArray(object.material) ? object.material.map(unlit) : unlit(object.material);
+    });
+    return root;
+  } catch (error) {
+    if (root) disposeObject(root);
+    throw error;
+  }
+}
+
+export function setupScan(panel: HTMLElement) {
+  panel.innerHTML = `
+    <div class="scan-controls">
+      <label>Result <select data-scan aria-label="Scan result"></select></label>
+      <button type="button" data-manage>Manage scans…</button>
+      <label>Layer <select data-layer aria-label="Scan display layer"></select></label>
+      <label data-point-size>Point size <input type="range" min="1" max="6" step="0.5" value="2" />
+        <output>2 px</output></label>
+      <button type="button" data-refresh>Refresh scans</button>
+      <label title="Estimated tag locations, shown through surfaces"><input type="checkbox" data-tags checked />
+        <span data-tag-count>AprilTags</span></label>
+      <p role="status" aria-live="polite">Select Scan to load the processed result.</p>
+    </div>
+    <div id="scan-viewer" aria-label="Interactive scan viewer"></div>
+    <div class="scan-measure-status" data-measure-bar hidden></div>`;
+  const select = panel.querySelector<HTMLSelectElement>('[data-scan]')!;
+  const layers = panel.querySelector<HTMLSelectElement>('[data-layer]')!;
+  const size = panel.querySelector<HTMLInputElement>('input[type=range]')!;
+  const output = panel.querySelector('output')!;
+  const pointSize = panel.querySelector<HTMLElement>('[data-point-size]')!;
+  const refresh = panel.querySelector<HTMLButtonElement>('[data-refresh]')!;
+  const tags = panel.querySelector<HTMLInputElement>('[data-tags]')!;
+  const tagCount = panel.querySelector<HTMLElement>('[data-tag-count]')!;
+  const status = panel.querySelector('[role=status]')!;
+  const container = panel.querySelector<HTMLElement>('#scan-viewer')!;
+  let scans: Scan[] = [];
+  let viewer: ScanViewer | undefined;
+  let material: PointsMaterial | undefined;
+  let page: { handleMessage(message: unknown): void; resize(): void } | undefined;
+  let loading = false;
+  let initialized = false;
+  let generation = 0;
+  let currentFrame = '';
+  let tagOverlay: ReturnType<typeof createScanTags> | undefined;
+  let renderedScan: Scan | undefined;
+  const measure = createScanMeasure({ panel, container, bar: panel.querySelector<HTMLElement>('[data-measure-bar]')!,
+    capture: () => renderedScan, overlay: () => tagOverlay, loading: () => loading,
+    view: async key => { await refreshScans(); await changeResult(key); } });
+  const camera = createViewerCamera(container, () => viewer, 'campervan.scan.camera.reference', () => loading);
+  measure.attach();
+  const manager = createScanLibrary({ results: () => scans, currentKey: () => select.value,
+    view: key => changeResult(key), changed: () => refreshScans() });
+  panel.querySelector<HTMLButtonElement>('[data-manage]')!.onclick = () => { void manager.open(); };
+  tags.onchange = () => { tagOverlay?.setVisible(tags.checked); };
+
+  size.oninput = () => {
+    output.value = `${size.value} px`;
+    if (material) material.size = Number(size.value);
+    viewer?.update(true, false);
+  };
+
+  function layerOptions() {
+    const scan = scans.find(item => item.key === select.value);
+    const previousLayer = layers.value || sessionStorage.getItem('campervan.scan.layer') || '';
+    layers.replaceChildren();
+    if (!scan) { layers.disabled = true; return; }
+    for (const layer of scan?.layers ?? [{ id: 'cloud', label: 'Cloud', asset: scan?.name, kind: 'cloud' }]) {
+      layers.add(new Option(layer.id === 'photo' ? 'Photo texture (experimental)' : layer.label, layer.id));
+    }
+    const preferred = ['colour', 'mesh', 'photo', 'cloud']
+      .find(id => [...layers.options].some(option => option.value === id));
+    if ([...layers.options].some(option => option.value === previousLayer)) layers.value = previousLayer;
+    else if (preferred) layers.value = preferred;
+    layers.disabled = layers.options.length < 2;
+  }
+
+  async function loadLayer(restoreCamera = false) {
+    const scan = scans.find(item => item.key === select.value && !item.archived);
+    if (!scan || !page) return;
+    const layer = scan.layers?.find(item => item.id === layers.value)
+      ?? { id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const };
+    sessionStorage.setItem('campervan.scan.result', scan.key);
+    sessionStorage.setItem('campervan.scan.layer', layer.id);
+    const token = ++generation;
+    const key = scan.reference_run_id ?? scan.id ?? scan.name;
+    const aligned = scan.alignment?.status === 'aligned' && !!scan.alignment.matrix;
+    const frame = aligned ? `reference:${scan.alignment!.target_frame}` : `scan:${key}`;
+    let saved = currentFrame === frame ? camera.cameraState() : restoreCamera && aligned
+      ? JSON.parse(localStorage.getItem('campervan.scan.camera.reference') ?? 'null') as CameraState | null : null;
+    loading = true;
+    measure.refresh();
+    camera.cancelCameraAnimation();
+    status.textContent = `Loading ${scan.display_name} · ${layer.label}…`;
+    const url = scan.id
+      ? `/api/v1/scans/runs/${encodeURIComponent(scan.id)}/assets/${layer.asset.split('/').map(encodeURIComponent).join('/')}`
+      : `/api/v1/scans/${encodeURIComponent(scan.name)}`;
+    let root: Object3D | undefined;
+    try {
+      root = await loadObject(url, layer.kind, layer.id === 'photo');
+      if (token !== generation) { disposeObject(root); return; }
+      if (currentFrame === frame) saved = camera.cameraState() ?? saved;
+      if (aligned) root.applyMatrix4(new Matrix4().fromArray(scan.alignment!.matrix!.flat()).transpose());
+      const bounds = new Box3().setFromObject(root);
+      if (bounds.isEmpty()) throw new Error('The scan contains no geometry.');
+      const { min, max } = bounds;
+      page.handleMessage({
+        type: 'data', data: { shapes: { id: '/Scan', name: 'Scan',
+          bb: { xmin: min.x, ymin: min.y, zmin: min.z, xmax: max.x, ymax: max.y, zmax: max.z },
+          parts: [{ id: '/Scan/Cloud', name: layer.label, type: 'vertices', state: [0, 1],
+            size: Number(size.value), color: '#ffffff', shape: { obj_vertices: [] } }],
+        } },
+        config: { theme: 'dark', tools: false, glass: false, control: 'orbit', up: 'Z',
+          ortho: saved?.ortho ?? false, zoom: 0.65, resetCamera: 'reset', axes: true, axes0: true,
+          grid: [false, false, false] },
+      });
+      // Let the existing renderer own the bulk layer without registering millions of CAD components.
+      const group = viewer!.rendered.nestedGroup.groups['/Scan/Cloud'];
+      for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
+      group.add(root);
+      renderedScan = scan;
+      void measure.reload();
+      tagOverlay ??= createScanTags(container, () => viewer?.rendered.camera.camera as unknown as Camera);
+      tagOverlay.setTags(scan.tags ?? [], aligned ? scan.alignment!.matrix : undefined);
+      tagOverlay.setVisible(tags.checked);
+      tags.disabled = !scan.tags?.length;
+      tagCount.textContent = `AprilTags (${scan.tags?.length ?? 0})`;
+      tags.parentElement!.title = `${scan.tag_note ?? 'No saved tag poses.'} Markers are shown through surfaces.`;
+      material = root instanceof Points ? root.material as PointsMaterial : undefined;
+      if (material) material.size = Number(size.value);
+      pointSize.hidden = layer.kind !== 'cloud';
+      camera.attachCube();
+      viewer!.rendered.orientationMarker.setVisible(true);
+      for (const child of container.querySelectorAll<HTMLElement>('.tcv_cad_toolbar > *')) {
+        if (child.querySelector('.tcv_button_perspective, .tcv_button_reset, .tcv_button_resize')) {
+          child.dataset.campervanControl = 'true';
+        }
+      }
+      if (!panel.hidden) page.resize();
+      if (saved) {
+        const projection = viewer!.rendered.camera.camera;
+        const zoom = saved.ortho
+          ? saved.viewHeight ? (projection.top - projection.bottom) / saved.viewHeight : saved.zoom : null;
+        viewer!.setCameraLocationSettings(saved.position, saved.quaternion, saved.target, zoom, false);
+      }
+      viewer!.update(true, false);
+      const vertices = root instanceof Mesh || root instanceof Points ? root.geometry.getAttribute('position').count : null;
+      status.textContent = `${vertices?.toLocaleString() ?? ''} ${layer.label} · metres · `
+        + (aligned ? `${scan.alignment!.target_frame} axes · origin tag ${scan.alignment!.definition!.origin_tag}`
+          : scan.alignment?.reason ?? 'unaligned scan coordinates')
+        + (scan.pose_source === 'gtsam_measured_distances' ? ' · distance-adjusted'
+          : scan.measured === false ? ' · unmeasured trial' : '');
+      currentFrame = frame;
+      root = undefined; // The native renderer disposes the attached layer when it replaces the scene.
+    } catch (error) {
+      if (root) disposeObject(root);
+      if (token === generation) status.textContent = error instanceof Error ? error.message : String(error);
+    } finally {
+      if (token === generation) { loading = false; camera.saveCamera(); measure.attach(); }
+    }
+  }
+
+  function clearDisplayedResult() {
+    ++generation; loading = false;
+    sessionStorage.removeItem('campervan.scan.result'); sessionStorage.removeItem('campervan.scan.layer');
+    const group = viewer?.rendered.nestedGroup.groups['/Scan/Cloud'];
+    if (group) for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
+    material = undefined; renderedScan = undefined;
+    tagOverlay?.setTags([]); tagCount.textContent = 'AprilTags (0)'; tags.disabled = true;
+    pointSize.hidden = true; size.disabled = true; measure.clearCapture(); measure.attach();
+    camera.cancelCameraAnimation(); viewer?.update(true, false);
+    status.textContent = 'No active results — open Manage scans to restore one.';
+  }
+
+  async function changeResult(key: string) {
+    if (!scans.some(scan => scan.key === key && !scan.archived)) return;
+    ++generation; measure.cancel(); select.value = key; layerOptions(); await loadLayer();
+  }
+
+  async function refreshScans() {
+    const previousKey = select.value;
+    const preferredKey = previousKey || sessionStorage.getItem('campervan.scan.result');
+    const discovered = await readScanResults();
+    scans = discovered;
+    const active = scans.filter(scan => !scan.archived).sort((a, b) =>
+      (a.group_name ?? 'Ungrouped').localeCompare(b.group_name ?? 'Ungrouped')
+      || (a.group_id ?? '').localeCompare(b.group_id ?? '')
+      || a.display_name.localeCompare(b.display_name) || a.key.localeCompare(b.key));
+    const selected = active.find(scan => scan.key === preferredKey) ?? active.find(scan => scan.is_default) ?? active[0];
+    const groups = new Set(active.map(scan => scan.group_id));
+    select.replaceChildren();
+    let group: HTMLOptGroupElement | undefined;
+    let previousGroup: string | null | undefined;
+    for (const scan of active) {
+      const option = new Option(scan.display_name, scan.key);
+      if (groups.size > 1) {
+        if (!group || scan.group_id !== previousGroup) {
+          group = document.createElement('optgroup'); group.label = scan.group_name ?? 'Ungrouped'; select.append(group);
+          previousGroup = scan.group_id;
+        }
+        group.append(option);
+      } else select.add(option);
+    }
+    select.disabled = !selected; tags.disabled = !renderedScan?.tags?.length; size.disabled = !selected;
+    if (selected) select.value = selected.key;
+    layerOptions();
+    if (!selected) clearDisplayedResult();
+    else if (previousKey && selected.key !== previousKey) { clearDisplayedResult(); await loadLayer(); }
+    else if (!previousKey && page) await loadLayer();
+    else if (renderedScan?.key === selected.key) renderedScan = selected;
+  }
+
+  async function initialize() {
+    status.textContent = 'Loading available scans…';
+    try {
+      await refreshScans();
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = assetUrl('viewer-assets/css/three-cad-viewer.css');
+      const styles = new Promise<void>((resolve, reject) => {
+        css.onload = () => resolve(); css.onerror = () => reject(new Error('Could not load scan viewer styles.'));
+      });
+      document.head.append(css);
+      const url = assetUrl('viewer-assets/js/ocp-viewer-core/index.js');
+      const [core] = await Promise.all([import(/* @vite-ignore */ url), styles]);
+      class ScanRenderer extends library.Viewer {
+        constructor(...args: any[]) {
+          super(...args); viewer = this as unknown as ScanViewer;
+          const update = this.update.bind(this);
+          this.update = (...args: any[]) => { update(...args); camera.updateCube(); tagOverlay?.update(); };
+        }
+      }
+      page = core.createPage({
+        Viewer: ScanRenderer, Display: library.Display, Timer: library.Timer,
+        container, listen: false, theme: 'dark',
+        getSize: () => ({ width: container.clientWidth + 20, height: container.clientHeight }),
+        overrides: { display: { tools: false, glass: false, theme: 'dark' }, viewer: { tools: false } },
+        send(command: string) { if (command === 'status') camera.saveCamera(); },
+      });
+      new ResizeObserver(() => { if (viewer?.ready && !panel.hidden) page!.resize(); }).observe(container);
+      await loadLayer(true);
+    } catch (error) { status.textContent = error instanceof Error ? error.message : String(error); }
+  }
+
+  select.onchange = () => changeResult(select.value);
+  layers.onchange = () => { void loadLayer(); };
+  refresh.onclick = () => {
+    refresh.disabled = true;
+    void Promise.all([refreshScans(), measure.reload(), manager.refresh()]).catch(error => { status.textContent = String(error); })
+      .finally(() => { refresh.disabled = false; });
+  };
+  onTab(tab => {
+    measure.tabChanged(tab === 'scan');
+    if (tab !== 'scan') { camera.cancelCameraAnimation(); return; }
+    if (!initialized) { initialized = true; void initialize(); }
+    else if (viewer?.ready) page!.resize();
+  });
+}

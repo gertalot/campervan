@@ -41,57 +41,63 @@ class MaterialRole(BaseModel):
 
 ROLES = [
     MaterialRole(
-        id="floor", name="Floor plywood", kind="sheet", fields={"thickness": "floor_ply_thickness_mm"},
-        note="The CAD floor is currently one panel. Its sheet size and division into separate panels still need specifying.",
+        id="floor",
+        name="Floor plywood",
+        kind="sheet",
+        fields={"thickness": "floor_ply_thickness_mm"},
+        note="The CAD floor is currently one panel. "
+        "Its sheet size and division into separate panels still need specifying.",
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
-        id="table-plywood", name="Tabletop panel", kind="sheet",
-        fields={"thickness": "table_ply_thickness_mm"}, default_product_id="specrite-pine-18-1200-600",
+        id="table-plywood",
+        name="Tabletop panel",
+        kind="sheet",
+        fields={"thickness": "table_ply_thickness_mm"},
+        default_product_id="specrite-pine-18-1200-600",
         note="Two 700 × 250 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
-             "Grain follows the 700mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
-             "The mounting spacer remains frame plywood.",
+        "Grain follows the 700mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
+        "The mounting spacer remains frame plywood.",
     ),
     MaterialRole(
-        id="lagun", name="Lagun swivel table leg", kind="hardware", fields={}, quantity=1,
+        id="lagun",
+        name="Lagun swivel table leg",
+        kind="hardware",
+        fields={},
+        quantity=1,
         note="One 500mm single-arm kit with standard 92 × 170mm bracket and 240 × 200mm tabletop mount. "
-             "Confirm bolt lengths and backing against the physical furniture before drilling.",
+        "Confirm bolt lengths and backing against the physical furniture before drilling.",
     ),
     MaterialRole(
-        id="table-hinges", name="Tabletop fold-over hinges", kind="hardware", fields={}, quantity=2,
+        id="table-hinges",
+        name="Tabletop fold-over hinges",
+        kind="hardware",
+        fields={},
+        quantity=2,
         note="Two Homer HOM006136 hinges, supplied as one pair, for the 18mm pine leaves. "
-             "Fosters specifies horizontal support and a 180° fold-over action. "
-             "Hinge positions, capacity, mortises, joint gap and fixings remain unconfirmed.",
+        "Fosters specifies horizontal support and a 180° fold-over action. "
+        "Hinge positions, capacity, mortises, joint gap and fixings remain unconfirmed.",
     ),
     MaterialRole(
         id="cabinet-frames",
-        name="Cabinet frame plywood",
-        kind="sheet",
-        fields={"thickness": "cabinet_frame_thickness_mm"},
+        name="Cabinet front frame and cleats",
+        kind="timber",
+        fields={"width": "cabinet_frame_width_mm", "thickness": "cabinet_frame_thickness_mm"},
     ),
     MaterialRole(
         id="cabinet-partitions",
-        name="Cabinet solid vertical plywood",
+        name="Cabinet supporting plywood panels",
         kind="sheet",
         fields={"thickness": "cabinet_partition_thickness_mm"},
     ),
     MaterialRole(
-        id="skins", name="Cross-bench rear plywood", kind="sheet",
+        id="skins",
+        name="Cross-bench rear plywood",
+        kind="sheet",
         fields={"thickness": "cross_bench_skin_thickness_mm"},
     ),
     MaterialRole(id="shelves", name="Shelf plywood", kind="sheet", fields={"thickness": "cabinet_shelf_thickness_mm"}),
     MaterialRole(id="drawer", name="Drawer plywood", kind="sheet", fields={"thickness": "drawer_ply_mm"}),
-    MaterialRole(
-        id="ledges",
-        name="Cabinet battens",
-        kind="timber",
-        fields={"width": "cabinet_ledge_size_mm", "thickness": "cabinet_ledge_height_mm"},
-        note=(
-            "Ready-made 18 × 18mm untreated clear pine for shelf ledges, corner cleats and catch blocks. "
-            "Square crosscuts only: wall ledges now meet straight rear rails, with no wall-facing bevels. "
-            "No plywood strips to rip. Plan crosscuts with kerf/waste before buying lengths."
-        ),
-    ),
     MaterialRole(
         id="slats",
         name="Existing bed slats",
@@ -106,22 +112,85 @@ for role in ROLES:
         "frames": "tigerply-18",
         "table-plywood": "specrite-pine-18-1200-600",
         "table-hinges": "homer-table-hinge-pair",
-        "cabinet-frames": "tigerply-okoume-9",
+        "cabinet-frames": "pinetrim-40-18-1800",
         "cabinet-partitions": "tigerply-okoume-9",
         "skins": "tigerply-okoume-9",
-        "shelves": "tigerply-okoume-6",
+        "shelves": "bbi-redline-6-1200-1195",
         "drawer": "tigerply-12",
-        "ledges": "pinetrim-18-18-2400",
     }.get(role.id)
     if role.id == "drawer":
         role.note = "Drawer sides, ends and bottom share 12mm sheets; plan cuts together."
     elif role.id == "shelves":
-        role.note = "6mm plywood on continuous glued and screwed perimeter ledges for pantry storage."
-    elif role.id in {"cabinet-frames", "cabinet-partitions", "skins"}:
-        role.note = "Share 9mm sheets across cabinet frames, solid vertical panels and cross-bench rear skin."
+        role.note = "6mm pantry shelves bear on face-mounted timber cleats."
+    elif role.id == "cabinet-frames":
+        role.note = (
+            "40 × 18mm untreated pine for the front frame, local shelf cleats, module joints and hardware backing."
+        )
+    elif role.id == "cabinet-partitions":
+        role.note = (
+            "9mm supporting end panels and centre divider: scribe side and ceiling edges. Van side closes the back."
+        )
+    elif role.id == "skins":
+        role.note = "9mm plywood cross-bench rear skin."
 
 ROLES.extend(
     [
+        MaterialRole(
+            id="cabinet-bridge",
+            name="Cabinet wheel-arch bridge",
+            kind="timber",
+            fields={"width": "cabinet_bridge_height_mm", "thickness": "cabinet_bridge_thickness_mm"},
+            default_product_id="pinetrim-90-18-1800",
+            note="One 90 × 18mm on-edge rail spans the wheel arch between end panels and carries the centre divider. "
+            "No middle posts.",
+        ),
+        MaterialRole(
+            id="cabinet-hinge-frame-bolts",
+            name="Cabinet hinge-to-frame bolts",
+            kind="hardware",
+            fields={},
+            quantity=36,
+            default_product_id="champion-m3-25-20",
+            note="Two M3 × 25 through-bolts per fixed hinge leaf, with nuts and separate backing washers. "
+            "Confirm hole diameter against the purchased hinge; preserve full timber behind the hinge positions.",
+        ),
+        MaterialRole(
+            id="cabinet-door-bolts",
+            name="Cabinet door and keeper through-bolts",
+            kind="hardware",
+            fields={},
+            quantity=54,
+            note="M3 × 12 pan-head bolt and nut sets: 36 for the moving hinge leaves and 18 for catch keepers. "
+            "Washers separate. Confirm head/hole fit on physical hardware; M3 × 12 is listed by an NZ supplier.",
+        ),
+        MaterialRole(
+            id="cabinet-hardware-washers",
+            name="Cabinet hardware backing washers",
+            kind="hardware",
+            fields={},
+            quantity=90,
+            note="M3 flat backing washers, nominal 8mm outside diameter: 36 frame hinge, 36 door hinge, 18 keeper. "
+            "Confirm bearing faces and fit on the physical hardware.",
+        ),
+        MaterialRole(
+            id="cabinet-catch-block-screws",
+            name="Cabinet catch-block assembly screws",
+            kind="hardware",
+            fields={},
+            quantity=18,
+            default_product_id="zenith-6g-40-100",
+            note="Two 6g × 40mm screws through the front header into each square-cut catch block. "
+            "Glue the broad mating faces, predrill and countersink. Catch base screws come with the catches.",
+        ),
+        MaterialRole(
+            id="cabinet-module-fasteners",
+            name="Cabinet module bolt sets",
+            kind="hardware",
+            fields={},
+            note="Eight countersunk M5 × 90mm joint screws, with a top washer and locking nut. "
+            "Heads are flush below the lower rails to preserve chair clearance. "
+            "80mm nominal timber stack; product and final fixing details remain to select.",
+        ),
         MaterialRole(
             id="cabinet-glue",
             name="Cabinet wood glue",
@@ -130,10 +199,11 @@ ROLES.extend(
             quantity=1,
             default_product_id="selleys-aquadhere-exterior-250",
             note=(
-                "One 250ml bottle as an initial cabinet allowance. Glue shelf-to-ledge, ledge-to-panel and "
-                "corner-cleat mating faces, including the panel/frame seams. Close-fitting bare wood only; "
+                "One 250ml bottle as an initial cabinet allowance. Glue front-frame joints and "
+                "fixed cleat-to-panel mating faces. Keep the module interface unglued. Close-fitting bare wood only; "
                 "clamp during curing and leave unstressed for 24 hours. Furniture adhesive, not vehicle anchorage. "
-                "Flute-board lining remains non-structural and is not bonded with this PVA."
+                "Bond the fixed centre divider and end panels to their local timber. "
+                "The van side closes the open wall-facing back."
             ),
         ),
         MaterialRole(
@@ -141,9 +211,9 @@ ROLES.extend(
             name="Cabinet door plywood",
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
-            default_product_id="tigerply-okoume-6",
-            note="Nine 6mm overlay doors, sharing Tigerply Okoume sheets with the shelves. "
-                 "Six drop-down flaps, one front door and the bottom storage pair. Through-fix hinges on thin plywood.",
+            default_product_id="bbi-redline-6-1200-1195",
+            note="Nine 6mm inset doors sharing sheets with the shelves. "
+            "Six drop-down flaps, one front door and the bottom storage pair. Through-fix hinges on thin plywood.",
         ),
         MaterialRole(
             id="cabinet-hinges",
@@ -153,9 +223,10 @@ ROLES.extend(
             quantity=18,
             default_product_id="zenith-butt-35",
             note=(
-                "Two per door. Face-mount the leaves between door rear and aisle frame, within the closing gap. "
-                "Use countersunk through-fixings on the thin plywood door. "
-                "Hole sizes, leaf thickness and fixings still require checking against the physical hinge."
+                "Two per door, visibly face-mounted on the flush inset door and timber frame. "
+                "Use through-face bolts and backing washers on the thin plywood door. "
+                "Fixed leaves use M3 × 25 through-bolts and moving leaves M3 × 12. "
+                "Hole sizes and leaf swage still require checking against the physical hinge."
             ),
         ),
         MaterialRole(
@@ -184,17 +255,6 @@ ROLES.extend(
                 "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
                 "to plywood frame members. Chains, anchors and fixings are not modelled. "
                 "Confirm link openings, anchor details and closing clearance before buying fixings."
-            ),
-        ),
-        MaterialRole(
-            id="cabinet-back",
-            name="Cabinet back lining",
-            kind="sheet",
-            fields={"thickness": "cabinet_back_thickness_mm"},
-            default_product_id="tunnelcore-white-3",
-            note=(
-                "Curved backing to the plywood ceiling, clear of the rear corner, with a wheel-arch notch. "
-                "Cut rectangle uses developed curve length; confirm flute orientation before cutting."
             ),
         ),
         MaterialRole(
@@ -290,9 +350,7 @@ def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
         excluded.append("Long bench / Rear drawer")
     if not parameters.table_included:
         excluded.append("Laptop table")
-    return [cut for cut in cuts if not any(
-        cut.path == root or cut.path.startswith(root + " / ") for root in excluded
-    )]
+    return [cut for cut in cuts if not any(cut.path == root or cut.path.startswith(root + " / ") for root in excluded)]
 
 
 def default_selections() -> dict[str, Selection]:
@@ -348,13 +406,38 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     project.materials.pop("cabinet-stays", None)
     project.materials.pop("lagun-second-bracket", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
-    if project.materials.get("ledges", Selection()).product_id == "tigerply-18":
-        project.materials["ledges"] = Selection(product_id="pinetrim-18-18-2400")
+    # Older sheet-framed cabinets use the current front frame and supporting panels.
+    old_frame = project.materials.get("cabinet-frames", Selection()).product_id
+    if (
+        "cabinet-back" in project.materials
+        or "ledges" in project.materials
+        or (old_frame and old_frame.startswith("tigerply"))
+    ):
+        project.materials["cabinet-frames"] = Selection(product_id="pinetrim-40-18-1800")
+        if "cabinet-partitions" not in project.materials:
+            project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-9")
+        project.materials["cabinet-doors"] = Selection(product_id="bbi-redline-6-1200-1195")
+        project.materials["shelves"] = Selection(product_id="bbi-redline-6-1200-1195")
+        project.parameters = project.parameters.model_copy(
+            update={
+                "cabinet_door_corner_radius_mm": 2.0,
+                "cabinet_door_edge_radius_mm": 1.0,
+                "cabinet_ceiling_gap_mm": 5.0,
+            }
+        )
+    for retired in ("ledges", "cabinet-module-timber", "cabinet-back", "cabinet-pillar"):
+        project.materials.pop(retired, None)
+    if project.materials.get("cabinet-partitions", Selection()).product_id == "birch-3-2440":
+        project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-9")
     if project.materials.get("skins", Selection()).product_id == "tigerply-okoume-4":
         project.materials["skins"] = Selection(product_id="tigerply-okoume-9")
     if project.materials.get("slides", Selection()).product_id == "instantpanel-1200":
         project.materials["slides"] = Selection(product_id="instantpanel-locking-1200")
-    if project.materials.get("table-plywood", Selection()).product_id in {"tigerply-18", "tigerply-12", "tigerply-okoume-9"}:
+    if project.materials.get("table-plywood", Selection()).product_id in {
+        "tigerply-18",
+        "tigerply-12",
+        "tigerply-okoume-9",
+    }:
         # Replace the superseded single plywood top with the two-leaf pine design.
         project.materials["table-plywood"] = Selection(product_id="specrite-pine-18-1200-600")
         project.parameters = project.parameters.model_copy(update={"table_depth_mm": 250.0})

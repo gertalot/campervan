@@ -95,15 +95,16 @@ aside button:hover { background: #3a424d; }
 aside button:focus-visible, aside input:focus-visible, summary:focus-visible { outline: 1px solid #8bb7e8; outline-offset: 2px; }
 .feedback { margin-top: auto; padding-top: 16px; font-size: 11px; color: #929aa6; overflow-wrap: anywhere; }
 #error { margin-top: 6px; color: #f09a91; }
-#viewer { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; background: #202225; }
-#viewer .tcv_cad_viewer { margin: 0; }
-#viewer .tcv_cad_view { margin: 0; }
-#viewer .tcv_cad_navigation, #viewer .tcv_animation, #viewer .tcv_animation_control,
-#viewer .tcv_filter_menu, #viewer .tcv_tick_size { display: none !important; }
-#viewer .tcv_cad_toolbar { display: flex !important; height: 32px !important; min-height: 32px;
+:is(#viewer, #scan-viewer) { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0;
+  overflow: hidden; background: #202225; }
+:is(#viewer, #scan-viewer) .tcv_cad_viewer { margin: 0; }
+:is(#viewer, #scan-viewer) .tcv_cad_view { margin: 0; }
+:is(#viewer, #scan-viewer) :is(.tcv_cad_navigation, .tcv_animation, .tcv_animation_control,
+  .tcv_filter_menu, .tcv_tick_size) { display: none !important; }
+:is(#viewer, #scan-viewer) .tcv_cad_toolbar { display: flex !important; height: 32px !important; min-height: 32px;
   margin: 0; padding: 0 4px; border: 0; border-bottom: 1px solid #34373e; border-radius: 0; }
-#viewer .tcv_cad_toolbar > :not([data-campervan-control]) { display: none !important; }
-#viewer .tcv_cad_toolbar > [data-campervan-control] { display: inline-block !important; }
+:is(#viewer, #scan-viewer) .tcv_cad_toolbar > :not([data-campervan-control]) { display: none !important; }
+:is(#viewer, #scan-viewer) .tcv_cad_toolbar > [data-campervan-control] { display: inline-block !important; }
 #viewer .tcv_cad_toolbar > .cad-piece-controls { display: inline-flex !important; margin-left: 6px;
   padding-left: 6px; border-left: 1px solid #737780; }
 #viewer .cad-piece-button { color: var(--tcv-font-color); cursor: pointer; }
@@ -143,6 +144,56 @@ header button[aria-pressed="true"] { color: #eef3fa; border-bottom-color: #8bb7e
 #workspace { display: grid; grid-template-columns: minmax(0, 1fr); position: relative; }
 #cad-panel { display: grid; grid-template-columns: var(--sidebar-width, 280px) 5px minmax(0, 1fr);
   grid-area: 1 / 1; min-height: 0; min-width: 0; }
+#scan-panel { position: absolute; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0; min-height: 0; background: #202225; }
+#scan-panel[hidden] { display: none; }
+.scan-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; padding: 8px 12px;
+  border-bottom: 1px solid #34373e; background: #22252a; }
+.scan-controls label { display: flex; align-items: center; gap: 8px; }
+.scan-controls [hidden] { display: none; }
+.scan-controls button { padding: 4px 8px; border: 1px solid #454a54; border-radius: 3px;
+  background: #2c3037; color: #e3e7ed; font: inherit; cursor: pointer; }
+.scan-controls select { max-width: min(420px, 65vw); padding: 4px; background: #15171a; color: #e3e7ed;
+  border: 1px solid #454a54; border-radius: 3px; font: inherit; }
+.scan-controls input { width: 90px; accent-color: #8bb7e8; }
+.scan-controls input[type=checkbox] { width: auto; }
+#scan-viewer { position: relative; }
+.scan-tags { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+.scan-tags polygon, .scan-tags circle { fill: none; stroke: #63edff; stroke-width: 2px; }
+.scan-tags circle { fill: #63edff; stroke: #15171a; }
+.scan-tags text { fill: #b9f8ff; stroke: #15171a; stroke-width: 4px; paint-order: stroke;
+  font: 600 14px system-ui, sans-serif; }
+.scan-tags .is-selected polygon, .scan-tags .is-selected circle { stroke: #ffd166; }
+.scan-tags .is-selected circle { fill: #ffd166; }
+.scan-tags .is-measured:not(.is-selected) polygon { stroke: #83e5ab; }
+.scan-tags g:focus-visible polygon { stroke: white; stroke-width: 4px; }
+.scan-tags .scan-measure-line { stroke: #ffd166; stroke-width: 2px; }
+.scan-tags .scan-measure-line.is-pending { stroke-dasharray: 6 4; }
+.scan-tags .scan-measure-line.is-saved { stroke: #83e5ab; }
+.scan-tags .scan-measure-label { fill: #baf2ce; font-size: 12px; }
+#scan-viewer .tcv_cad_toolbar > .scan-measure-tools { display: inline-flex !important; gap: 4px; margin-left: 6px; }
+.scan-measure-tools button { height: 28px; min-width: 30px; padding: 3px; color: #d7e2f0; background: #30343a;
+  border: 1px solid #59616e; border-radius: 3px; cursor: pointer; }
+.scan-measure-tools button[aria-pressed=true] { color: #ffd166; background: #4b4230; border-color: #ffd166; }
+.scan-measure-tools button:disabled { opacity: .45; cursor: default; }
+.scan-measure-tools svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7px; }
+.scan-measure-status { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 7px 12px;
+  border-top: 1px solid #454a54; background: #22252af2; font-size: 13px; }
+.scan-measure-status[hidden] { display: none; }
+.scan-measure-status [data-prompt] { flex: 1 1 300px; }
+.scan-measure-status label { display: flex; align-items: center; gap: 8px; }
+.scan-measure-status input { width: 150px; color: #f1f3f7; background: #15171a; padding: 5px 7px;
+  border: 1px solid #7a8596; border-radius: 3px; font: inherit; }
+.scan-measure-status input[aria-invalid=true] { border-color: #ff9999; }
+.scan-measure-status [role=alert] { color: #ffb5b5; }
+#scan-distance-help { color: #adb8c8; font-size: 12px; }
+.scan-measure-status button, .scan-measurements-dialog button { padding: 5px 9px; background: #303741;
+  border: 1px solid #647083; border-radius: 3px; color: #edf2fa; cursor: pointer; }
+.scan-measure-tools button:focus-visible, .scan-measure-status :focus-visible {
+  outline: 2px solid #8bb7e8; outline-offset: 2px; }
+.scan-controls output { min-width: 4ch; }
+.scan-controls [role=status] { color: #aab3c0; }
 #bom-panel { position: absolute; inset: 0; overflow: auto; padding: 24px clamp(16px, 3vw, 48px) 60px;
   background: #1b1d21; --bom-text: #e3e7ed; --bom-muted: #aab3c0; --bom-accent: #9ec5ef;
   --bom-surface: #22252a; --bom-line: #34373e; }
@@ -433,3 +484,143 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .plan-slash kbd { font: 11px system-ui, sans-serif; color: #9eafc2; }
 .plan-slash-hint { margin-top: 5px; padding: 7px 4px 3px; border-top: 1px solid #454a54;
   color: #aebaca; font-size: 11px; }
+
+/* Scan management is a modal overlay; it never participates in the viewer grid. */
+/* Layout and dismissal styling is owned once by side-panel.ts. */
+.side-panel { position: fixed; inset: 0 0 0 auto; margin: 0; box-sizing: border-box;
+  width: min(650px, 96vw); max-width: none; height: 100dvh; max-height: none; padding: 20px;
+  border: 1px solid #454a54; color: #e3e7ed; background: #23272d; z-index: 35; }
+.side-panel:not([open]) { display: none; }
+.side-panel[open] { display: flex; flex-direction: column; gap: 12px; }
+.side-panel::backdrop { background: #0008; }
+.side-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
+.side-panel-header h2 { margin: 0; font-size: 17px; font-weight: 600; color: #edf1f7; }
+.side-panel-context, .side-panel-actions, .side-panel-status { flex: none; }
+.side-panel-context { color: #b7c1cf; }
+.side-panel-context:empty, .side-panel-actions:empty, .side-panel-status:empty { display: none; }
+.side-panel-body { flex: 1 1 auto; overflow: auto; min-height: 0; }
+.side-panel-status pre { max-height: 130px; overflow: auto; white-space: pre-wrap; font-size: 11px; }
+.side-panel .side-panel-close { display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 5px; border: 0; background: transparent; color: #b7c7da; }
+.side-panel-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.side-panel .side-panel-close:hover { color: white; background: #303741; }
+.scan-library-group { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scan-library-dialog h3 { margin: 16px 0 8px; font-size: 12px; }
+.scan-library-dialog h4 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+.scan-library-dialog h4 span { font-size: 11px; font-weight: 400; color: #a7c6e8; }
+.scan-library-dialog p { color: #b7c1cf; }
+.scan-library-dialog > p { margin-bottom: 12px; }
+.side-panel button, .side-panel input, .side-panel select {
+  padding: 6px 9px; border: 1px solid #586170; border-radius: 3px; background: #303741; color: #edf1f7; font: inherit; }
+.side-panel input { min-width: 0; background: #15171a; }
+.side-panel button { cursor: pointer; }
+.side-panel button:disabled { opacity: .45; cursor: default; }
+.side-panel :focus-visible { outline: 2px solid #8bb7e8; outline-offset: 2px; }
+.scan-library-filters, .scan-library-row-actions, .scan-library-editor form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.scan-library-filters { gap: 8px 12px; }
+.scan-library-filters label:first-child { flex: 1 1 250px; }
+.scan-library-filters input { flex: 1; width: 100%; }
+.scan-library-filters label, .scan-library-editor label { display: flex; align-items: center; gap: 8px; }
+.scan-library-dialog article { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
+  gap: 4px 12px; border-top: 1px solid #454a54; padding: 10px 0; }
+.scan-result-identity p { margin-top: 3px; font-size: 11px; line-height: 1.5; }
+.scan-library-dialog details { grid-column: 1 / -1; }
+.scan-library-dialog summary { cursor: pointer; color: #a8c9ef; width: fit-content; padding: 3px 0; }
+.scan-library-dialog summary:hover { color: #e0edff; text-decoration: underline; }
+.scan-library-dialog .scan-result-view, .scan-library-group button, .scan-library-row-actions button {
+  padding: 4px 6px; min-height: 26px; border-color: transparent; background: transparent; color: #a8c9ef; }
+.scan-library-dialog :is(.scan-result-view, .scan-library-group button, .scan-library-row-actions button):hover:not(:disabled) {
+  background: #303741; color: #e0edff; }
+.scan-library-row-actions { gap: 4px 12px; margin: 8px 0; }
+.scan-result-action-help { font-size: 11px; }
+.scan-library-dialog dl { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 7px 12px; font-size: 13px; }
+.scan-library-dialog dt { color: #abb9ca; }
+.scan-library-dialog dd { margin: 0; overflow-wrap: anywhere; }
+.scan-library-dialog [role=alert] { color: #ffb5b5; }
+.scan-library-editor { margin: 12px 0; padding: 12px; border: 1px solid #8bb7e8; border-radius: 4px; }
+.scan-library-editor[hidden] { display: none; }
+.scan-measure-tools [data-list] { padding-inline: 9px; font: inherit; font-size: 12px;
+  height: 28px; border-color: #59616e; background: #30343a; color: #d7e2f0; }
+.scan-measure-tools [data-list]:hover { background: #303741; color: #e0edff; }
+.scan-result-tools { display: flex; align-items: center; gap: 2px; }
+.scan-library-dialog .scan-result-icon { display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 4px; border-color: transparent; background: transparent; color: #b7c7da; }
+.scan-result-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round; }
+.scan-library-dialog .scan-result-icon:hover { background: #303741; color: #edf1f7; }
+.scan-library-dialog .scan-result-trash:hover { background: #492d31; color: #ffb5b5; }
+.scan-delete-dialog { width: min(460px, 94vw); padding: 22px; border: 1px solid #586170; border-radius: 5px;
+  color: #edf1f7; background: #23272d; }
+.scan-delete-dialog::backdrop { background: #0009; }
+.scan-delete-dialog h2 { margin: 0 0 14px; font-size: 16px; color: #edf1f7; font-weight: 600; overflow-wrap: anywhere; }
+.scan-delete-dialog p { margin: 12px 0; }
+.scan-delete-dialog code { display: block; overflow-wrap: anywhere; color: #b9cbe1; }
+.scan-delete-dialog [role=alert] { color: #ffb5b5; }
+.scan-delete-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.scan-delete-actions button { padding: 6px 12px; border: 1px solid #647083; border-radius: 3px;
+  background: #303741; color: #edf1f7; font: inherit; cursor: pointer; }
+.scan-delete-actions .scan-delete-confirm { background: #923b44; border-color: #bc626c; }
+.scan-delete-actions button:disabled { opacity: .5; cursor: default; }
+.scan-delete-dialog :focus-visible { outline: 2px solid #8bb7e8; outline-offset: 2px; }
+.scan-import-dialog { width: min(640px, 96vw); max-height: 92dvh; overflow: auto; padding: 20px;
+  border: 1px solid #586170; border-radius: 5px; color: #e3e7ed; background: #23272d; }
+.scan-import-dialog::backdrop { background: #0009; }
+.scan-import-dialog header { display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 12px; background: transparent; border: 0; }
+.scan-import-dialog h2 { font-size: 16px; font-weight: 600; color: #edf1f7; margin: 0; }
+.scan-import-dialog h3 { font-size: 13px; }
+.scan-import-dialog p { margin: 8px 0; color: #b7c1cf; }
+.scan-import-dialog button, .scan-import-dialog input:not([type=checkbox]), .scan-import-dialog select {
+  font: inherit; border: 1px solid #586170; border-radius: 3px; padding: 5px 8px; color: #edf1f7; background: #303741; }
+.scan-import-dialog button { cursor: pointer; }
+.scan-import-dialog button:disabled { opacity: .5; cursor: default; }
+.scan-import-dialog fieldset { margin: 12px 0; border: 1px solid #454a54; padding: 12px; }
+.scan-import-dialog legend { padding: 0 5px; font-weight: 600; }
+.scan-import-dialog label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.scan-import-dialog label > input:not([type=checkbox]):not([type=number]) { flex: 1; min-width: 0; }
+.scan-import-dialog input[type=number] { width: 95px; }
+.scan-import-dialog [data-new-layout] p, .scan-import-dialog fieldset > p { font-size: 11px; }
+.scan-import-drop { border: 1px dashed #7c94b1; padding: 12px; border-radius: 4px; }
+.scan-import-dialog .scan-import-drop input { width: 100%; background: transparent; border: 0; padding: 5px 0; }
+.scan-import-file { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 5px 0; }
+.scan-import-file span { overflow-wrap: anywhere; }
+.scan-import-dialog [role=alert] { color: #ffb5b5; }
+.scan-import-dialog [data-process] { color: #e6f0ff; border-color: #6f96c2; background: #324963; }
+.scan-import-dialog progress { width: 100%; height: 7px; margin: 10px 0; }
+.scan-import-dialog pre { max-height: 200px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  padding: 10px; background: #171a1f; font-size: 11px; }
+.scan-import-dialog summary { cursor: pointer; padding-block: 8px; }
+.scan-import-dialog :focus-visible { outline: 2px solid #8bb7e8; outline-offset: 2px; }
+.scan-import-activity:empty { display: none; }
+.scan-import-activity { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; }
+.scan-import-activity span { color: #b7c1cf; }
+.measurement-actions, .measurement-precision { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.measurement-precision { margin: 10px 0 5px; }
+.measurement-precision label { display: flex; align-items: center; gap: 7px; }
+.scan-measure-panel input[type=number] { width: 70px; padding: 4px; }
+.scan-measure-panel .measurement-help { color: #aab8ca; font-size: 11px; margin: 5px 0 10px; }
+.scan-measure-panel [role=alert] { color: #ffb5b5; }
+.scan-measure-panel table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.scan-measure-panel th, .scan-measure-panel td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #3b414b; }
+.scan-measure-panel th { font-size: 11px; color: #abb9ca; }
+.scan-measure-panel td button { padding: 3px 5px; border: 0; background: transparent; color: #a8c9ef; }
+.scan-measure-panel h3 { font-size: 13px; margin: 10px 0; }
+.scan-measure-panel .side-panel-body p { margin: 8px 0; }
+.scan-measure-panel article { padding: 10px 0; border-bottom: 1px solid #454a54; }
+.scan-measure-panel article button { margin: 4px 6px 0 0; }
+.scan-measure-panel summary { cursor: pointer; padding: 6px 0; }
+.scan-measure-panel :is([data-hidden], [hidden]) { display: none; }
+.scan-tags .scan-analysis-line { stroke: #da96ff; stroke-width: 2px; }
+.scan-tags .scan-analysis-dot { fill: #da96ff; stroke: #22252a; stroke-width: 1px; }
+.scan-tags .scan-analysis-label { fill: #edcaff; font-size: 11px; }
+.scan-tags .scan-suggest-line { stroke: #8bb7ff; stroke-width: 3px; stroke-dasharray: 7 4; }
+.scan-tags .scan-obstruction { fill: #ff7777; stroke: #ffcccc; stroke-width: 2px; }
+.scan-measure-panel .is-outlier td:first-child { color: #ffd166; }
+.measurement-suggestion { padding: 5px 0; border-bottom: 1px solid #454a54; }
+.measurement-suggestion summary { font-size: 12px; color: #c6dcf5; }
+.measurement-suggestion button { margin: 4px 6px 6px 0; }
+.scan-measure-panel input[aria-invalid=true] { border-color: #ff9999; outline: 1px solid #ff9999; }
+.measurement-field-error { color: #ffb5b5; font-size: 12px; }
+.measurement-field-error:empty { display: none; }
+.measurement-precision .measurement-field-error { flex-basis: 100%; }

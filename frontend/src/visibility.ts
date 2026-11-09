@@ -3,8 +3,10 @@ const categories: Record<string, string[]> = {
   wheelArches: ['/Campervan/Vehicle references/Wheel arches'],
   woodenFloor: ['/Campervan/Finished floor plywood'],
   cabinet: ['/Campervan/Cabinet'],
-  cabinetShelves: ['/Campervan/Cabinet/Shelves'],
-  cabinetBacking: ['/Campervan/Cabinet/Back lining'],
+  cabinetShelves: ['/Campervan/Cabinet/Lower module/Shelves', '/Campervan/Cabinet/Upper module/Shelves'],
+  cabinetDoors: ['/Campervan/Cabinet/Lower module/Doors', '/Campervan/Cabinet/Upper module/Doors'],
+  cabinetSkin: ['/Campervan/Cabinet/Lower module/Skin', '/Campervan/Cabinet/Upper module/Skin'],
+  cabinetFrames: ['/Campervan/Cabinet/Lower module/Frames', '/Campervan/Cabinet/Upper module/Frames'],
   storedGear: ['/Campervan/Stored gear'],
   longBench: ['/Campervan/Long bench'],
   crossBench: ['/Campervan/Cross bench'],
@@ -45,7 +47,7 @@ export function createVisibilityButton(title: string, toggle: () => void) {
 
 export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer) {
   const inputs = [...container.querySelectorAll<HTMLInputElement>('input[name]')];
-  const groups = new Map<HTMLButtonElement, { path: string; title: string }>();
+  const groups = new Map<HTMLButtonElement, { paths: string[]; title: string }>();
   const key = 'campervan.visibility.paths';
   const independentRoots = categories.wheelArches;
   let excludedRoots: string[] = [];
@@ -54,6 +56,24 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
     '/Campervan/Vehicle references/Rear opening/Clear opening': false,
     ...JSON.parse(localStorage.getItem(key) ?? '{}'),
   };
+  // Carry existing component and category choices into the two carcass modules.
+  const cabinetPrefix = '/Campervan/Cabinet/';
+  for (const [path, visible] of Object.entries(rules)) {
+    if (!path.startsWith(cabinetPrefix)) continue;
+    const suffix = path.slice(cabinetPrefix.length);
+    if (/^(Lower module|Upper module|Module fasteners)(\/|$)/.test(suffix)) continue;
+    for (const module of ['Lower module', 'Upper module']) {
+      rules[`${cabinetPrefix}${module}/${suffix}`] ??= visible;
+    }
+    delete rules[path];
+  }
+  for (const [path, visible] of Object.entries(rules)) {
+    if (path.endsWith('/Back lining')) {
+      rules[path.replace(/Back lining$/, 'Skin')] ??= visible;
+      delete rules[path];
+    }
+  }
+  if (localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(rules));
   // Assembly switches must retain independent content filters and reference-wire choices.
   const independentPaths = new Set([
     ...Object.values(categories).flat(),
@@ -75,9 +95,9 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       input.checked = enabled.every(Boolean);
       input.indeterminate = enabled.some(Boolean) && !input.checked;
     }
-    for (const [button, { path, title }] of groups) {
-      updateVisibilityButton(button, title, viewer.getVisibility([path]));
-      button.disabled = excludedRoots.some(root => path === root || path.startsWith(`${root}/`));
+    for (const [button, { paths, title }] of groups) {
+      updateVisibilityButton(button, title, viewer.getVisibility(paths));
+      button.disabled = paths.every(path => excludedRoots.some(root => path === root || path.startsWith(`${root}/`)));
     }
   }
 
@@ -119,10 +139,20 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
     },
     resetGroups() { groups.clear(); },
     addGroup(heading: HTMLElement, path: string, title: string) {
+      const cabinetGroups: Record<string, string[]> = {
+        Shelves: categories.cabinetShelves,
+        Doors: categories.cabinetDoors,
+        Skin: categories.cabinetSkin,
+        Frames: categories.cabinetFrames,
+        'Module joint': ['Lower module', 'Upper module'].map(module =>
+          `/Campervan/Cabinet/${module}/Frames/Module joint`),
+      };
+      const suffix = path.startsWith(cabinetPrefix) ? path.slice(cabinetPrefix.length) : '';
+      const paths = cabinetGroups[suffix] ?? [path];
       const button = createVisibilityButton(title, () => {
-        change([path], rules[path] === false);
+        change(paths, !paths.every(item => rules[item] !== false));
       });
-      groups.set(button, { path, title });
+      groups.set(button, { paths, title });
       heading.append(button);
       refresh();
     },

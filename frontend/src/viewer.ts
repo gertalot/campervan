@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 /** Our host for the installed OCP renderer. No second viewer or playback timeline. */
-import { createViewCube } from './view-cube';
+import { createViewerCamera, type CameraState, type CameraViewer } from './viewer-camera';
 import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPose } from './mannequin';
 import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
@@ -19,9 +19,6 @@ interface Track {
 }
 interface Motion { position: number; tracks: Track[] }
 interface Vector { x: number; y: number; z: number }
-interface CameraState {
-  position: number[]; quaternion: number[]; target: number[]; zoom: number; ortho: boolean; viewHeight?: number;
-}
 interface SceneGroup { position: Vector; rotation: Vector; visible: boolean; updateMatrixWorld(force: boolean): void }
 interface MotionController {
   snapshotPositions(): DragSnapshot;
@@ -29,44 +26,17 @@ interface MotionController {
   restorePositions(snapshot: DragSnapshot): void;
   savePositions(patch?: Record<string, number>): Promise<void>;
 }
-interface CameraQuaternion {
-  toArray(): number[];
-  clone(): CameraQuaternion;
-  angleTo(other: CameraQuaternion): number;
-  slerp(other: CameraQuaternion, fraction: number): CameraQuaternion;
-}
-interface CameraVector {
-  set(x: number, y: number, z: number): CameraVector;
-  clone(): CameraVector;
-  applyQuaternion(quaternion: CameraQuaternion): CameraVector;
-  toArray(): number[];
-}
-interface CameraPose {
-  position: CameraVector;
-  up: { set(x: number, y: number, z: number): void };
-  quaternion: CameraQuaternion;
-  lookAt(x: number, y: number, z: number): void;
-  clone(): CameraPose;
-}
-interface CadViewer {
-  ready: boolean;
+interface CadViewer extends CameraViewer {
   display: {
     shapeFilterDropDownMenu: { setValue(value: string): void };
   };
-  rendered: {
+  rendered: CameraViewer['rendered'] & {
     scene: Scene;
     nestedGroup: { groups: Record<string, SceneGroup> };
     orientationMarker: { setVisible(value: boolean): void };
-    camera: { camera: CameraPose & { top: number; bottom: number } };
   };
   getStates(): Record<string, number[]>;
   setStates(states: Record<string, number[]>): void;
-  getCameraPosition(): number[];
-  getCameraQuaternion(): number[];
-  getCameraTarget(): number[];
-  getCameraZoom(): number;
-  getOrtho(): boolean;
-  setCameraLocationSettings(position: number[], quaternion: number[], target: number[], zoom: number | null, notify: boolean): void;
   update(change: boolean, controls: boolean): void;
 }
 
@@ -76,7 +46,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let viewer: CadViewer | undefined;
   let excludedComponents: string[] = [];
   let unsubscribeTool: (() => void) | undefined;
-  let cube: ReturnType<typeof createViewCube> | undefined;
   let socket: WebSocket | undefined;
   let motions: Record<string, Motion> = {};
   const positions: Record<string, number> = {};
@@ -87,7 +56,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let motionController: MotionController | undefined;
   const cameraKey = 'campervan.camera';
   let rendering = false;
-  let cameraAnimation: number | null = null;
+  const cameraNavigation = createViewerCamera(container, () => viewer, cameraKey, () => rendering);
+  const { cameraState, saveCamera, cancelCameraAnimation } = cameraNavigation;
   const mannequins: Partial<Record<MannequinPose['mode'], Awaited<ReturnType<typeof loadMannequin>>>> = {};
   let mannequinLoading: Promise<void> | undefined;
   const mannequinPoses = { seated: { ...seatedPose }, lying: { ...lyingPose }, 'lying-second': { ...secondLyingPose } };
@@ -196,76 +166,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       : fitted.compression < -5 ? 'This leg pose lifts the hips off the seat.'
       : fitted.compression > (seatCushion.bounds().max.z - seatCushion.bounds().min.z) * 0.55
         ? 'This leg pose needs more compression than the cushion allows.' : '');
-  }
-
-  function cancelCameraAnimation() {
-    if (cameraAnimation !== null) cancelAnimationFrame(cameraAnimation);
-    cameraAnimation = null;
-  }
-  container.addEventListener('pointerdown', cancelCameraAnimation, { capture: true });
-  container.addEventListener('wheel', cancelCameraAnimation, { capture: true, passive: true });
-  container.addEventListener('keydown', cancelCameraAnimation, { capture: true });
-
-  function cameraState(): CameraState | null {
-    return viewer?.ready ? {
-      position: viewer.getCameraPosition(), quaternion: viewer.getCameraQuaternion(),
-      target: viewer.getCameraTarget(), zoom: viewer.getCameraZoom(), ortho: viewer.getOrtho(),
-      viewHeight: viewer.getOrtho()
-        ? (viewer.rendered.camera.camera.top - viewer.rendered.camera.camera.bottom) / viewer.getCameraZoom()
-        : undefined,
-    } : null;
-  }
-
-  function saveCamera() {
-    if (rendering) return;
-    const camera = cameraState();
-    if (camera) localStorage.setItem(cameraKey, JSON.stringify(camera));
-  }
-  window.addEventListener('pagehide', saveCamera);
-
-  function setDirection(direction: [number, number, number], animate = true) {
-    cancelCameraAnimation();
-    const state = cameraState();
-    if (!state || !viewer) return;
-    const distance = Math.hypot(...state.position.map((value, i) => value - state.target[i]));
-    const size = Math.hypot(...direction);
-    const position = direction.map((value, i) => state.target[i] + value * distance / size);
-    const pose = viewer.rendered.camera.camera.clone();
-    const startRotation = pose.quaternion.clone();
-    pose.position.set(position[0], position[1], position[2]);
-    // Upright side/corner views; stable plan orientations at the two poles.
-    if (direction[0] === 0 && direction[1] === 0) pose.up.set(0, direction[2] > 0 ? 1 : -1, 0);
-    else pose.up.set(0, 0, 1);
-    pose.lookAt(state.target[0], state.target[1], state.target[2]);
-    const duration = animate ? startRotation.angleTo(pose.quaternion) / Math.PI * 500 : 0;
-    if (duration < 1) {
-      viewer.setCameraLocationSettings(position, pose.quaternion.toArray(), state.target, state.ortho ? state.zoom : null, true);
-      saveCamera();
-      return;
-    }
-    const started = performance.now();
-    const tick = (now: number) => {
-      if (!viewer?.ready) { cameraAnimation = null; return; }
-      const fraction = Math.min((now - started) / duration, 1);
-      // Three.js supplies shortest-path spherical interpolation: 360 degrees per second.
-      const rotation = startRotation.clone().slerp(pose.quaternion, fraction);
-      const offset = pose.position.clone().set(0, 0, distance).applyQuaternion(rotation).toArray();
-      const nextPosition = offset.map((value, i) => state.target[i] + value);
-      viewer.setCameraLocationSettings(nextPosition, rotation.toArray(), state.target, state.ortho ? state.zoom : null, fraction === 1);
-      if (fraction < 1) cameraAnimation = requestAnimationFrame(tick);
-      else { cameraAnimation = null; saveCamera(); }
-    };
-    cameraAnimation = requestAnimationFrame(tick);
-  }
-
-  function orbitCube(dx: number, dy: number) {
-    const state = cameraState();
-    if (!state) return;
-    const [x, y, z] = state.position.map((value, i) => value - state.target[i]);
-    const azimuth = Math.atan2(y, x) - dx * 0.012;
-    const elevation = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01,
-      Math.atan2(z, Math.hypot(x, y)) + dy * 0.012));
-    setDirection([Math.cos(azimuth) * Math.cos(elevation), Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation)], false);
   }
 
   function showTables(pose: Record<string, number> = positions) {
@@ -378,7 +278,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
               else vehicleFade.setExteriorOpacity();
             }
             update(...updateArgs);
-            if (this.ready) cube?.update(this.getCameraQuaternion());
+            if (this.ready) cameraNavigation.updateCube();
           };
         }
       }
@@ -396,7 +296,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       if (isStaticSite) allowed.delete('distance');
       function trimToolbar() {
         // createPage clears the host when it creates the first display.
-        cube ??= createViewCube(container, setDirection, orbitCube);
+        cameraNavigation.attachCube();
         for (const child of container.querySelectorAll<HTMLElement>('.tcv_cad_toolbar > *')) {
           const button = child.querySelector('input[class*="tcv_button_"]');
           if (button && [...allowed].some(name => button.classList.contains(`tcv_button_${name}`))) {
@@ -404,7 +304,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           }
         }
         viewer?.rendered.orientationMarker.setVisible(true);
-        if (viewer?.ready) cube?.update(viewer.getCameraQuaternion());
+        if (viewer?.ready) cameraNavigation.updateCube();
       }
       function receive(message: any) {
         if (message.type === 'data') cancelCameraAnimation();

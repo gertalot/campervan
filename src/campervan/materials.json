@@ -1,11 +1,120 @@
 [
   {
+    "id": "champion-m3-25-20",
+    "name": "Champion pan-head machine screw and nut · M3 × 25 · 20 pack",
+    "supplier": "Mitre 10 NZ",
+    "url": "https://www.mitre10.co.nz/shop/champion-machine-screws-m3-x-25/p/226173",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 25,
+      "diameter": 3
+    },
+    "price_nzd": 5,
+    "sale_unit": "pack of 20",
+    "pack_quantity": 20,
+    "specification": "SKU 226173 / BS0875. Pan Phillips fully threaded screws with nuts. Washers separate; verify hinge hole/head fit.",
+    "availability": "Listed online; local branch stock unconfirmed.",
+    "checked": "2026-11-08"
+  },
+  {
+    "id": "zenith-6g-40-100",
+    "name": "Zenith zinc-plated longthread timber screws · 6g × 40mm · 100 pack",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/zenith-6g-x-40mm-zinc-plated-longthread-timber-screws-100-pack_p2434142",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 40
+    },
+    "price_nzd": 12.54,
+    "sale_unit": "pack of 100",
+    "pack_quantity": 100,
+    "specification": "Phillips countersunk longthread timber screws. Two per catch mounting block, through front rail into face grain.",
+    "availability": "Listed online; local branch stock unconfirmed.",
+    "checked": "2026-11-08"
+  },
+  {
+    "id": "pinetrim-140-18-1800",
+    "name": "Pinetrim untreated pine · 140 × 18 × 1800mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/pinetrim-140-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132635",
+    "kind": "timber",
+    "dimensions": {
+      "length": 1800,
+      "width": 140,
+      "thickness": 18
+    },
+    "price_nzd": 27.43,
+    "sale_unit": "1.8m length",
+    "pack_quantity": 1,
+    "specification": "Untreated kiln-dried radiata pine D4S. Shape the two pillar-return uprights from full stock.",
+    "availability": "Listed online; local branch stock unconfirmed.",
+    "checked": "2026-11-08"
+  },
+  {
+    "id": "birch-3-2440",
+    "name": "Solid birch plywood · 3mm",
+    "supplier": "Renovation Warehouse NZ",
+    "url": "https://renovationwarehouse.co.nz/collections/latest-arrivals/products/plywood-2440x1220x3mm-solid-birch-hardwood",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2440,
+      "width": 1220,
+      "thickness": 3
+    },
+    "price_nzd": 55,
+    "sale_unit": "sheet",
+    "pack_quantity": 1,
+    "specification": "3mm birch plywood with exterior WBP glue. Fixed skins and planar back facets; no structural grade or bending capacity assumed.",
+    "availability": "Listed online; freight and local pickup availability to confirm.",
+    "checked": "2026-11-07"
+  },
+  {
+    "id": "pinetrim-90-18-1800",
+    "name": "Pinetrim untreated pine · 90 × 18 × 1800mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/pinetrim-90-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132627",
+    "kind": "timber",
+    "dimensions": {
+      "length": 1800,
+      "width": 90,
+      "thickness": 18
+    },
+    "price_nzd": 20.85,
+    "sale_unit": "1.8m length",
+    "pack_quantity": 1,
+    "specification": "Untreated kiln-dried radiata pine dressed four sides. Continuous on-edge wheel-arch bridge; fit its ends to the rear posts.",
+    "availability": "Listed online; local branch stock unconfirmed.",
+    "checked": "2026-11-07"
+  },
+  {
+    "id": "pinetrim-40-18-1800",
+    "name": "Pinetrim untreated pine · 40 × 18 × 1800mm",
+    "supplier": "Bunnings NZ",
+    "url": "https://www.bunnings.co.nz/pinetrim-40-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132618",
+    "kind": "timber",
+    "dimensions": {
+      "length": 1800,
+      "width": 40,
+      "thickness": 18
+    },
+    "price_nzd": 11.5,
+    "sale_unit": "1.8m length",
+    "pack_quantity": 1,
+    "specification": "Untreated kiln-dried dressed radiata pine, 40 × 18mm. Cabinet rails stand 40mm vertically; skin grooves, shelf rebates and joints are separate machining.",
+    "availability": "Listed online; local stock unconfirmed.",
+    "checked": "2026-11-07"
+  },
+  {
     "id": "bbi-redline-6-1200-1195",
     "name": "bbi Redline untreated plywood · 6mm",
     "supplier": "Mitre 10 NZ",
     "url": "https://www.mitre10.co.nz/shop/bbi-redline-non-structural-plywood-untreated-1200-1195-6mm/p/303849",
     "kind": "sheet",
-    "dimensions": {"length": 1200, "width": 1195, "thickness": 6},
+    "dimensions": {
+      "length": 1200,
+      "width": 1195,
+      "thickness": 6
+    },
     "price_nzd": 33.47,
     "sale_unit": "panel",
     "pack_quantity": 1,
@@ -19,7 +128,11 @@
     "supplier": "Harken Fosters NZ",
     "url": "https://fostersshipchandlery.co.nz/products/table-hinge-homer-pair",
     "kind": "hardware",
-    "dimensions": {"length": 114, "width": 42, "pin_width": 38},
+    "dimensions": {
+      "length": 114,
+      "width": 42,
+      "pin_width": 38
+    },
     "price_nzd": 75.67,
     "sale_unit": "pair",
     "pack_quantity": 2,
@@ -33,7 +146,11 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619",
     "kind": "sheet",
-    "dimensions": {"length": 1200, "width": 600, "thickness": 18},
+    "dimensions": {
+      "length": 1200,
+      "width": 600,
+      "thickness": 18
+    },
     "price_nzd": 47,
     "sale_unit": "panel",
     "pack_quantity": 1,
@@ -47,7 +164,11 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770",
     "kind": "sheet",
-    "dimensions": {"length": 2200, "width": 600, "thickness": 25},
+    "dimensions": {
+      "length": 2200,
+      "width": 600,
+      "thickness": 25
+    },
     "price_nzd": 139,
     "sale_unit": "panel",
     "pack_quantity": 1,
@@ -61,7 +182,11 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinetrim-18-x-18-x-2-4m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293156",
     "kind": "timber",
-    "dimensions": {"length": 2400, "width": 18, "thickness": 18},
+    "dimensions": {
+      "length": 2400,
+      "width": 18,
+      "thickness": 18
+    },
     "price_nzd": 12.27,
     "sale_unit": "2.4m length",
     "pack_quantity": 1,
@@ -103,7 +228,16 @@
     "supplier": "Vanlifer NZ (Auckland)",
     "url": "https://vanlifer.co.nz/products/vanlifer-push-close-chrome-catches",
     "kind": "hardware",
-    "dimensions": {"minimum_panel": 5, "maximum_panel": 25, "body_depth": 50, "bore_diameter": 27, "bore_flats": 23.5, "flange_diameter": 32, "catch_setback": 35.5, "catch_offset": 20},
+    "dimensions": {
+      "minimum_panel": 5,
+      "maximum_panel": 25,
+      "body_depth": 50,
+      "bore_diameter": 27,
+      "bore_flats": 23.5,
+      "flange_diameter": 32,
+      "catch_setback": 35.5,
+      "catch_offset": 20
+    },
     "price_nzd": 16,
     "sale_unit": "latch with striker",
     "pack_quantity": 1,
@@ -117,7 +251,11 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-6mm-okoume-plywood_p0345103",
     "kind": "sheet",
-    "dimensions": {"length": 2400, "width": 1200, "thickness": 6},
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 6
+    },
     "price_nzd": 53.77,
     "sale_unit": "sheet",
     "pack_quantity": 1,
@@ -131,7 +269,11 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-9mm-okoume-plywood-9mm_p0345104",
     "kind": "sheet",
-    "dimensions": {"length": 2400, "width": 1200, "thickness": 9},
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 9
+    },
     "price_nzd": 58,
     "sale_unit": "sheet",
     "pack_quantity": 1,
@@ -145,7 +287,9 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/zenith-35mm-zinc-plated-fixed-pin-butt-hinge_p4161393",
     "kind": "hardware",
-    "dimensions": {"length": 35},
+    "dimensions": {
+      "length": 35
+    },
     "price_nzd": 1.45,
     "sale_unit": "hinge",
     "pack_quantity": 1,
@@ -159,7 +303,10 @@
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinnacle-2mm-x-3m-zinc-plated-double-jack-chain_p0581686",
     "kind": "hardware",
-    "dimensions": {"length": 3000, "wire_diameter": 2},
+    "dimensions": {
+      "length": 3000,
+      "wire_diameter": 2
+    },
     "price_nzd": 7.91,
     "sale_unit": "3m pack",
     "pack_quantity": 1,

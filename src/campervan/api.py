@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -22,6 +22,15 @@ from campervan.parameter_fit import FitError, fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import PROJECT_PATH
 from campervan.planning_api import register_planning
+from campervan.scan_analysis_api import register_scan_analysis
+from campervan.scan_layouts import ScanLayouts
+from campervan.scan_library import ScanLibraryStore, decorate_scans
+from campervan.scan_library_api import register_scan_library
+from campervan.scan_measurements_api import register_scan_measurements
+from campervan.scan_processing import ScanProcessing
+from campervan.scan_processing_api import register_scan_processing
+from campervan.scan_solutions import ScanSolutions
+from campervan.scans import completed_scans, scan_asset
 from campervan.settings import Settings, load_settings
 from campervan.snapshot import ParameterResponse, cutting_data, material_data, parameter_response
 from campervan.worker import regenerate_model
@@ -103,9 +112,19 @@ def build_app(
                     except asyncio.CancelledError:
                         pass
             finally:
+                await scan_processing.close()
                 await coordinator.close()
 
     app = FastAPI(lifespan=lifespan)
+    scan_library = ScanLibraryStore(project_path.with_name("scan-library.json"))
+    scan_layouts = ScanLayouts(project_path.with_name("scan-measurements.json"))
+    scan_processing = ScanProcessing(scan_library, scan_layouts)
+    register_scan_measurements(app, scan_layouts)
+    read_scan_library = register_scan_library(app, scan_library)
+    register_scan_processing(app, scan_processing, scan_layouts)
+    register_scan_analysis(
+        app, scan_processing, scan_layouts, ScanSolutions(project_path.with_name("scan-solutions.json"))
+    )
     register_planning(app, project_path)
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None
@@ -119,6 +138,32 @@ def build_app(
         return Response(source + "\nexport { THREE as sharedThree };\n", media_type="text/javascript")
 
     app.mount("/viewer-assets", StaticFiles(directory=assets), name="viewer-assets")
+
+    @app.get("/api/v1/scans")
+    def scans() -> list[dict[str, Any]]:
+        directory = project_path.parent.resolve()
+        discovered = [
+            {"name": path.name, "bytes": path.stat().st_size}
+            for path in sorted(directory.glob("*.ply"))
+            if path.is_file() and path.resolve().parent == directory
+        ] + completed_scans()
+        return decorate_scans(discovered, read_scan_library())
+
+    @app.get("/api/v1/scans/runs/{run_id}/assets/{asset_name:path}")
+    def generated_scan_asset(run_id: str, asset_name: str) -> FileResponse:
+        try:
+            path = scan_asset(run_id, asset_name)
+        except (ValueError, OSError, KeyError, TypeError) as error:
+            raise HTTPException(status_code=404, detail="Scan asset not found.") from error
+        return FileResponse(path)
+
+    @app.get("/api/v1/scans/{filename}")
+    def scan_cloud(filename: str) -> FileResponse:
+        directory = project_path.parent.resolve()
+        path = (directory / filename).resolve()
+        if path.parent != directory or path.suffix != ".ply" or not path.is_file():
+            raise HTTPException(status_code=404, detail="Scan point cloud not found.")
+        return FileResponse(path, media_type="application/octet-stream")
 
     def get_coordinator(request: Request) -> Coordinator:
         coordinator: Coordinator = request.app.state.coordinator
@@ -274,6 +319,7 @@ def create_app() -> FastAPI:
         @app.get("/plan", include_in_schema=False)
         @app.get("/cuts", include_in_schema=False)
         @app.get("/apriltags", include_in_schema=False)
+        @app.get("/scan", include_in_schema=False)
         @app.get("/bom", include_in_schema=False)
         @app.get("/bom/{material}", include_in_schema=False)
         async def frontend_view() -> FileResponse:

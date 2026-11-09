@@ -10,9 +10,14 @@ The project tabs share one saved project. Switching tabs keeps the camera and vi
 - Hide groups with their eye icons or use the category checkboxes in the sidebar.
 - **See inside** fades obstructing vehicle surfaces. Turn it off to view the opaque body; windows remain transparent.
 - Show **Wheel arches** independently of the rest of the vehicle.
+- Filter **Cabinet shelves**, **Cabinet doors**, **Cabinet skin** and **Cabinet frames** independently.
+  Hinges follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
 
 The browser remembers the camera, visibility and sidebar choices. Use the viewer toolbar to reset or refit the camera.
+The cabinet filters reuse native labelled checkboxes, Space-key activation and the existing mixed state when the two
+modules differ, following the relevant [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
+This is a focused interaction choice, not a claim of full accessibility conformance.
 
 ### Included in build
 
@@ -47,7 +52,7 @@ Movable parts glow cyan on hover and during dragging. Motion follows the joint l
 | Long bench conversion | Extends the frame, repositions cushions, then lowers backrests. Reverse to undo the sequence. |
 | Drawer extension | Moves the rear drawer on its sliders. |
 | Doors closed | Closes both sliding doors and lowers the rear hatch. At 0%, the hatch is raised 90°; at 100%, all doors are closed. |
-| Cabinet door sliders | Open individual doors; find them under Cabinet → Doors. |
+| Cabinet door sliders | Open individual doors; find them under Cabinet → Doors. The model hierarchy places each door in its Lower or Upper module. |
 | Unfold tabletop | Top-level slider: 0% folded, 100% flat. |
 | Laptop table | Adjust mounting/stowed pose, height, arm swivel, tabletop rotation and offset. |
 
@@ -170,3 +175,18 @@ following W3C guidance on [labels](https://www.w3.org/WAI/tutorials/forms/labels
 [validation](https://www.w3.org/WAI/tutorials/forms/validation/). Tab navigation reuses the app's shared keyboard controls.
 Patterns come from OpenCV's [predefined dictionary and marker generator](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html);
 tag measurement follows the [AprilTag pose convention](https://github.com/AprilRobotics/apriltag#pose-estimation).
+
+### Cabinet module joint
+
+The replacement cabinet contains Lower module and Upper module. Each has Frames, Skin, Shelves and Doors.
+Frames includes the side joining rails and module fasteners. Cabinet → Frames controls the 40 × 18mm pine section;
+the wheel-arch bridge uses 90 × 18mm pine. The rear corner uses ordinary 40 × 18mm posts; the former wide return pieces and short rails are removed.
+The rear end frame clears the pillar independently of the main back frame. Shelves and fixed middle/end skins extend past the timber
+and are jigsaw-scribed to the actual van side and finished ceiling. The van side closes the open back.
+Doors and shelves are 6mm plywood; fixed skins are 3mm birch.
+Cabinet → Module joint sets the 20mm guide lip and 0.5mm fitting clearance. The split follows the middle shelf tops.
+
+Eight estimated M5 × 90mm countersunk fixing sets join the side rails; there are no front or rear rail bolts.
+Keep the interface unglued. Slide the upper module into alignment before fitting bolts. Hardware envelopes and
+joint machining need confirmation before cutting. The earlier plywood-cabinet module notes describe the superseded
+construction; use [the replacement construction rationale](research/cabinet-redesign.md) for this model.

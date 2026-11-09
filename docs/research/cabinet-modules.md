@@ -1,6 +1,42 @@
 # Two-module cabinet proposal
 
-Research proposal, 6 November 2026. No CAD changes made.
+Implemented design, 7 November 2026. The earlier research is retained below; the following decisions supersede its provisional block-joint details.
+
+## Final joint design
+
+The lower module retains the middle shelves and their 18 × 18mm supports. The upper module has four transverse
+40mm-vertical × 18mm-wide Pinetrim untreated pine joining rails, two per bay. There are no upper joining rails
+along the door-facing or wall-facing edges. The four former middle-level rear corner blocks are replaced by
+the ends of the transverse joining rails.
+
+The rails bear directly over the lower transverse shelf supports. Bolts are on the transverse sides only: two in each bay's
+end joining rails, including both sides of the centre divider. This gives eight sets total, positioned 40mm
+from the rail ends. There are no bolts on the aisle/door-facing or wall-facing longitudinal rails.
+Each bore is 5.5mm, passing through upper
+40mm timber, 6mm shelf and lower 18mm timber. Use M5 × 75mm bolts, two 15mm OD × 1mm washers and a nyloc nut per
+set. The CAD heads, nuts and washers are clearance envelopes, not supplier machining drawings. Fixing products
+and price remain to select in Materials. Do not apply a generic metal-joint tightening torque to the pine.
+
+At the cab-end panel, centre partition and rear upright the lower panel extends 20mm above the shelf. Upper panel
+edges start another 0.5mm above this lip. The ring's adjacent bottom faces have a 0.5mm guide relief, extending
+20.5mm up from the shelf; above that it bonds flush against the upper panels. Plane/sand or rebate these guide
+faces during dry assembly. This gives the 20mm lip a running fit without cutting into the shelf supports.
+
+The complete rear outside panel belongs to the upper module, extending down to its original lower edge at
+Z730, below the middle shelf top. There is no lower-module strip or guide lip on that panel.
+The front frame's seam stays at the shelf top, with 0.5mm clearance above. There is no front lip obstructing the
+horizontal insertion path. The four upper doors belong to the upper module; the five lower doors belong to the
+lower module. Their existing hinge origins and dimensions remain. The plastic backing is split too.
+
+The joining ring is scribed at the rear pillar where required by the model. At the shared level the wall rail
+position also reserves the ring's full 40mm height, avoiding a new wall collision above the original 60mm rail.
+All guides and holes are modelled, but the complete installation path and joint strength still require assessment.
+The 18 × 18mm supports elsewhere remain unchanged.
+
+Verified upper stock: [Pinetrim 40 × 18 × 1800mm untreated pine, Bunnings item 0132618](https://www.bunnings.co.nz/pinetrim-40-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132618),
+listed at NZ$11.50 per length on 7 November 2026; local stock not confirmed.
+
+## Earlier research
 
 ## Recommendation
 

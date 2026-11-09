@@ -1,13 +1,13 @@
 """Cutting envelopes from assembly leaves, independent of placement and display state."""
 
-from typing import Any
 import logging
+from typing import Any
 
 from build123d import Location, Shape
 
+from campervan.cad.cut_profiles import flat_profile
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
-from campervan.cad.cut_profiles import flat_profile
 
 
 def material_for(path: tuple[str, ...]) -> str:
@@ -18,16 +18,17 @@ def material_for(path: tuple[str, ...]) -> str:
         return "floor"
     if name.startswith("roller catch keeper"):
         return "cabinet-catches"
-    if "Catch timber" in path:
-        return "ledges"
-    if "Cabinet" in path and "Doors" in path:
-        return "cabinet-doors"
-    if "Cabinet" in path and name == "back lining":
-        return "cabinet-back"
-    if "Cabinet" in path and name in {"middle panel", "cab-end panel", "rear upper panel"}:
-        return "cabinet-partitions"
-    if "Cabinet" in path and ("frame" in name or "Wall supports" in path):
-        return "cabinet-frames"
+    if "Module fasteners" in path:
+        return "cabinet-module-fasteners"
+    if "Cabinet" in path:
+        if name == "wheel-arch bridge":
+            return "cabinet-bridge"
+        if "Frames" in path:
+            return "cabinet-frames"
+        if "Skin" in path:
+            return "cabinet-partitions"
+        if name == "plywood door":
+            return "cabinet-doors"
     if "Angle brackets" in path:
         return "brackets"
     if "Rear drawer" in path and "Drawer sliders" in path:
@@ -60,6 +61,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             return  # Another pose of the same two leaves and purchased leg kit.
         if "Laptop table" in path and "Table hinges · Homer HOM006136" in path:
             return  # One purchased pair; the moving halves follow their tabletop leaves.
+        if "Hinges" in path or "Keeper fixings" in path or any(name.endswith("fixed hardware") for name in path):
+            return  # Purchased hinges/bodies: count the static hinge role and moving catch keeper only.
         if "Roller catch bodies" in path:
             return  # One catch set is counted by its moving keeper.
         if part.children:
@@ -71,17 +74,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         size = part.located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
-        profile = {}
-        if material == "cabinet-back":
-            from campervan.cad.cabinet import cabinet_back_profile
-
-            centre = cabinet_back_profile(
-                parameters, parameters.cabinet_back_clearance_mm + parameters.cabinet_back_thickness_mm / 2
-            )
-            length, width = sorted((round(centre.length, 2), round(size.Y, 2)), reverse=True)
-            thickness = parameters.cabinet_back_thickness_mm
-            profile = {"profile_note": "Developed rectangular blank. Transfer the wheel-arch notch from a van template; confirm flute direction."}
-        elif material == "slides":
+        profile: dict[str, Any] = {}
+        if material == "slides":
             # The fixed, intermediate and moving leaves describe the same two purchased slides.
             if "Fixed" not in path:
                 return
@@ -96,27 +90,45 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 parameters.bracket_width_mm,
                 parameters.bracket_thickness_mm,
             )
-        if material in {"ledges", "slats"}:
-            width, thickness = (
-                (parameters.cabinet_ledge_size_mm, parameters.cabinet_ledge_height_mm)
-                if material == "ledges"
-                else (parameters.slat_width_mm, parameters.slat_thickness_mm)
-            )
+        if material in {"slats", "cabinet-frames", "cabinet-bridge"}:
+            if material == "cabinet-frames":
+                width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
+            elif material == "cabinet-bridge":
+                width, thickness = parameters.cabinet_bridge_height_mm, parameters.cabinet_bridge_thickness_mm
+            else:
+                width, thickness = parameters.slat_width_mm, parameters.slat_thickness_mm
             dimensions = list(size)
             for section in (width, thickness):
                 dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
             length = round(dimensions[0], 2)
+            if material in {"cabinet-frames", "cabinet-bridge"}:
+                profile = {
+                    "profile_note": "Square-cut stock. Side joining rails have shelf seats and solid bolt lands; "
+                    "match-drill fixings."
+                }
         if material in {
-            "floor", "frames", "cabinet-frames", "cabinet-partitions", "skins", "shelves", "drawer",
-            "cabinet-doors", "guides", "table-plywood",
+            "floor",
+            "frames",
+            "cabinet-partitions",
+            "skins",
+            "shelves",
+            "drawer",
+            "cabinet-doors",
+            "guides",
+            "table-plywood",
         }:
             try:
                 profile = flat_profile(part)
             except (ValueError, RuntimeError, IndexError) as error:
                 logging.getLogger(__name__).warning("Cutting profile for %s: %s", part.label, error)
-                profile = {"profile_note": f"Rectangle only: CAD outline extraction failed ({error}). Transfer the profile before cutting."}
+                profile = {
+                    "profile_note": f"Rectangle only: CAD outline extraction failed ({error}). "
+                    "Transfer the profile before cutting."
+                }
         cuts.append(
-            CutPart(path=" / ".join(path[1:]), material=material, length=length, width=width, thickness=thickness, **profile)
+            CutPart(
+                path=" / ".join(path[1:]), material=material, length=length, width=width, thickness=thickness, **profile
+            )
         )
 
     visit(model, ())

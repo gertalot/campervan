@@ -241,7 +241,15 @@ class Coordinator:
         return revision
 
     async def load(self) -> ModelStatus:
-        """Replay a saved model after the browser connects, or start its first build."""
+        """Replay saved geometry on reconnect; only build automatically when none exists."""
+        if self._status.state != "regenerating":
+            fingerprint = model_fingerprint(self.parameters)
+            if self._bundle is None or self._bundle.fingerprint != fingerprint:
+                # A build completed outside the reloadable API may have saved a newer bundle.
+                saved = await asyncio.to_thread(read_bundle, self._cache_path)
+                if saved is not None and saved.fingerprint == fingerprint:
+                    self._bundle = saved
+                    self._cuts = saved.cuts
         revision = self._status.requested_revision
         try:
             async with self._publication:
@@ -259,7 +267,8 @@ class Coordinator:
                 revision = self._status.requested_revision
                 self.cuts_revision = revision
                 self._status = replace(self._status, published_revision=revision, state="ready", error=None)
-            else:
+                await self.ensure_cutting()
+            elif self._bundle is None:
                 await self.accept()
         return self._status
 
