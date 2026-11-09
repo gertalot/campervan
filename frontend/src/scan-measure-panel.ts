@@ -21,7 +21,7 @@ interface Host {
   otherUnsaved(): boolean;
 }
 export function createMeasurePanel(host: Host) {
-  const side = createSidePanel({ id: 'measurement-manager', title: 'Review and improve scan', mode: 'nonmodal',
+  const side = createSidePanel({ id: 'measurement-manager', title: 'Review and improve scan',
     onClose: () => { host.highlight(null); host.highlightTag(null); host.highlightMovements([]); } });
   side.element.classList.add('scan-measure-panel');
   const stages: { id: Stage; label: string }[] = [

@@ -1,4 +1,4 @@
-/** Shared shell for local management panels; callers own content, actions and domain state. */
+/** Shared nonmodal shell; callers own content, actions and domain state, not dismissal behavior. */
 export interface SidePanel {
   element: HTMLDialogElement; context: HTMLElement; actions: HTMLElement; status: HTMLElement; body: HTMLElement;
   closeButton: HTMLButtonElement;
@@ -8,10 +8,12 @@ export interface SidePanel {
 }
 let active: SidePanel | undefined;
 export function createSidePanel(options: {
-  id: string; title: string; mode: 'modal' | 'nonmodal'; onClose?(): void;
+  id: string; title: string; onClose?(): void;
 }): SidePanel {
   const element = document.createElement('dialog'); element.id = options.id; element.className = 'side-panel';
-  if (options.mode === 'modal') element.setAttribute('closedby', 'any');
+  // Keep canvas interaction available; dismissal belongs to X/Escape rather than outside clicks.
+  // https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/show
+  element.setAttribute('closedby', 'none');
   element.setAttribute('aria-labelledby', `${options.id}-title`);
   const header = document.createElement('div'); header.className = 'side-panel-header';
   const title = document.createElement('h2'); title.id = `${options.id}-title`; title.textContent = options.title;
@@ -36,7 +38,7 @@ export function createSidePanel(options: {
       active?.close({ restoreFocus: false });
       returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       closingFocus = undefined; active = panel;
-      if (options.mode === 'modal') element.showModal(); else element.show();
+      element.show();
     },
     close(settings = {}) {
       if (!element.open) return;
@@ -46,7 +48,7 @@ export function createSidePanel(options: {
   };
   closeButton.onclick = () => panel.close();
   element.addEventListener('keydown', event => {
-    if (options.mode === 'nonmodal' && event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
+    if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
       event.preventDefault(); event.stopPropagation(); panel.close();
     }
   });

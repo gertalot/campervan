@@ -492,7 +492,6 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
   border: 1px solid #454a54; color: #e3e7ed; background: #23272d; z-index: 35; }
 .side-panel:not([open]) { display: none; }
 .side-panel[open] { display: flex; flex-direction: column; gap: 12px; }
-.side-panel::backdrop { background: #0008; }
 .side-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
 .side-panel-header h2 { margin: 0; font-size: 17px; font-weight: 600; color: #edf1f7; }
 .side-panel-context, .side-panel-actions, .side-panel-status { flex: none; }

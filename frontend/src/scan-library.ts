@@ -35,7 +35,7 @@ function iconButton(icon: 'pencil' | 'trash', label: string, run: () => void) {
 }
 
 export function createScanLibrary(host: Host) {
-  const side = createSidePanel({ id: 'scan-library', title: 'Manage scans', mode: 'modal',
+  const side = createSidePanel({ id: 'scan-library', title: 'Manage scans',
     onClose: () => { editor.hidden = true; } });
   const dialog = side.element; dialog.classList.add('scan-library-dialog');
   const close = side.closeButton;
