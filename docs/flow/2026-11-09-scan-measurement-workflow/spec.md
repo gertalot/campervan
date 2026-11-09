@@ -339,9 +339,10 @@ review decisions, not four independent sets of booleans. Browser session storage
 preference for selected result/layer.
 
 Each artifact records its kind, mode, source run/fingerprints, layout, measurement revision, context revision when
-used, candidate/exclusion/settings fingerprint, algorithm version, assumptions and producing job. Existing analysis
-snapshots/history remain readable as **Legacy scan-assisted analysis** and cannot satisfy measurement-only completion.
-No automatic source reprocessing or observation migration happens merely on opening the app.
+used, candidate/exclusion/settings fingerprint, algorithm version, assumptions and producing job. Replace the old
+analysis workflow directly, without legacy readers, adapters, compatibility modes or rollback history. Existing
+captures, physical measurements and reconstruction assets remain intact; obsolete analysis/history files need not
+be read, migrated or deleted. Opening the app never automatically reprocesses sources or migrates observations.
 
 One scan-owned artifact-kind dependency policy computes freshness from canonical fingerprints of relevant content.
 Keep revisions for concurrency/provenance, but do not invalidate every result on every shared-document revision.
@@ -384,9 +385,10 @@ correction. Long actions return a job/artifact ID through the existing `ScanProc
 return domain status, freshness reason and artifact availability; do not spread completion rules across the frontend.
 Exact route spelling and wire models are implementation-plan work; these ownership/semantic contracts are fixed.
 
-Current `/analyses/{id}/apply` becomes callable only for a current scan-correction artifact and retains its existing
-source/revision checks. Measurement-only artifacts cannot invoke it. Preserve old saved analysis/history inspection
-and original-result viewing; remove the old Analyse→Apply shortcut from the measurement assessment UI.
+Remove the superseded `/analyses` routes and Analyse→Apply/Revert workflow. The new workflow's Update mesh action
+accepts only a current scan-correction artifact and retains source/revision checks. Measurement-only artifacts cannot
+rebuild geometry. Original-result viewing is ordinary result selection; it does not roll back measurements or delete
+results. Store the corrected-result reference in the workflow without a separate acceptance-history owner.
 
 Keep one active expensive subprocess. Do not add queues, services, retries or readiness protocols. Workflows can be
 viewed/edited while another task runs; explain why a competing expensive action cannot start. Source deletion/missing
@@ -460,7 +462,7 @@ future implementation plan. These criteria own the corresponding original baseli
 | M8 | Initial and extra-pair planning share one scoring/visibility mechanism and expose all meaningfully useful pairs. | AC9 |
 | M9 | Reload preserves acknowledged measurements, capture selection and workflow; moved tags cannot silently inherit distances. | AC10 |
 | M10 | Only explicit correction/rebuild publishes new geometry; original sources and physical values remain intact. | AC11 |
-| M11 | Old-layout measurements, legacy results/library actions and camera/navigation controls remain usable. | AC12 |
+| M11 | Old-layout measurements, saved reconstruction/library actions and camera/navigation remain usable; old-workflow compatibility is waived. | AC12 |
 
 README and docs/photogrammetry.md updates belong here for measurement-only semantics, shared workflow and explicit
 correction. Other scopes own their factual import/scene documentation changes; do not rewrite their sections here.
