@@ -5,8 +5,7 @@ from typing import Literal
 
 from campervan.scan_library import ScanEntryPreferences, ScanLibraryDocument
 from campervan.scan_processing import ScanProcessing, identifier
-from campervan.scan_solutions import ScanSolutions
-from campervan.scans import SCAN_RUNS, completed_scans, delete_scan_result, read_json, write_json
+from campervan.scans import completed_scans, delete_scan_result, read_json, write_json
 
 
 def result_family(key: str) -> set[str]:
@@ -57,7 +56,7 @@ def move_item(
 
 
 def delete_group(
-    processing: ScanProcessing, history: ScanSolutions, revision: int, group_id: str,
+    processing: ScanProcessing, revision: int, group_id: str,
 ) -> ScanLibraryDocument:
     def change(document: ScanLibraryDocument) -> None:
         if group_id not in document.groups:
@@ -77,13 +76,8 @@ def delete_group(
             delete_scan_result(key, processing.library.path.parent)
         for directory in directories:
             shutil.rmtree(directory)
-        # Analyses are generated from these results; reusable physical tag measurements are independent.
+        # Physical measurements and workflow evidence remain independent of capture-library deletion.
         run_ids = {key.removeprefix("run:") for key in keys if key.startswith("run:")}
-        for request_path in (SCAN_RUNS.parent / "scan-analyses").glob("*/request.json"):
-            if read_json(request_path).get("run_id") in run_ids:
-                if request_path.parent.is_symlink():
-                    raise ValueError("Invalid analysis directory.")
-                shutil.rmtree(request_path.parent)
         for job_path in processing.jobs.glob("*.json"):
             job = read_json(job_path)
             if (
@@ -93,7 +87,6 @@ def delete_group(
             ):
                 job_path.unlink()
                 job_path.with_suffix(".log").unlink(missing_ok=True)
-        history.remove_runs(run_ids)
         for key in keys:
             document.entries.pop(key, None)
         if document.default_key in keys:

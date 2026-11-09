@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from campervan.scan_groups import delete_group, move_item
 from campervan.scan_library import ScanLibraryConflict, ScanLibraryDocument, ScanLibraryStore
 from campervan.scan_processing import ScanProcessing
-from campervan.scan_solutions import ScanSolutions
 from campervan.scans import delete_scan_result
 
 
@@ -34,7 +33,7 @@ class MoveScanItem(BaseModel):
 
 
 def register_scan_library(
-    app: FastAPI, store: ScanLibraryStore, processing: ScanProcessing, history: ScanSolutions,
+    app: FastAPI, store: ScanLibraryStore, processing: ScanProcessing,
 ) -> Callable[[], ScanLibraryDocument]:
 
     def operation(action: Callable[[], ScanLibraryDocument]) -> ScanLibraryDocument:
@@ -71,7 +70,7 @@ def register_scan_library(
     @app.delete("/api/v1/scans/library/group")
     def remove_group(edit: DeleteCaptureGroup) -> ScanLibraryDocument:
         try:
-            return operation(lambda: delete_group(processing, history, edit.revision, edit.group_id))
+            return operation(lambda: delete_group(processing, edit.revision, edit.group_id))
         except HTTPException as error:
             if error.status_code == 500:
                 raise HTTPException(

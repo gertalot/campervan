@@ -19,12 +19,42 @@ def clean_manifold_vertices(mesh: Any) -> int:
     return before - len(mesh.triangles)
 
 
-def reconstruct(frames_path: Path, poses_path: Path, output: Path, settings: ScanSettings) -> dict[str, Any]:
+def read_depth_frame(root: Path, frame: dict[str, Any], settings: ScanSettings,
+                     exclusion_masks: list[str] | None = None) -> Any:
+    """Read original depth pixels; exclusions are nonzero pixels in same-size single-channel masks."""
+    import cv2
+    import numpy as np
+
+    depth = cv2.imread(str(root / frame["depth"]), cv2.IMREAD_UNCHANGED)
+    if depth is None or depth.ndim != 2 or depth.dtype != np.uint16:
+        raise ValueError(f"Invalid original depth image for node {frame['id']}")
+    if frame.get("confidence") and settings.depth_confidence_min:
+        confidence = cv2.imread(str(root / frame["confidence"]), cv2.IMREAD_UNCHANGED)
+        if confidence is None or confidence.shape != depth.shape:
+            raise ValueError(f"Invalid depth confidence image for node {frame['id']}")
+        depth[confidence < settings.depth_confidence_min] = 0
+    for asset in exclusion_masks or []:
+        path = (root / asset).resolve()
+        if Path(asset).is_absolute() or not path.is_relative_to(root.resolve()):
+            raise ValueError("Cleanup mask must belong to the source result.")
+        mask = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
+        if mask is None or mask.shape != depth.shape:
+            raise ValueError(f"Cleanup mask must use original depth pixels for node {frame['id']}")
+        depth[mask != 0] = 0
+    return depth
+
+
+def reconstruct(frames_path: Path, poses_path: Path, output: Path, settings: ScanSettings,
+                exclusion_masks: dict[str, list[str]] | None = None) -> dict[str, Any]:
     import cv2
     import numpy as np
     import open3d as o3d
 
     document = read_json(frames_path)
+    masks = exclusion_masks if exclusion_masks is not None else document.get("exclusion_masks", {})
+    unknown_frames = set(masks) - {str(frame["id"]) for frame in document["frames"]}
+    if unknown_frames:
+        raise ValueError(f"Cleanup masks reference unavailable frames: {sorted(unknown_frames)}")
     poses = read_json(poses_path)["poses"]
     depth_scale = float(document["depth_scale"])
     # Open3D 0.20's legacy ScalableTSDFVolume rescales metric depth twice (upstream #7592).
@@ -42,15 +72,13 @@ def reconstruct(frames_path: Path, poses_path: Path, output: Path, settings: Sca
     confidence_frames = 0
     for index, frame in enumerate(document["frames"]):
         rgb = cv2.imread(str(output / frame["rgb"]))
-        depth = cv2.imread(str(output / frame["depth"]), cv2.IMREAD_UNCHANGED)
-        if rgb is None or depth is None:
+        depth = read_depth_frame(output, frame, settings, masks.get(str(frame["id"])))
+        if rgb is None:
             raise ValueError(f"Missing RGB/depth image for node {frame['id']}")
-        if frame["confidence"] and settings.depth_confidence_min:
-            confidence = cv2.imread(str(output / frame["confidence"]), cv2.IMREAD_UNCHANGED)
-            if confidence is None or confidence.shape != depth.shape:
-                raise ValueError(f"Invalid depth confidence image for node {frame['id']}")
-            depth[confidence < settings.depth_confidence_min] = 0
+        if frame.get("confidence") and settings.depth_confidence_min:
             confidence_frames += 1
+        if not np.any(depth):
+            continue
         height, width = depth.shape
         # RTAB-Map exports registered RGB/depth in the same optical frame at different resolutions.
         # Preserve depth samples; resample colour and scale the per-frame intrinsic matrix.
@@ -117,6 +145,9 @@ def reconstruct(frames_path: Path, poses_path: Path, output: Path, settings: Sca
         "triangles": len(mesh.triangles),
         "vertices": len(mesh.vertices),
         "confidence_filtered_frames": confidence_frames,
+        "cleanup_masked_frames": len(masks),
+        "cleanup_note": ("Reviewed original-depth-pixel exclusions applied before fusion." if masks else
+                         "No reviewed cleanup masks supplied; cleanup context skipped."),
         "depth_resampling": "none",
         "backend": "VoxelBlockGrid CPU",
         "manifold_removed_triangles": manifold_removed,

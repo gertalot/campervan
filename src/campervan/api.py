@@ -22,14 +22,12 @@ from campervan.parameter_fit import FitError, fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import PROJECT_PATH
 from campervan.planning_api import register_planning
-from campervan.scan_analysis_api import register_scan_analysis
 from campervan.scan_layouts import ScanLayouts
 from campervan.scan_library import ScanLibraryStore, decorate_scans
 from campervan.scan_library_api import register_scan_library
 from campervan.scan_measurements_api import register_scan_measurements
 from campervan.scan_processing import ScanProcessing
 from campervan.scan_processing_api import register_scan_processing
-from campervan.scan_solutions import ScanSolutions
 from campervan.scan_workflow_api import register_scan_workflows
 from campervan.scan_workflows import ScanWorkflowStore
 from campervan.scans import completed_scans, scan_asset
@@ -121,15 +119,11 @@ def build_app(
     scan_library = ScanLibraryStore(project_path.with_name("scan-library.json"))
     scan_layouts = ScanLayouts(project_path.with_name("scan-measurements.json"))
     scan_processing = ScanProcessing(scan_library, scan_layouts)
-    scan_solutions = ScanSolutions(project_path.with_name("scan-solutions.json"))
     scan_workflows = ScanWorkflowStore(project_path.with_name("scan-workflows.json"))
     register_scan_workflows(app, scan_workflows, scan_layouts, scan_library, scan_processing)
     register_scan_measurements(app, scan_layouts)
-    read_scan_library = register_scan_library(app, scan_library, scan_processing, scan_solutions)
+    read_scan_library = register_scan_library(app, scan_library, scan_processing)
     register_scan_processing(app, scan_processing, scan_layouts)
-    register_scan_analysis(
-        app, scan_processing, scan_layouts, scan_solutions
-    )
     register_planning(app, project_path)
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None

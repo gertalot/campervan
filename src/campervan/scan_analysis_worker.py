@@ -40,14 +40,36 @@ def main() -> None:
             payload = planner(source, request["run"], measurements, network, request["planning"], directory)
         artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
         write_json(directory / "artifact.json", artifact.model_dump())
-    elif kind == "analyse":
-        from campervan.scan_analysis import analyse
+    elif kind == "preview-correction":
+        from campervan.scan_analysis import preview_correction
+        from campervan.scan_workflow_models import ArtifactEnvelope, SourceBinding
 
-        analyse(source, MeasurementDocument.model_validate(request["measurements"]), directory)
-    elif kind == "rebuild":
+        binding_data = (request["context"] or {}).get("binding")
+        payload = preview_correction(source, MeasurementDocument.model_validate(request["measurements"]), directory,
+                                     network=request["network"],
+                                     binding=SourceBinding.model_validate(binding_data) if binding_data else None)
+        artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
+        write_json(directory / "artifact.json", artifact.model_dump())
+    elif kind == "update-mesh":
+        from campervan.scan_analysis import CORRECTION_ALGORITHM_VERSION, CORRECTION_SETTINGS
+        from campervan.scan_layouts import ScanLayouts
         from campervan.scan_rebuild import rebuild
+        from campervan.scan_workflow_models import ArtifactEnvelope
+        from campervan.scan_workflows import ScanWorkflowStore, capture_inputs
 
-        rebuild(source, directory, SCAN_RUNS / sys.argv[3])
+        # Reuse the same content policy immediately before original RGB-D ingestion. The worker never edits the store.
+        store = ScanWorkflowStore(Path(request["workflow_store_path"]))
+        document = store.read()
+        item = document.workflows[request["workflow_id"]]
+        artifact = ArtifactEnvelope.model_validate(read_json(Path(request["correction_directory"]) / "artifact.json"))
+        if (item.artifact_refs.get("scan_correction") != artifact.id or artifact.workflow_id != item.id or
+            item.source_run_id != request["run_id"]):
+            raise ValueError("Correction selection changed before reconstruction started.")
+        current = capture_inputs(item, document, ScanLayouts(Path(request["measurement_store_path"])),
+                                 "scan_correction", CORRECTION_ALGORITHM_VERSION,
+                                 settings=CORRECTION_SETTINGS, context_used=True)
+        rebuild(source, Path(request["correction_directory"]), SCAN_RUNS / request["output_run_id"],
+                fingerprints=current["fingerprints"])
     else:
         raise ValueError("Unknown scan analysis task.")
 

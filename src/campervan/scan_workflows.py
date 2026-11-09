@@ -53,6 +53,22 @@ class ScanWorkflowStore:
         temporary.replace(self.path)
         return document
 
+    def record_correction_result(self, artifact: ArtifactEnvelope, run_id: str,
+                                 freshness: Callable[[WorkflowDocument], ArtifactStatus]) -> ArtifactStatus:
+        """Keep completed assets, but only attach a result still matching the acknowledged correction."""
+        with self.lock:
+            document = self.read()
+            item = document.workflows[artifact.workflow_id]
+            if artifact.kind != "scan_correction" or item.source_run_id != artifact.source_run_id or item.layout_id != artifact.layout_id:
+                raise ValueError("Corrected result does not belong to this workflow source/layout.")
+            status = freshness(document)
+            if item.artifact_refs.get("scan_correction") != artifact.id:
+                status = ArtifactStatus(status="stale", reasons=["A different correction preview is selected."])
+            if status.status == "current":
+                item.corrected_run_id = run_id
+                self._save(document)
+            return status
+
 
 def fingerprint(value: Any) -> str:
     data = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()

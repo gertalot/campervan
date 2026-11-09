@@ -7,6 +7,9 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from pydantic import Field
 
+from campervan.scan_analysis import CORRECTION_ALGORITHM_VERSION, CORRECTION_SETTINGS
+from campervan.scan_context_factors import source_support_asset
+from campervan.scan_graph import ensure_graph
 from campervan.scan_layouts import ReviseTagLayout, ScanLayouts
 from campervan.scan_library import ScanLibraryStore
 from campervan.scan_network import ALGORITHM_VERSION, NETWORK_SETTINGS
@@ -17,7 +20,7 @@ from campervan.scan_workflow_models import (
     ArtifactEnvelope, ArtifactStatus, ChecklistBatch, Model, ProfileRef, ProfileRevision, SourceBinding, Stage, Workflow,
 )
 from campervan.scan_workflows import ScanWorkflowStore, WorkflowConflict, artifact_status, capture_inputs
-from campervan.scans import scan_asset, scan_manifest, write_json
+from campervan.scans import SCAN_RUNS, read_json, scan_manifest, write_json
 
 
 class CreateWorkflow(Model):
@@ -53,6 +56,8 @@ PRODUCERS = {
     "suggest-more": ("measurement_plan", PLANNER_ALGORITHM_VERSION,
                      PLANNER_SETTINGS | {"mode": "additional"}, False, "Suggest more"),
     "review-placement": ("placement_review", PLACEMENT_ALGORITHM_VERSION, PLACEMENT_SETTINGS, True, "Review placement"),
+    "preview-correction": ("scan_correction", CORRECTION_ALGORITHM_VERSION, CORRECTION_SETTINGS,
+                           True, "Preview corrections"),
 }
 
 
@@ -76,7 +81,7 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             raise HTTPException(404, "Artifact not found for this workflow.")
         try:
             # Compare against the current producer, never replay a saved version/settings as current policy.
-            action_name = artifact.assumptions.get("action", "check-measurements" if artifact.kind == "measurement_network" else "")
+            action_name = artifact.assumptions.get("action")
             producer = PRODUCERS.get(action_name)
             if producer is None or producer[0] != artifact.kind:
                 return artifact, ArtifactStatus(status="unavailable", reasons=["Artifact producer is unavailable."])
@@ -85,9 +90,12 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
                                      settings=settings, context_used=context_used)["fingerprints"]
         except (ValueError, OSError, KeyError) as error:
             return artifact, ArtifactStatus(status="unavailable", reasons=[f"Source evidence unavailable: {error}"])
-        return artifact, artifact_status(artifact, current)
+        status = artifact_status(artifact, current)
+        if artifact.kind == "scan_correction" and status.status == "current":
+            status.available_actions = ["update-mesh"]
+        return artifact, status
 
-    def actions(source_available: bool) -> dict[str, Any]:
+    def actions(source_available: bool, correction: ArtifactStatus | None = None) -> dict[str, Any]:
         result = {name: {"available": False, "reasons": ["Producer unavailable."]}
                   for name in ("review-placement", "plan-measurements", "check-measurements", "suggest-more",
                                "preview-correction", "update-mesh")}
@@ -96,6 +104,12 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             reasons.append("Another scan task is running. Wait for it to finish.")
         for name in PRODUCERS:
             result[name] = {"available": not reasons, "reasons": reasons}
+        update_reasons = list(reasons)
+        if correction is None:
+            update_reasons.append("Preview corrections before updating the mesh.")
+        elif correction.status != "current":
+            update_reasons.extend(correction.reasons or ["The correction preview needs updating."])
+        result["update-mesh"] = {"available": not update_reasons, "reasons": update_reasons}
         return result
 
     def view(document, item: Workflow) -> dict[str, Any]:
@@ -135,10 +149,21 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             planned = reports["measurement_plan"]["recommended_pairs"]
             stages["measure"] = ("Complete" if all((pair["tag_a"], pair["tag_b"]) in measured_pairs for pair in planned)
                                  else "In progress")
+        if stages["update_reconstruction"] == "Complete":
+            # A preview is a proposal; this stage completes only when that exact correction has been rebuilt.
+            stages["update_reconstruction"] = "In progress"
+            if item.corrected_run_id:
+                try:
+                    corrected = scan_manifest(item.corrected_run_id)
+                    if (corrected.get("correction_artifact_id") == item.artifact_refs.get("scan_correction") and
+                        corrected.get("workflow_id") == item.id):
+                        stages["update_reconstruction"] = "Complete"
+                except (ValueError, OSError, KeyError):
+                    pass
         return {"revision": document.revision, "workflow": displayed, "measurement": measurement,
                 "source_available": available, "profile": (document.profiles[item.profile_ref.profile_id][item.profile_ref.revision - 1] if item.profile_ref else None),
                 "artifacts": artifacts, "stages": stages, "jobs": jobs,
-                "actions": actions(available)}
+                "actions": actions(available, artifacts.get("scan_correction"))}
 
     @app.post("/api/v1/scans/workflows")
     def create(request: CreateWorkflow):
@@ -185,11 +210,17 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
                 updates["profile_ref"] = {"profile_id": profile.profile_id, "revision": profile.revision}
                 updates["source_binding"] = None
             if request.source_binding:
+                source = SCAN_RUNS / item.source_run_id
+                frames = {str(frame["id"]) for frame in read_json(source / "frames.json")["frames"]}
                 for mask in request.source_binding.masks:
-                    scan_asset(item.source_run_id, mask.asset)
+                    source_support_asset(source, mask.asset)
+                    if mask.frame_id not in frames:
+                        raise ValueError("Cleanup mask refers to an unavailable original source frame.")
                 for region in request.source_binding.regions:
                     for support in region.support:
-                        scan_asset(item.source_run_id, support.asset)
+                        source_support_asset(source, support.asset)
+                        if support.frame_id not in frames:
+                            raise ValueError("Region support refers to an unavailable original source frame.")
                 updates["source_binding"] = request.source_binding.model_dump()
             document.workflows[item.id] = Workflow.model_validate(item.model_dump() | updates)
         try:
@@ -200,6 +231,42 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
         except (ValueError, OSError, KeyError) as error:
             raise HTTPException(422, str(error)) from error
 
+    def start_update(item: Workflow, artifact: ArtifactEnvelope, request: ActionRequest):
+        if layouts.measurements(item.layout_id).read().revision != request.measurement_revision:
+            raise HTTPException(409, "Measurements changed. Refresh and retry.")
+        value, run_id = str(uuid4()), str(uuid4())
+        directory = artifact_directory / value
+        directory.mkdir(parents=True)
+        write_json(directory / "request.json", {
+            "run_id": item.source_run_id, "output_run_id": run_id, "workflow_id": item.id,
+            "correction_directory": str((artifact_directory / artifact.id).resolve()),
+            "workflow_store_path": str(store.path.resolve()),
+            "measurement_store_path": str(layouts.legacy.path.resolve()),
+        })
+
+        def publish(job):
+            def freshness(document):
+                _, status = read_artifact(document.workflows[item.id], document, artifact.id)
+                return status
+
+            status = store.record_correction_result(artifact, run_id, freshness)
+            job["artifact_status"] = status.model_dump()
+            job["artifact_id"] = artifact.id
+            job["activation_allowed"] = status.status == "current"
+            if status.status != "current":
+                job["note"] = "Result saved, but inputs changed during reconstruction; preview again before activation."
+
+        preference = library.read().entries.get(f"run:{item.source_run_id}")
+        processing.start_action(
+            value, "rebuild", [sys.executable, "-u", "-m", "campervan.scan_analysis_worker", "update-mesh",
+                               str(directory.resolve())],
+            {"run_id": run_id, "source_run_id": item.source_run_id, "workflow_id": item.id,
+             "layout_id": item.layout_id, "artifact_kind": "scan_correction",
+             "group_id": preference.group_id if preference else None, "name": "Corrected reconstruction"},
+            publish=publish,
+        )
+        return {"id": value, "run_id": run_id, "artifact_id": artifact.id}
+
     @app.post("/api/v1/scans/workflows/{workflow_id}/actions/{action}", status_code=202)
     async def action(workflow_id: str, action: Action, request: ActionRequest):
         document = store.read()
@@ -208,9 +275,18 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             raise HTTPException(409, "Workflow data changed. Refresh and retry.")
         try:
             scan_manifest(item.source_run_id)
-            eligibility = actions(True)[action]
+            correction, correction_status = None, None
+            if action == "update-mesh" and item.artifact_refs.get("scan_correction"):
+                correction, correction_status = read_artifact(item, document, item.artifact_refs["scan_correction"])
+                if correction.kind != "scan_correction":
+                    raise HTTPException(409, "Update mesh accepts only a scan-correction artifact.")
+            eligibility = actions(True, correction_status)[action]
             if not eligibility["available"]:
-                raise HTTPException(409 if action in PRODUCERS else 503, " ".join(eligibility["reasons"]))
+                raise HTTPException(409, " ".join(eligibility["reasons"]))
+            if action == "update-mesh":
+                return start_update(item, correction, request)
+            if action == "preview-correction":
+                ensure_graph(SCAN_RUNS / item.source_run_id)
             artifact_kind, algorithm, settings, context_used, title = PRODUCERS[action]
             snapshot = capture_inputs(item, document, layouts, artifact_kind, algorithm,
                                       settings=settings, context_used=context_used)
@@ -226,6 +302,7 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
                 fingerprints=snapshot["fingerprints"], job_id=value, payload={},
                 assumptions={"action": action, "settings": settings, "context_used": context_used,
                              "physical_inputs": snapshot["inputs"]["physical"],
+                             "source_binding": item.source_binding.model_dump() if context_used and item.source_binding else None,
                              "capture_role": "Initial coordinates, display orientation and source-dependent planning only."},
             )
             network = None

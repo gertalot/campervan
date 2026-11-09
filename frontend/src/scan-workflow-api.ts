@@ -1,19 +1,25 @@
 import { request } from './api';
 import type { ProcessingJob, TagLayout } from './scan-import-api';
 import type { MeasurementDocument } from './scan-measurements-api';
+import type { ScanTag } from './scan-tags';
 
 export type Stage = 'review_capture' | 'measure' | 'check_accuracy' | 'update_reconstruction';
 export type ArtifactKind = 'measurement_network' | 'measurement_plan' | 'placement_review' | 'context_review' | 'scan_correction';
 export type WorkflowAction = 'review-placement' | 'plan-measurements' | 'check-measurements' | 'suggest-more' | 'preview-correction' | 'update-mesh';
 export interface Pair { tag_a: number; tag_b: number }
 export interface ProfileRef { profile_id: string; revision: number }
-export interface Relationship { kind: string; region_ids: string[]; enabled: boolean; sigma: number | null; units: string | null; support: string[] }
+export interface Relationship { kind: string; region_ids: string[]; enabled: boolean; sigma: number | null; units: string | null; support: string[]; minimum_separation_m: number }
+export interface SourcePixel { region_id: string; frame_id: string; pixel: [number, number] }
+export interface BoundRelationship extends Relationship {
+  up_direction: [number, number, number] | null;
+  matched_support: { first: SourcePixel; second: SourcePixel }[];
+}
 export interface ProfileRevision { profile_id: string; revision: number; layout_id: string; context_text: string; target_classes: string[]; relationships: Relationship[]; tag_references: Record<string, unknown>[] }
 export interface PlacementCandidate {
   id: string; tag_id: number; region_id: string; support_index: number; mounting_confirmed: boolean;
   access_confirmed: boolean; interior_confirmed: boolean; sigma_m: number; connects_to: number[];
 }
-export interface SourceBinding { source_run_id: string; profile_ref: ProfileRef; revision: number; regions: { id: string; label: string; support: { frame_id: string; asset: string; observed_xyz: [number, number, number] | null }[]; correction_revision: number }[]; masks: { frame_id: string; asset: string; revision: number }[]; relationships: Relationship[]; placement_candidates: PlacementCandidate[] }
+export interface SourceBinding { source_run_id: string; profile_ref: ProfileRef; revision: number; regions: { id: string; label: string; support: { frame_id: string; asset: string; observed_xyz: [number, number, number] | null }[]; correction_revision: number; symmetry_scope: 'body' | 'excluded' }[]; masks: { frame_id: string; asset: string; revision: number }[]; relationships: BoundRelationship[]; placement_candidates: PlacementCandidate[] }
 export interface ChecklistBatch { id: string; kind: 'initial' | 'additional' | 'recheck'; ordered_pairs: Pair[]; current_pair: Pair | null; producing_artifact_id: string }
 export interface Workflow { id: string; source_run_id: string; layout_id: string; group_id: string | null; profile_ref: ProfileRef | null; source_binding: SourceBinding | null; stage: Stage; target_mm: number; improvement_mm: number; candidate_sigmas: Record<string, number>; checklist_batches: ChecklistBatch[]; artifact_refs: Partial<Record<ArtifactKind, string>>; corrected_run_id: string | null; review_decisions: Record<string, unknown> }
 export interface ArtifactStatus { status: 'current' | 'stale' | 'unavailable'; reasons: string[]; available_actions: string[] }
@@ -129,9 +135,32 @@ export interface PlacementReview {
   candidates: PlacementCandidateReview[]; baseline_plan: MeasurementPlan; common_budget: number; retained_tag_ids: number[];
   settings: { planner: PlannerSettings; comparison: string; candidate_source: string }; notes: string[];
 }
+export interface CorrectionMovement {
+  id: number; before: [number, number, number]; after: [number, number, number];
+  registered_proposal: [number, number, number]; distance_m: number; scan_dependent: boolean;
+}
+export interface CorrectionContext {
+  index?: number; kind?: string; active: boolean; region_ids?: string[]; sigma?: number | null;
+  units?: string | null; reason?: string; contributing_frames?: string[]; support_samples?: number;
+}
+export interface ScanCorrection {
+  tag_ids: number[]; tags: (ScanTag & { scan_dependent: boolean })[]; movements: CorrectionMovement[];
+  residuals: (MeasurementDocument['distances'][number] & { effective_sigma_m: number; fitted_m: number;
+    residual_m: number; standardised_residual: number; weight: number })[];
+  inactive_measurements: (MeasurementDocument['distances'][number] & { reason: string })[];
+  inactive_measurement_count: number;
+  registration: { rotation: number[][]; translation: number[]; weights: number[];
+    status: 'registered' | 'scan_dependent'; reasons: string[]; scan_dependent_tag_ids: number[];
+    unresolved_mode_count: number };
+  context: CorrectionContext[]; cleanup: { mask_count: number; note: string };
+  diagnostics: { nodes: number; original_factors: number; physical_range_factors: number; context_factors: number;
+    iterations: number; initial_error: number; final_error: number; note: string };
+  solution_sha256: string; graph_sha256: string;
+}
 export type ArtifactEnvelope = { [K in ArtifactKind]: ArtifactBase & {
   kind: K; payload: K extends 'measurement_network' ? MeasurementNetwork :
-    K extends 'measurement_plan' ? MeasurementPlan : K extends 'placement_review' ? PlacementReview : Record<string, unknown>
+    K extends 'measurement_plan' ? MeasurementPlan : K extends 'placement_review' ? PlacementReview :
+    K extends 'scan_correction' ? ScanCorrection : Record<string, unknown>
 } }[ArtifactKind];
 export interface WorkflowView { revision: number; workflow: Workflow; measurement: MeasurementDocument | null; source_available: boolean; profile: ProfileRevision | null; actions: Record<WorkflowAction, { available: boolean; reasons: string[] }>; artifacts: Partial<Record<ArtifactKind, ArtifactStatus>>; stages: Record<Stage, 'Not started' | 'In progress' | 'Complete' | 'Needs updating'>; jobs: ProcessingJob[] }
 export interface WorkflowEdit { revision: number; stage?: Stage; target_mm?: number; improvement_mm?: number; candidate_sigmas?: Record<string, number>; checklist_batches?: ChecklistBatch[]; review_decisions?: Record<string, unknown>; profile?: ProfileRevision; profile_ref?: ProfileRef | null; source_binding?: SourceBinding }
@@ -139,6 +168,6 @@ const base = 'scans/workflows';
 export const createWorkflow = (source_run_id: string, layout_id: string) => request<WorkflowView>(base, 'POST', { source_run_id, layout_id });
 export const readWorkflow = (id: string) => request<WorkflowView>(`${base}/${encodeURIComponent(id)}`);
 export const editWorkflow = (id: string, edit: WorkflowEdit) => request<WorkflowView>(`${base}/${encodeURIComponent(id)}`, 'PATCH', edit);
-export const runWorkflowAction = (id: string, action: WorkflowAction, revision: number, measurement_revision: number) => request<{ id: string; artifact_id: string }>(`${base}/${encodeURIComponent(id)}/actions/${action}`, 'POST', { revision, measurement_revision });
+export const runWorkflowAction = (id: string, action: WorkflowAction, revision: number, measurement_revision: number) => request<{ id: string; artifact_id: string; run_id?: string }>(`${base}/${encodeURIComponent(id)}/actions/${action}`, 'POST', { revision, measurement_revision });
 export const readWorkflowArtifact = (id: string, artifact: string) => request<{ artifact: ArtifactEnvelope; status: ArtifactStatus }>(`${base}/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(artifact)}`);
 export const reviseTagLayout = (id: string, body: { name: string; tag_family: '36h11'; tag_size_mm: number; revision: number; unchanged: number[]; moved: number[]; removed: number[]; added: number[] }) => request<TagLayout>(`scans/layouts/${encodeURIComponent(id)}/revise`, 'POST', body);

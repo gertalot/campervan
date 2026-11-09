@@ -537,7 +537,10 @@ def completed_scans(directory: Path = SCAN_RUNS) -> list[dict[str, Any]]:
                     "pose_source": data.get("pose_source"),
                     "settings": data.get("settings", {}),
                     "frame_count": data.get("frames", {}).get("included_frames"),
-                    "analysis_id": data.get("analysis_id"),
+                    "workflow_id": data.get("workflow_id"),
+                    "correction_artifact_id": data.get("correction_artifact_id"),
+                    "correction": data.get("correction"),
+                    "cleanup": data.get("cleanup"),
                     "source_run_id": data.get("source_run_id"),
                     "reference_run_id": data.get("reference_run_id"),
                 }

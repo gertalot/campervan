@@ -1,6 +1,6 @@
 """Persistent scan workflow contracts, separate from physical observations."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -31,6 +31,24 @@ class ReviewedRelationship(Model):
     sigma: float | None = Field(default=None, gt=0)
     units: str | None = None
     support: list[str] = Field(default_factory=list)
+    minimum_separation_m: float = Field(default=0, ge=0)
+
+
+class SourcePixel(Model):
+    region_id: str = Field(min_length=1)
+    frame_id: str = Field(min_length=1)
+    pixel: tuple[Annotated[int, Field(ge=0, strict=True)], Annotated[int, Field(ge=0, strict=True)]]
+
+
+class MatchedBodySupport(Model):
+    first: SourcePixel
+    second: SourcePixel
+
+
+class BoundRelationship(ReviewedRelationship):
+    # Source-world direction, never an assumed vehicle axis or reusable profile assertion.
+    up_direction: tuple[float, float, float] | None = None
+    matched_support: list[MatchedBodySupport] = Field(default_factory=list)
 
 
 class ProfileRevision(Model):
@@ -60,6 +78,19 @@ class ReviewedRegion(Model):
     label: str = Field(min_length=1)
     support: list[RegionSupport] = Field(default_factory=list)
     correction_revision: int = Field(default=0, ge=0, strict=True)
+    symmetry_scope: Literal["body", "excluded"] = "excluded"
+
+
+class PlacementCandidate(Model):
+    id: str = Field(min_length=1)
+    tag_id: int = Field(gt=0, strict=True)
+    region_id: str = Field(min_length=1)
+    support_index: int = Field(ge=0, strict=True)
+    mounting_confirmed: bool = False
+    access_confirmed: bool = False
+    interior_confirmed: bool = False
+    sigma_m: float = Field(gt=0)
+    connects_to: list[Annotated[int, Field(gt=0, strict=True)]] = Field(default_factory=list)
 
 
 class SourceBinding(Model):
@@ -68,7 +99,8 @@ class SourceBinding(Model):
     revision: int = Field(ge=0, strict=True)
     regions: list[ReviewedRegion] = Field(default_factory=list)
     masks: list[CleanupMask] = Field(default_factory=list)
-    relationships: list[ReviewedRelationship] = Field(default_factory=list)
+    relationships: list[BoundRelationship] = Field(default_factory=list)
+    placement_candidates: list[PlacementCandidate] = Field(default_factory=list)
 
 
 Stage = Literal["review_capture", "measure", "check_accuracy", "update_reconstruction"]

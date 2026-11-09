@@ -1,6 +1,5 @@
-"""Joint camera/landmark fitting and model-based uncertainty, without changing observations."""
+"""Registered measured proposals and joint original-observation correction, separate from physical assessment."""
 
-from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -8,12 +7,19 @@ import numpy as np
 
 from campervan.scan_graph import GraphDocument, ensure_graph
 from campervan.scan_measurements import MeasurementDocument
-from campervan.scan_network import pair_jacobian
+from campervan.scan_network import ALGORITHM_VERSION as NETWORK_ALGORITHM_VERSION, NETWORK_SETTINGS, analyse_network
+from campervan.scan_workflow_models import SourceBinding
 from campervan.scans import file_hash, read_json, write_json
 
 
 class UnobservableGraph(ValueError):
     pass
+
+
+CORRECTION_ALGORITHM_VERSION = "scan-correction-1"
+CORRECTION_SETTINGS = {"registration": "weighted-proper-rigid-no-scale", "huber_k": 1.345,
+                       "context": "source-depth-refit-soft-relations-1", "linear_solver": "MULTIFRONTAL_QR",
+                       "physical_initializer": {"algorithm": NETWORK_ALGORITHM_VERSION, "settings": NETWORK_SETTINGS}}
 
 
 def _key(node: int) -> int:
@@ -99,174 +105,162 @@ def _build(document: GraphDocument) -> tuple[Any, Any]:
             reached.add(node)
             stack.extend(connected[node] - reached)
     if reached != set(connected):
-        raise UnobservableGraph("Original scan graph is disconnected; no finite joint uncertainty can be reported.")
+        raise UnobservableGraph("Original scan graph is disconnected; the joint correction needs connected observations.")
     if not any(link.kind == 7 for link in document.links):
         _gauge(graph, initial, root, document.gravity_sigma_rad > 0 and any(link.kind == 9 for link in document.links))
     return graph, initial
 
 
-def _positions(values: Any, ids: list[int]) -> Any:
-    return np.asarray([values.atPose3(_key(-tag)).translation() for tag in ids])
+def register_measured_shape(network: dict[str, Any], captured_positions: dict[int, Any]) -> dict[str, Any]:
+    """Orient an identifiable range fit for the source; incomplete modes keep labelled captured support."""
+    ids = network["tag_ids"]
+    captured = np.asarray([captured_positions[tag] for tag in ids], dtype=float).reshape((-1, 3))
+    fitted = np.asarray(network["positions_m"], dtype=float).reshape((-1, 3))
+    if fitted.shape != captured.shape or not np.isfinite(fitted).all() or not np.isfinite(captured).all():
+        raise ValueError("Physical and captured tag positions must be finite and have identical IDs.")
+    reasons = []
+    if network["solver"]["status"] != "fitted":
+        reasons.append("The independent range fit is unavailable or has no active measurements.")
+    if network["information"]["nullity"] or network["completeness"]["nonlinear_ambiguity"]:
+        reasons.append("The measured shape has unresolved modes or nonlinear ambiguity.")
+    if len(ids) < 3 or np.linalg.matrix_rank(fitted - fitted.mean(axis=0)) < 2:
+        reasons.append("The measured shape cannot identify a full rigid registration.")
+    weights = np.ones(len(ids))
+    covariance = network.get("covariance_m2")
+    if covariance is not None:
+        matrix = np.asarray(covariance)
+        if matrix.shape != (3 * len(ids), 3 * len(ids)) or not np.isfinite(matrix).all():
+            raise ValueError("Physical covariance does not match the fitted tag positions.")
+        variances = np.array([np.trace(matrix[3*i:3*i+3, 3*i:3*i+3]) for i in range(len(ids))])
+        if np.any(variances <= 0):
+            raise ValueError("Physical registration weights require positive positional covariance.")
+        weights = 1 / variances
+    weights = weights / weights.sum() if len(weights) else weights
+    if reasons:
+        return {"positions": dict(zip(ids, captured, strict=True)), "rotation": np.eye(3),
+                "translation": np.zeros(3), "weights": weights.tolist(), "status": "scan_dependent",
+                "reasons": reasons, "scan_dependent_tag_ids": ids,
+                "unresolved_mode_count": network["information"]["nullity"]}
+    source_centre = np.sum(fitted * weights[:, None], axis=0)
+    target_centre = np.sum(captured * weights[:, None], axis=0)
+    u, _, vt = np.linalg.svd(((fitted - source_centre) * weights[:, None]).T @ (captured - target_centre))
+    correction = np.diag([1.0, 1.0, 1.0 if np.linalg.det(vt.T @ u.T) >= 0 else -1.0])
+    rotation = vt.T @ correction @ u.T
+    translation = target_centre - rotation @ source_centre
+    registered = fitted @ rotation.T + translation
+    return {"positions": dict(zip(ids, registered, strict=True)), "rotation": rotation, "translation": translation,
+            "weights": weights.tolist(), "status": "registered", "reasons": [], "scan_dependent_tag_ids": [],
+            "unresolved_mode_count": 0}
 
 
-def _covariance(graph: Any, values: Any, ids: list[int]) -> Any:
+def _initialise_proposal(initial: Any, document: GraphDocument, proposed: dict[int, Any]) -> None:
+    """Move tag translations and their directly observing camera starts together; preserve native rotations/gauge."""
     import gtsam
 
-    try:
-        marginals = gtsam.Marginals(graph, values)
-        joint = marginals.jointMarginalCovariance([_key(-tag) for tag in ids]).fullMatrix()
-    except RuntimeError as error:
-        raise UnobservableGraph(f"Graph uncertainty is unobservable or ill-conditioned: {error}") from error
-    jacobian = np.zeros((3 * len(ids), 6 * len(ids)))
-    for i, tag in enumerate(ids):
-        jacobian[3 * i : 3 * i + 3, 6 * i + 3 : 6 * i + 6] = values.atPose3(_key(-tag)).rotation().matrix()
-    result = jacobian @ joint @ jacobian.T
-    if not np.isfinite(result).all() or np.min(np.linalg.eigvalsh(result)) < -1e-8:
-        raise UnobservableGraph("Joint covariance is invalid; uncertainty cannot be quantified.")
-    return result
+    shifts = {tag: np.asarray(point) - initial.atPose3(_key(-tag)).translation() for tag, point in proposed.items()}
+    camera_shifts: dict[int, list[tuple[Any, float]]] = {}
+    for link in document.links:
+        a, b = link.from_id, link.to_id
+        if a > 0 > b and -b in shifts:
+            camera, tag = a, -b
+        elif b > 0 > a and -a in shifts:
+            camera, tag = b, -a
+        else:
+            continue
+        weight = float(np.trace(np.asarray(link.information)[:3, :3]))
+        camera_shifts.setdefault(camera, []).append((shifts[tag], weight))
+    translations = {-tag: shift for tag, shift in shifts.items()}
+    translations.update({camera: np.average([shift for shift, _ in supports], axis=0,
+                                            weights=[weight for _, weight in supports])
+                         for camera, supports in camera_shifts.items()})
+    root = min(int(node) for node in document.poses if int(node) > 0)
+    # _build fixes the original root gauge; keep the initializer on that same equality manifold.
+    offset = translations.get(root, np.zeros(3)) if not any(link.kind == 7 for link in document.links) else np.zeros(3)
+    for node in document.poses:
+        pose = initial.atPose3(_key(int(node)))
+        initial.update(_key(int(node)), gtsam.Pose3(pose.rotation(),
+                       pose.translation() + translations.get(int(node), np.zeros(3)) - offset))
 
 
-def _analyse(run: Path, measurements: MeasurementDocument, output: Path) -> dict[str, Any]:
+def preview_correction(run: Path, measurements: MeasurementDocument, output: Path, *,
+                       network: dict[str, Any] | None = None, binding: SourceBinding | None = None) -> dict[str, Any]:
+    """Fit original graph factors and each active original range once; publish no measurement-only uncertainty."""
     import gtsam
+    from campervan.scan_context_factors import add_context_factors
 
     manifest = read_json(run / "run.json")
     if manifest.get("tag_layout_id") != measurements.tag_layout_id:
-        raise ValueError("Selected run and measurements belong to different tag layouts.")
-    if measurements.default_sigma_m is None:
-        raise ValueError("Set the typical measuring precision before analysing uncertainty.")
+        raise ValueError("Selected source and physical measurements belong to different tag layouts.")
     document = ensure_graph(run)
-    write_json(output / "graph.json", document.model_dump())
-    ids = sorted(tag["id"] for tag in manifest["tags"])
-    if len(ids) < 2:
-        raise ValueError("At least two observed tag centres are required.")
+    ids = sorted(tag["id"] for tag in manifest.get("tags", []))
+    if len(ids) != len(set(ids)) or any(str(-tag) not in document.poses for tag in ids):
+        raise ValueError("Captured tag IDs do not match the original graph landmarks.")
+    active = [record for record in measurements.distances if record.tag_a in ids and record.tag_b in ids]
+    inactive = [{**record.model_dump(), "reason": "One or both tags are absent from this source capture."}
+                for record in measurements.distances if record not in active]
+    if any((record.sigma_m or measurements.default_sigma_m) is None for record in active):
+        raise ValueError("Set measuring precision for each active physical range before correction.")
+    if network is None:
+        network = analyse_network(manifest, measurements, NETWORK_SETTINGS, output)
+    if network["tag_ids"] != ids:
+        raise ValueError("Measured proposal belongs to different captured tags.")
+    before = {tag["id"]: np.asarray(tag["pose"])[:3, 3] for tag in manifest.get("tags", [])}
+    registration = register_measured_shape(network, before)
     graph, initial = _build(document)
-    parameters = gtsam.LevenbergMarquardtParams()
-    print("[Fit original scan observations]", flush=True)
-    baseline = gtsam.LevenbergMarquardtOptimizer(graph, initial, parameters).optimize()
-    baseline_cov = _covariance(graph, baseline, ids)
-    for record in measurements.distances:
-        if record.tag_a not in ids or record.tag_b not in ids:
-            raise ValueError(f"Measured pair {record.tag_a}–{record.tag_b} is missing from this run.")
+    _initialise_proposal(initial, document, registration["positions"])
+    original_factors = graph.size()
+    for record in active:
         sigma = record.sigma_m or measurements.default_sigma_m
         noise = gtsam.noiseModel.Robust.Create(
-            gtsam.noiseModel.mEstimator.Huber.Create(1.345), gtsam.noiseModel.Isotropic.Sigma(1, sigma)
+            gtsam.noiseModel.mEstimator.Huber.Create(CORRECTION_SETTINGS["huber_k"]),
+            gtsam.noiseModel.Isotropic.Sigma(1, sigma),
         )
         graph.add(gtsam.RangeFactorPose3(_key(-record.tag_a), _key(-record.tag_b), record.distance_m, noise))
-    print("[Fit measured tag distances]", flush=True)
-    fitted = gtsam.LevenbergMarquardtOptimizer(graph, baseline, parameters).optimize()
-    covariance = _covariance(graph, fitted, ids)
-    positions = _positions(fitted, ids)
-    before = np.asarray([np.asarray(tag["pose"])[:3, 3] for tag in sorted(manifest["tags"], key=lambda t: t["id"])])
+    context = add_context_factors(graph, initial, document, run, binding, _key)
+    parameters = gtsam.LevenbergMarquardtParams()
+    parameters.setLinearSolverType(CORRECTION_SETTINGS["linear_solver"])
+    print("[Fit original graph and physical ranges]", flush=True)
+    optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial, parameters)
+    fitted = optimizer.optimize()
+    graph_poses = {node: fitted.atPose3(_key(int(node))).matrix().tolist() for node in document.poses}
+    if not all(np.isfinite(matrix).all() for matrix in map(np.asarray, graph_poses.values())):
+        raise ValueError("Joint correction returned nonfinite camera or landmark poses.")
+    camera_poses = {node: (np.asarray(graph_poses[node]) @ np.asarray(offset)).tolist()
+                    for node, offset in document.optical_transforms.items()}
+    tags = [{**tag, "pose": graph_poses[str(-tag["id"])], "scan_dependent": tag["id"] in
+             registration["scan_dependent_tag_ids"]} for tag in manifest.get("tags", [])]
+    after = {tag: np.asarray(graph_poses[str(-tag)])[:3, 3] for tag in ids}
     residuals = []
-    for record in measurements.distances:
-        a, b = ids.index(record.tag_a), ids.index(record.tag_b)
-        distance = float(np.linalg.norm(positions[a] - positions[b]))
-        z = (distance - record.distance_m) / (record.sigma_m or measurements.default_sigma_m)
-        residuals.append(
-            {
-                **record.model_dump(),
-                "scan_m": float(np.linalg.norm(before[a] - before[b])),
-                "fitted_m": distance,
-                "residual_m": distance - record.distance_m,
-                "standardised_residual": z,
-                "weight": min(1.0, 1.345 / abs(z)) if z else 1.0,
-            }
-        )
-    dimensions = []
-    for a, b in combinations(range(len(ids)), 2):
-        h = pair_jacobian(positions, a, b)
-        h0 = pair_jacobian(_positions(baseline, ids), a, b)
-        dimensions.append(
-            {
-                "tag_a": ids[a],
-                "tag_b": ids[b],
-                "before_95_m": float(1.96 * np.sqrt(max(0.0, h0 @ baseline_cov @ h0))),
-                "after_95_m": float(1.96 * np.sqrt(max(0.0, h @ covariance @ h))),
-            }
-        )
-    graph_poses = {key: fitted.atPose3(_key(int(key))).matrix().tolist() for key in document.poses}
-    camera_poses = {
-        key: (np.asarray(graph_poses[key]) @ np.asarray(offset)).tolist()
-        for key, offset in document.optical_transforms.items()
-    }
-    tags = [{**tag, "pose": graph_poses[str(-tag["id"])]} for tag in manifest["tags"]]
-    mesh = run / "mesh.ply"
+    for record in active:
+        distance = float(np.linalg.norm(after[record.tag_a] - after[record.tag_b]))
+        sigma = record.sigma_m or measurements.default_sigma_m
+        z = (distance - record.distance_m) / sigma
+        residuals.append({**record.model_dump(), "effective_sigma_m": sigma, "fitted_m": distance,
+                          "residual_m": distance - record.distance_m, "standardised_residual": z,
+                          "weight": min(1.0, CORRECTION_SETTINGS["huber_k"] / abs(z)) if z else 1.0})
     result = {
-        "version": 1,
-        "run_id": run.name,
-        "tag_layout_id": measurements.tag_layout_id,
-        "measurement_revision": measurements.revision,
-        "default_sigma_m": measurements.default_sigma_m,
-        "graph_sha256": file_hash(run / "graph.json"),
-        "mesh_sha256": file_hash(mesh) if mesh.is_file() else None,
-        "manifest_sha256": file_hash(run / "run.json"),
-        "tag_ids": ids,
-        "tags": tags,
-        "movements": [
-            {
-                "id": tag,
-                "before": before[i].tolist(),
-                "after": positions[i].tolist(),
-                "distance_m": float(np.linalg.norm(positions[i] - before[i])),
-            }
-            for i, tag in enumerate(ids)
-        ],
-        "residuals": residuals,
-        "dimensions": dimensions,
-        "diagnostics": {
-            "nodes": len(document.poses),
-            "original_factors": len(document.links),
-            "excluded_nonlocalised_links": document.excluded_links,
-            "gravity_sigma_rad": document.gravity_sigma_rad,
-            "note": "Approximate 95% half-widths under the stated noise model; not calibrated physical accuracy.",
-        },
+        "tag_ids": ids, "tags": tags,
+        "movements": [{"id": tag, "before": before[tag].tolist(), "after": after[tag].tolist(),
+                       "registered_proposal": registration["positions"][tag].tolist(),
+                       "distance_m": float(np.linalg.norm(after[tag] - before[tag])),
+                       "scan_dependent": tag in registration["scan_dependent_tag_ids"]} for tag in ids],
+        "residuals": residuals, "inactive_measurements": inactive, "inactive_measurement_count": len(inactive),
+        "registration": {key: value.tolist() if isinstance(value, np.ndarray) else value
+                         for key, value in registration.items() if key != "positions"},
+        "context": context,
+        "cleanup": {"mask_count": len(binding.masks) if binding else 0,
+                    "note": "Reviewed masks will be applied before fusion." if binding and binding.masks else
+                            "No reviewed cleanup masks supplied; cleanup context skipped."},
+        "diagnostics": {"nodes": len(document.poses), "original_factors": original_factors,
+                        "physical_range_factors": len(active), "context_factors": sum(item["active"] for item in context),
+                        "iterations": optimizer.iterations(), "initial_error": float(graph.error(initial)),
+                        "final_error": float(graph.error(fitted)),
+                        "note": "Joint scan-assisted correction; movements and residuals are not physical-network accuracy."},
     }
+    write_json(output / "graph.json", document.model_dump())
     write_json(output / "solution.json", {"graph_poses": graph_poses, "camera_poses": camera_poses, "tags": tags})
-    np.save(output / "covariance.npy", covariance)
-    write_json(output / "result.tmp", result)
-    (output / "result.tmp").replace(output / "result.json")
+    result["solution_sha256"] = file_hash(output / "solution.json")
+    result["graph_sha256"] = file_hash(output / "graph.json")
     return result
 
 
-def analyse(run: Path, measurements: MeasurementDocument, output: Path) -> dict[str, Any]:
-    try:
-        return _analyse(run, measurements, output)
-    except UnobservableGraph as error:
-        document = ensure_graph(run)
-        neighbours: dict[int, set[int]] = {int(key): set() for key in document.poses}
-        for link in document.links:
-            if link.from_id != link.to_id:
-                neighbours[link.from_id].add(link.to_id)
-                neighbours[link.to_id].add(link.from_id)
-        components: dict[int, int] = {}
-        for key in neighbours:
-            if key in components:
-                continue
-            component = len(components)
-            stack = [key]
-            while stack:
-                item = stack.pop()
-                if item not in components:
-                    components[item] = component
-                    stack.extend(neighbours[item] - components.keys())
-        ids = sorted(tag["id"] for tag in read_json(run / "run.json")["tags"])
-        measured = {(r.tag_a, r.tag_b) for r in measurements.distances}
-        blocked = {(r.tag_a, r.tag_b) for r in measurements.excluded_pairs}
-        disconnected = len(set(components.values())) > 1
-        pairs = [
-            {"tag_a": a, "tag_b": b}
-            for a, b in combinations(ids, 2)
-            if (a, b) not in measured
-            and (a, b) not in blocked
-            and (not disconnected or components[-a] != components[-b])
-        ]
-        write_json(
-            output / "diagnostic.tmp",
-            {
-                "message": str(error),
-                "pairs": pairs,
-                "note": "Potential connections only: improvement cannot yet be quantified. Physical access is unknown.",
-            },
-        )
-        (output / "diagnostic.tmp").replace(output / "diagnostic.json")
-        raise
