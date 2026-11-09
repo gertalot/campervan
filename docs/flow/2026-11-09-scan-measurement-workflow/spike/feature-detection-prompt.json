@@ -1,0 +1,6 @@
+{
+  "task": "detect_features",
+  "categories": ["floor", "ceiling", "wall", "wheel well", "window", "seat"],
+  "context": "This is a photograph taken INSIDE a small cargo van. We are mapping its INTERIOR. Find ONLY these physical interior features: FLOOR, CEILING, WALL, WHEEL WELL (the wheel arch protruding into the interior), WINDOW, SEAT (including backrest and headrest). Coverings such as foil insulation, plywood, fabric and paint are not separate objects: identify the underlying feature. Use the whole interior scene for context. Do not identify handles, trim, tags, tools or any objects outside the requested list. There are no supplied regions; locate the requested features yourself.",
+  "question": "Return a JSON object with a detections array. Each detection must have category (exactly one of: floor, ceiling, wall, wheel well, window, seat), bbox [left, top, right, bottom] in image coordinates normalized to 0–1000 with origin at the TOP LEFT, and brief evidence describing the visible shape/location. Include each clearly visible requested feature, with a tight bounding box around its visible extent. Omit features that are not visible or cannot be located; an empty detections array is valid. Do not output any other categories. Do not invent hidden features or give a reasoning transcript. Keep evidence to one short sentence per detection."
+}

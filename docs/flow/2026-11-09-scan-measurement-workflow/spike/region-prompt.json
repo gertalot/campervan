@@ -1,0 +1,4 @@
+{
+  "context": "These photographs show the interior of one small cargo van. A red rectangle highlights a candidate physical region in each image; the surrounding scene remains visible for context. The rectangles carry no category label. Where there are two views, consider both, but do not assume they show identical objects without visual support.",
+  "question": "What physical object or structural feature is highlighted by the red rectangle? Identify its function or identity separately from the material covering it, using the surrounding scene and shape. Return only a JSON object with object_identity, surface_material, visible_evidence, and uncertainty_or_alternatives. Limit your entire response to 100 words. Do not guess the vehicle brand, model, construction history or unseen parts. Do not provide a reasoning transcript."
+}

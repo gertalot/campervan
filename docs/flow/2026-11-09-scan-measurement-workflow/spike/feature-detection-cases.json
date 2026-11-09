@@ -1,0 +1,7 @@
+{
+  "prompt_file": "feature-detection-prompt.json",
+  "cases": [
+    {"name": "rear-interior", "frame_ids": [76]},
+    {"name": "front-interior", "frame_ids": [1020]}
+  ]
+}

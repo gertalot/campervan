@@ -1,0 +1,25 @@
+{
+  "prompt_file": "region-prompt.json",
+  "cases": [
+    {
+      "name": "region-01",
+      "frame_ids": [76, 415],
+      "regions": [[237.8, 754.7, 650.1, 957.3], [485.4, 231.8, 679.6, 622.2]]
+    },
+    {
+      "name": "region-02",
+      "frame_ids": [76],
+      "regions": [[330.3, 538.6, 696.4, 742.1]]
+    },
+    {
+      "name": "region-03",
+      "frame_ids": [1020],
+      "regions": [[317.1, 240.8, 717.1, 954.1]]
+    },
+    {
+      "name": "region-04",
+      "frame_ids": [76],
+      "regions": [[3, 3, 717, 210]]
+    }
+  ]
+}

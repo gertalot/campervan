@@ -1,0 +1,8 @@
+{
+  "context": "These photographs come from a scan of the same small cargo van interior. The vehicle body is approximately bilaterally symmetric. This is background context, not evidence of objects hidden from view. Describe what is actually visible and retain uncertainty where evidence is insufficient.",
+  "question": "Identify the main physical objects and structural regions visible across the supplied images. Use the whole scene, geometry and position to interpret objects. Separate an object's identity from its surface material. Reconcile overlapping views where possible. Return only a concise JSON object with a scene summary and up to 7 features. Each feature should contain name, supporting_image_numbers (1-based), location_in_images, material, visible_evidence, and uncertainty. Include only features supported by the images, without inventing unseen counterparts. Do not infer dimensions. Do not provide a reasoning transcript.",
+  "cases": [
+    {"name": "rear-interior", "frame_ids": [76, 415]},
+    {"name": "front-interior", "frame_ids": [770, 1020]}
+  ]
+}
