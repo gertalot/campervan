@@ -2,7 +2,7 @@
 
 The combined design was approved on 9 November 2026. Gert subsequently authorised splitting its independently
 deliverable work after the implementation-plan scope check. Existing decisions and evidence remain approved;
-the split boundaries below await review. No implementation plan or application change is part of this split.
+Gert approved the split boundaries and delivery order on 9 November 2026. No implementation plan or application change is part of this split.
 
 | Scope | Specification | Standalone completion evidence |
 | --- | --- | --- |

@@ -1,6 +1,6 @@
 # Embedded RTAB-Map import and reprocessing
 
-**Status:** approved requirements reorganised into a split draft; boundary review pending.
+**Status:** approved by Gert on 9 November 2026, including split boundaries and delivery order.
 **Flow folder:** [embedded-rtabmap](./).
 **Programme:** [scope index](../2026-11-09-scan-measurement-workflow/README.md).
 **Binding shared contracts:** [shared ownership and interchange](../2026-11-09-scan-measurement-workflow/shared-contracts.md).

@@ -1,6 +1,6 @@
 # Shared ownership and interchange for the three scan scopes
 
-Status: split draft preserving approved contracts; boundary review pending. See the [scope index](README.md) and
+Status: approved with the split specifications on 9 November 2026. See the [scope index](README.md) and
 [approved combined baseline](approved-combined-spec.md). This is a common specification reference, not a fourth
 deliverable or a new platform mechanism. Each implementing scope has its own spec/plan and completion evidence.
 

@@ -1,7 +1,7 @@
 # Specification review record
 
 Original spec: [approved combined baseline](approved-combined-spec.md). Status: six reviews, decision walkthrough
-and original written-spec approval complete. The later [scope split](README.md) awaits boundary review.
+and original written-spec approval complete. The later [scope split](README.md) and delivery order were approved on 9 November 2026.
 
 ## Author self-review
 
@@ -191,5 +191,6 @@ depends on the shared workflow foundation rather than implementing a duplicate p
 
 The focused split self-review checked requirement coverage, ownership, data seams, dependency order and relative
 references. Original tool choices, limitations and evidence remain binding. No new requirement, algorithm, runtime,
-experiment or application edit is introduced. The original six reviews are not repeated. Boundary review of the
-three written split specs remains pending; their semantics retain the original approval.
+experiment or application edit is introduced. The original six reviews are not repeated. Gert approved the three
+written split specifications and native → measurement → scene delivery order on 9 November 2026. Implementation
+planning remains a separate user-invoked phase.

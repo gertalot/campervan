@@ -1,6 +1,6 @@
 # Measurement network and reconstruction workflow
 
-**Status:** approved requirements reorganised into a split draft; boundary review pending.
+**Status:** approved by Gert on 9 November 2026, including split boundaries and delivery order.
 **Flow folder:** [scan-measurement-workflow](./).
 **Programme and dependencies:** [scope index](README.md).
 **Binding shared ownership:** [shared contracts](shared-contracts.md).
