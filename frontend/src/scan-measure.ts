@@ -4,14 +4,16 @@ import { readMeasurements, type MeasurementDocument, type DistanceMeasurement } 
 import { createMeasurementSession, type MeasurementSession } from './scan-measure-session';
 import type { createScanTags, ScanTag, MeasurementPreview } from './scan-tags';
 
-export interface MeasurementCapture { id?: string; name?: string; display_name?: string; group_name?: string | null;
-  analysis_id?: string | null; tag_layout_id?: string | null; tags?: ScanTag[] }
+export interface MeasurementCapture { id?: string; source_run_id?: string | null; reference_run_id?: string | null; name?: string; display_name?: string; group_name?: string | null;
+  tag_layout_id?: string | null; tags?: ScanTag[] }
 interface Host {
   panel: HTMLElement; container: HTMLElement; bar: HTMLElement;
   capture(): MeasurementCapture | undefined;
   overlay(): ReturnType<typeof createScanTags> | undefined;
   loading(): boolean;
   view(key: string): Promise<void>;
+  addCaptures(): void;
+  layoutTagIds(layout: string): number[];
 }
 const mm = (metres: number) => `${(metres * 1000).toFixed(1)} mm`;
 const emptyRecords: DistanceMeasurement[] = [];
@@ -31,7 +33,7 @@ export function createScanMeasure(host: Host) {
   tools.innerHTML = `<button type="button" aria-label="Measure tags" aria-pressed="false" aria-keyshortcuts="T" title="Measure tags (T)"
     data-tape><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h10a5 5 0 0 1 5 5v5H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm2 3v4m4-4v2m4-2v4m5 3h3v4H11v-4" /></svg></button>
     <button type="button" data-list aria-haspopup="dialog" aria-controls="measurement-manager"
-      title="Manage measured distances, uncertainty and additional measurements">Manage measurements…</button>`;
+      title="Review capture and improve the scan">Review and improve scan…</button>`;
   const tape = tools.querySelector<HTMLButtonElement>('[data-tape]')!;
   const listButton = tools.querySelector<HTMLButtonElement>('[data-list]')!;
   let active = false;
@@ -46,7 +48,7 @@ export function createScanMeasure(host: Host) {
   let measurementData: MeasurementDocument | null = null;
   let session: MeasurementSession | null = null;
   const sessions = new Map<string, MeasurementSession>();
-  window.addEventListener('beforeunload', event => { if ([...sessions.values()].some(item => item.hasUnsaved())) event.preventDefault(); });
+  window.addEventListener('beforeunload', event => { if (manager.hasUnsaved() || [...sessions.values()].some(item => item.hasUnsaved())) event.preventDefault(); });
   let readError = '';
   let layoutName = '';
   let reading = true;
@@ -57,13 +59,16 @@ export function createScanMeasure(host: Host) {
   const commands = {
     tape: { label: 'Measure tags', shortcut: 'T', run: () => { if (host.capture()?.tags?.length) setActive(!active); } },
     escape: { shortcut: 'Esc', run: escape },
-    list: { label: 'Manage measurements…', run: showList },
+    list: { label: 'Review and improve scan…', run: showList },
   };
   tape.title = `${commands.tape.label} (${commands.tape.shortcut})`;
 
   const manager = createMeasurePanel({ capture: host.capture, session: () => session, layoutName: () => layoutName,
-    error: () => error || readError, distance,
-    highlight: pair => host.overlay()?.setSuggestedPair(pair ? { from: pair.tag_a, to: pair.tag_b } : null) });
+    error: () => error || readError, distance, view: host.view, addCaptures: host.addCaptures, layoutTagIds: host.layoutTagIds,
+    otherUnsaved: () => [...sessions.values()].some(item => item !== session && item.hasUnsaved()),
+    highlight: pair => host.overlay()?.setSuggestedPair(pair ? { from: pair.tag_a, to: pair.tag_b } : null),
+    highlightTag: id => host.overlay()?.setHighlightedTag(id),
+    highlightMovements: movements => host.overlay()?.setAnalysis(movements) });
 
   function distance(a: number, b: number): number | null {
     const tags = host.capture()?.tags ?? [];
@@ -143,7 +148,7 @@ export function createScanMeasure(host: Host) {
       if (response.document) {
         let next = sessions.get(response.document.tag_layout_id);
         if (!next) {
-          next = createMeasurementSession(response.document, () => host.capture()?.id);
+          next = createMeasurementSession(response.document, () => host.capture()?.reference_run_id ?? host.capture()?.source_run_id ?? host.capture()?.id);
           const owned = next;
           next.subscribe(() => { if (session === owned) { measurementData = owned.document;
             if (first !== null && second !== null && document.activeElement !== input) {
@@ -238,15 +243,12 @@ export function createScanMeasure(host: Host) {
       && !(event.target as HTMLElement).closest('button,[role=button]')) {
       event.preventDefault(); event.stopPropagation(); void save();
     }
-    else if (active && second !== null && !busy && !host.loading() && /^[\d.]$/.test(event.key)) {
-      // Focusing the field does not retarget this key event away from the viewer.
-      event.preventDefault(); event.stopPropagation();
-      input.value = event.key; if (first !== null && second !== null) session?.setDraft({ tag_a: first, tag_b: second }, input.value); error = notice = ''; input.focus(); paint();
-    }
   }, true);
   void refreshDocument(); paint();
   return {
     cancel, refresh: paint, reload: refreshDocument,
+    openReview() { manager.openReview(); },
+    hasUnsaved() { return manager.hasUnsaved() || [...sessions.values()].some(item => item.hasUnsaved()); },
     session: () => session, flush: () => manager.flush(),
     clearCapture() { setActive(false); manager.refresh(); },
     attach() { (container.querySelector('.tcv_cad_toolbar') ?? panel.querySelector('.scan-controls'))?.append(tools); paint(); },

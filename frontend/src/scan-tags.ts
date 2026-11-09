@@ -23,6 +23,7 @@ export function createScanTags(container: HTMLElement, camera: () => Camera | un
   let interactive = false;
   let selectTag: ((id: number) => void) | undefined;
   let selection: number[] = [];
+  let highlightedTag: number | null = null;
   let records: DistanceMeasurement[] = [];
   let pending: MeasurementPreview | null = null;
   let referenceMatrix = new Matrix4();
@@ -52,8 +53,8 @@ export function createScanTags(container: HTMLElement, camera: () => Camera | un
   }
 
   function update() {
-    svg.style.display = (visible || interactive || analysis.length || suggested) && markers.length ? '' : 'none';
-    if ((!visible && !interactive && !analysis.length && !suggested) || !markers.length) return;
+    svg.style.display = (visible || interactive || analysis.length || suggested || highlightedTag !== null) && markers.length ? '' : 'none';
+    if ((!visible && !interactive && !analysis.length && !suggested && highlightedTag === null) || !markers.length) return;
     const projection = camera(); const canvas = container.querySelector('canvas');
     if (!projection || !canvas) return;
     if (!svg.isConnected) container.append(svg);
@@ -73,6 +74,7 @@ export function createScanTags(container: HTMLElement, camera: () => Camera | un
       if (interactive) marker.node.setAttribute('aria-pressed', String(selection.includes(marker.id)));
       else marker.node.removeAttribute('aria-pressed');
       marker.node.classList.toggle('is-selected', selection.includes(marker.id));
+      marker.node.classList.toggle('is-highlighted', marker.id === highlightedTag);
       marker.node.classList.toggle('is-measured', interactive && records.some(r => r.tag_a === marker.id || r.tag_b === marker.id));
       marker.label.setAttribute('x', String(p.x + 9)); marker.label.setAttribute('y', String(p.y - 9));
       marker.circle.setAttribute('cx', String(p.x)); marker.circle.setAttribute('cy', String(p.y));
@@ -138,6 +140,7 @@ export function createScanTags(container: HTMLElement, camera: () => Camera | un
       }); update();
     },
     setSuggestedPair(value: { from: number; to: number; hit?: number[] } | null) { suggested = value; update(); },
+    setHighlightedTag(value: number | null) { highlightedTag = value; update(); },
     setVisible(value: boolean) { visible = value; update(); },
     setInteractive(value: boolean, onSelect?: (id: number) => void) {
       interactive = value; selectTag = onSelect; update();

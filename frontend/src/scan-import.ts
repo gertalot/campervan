@@ -2,11 +2,14 @@
 import { createTagLayout, processCaptures, readScanImports, uploadCapture,
   type ScanImports, type ProcessingJob } from './scan-import-api';
 import { jobStatus, createJobView } from './scan-job-status';
+import { createWorkflow } from './scan-workflow-api';
 interface Host {
   defaultLayout(group: string): string | undefined;
   changed(): Promise<void>;
   view(key: string): void;
   closed(group: string): void;
+  interactionGeneration(): number;
+  completed(key: string, autoOpen: boolean): void;
 }
 export function createScanImport(host: Host) {
   const dialog = document.createElement('dialog'); dialog.className = 'scan-import-dialog';
@@ -53,6 +56,7 @@ export function createScanImport(host: Host) {
   let data: ScanImports = { captures: [], layouts: [], jobs: [] };
   let group = ''; let queued: File[] = []; let selected = new Set<string>();
   let busy = false; let currentJob: ProcessingJob | undefined;
+  const handoffs = new Map<string, number>();
   const jobs = jobStatus;
   const subscriptions = new Map<string, () => void>();
   const jobView = createJobView(() => { if (currentJob?.state === 'processing') void jobs.refresh(currentJob.id); else void start(); });
@@ -129,7 +133,7 @@ export function createScanImport(host: Host) {
     data = await readScanImports(); paintActivities();
     if (!busy) get<HTMLButtonElement>('[data-process]').disabled = data.jobs.some(job => job.state === 'processing');
     for (const job of data.jobs) {
-      if (!subscriptions.has(job.id) && job.state !== 'processing') terminal.add(job.id);
+      if (!subscriptions.has(job.id) && job.state !== 'processing' && !handoffs.has(job.id)) terminal.add(job.id);
       jobs.publish(job);
       if (!subscriptions.has(job.id)) subscriptions.set(job.id, jobs.subscribe(job.id, updated => {
         const index = data.jobs.findIndex(item => item.id === updated.id);
@@ -138,7 +142,15 @@ export function createScanImport(host: Host) {
         paintActivities();
         if (!busy) get<HTMLButtonElement>('[data-process]').disabled = data.jobs.some(item => item.state === 'processing');
         if (updated.state !== 'processing' && !terminal.has(updated.id)) {
-          terminal.add(updated.id); void host.changed();
+          terminal.add(updated.id);
+          void (async () => { try { await host.changed();
+              if (updated.state !== 'completed' || !updated.result_key) return;
+              await createWorkflow(updated.run_id, updated.layout_id);
+              const token = handoffs.get(updated.id); const autoOpen = token !== undefined && dialog.open
+                && currentJob?.id === updated.id && token === host.interactionGeneration();
+              if (autoOpen) dialog.close(); host.completed(updated.result_key, autoOpen);
+            } catch (reason) { fail(reason); }
+          })();
         }
       }));
     }
@@ -185,6 +197,7 @@ export function createScanImport(host: Host) {
       meter.removeAttribute('value'); stage.textContent = 'Starting reconstruction…';
       const job = await processCaptures({ group_id: group, capture_ids: [...selected], layout_id: layout.value,
         name: resultName, settings });
+      handoffs.set(job.id, host.interactionGeneration());
       jobs.publish(job); showJob(job); await refresh(); await host.changed();
     } catch (reason) { fail(reason); meter.hidden = true; }
     finally { setBusy(false); }

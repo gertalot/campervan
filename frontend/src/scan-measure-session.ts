@@ -1,7 +1,7 @@
 import { ApiError } from './api';
 import { configureMeasurements, readMeasurements, removeMeasurement, saveMeasurement,
   type MeasurementDocument } from './scan-measurements-api';
-import { editWorkflow, readWorkflow, type ChecklistBatch, type Pair, type WorkflowView } from './scan-workflow-api';
+import { editWorkflow, readWorkflow, type ChecklistBatch, type Pair, type WorkflowEdit, type WorkflowView } from './scan-workflow-api';
 
 export function parseDistance(value: string): number {
   const match = value.trim().match(/^(\d+(?:\.\d*)?|\.\d+)\s*(mm|cm|m|in|ft)?$/i);
@@ -156,6 +156,24 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
       const errors = candidateErrors.get(id); errors?.delete(key); if (errors && !errors.size) candidateErrors.delete(id); notify();
     },
     bindWorkflow(view: WorkflowView | null) { workflow = view; if (view) workflowViews.set(view.workflow.id, view); notify(); },
+    editMetadata(change: Pick<WorkflowEdit, 'stage' | 'target_mm' | 'improvement_mm'>) {
+      const bound = workflow; if (!bound) return Promise.reject(new Error('Workflow is unavailable.'));
+      const id = bound.workflow.id;
+      return enqueue(async () => {
+        const current = workflowViews.get(id); if (!current) throw new Error('Workflow is unavailable.');
+        try {
+          const saved = await editWorkflow(id, { revision: current.revision, ...change });
+          workflowViews.set(id, saved); if (workflow?.workflow.id === id) workflow = saved; notify(); return saved;
+        } catch (reason) {
+          if (reason instanceof ApiError && reason.status === 409) {
+            try { const refreshed = await readWorkflow(id); workflowViews.set(id, refreshed);
+              if (workflow?.workflow.id === id) workflow = refreshed; } catch { /* retain the original conflict */ }
+            notify();
+          }
+          throw reason;
+        }
+      });
+    },
     checklistDraft() { return workflow ? checklists.get(workflow.workflow.id) : undefined; },
     setChecklist(batches: ChecklistBatch[]) {
       const bound = workflow; if (!bound) return Promise.reject(new Error('Workflow is unavailable.'));

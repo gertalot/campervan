@@ -10,6 +10,8 @@ interface Host {
   currentKey(): string;
   view(key: string): void;
   changed(): Promise<void>;
+  interactionGeneration(): number;
+  importCompleted(key: string, autoOpen: boolean): void;
 }
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string) {
   const node = document.createElement(tag);
@@ -57,6 +59,8 @@ export function createScanLibrary(host: Host) {
     defaultLayout: group => library?.group_layouts?.[group],
     async changed() { await host.changed(); library = await readScanLibrary(); if (!busy) render(); },
     view(key) { side.close(); host.view(key); },
+    interactionGeneration: host.interactionGeneration,
+    completed(key, autoOpen) { if (autoOpen) side.close({ restoreFocus: false }); host.importCompleted(key, autoOpen); },
     closed(group) {
       if (!dialog.open) return;
       const trigger = [...list.querySelectorAll<HTMLButtonElement>('[data-import-group]')]

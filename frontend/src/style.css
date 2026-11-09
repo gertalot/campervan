@@ -641,3 +641,10 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-measure-panel .measurement-row strong { flex-basis: 100%; }
 .scan-measure-panel .measurement-row input[type=text] { width: 110px; }
 .scan-measure-panel .measurement-row [role=alert] { flex-basis: 100%; }
+.scan-workflow-stages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0; margin: 0 0 10px; list-style-position: inside; }
+.scan-workflow-stages li { min-width: 0; }
+.scan-workflow-stages button { text-align: left; }
+.scan-workflow-stages button[aria-current=step] { border-color: #8bb7e8; color: #fff; }
+.scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
+.scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
+.scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }

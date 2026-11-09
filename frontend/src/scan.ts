@@ -110,15 +110,29 @@ export function setupScan(panel: HTMLElement) {
   let loading = false;
   let initialized = false;
   let generation = 0;
+  let interactionGeneration = 0;
+  document.addEventListener('pointerdown', () => { interactionGeneration++; }, true);
+  document.addEventListener('keydown', () => { interactionGeneration++; }, true);
+  document.addEventListener('input', () => { interactionGeneration++; }, true);
+  const completion = document.createElement('div'); completion.setAttribute('role', 'status'); completion.setAttribute('aria-live', 'polite');
+  panel.querySelector('.scan-controls')!.append(completion);
   let tagOverlay: ReturnType<typeof createScanTags> | undefined;
   let renderedScan: Scan | undefined;
   const measure = createScanMeasure({ panel, container, bar: panel.querySelector<HTMLElement>('[data-measure-bar]')!,
     capture: () => renderedScan, overlay: () => tagOverlay, loading: () => loading,
-    view: async key => { await refreshScans(); await changeResult(key); } });
+    view: async key => { await refreshScans(); await changeResult(key); }, addCaptures: () => { void manager.open(); },
+    layoutTagIds: layout => scans.filter(scan => scan.tag_layout_id === layout).flatMap(scan => (scan.tags ?? []).map(tag => tag.id)) });
   const camera = createViewerCamera(container, () => viewer, 'campervan.scan.camera.reference', () => loading);
   measure.attach();
   const manager = createScanLibrary({ results: () => scans, currentKey: () => select.value,
-    view: key => changeResult(key), changed: () => refreshScans() });
+    view: key => changeResult(key), changed: () => refreshScans(), interactionGeneration: () => interactionGeneration,
+    importCompleted(key, autoOpen) {
+      const announce = () => { completion.replaceChildren('Capture processing complete. '); const button = document.createElement('button');
+        button.type = 'button'; button.textContent = 'Review capture'; button.onclick = () => { void review(false); }; completion.append(button); };
+      const review = async (guard: boolean) => { const token = interactionGeneration; completion.replaceChildren(); await changeResult(key);
+        if (guard && (token !== interactionGeneration || panel.hidden || measure.hasUnsaved())) announce(); else measure.openReview(); };
+      if (autoOpen && !panel.hidden && !measure.hasUnsaved()) void review(true); else announce();
+    } });
   panel.querySelector<HTMLButtonElement>('[data-manage]')!.onclick = () => { void manager.open(); };
   tags.onchange = () => { tagOverlay?.setVisible(tags.checked); };
 
@@ -186,7 +200,8 @@ export function setupScan(panel: HTMLElement) {
       for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
       group.add(root);
       renderedScan = scan;
-      void measure.reload();
+      await measure.reload();
+      if (token !== generation) { root = undefined; return; }
       tagOverlay ??= createScanTags(container, () => viewer?.rendered.camera.camera as unknown as Camera);
       tagOverlay.setTags(scan.tags ?? [], aligned ? scan.alignment!.matrix : undefined);
       tagOverlay.setVisible(tags.checked);
@@ -240,7 +255,7 @@ export function setupScan(panel: HTMLElement) {
 
   async function changeResult(key: string) {
     if (!scans.some(scan => scan.key === key && !scan.archived)) return;
-    ++generation; measure.cancel(); select.value = key; layerOptions(); await loadLayer();
+    ++generation; select.value = key; layerOptions(); await loadLayer();
   }
 
   async function refreshScans() {
@@ -315,6 +330,7 @@ export function setupScan(panel: HTMLElement) {
       .finally(() => { refresh.disabled = false; });
   };
   onTab(tab => {
+    interactionGeneration++;
     measure.tabChanged(tab === 'scan');
     if (tab !== 'scan') { camera.cancelCameraAnimation(); return; }
     if (!initialized) { initialized = true; void initialize(); }

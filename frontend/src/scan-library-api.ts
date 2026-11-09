@@ -11,7 +11,7 @@ export interface ScanResult {
   created_at?: string | null; input_filenames?: string[]; pose_source?: string | null;
   settings?: { voxel_mm?: number; [key: string]: unknown }; frame_count?: number | null;
   geometry?: { triangles?: number; [key: string]: unknown };
-  analysis_id?: string | null; source_run_id?: string | null; reference_run_id?: string | null;
+  source_run_id?: string | null; reference_run_id?: string | null;
 }
 export interface ScanEntryPreferences { display_name: string | null; group_id: string | null; archived: boolean }
 export interface ScanLibraryDocument {
