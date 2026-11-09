@@ -30,6 +30,8 @@ from campervan.scan_measurements_api import register_scan_measurements
 from campervan.scan_processing import ScanProcessing
 from campervan.scan_processing_api import register_scan_processing
 from campervan.scan_solutions import ScanSolutions
+from campervan.scan_workflow_api import register_scan_workflows
+from campervan.scan_workflows import ScanWorkflowStore
 from campervan.scans import completed_scans, scan_asset
 from campervan.settings import Settings, load_settings
 from campervan.snapshot import ParameterResponse, cutting_data, material_data, parameter_response
@@ -120,6 +122,8 @@ def build_app(
     scan_layouts = ScanLayouts(project_path.with_name("scan-measurements.json"))
     scan_processing = ScanProcessing(scan_library, scan_layouts)
     scan_solutions = ScanSolutions(project_path.with_name("scan-solutions.json"))
+    scan_workflows = ScanWorkflowStore(project_path.with_name("scan-workflows.json"))
+    register_scan_workflows(app, scan_workflows, scan_layouts, scan_library, scan_processing)
     register_scan_measurements(app, scan_layouts)
     read_scan_library = register_scan_library(app, scan_library, scan_processing, scan_solutions)
     register_scan_processing(app, scan_processing, scan_layouts)
