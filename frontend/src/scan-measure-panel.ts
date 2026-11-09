@@ -24,23 +24,34 @@ export function createMeasurePanel(host: Host) {
   const side = createSidePanel({ id: 'measurement-manager', title: 'Review and improve scan',
     onClose: () => { host.highlight(null); host.highlightTag(null); host.highlightMovements([]); } });
   side.element.classList.add('scan-measure-panel');
-  const stages: { id: Stage; label: string }[] = [
-    { id: 'review_capture', label: 'Review capture' }, { id: 'measure', label: 'Measure' },
-    { id: 'check_accuracy', label: 'Check accuracy' }, { id: 'update_reconstruction', label: 'Update reconstruction' },
+  const stages: { id: Stage; label: string; description: string }[] = [
+    { id: 'review_capture', label: 'Review capture', description: 'Check the reconstruction and detected tags before taking measurements.' },
+    { id: 'measure', label: 'Measure', description: 'Generate a checklist and enter your physical tag-to-tag measurements.' },
+    { id: 'check_accuracy', label: 'Check accuracy', description: 'Check the measurement network and see where additional readings would help.' },
+    { id: 'update_reconstruction', label: 'Update reconstruction', description: 'Preview corrections, then rebuild and save the corrected reconstruction.' },
   ];
+  // Editable stepper: sequential navigation without turning quality advice into permission gates.
+  // https://mui.com/material-ui/react-stepper/#non-linear
+  const stepper = document.createElement('nav'); stepper.setAttribute('aria-label', 'Scan improvement steps');
   const navigation = document.createElement('ol'); navigation.className = 'scan-workflow-stages';
-  const stageButtons = new Map<Stage, HTMLButtonElement>();
-  for (const stage of stages) { const item = document.createElement('li'); const button = document.createElement('button');
-    button.type = 'button'; button.onclick = () => { void changeStage(stage.id); }; item.append(button); navigation.append(item); stageButtons.set(stage.id, button); }
-  side.actions.append(navigation);
+  const stageNodes = new Map<Stage, { item: HTMLLIElement; button: HTMLButtonElement; marker: HTMLElement; label: HTMLElement; state: HTMLElement }>();
+  for (const [index, stage] of stages.entries()) {
+    const item = document.createElement('li'); const button = document.createElement('button'); button.type = 'button';
+    const marker = document.createElement('span'); marker.className = 'scan-workflow-marker'; marker.setAttribute('aria-hidden', 'true'); marker.textContent = String(index + 1);
+    const label = document.createElement('span'); label.className = 'scan-workflow-label'; label.textContent = stage.label;
+    const state = document.createElement('span'); state.className = 'scan-workflow-step-state'; state.setAttribute('aria-hidden', 'true');
+    button.append(marker, label, state); button.onclick = () => { void changeStage(stage.id); };
+    item.append(button); navigation.append(item); stageNodes.set(stage.id, { item, button, marker, label, state });
+  }
+  stepper.append(navigation); side.actions.append(stepper);
   const form = document.createElement('form'); form.className = 'measurement-precision';
   const label = document.createElement('label'); label.textContent = 'Typical measuring precision (mm) ';
   const precision = document.createElement('input'); precision.type = 'number'; precision.min = '0.01'; precision.step = 'any'; label.append(precision);
-  const save = document.createElement('button'); save.textContent = 'Save precision'; save.type = 'submit'; form.append(label, save); side.actions.append(form);
+  const save = document.createElement('button'); save.textContent = 'Save precision'; save.type = 'submit'; form.append(label, save);
   const targets = document.createElement('form'); targets.className = 'measurement-precision';
   targets.innerHTML = `<label>Target, longest 95% ellipsoid semi-axis (mm) <input name="target" type="number" min="0.01" step="any"></label>
     <label>Meaningful improvement (mm) <input name="improvement" type="number" min="0.01" step="any"></label><button type="submit">Save targets</button>`;
-  side.actions.append(targets); const target = targets.elements.namedItem('target') as HTMLInputElement;
+  const target = targets.elements.namedItem('target') as HTMLInputElement;
   const improvement = targets.elements.namedItem('improvement') as HTMLInputElement;
   const targetDrafts = new Map<string, { target: string; improvement: string }>();
   targets.oninput = () => { const id = host.session()?.workflow?.workflow.id; if (id) targetDrafts.set(id, { target: target.value, improvement: improvement.value }); };
@@ -64,8 +75,16 @@ export function createMeasurePanel(host: Host) {
   retryChecklist.onclick = () => { void host.session()?.retryChecklist().catch(() => undefined); };
   side.status.append(checklistFailure, retryChecklist);
   const stageBody = document.createElement('section'); side.body.append(stageBody);
-  const stageHeading = document.createElement('h3'); const summary = document.createElement('div');
-  const actions = document.createElement('div'); stageBody.append(stageHeading, summary, actions);
+  const stepCount = document.createElement('p'); stepCount.className = 'scan-workflow-step-count';
+  const stageHeading = document.createElement('h3'); stageHeading.className = 'scan-workflow-title'; stageHeading.tabIndex = -1;
+  const description = document.createElement('p'); description.className = 'scan-workflow-description';
+  const completion = document.createElement('div'); completion.className = 'scan-workflow-completion'; completion.setAttribute('role', 'status');
+  const completionMark = document.createElement('span'); completionMark.textContent = '✓'; completionMark.setAttribute('aria-hidden', 'true');
+  const completionText = document.createElement('p'); completionText.textContent = 'Your corrected reconstruction has been saved. Inspect the result below, or choose Done to close.';
+  completion.append(completionMark, completionText); completion.hidden = true;
+  const summary = document.createElement('div');
+  const actions = document.createElement('div'); actions.className = 'scan-workflow-actions';
+  stageBody.append(stepCount, stageHeading, description, completion, form, targets, summary, actions);
   const actionNodes = new Map<string, { button: HTMLButtonElement; reason: HTMLParagraphElement }>();
   const correctionWarning = document.createElement('p');
   const measurementSection = document.createElement('section'); side.body.append(measurementSection);
@@ -73,6 +92,11 @@ export function createMeasurePanel(host: Host) {
   const list = document.createElement('div'); measurementSection.append(list);
   const empty = document.createElement('p'); empty.textContent = 'No measured distances saved for this layout.'; measurementSection.append(empty);
   const jobView = createJobView(() => { if (jobId) void jobStatus.refresh(jobId); }); side.body.append(jobView.element); jobView.element.hidden = true;
+  const footerReason = document.createElement('p'); footerReason.className = 'scan-workflow-footer-reason';
+  const footerNavigation = document.createElement('div'); footerNavigation.className = 'scan-workflow-navigation';
+  const back = document.createElement('button'); back.type = 'button'; back.textContent = 'Back';
+  const next = document.createElement('button'); next.type = 'button'; next.className = 'scan-workflow-next';
+  footerNavigation.append(back, next); side.footer.append(footerReason, footerNavigation);
   let jobId: string | undefined; let unsubscribeJob: (() => void) | undefined;
   let artifactKey = ''; let artifactGeneration = 0; let plan: MeasurementPlan | null = null;
   let stageError = ''; let actionPending = false; let requestedStage: Stage | null = null;
@@ -119,8 +143,14 @@ export function createMeasurePanel(host: Host) {
   }
   async function changeStage(stage: Stage, isCurrent = () => true) {
     const session = host.session(); if (!session?.workflow) return;
+    const workflowId = session.workflow.workflow.id;
+    const trigger = document.activeElement;
     host.highlight(null); host.highlightTag(null); host.highlightMovements([]);
-    try { await session.editMetadata({ stage }); } catch (reason) { if (isCurrent()) { stageError = String(reason); render(); } }
+    try {
+      await session.editMetadata({ stage });
+      if (isCurrent() && side.isOpen && document.activeElement === trigger && host.session() === session
+        && session.workflow?.workflow.id === workflowId) stageHeading.focus();
+    } catch (reason) { if (isCurrent()) { stageError = String(reason); render(); } }
   }
   function watchJob(session: MeasurementSession, id: string) {
     const view = session.workflow; const job = view?.jobs.find(item => item.id === id); if (!view || !job || jobId === id) return;
@@ -269,14 +299,42 @@ export function createMeasurePanel(host: Host) {
     const checklist = session?.checklistDraft();
     checklistFailure.textContent = checklist?.error ?? ''; retryChecklist.hidden = !checklist?.blocked;
     const view = session?.workflow; const stage = view?.workflow.stage ?? 'review_capture';
+    const stageIndex = stages.findIndex(item => item.id === stage);
+    const finalStep = stageIndex === stages.length - 1;
+    const finished = view?.stages.update_reconstruction === 'Complete';
+    const finalAction: WorkflowAction = view?.artifacts.scan_correction?.status === 'current' ? 'update-mesh' : 'preview-correction';
     const activeJob = view?.jobs.find(job => job.state === 'processing');
     if (session && activeJob) watchJob(session, activeJob.id);
-    for (const item of stages) { const button = stageButtons.get(item.id)!;
-      button.textContent = `${item.label} · ${view?.stages[item.id] ?? 'Not started'}`;
-      if (item.id === stage) button.setAttribute('aria-current', 'step'); else button.removeAttribute('aria-current');
-      button.disabled = !view; }
-    stageHeading.textContent = stages.find(item => item.id === stage)!.label;
-    form.hidden = false; targets.hidden = stage !== 'measure'; measurementSection.hidden = stage !== 'measure';
+    for (const [index, item] of stages.entries()) {
+      const nodes = stageNodes.get(item.id)!; const state = view?.stages[item.id] ?? 'Not started';
+      const current = item.id === stage; const complete = state === 'Complete';
+      nodes.item.dataset.state = complete ? 'complete' : state === 'Needs updating' ? 'needs-updating' : 'pending';
+      nodes.marker.textContent = complete ? '✓' : String(index + 1);
+      nodes.label.textContent = item.id === 'update_reconstruction' && finished ? 'Complete' : item.label;
+      nodes.state.textContent = state === 'Needs updating' ? 'Needs updating' : current && !(finalStep && finished) ? 'Current step' : '';
+      nodes.button.setAttribute('aria-label', `Step ${index + 1} of ${stages.length}: ${item.label}. ${state}${current ? '. Current step' : ''}`);
+      if (current) nodes.button.setAttribute('aria-current', 'step'); else nodes.button.removeAttribute('aria-current');
+      nodes.button.disabled = !view;
+    }
+    stepCount.textContent = `Step ${stageIndex + 1} of ${stages.length}`;
+    stageHeading.textContent = finalStep && finished ? 'Reconstruction complete' : stages[stageIndex].label;
+    description.textContent = stages[stageIndex].description; description.hidden = finalStep && finished;
+    completion.hidden = !finalStep || !finished;
+    form.hidden = stage !== 'measure'; targets.hidden = stage !== 'measure'; measurementSection.hidden = stage !== 'measure';
+    back.hidden = stageIndex === 0; back.disabled = !view;
+    back.onclick = () => { if (view && stageIndex > 0) void changeStage(stages[stageIndex - 1].id); };
+    const nextEligibility = finalStep && !finished ? view?.actions[finalAction] : undefined;
+    const nextDisabled = !view || actionPending || (finalStep && !finished && !nextEligibility?.available);
+    next.textContent = !finalStep ? 'Continue' : finished ? 'Done' : finalAction === 'update-mesh' ? 'Update mesh' : 'Preview corrections';
+    next.setAttribute('aria-disabled', String(nextDisabled));
+    next.onclick = () => {
+      if (nextDisabled) return;
+      if (!finalStep) void changeStage(stages[stageIndex + 1].id);
+      else if (finished) side.close();
+      else void dispatch(finalAction);
+    };
+    footerReason.textContent = nextEligibility?.reasons.join(' · ') ?? '';
+    footerReason.hidden = !footerReason.textContent;
     if (view && document.activeElement !== target && document.activeElement !== improvement) {
       const draft = targetDrafts.get(view.workflow.id);
       target.value = draft?.target ?? String(view.workflow.target_mm); improvement.value = draft?.improvement ?? String(view.workflow.improvement_mm);
@@ -287,13 +345,14 @@ export function createMeasurePanel(host: Host) {
       check_accuracy: [{ action: 'check-measurements', label: 'Check measurements' }, { action: 'suggest-more', label: 'Suggest more' }],
       update_reconstruction: [{ action: 'preview-correction', label: 'Preview corrections' }, { action: 'update-mesh', label: 'Update mesh' }],
     };
-    const desired: { key: string; label: string; disabled: boolean; reason?: string; run(): void }[] = definitions[stage].map(definition => {
+    const desired: { key: string; label: string; disabled: boolean; reason?: string; run(): void }[] = definitions[stage]
+      .filter(definition => !finalStep || (definition.action !== 'update-mesh' && (finished || definition.action !== finalAction)))
+      .map(definition => {
       const eligibility = view?.actions[definition.action]; return { key: definition.action, label: definition.label,
         disabled: actionPending || !eligibility?.available, reason: eligibility?.reasons.join(' · ') ?? 'Workflow unavailable',
         run: () => { void dispatch(definition.action); } };
     });
     if (stage === 'review_capture') desired.push(
-      { key: 'continue', label: 'Continue to measurements', disabled: !view, run: () => { void changeStage('measure'); } },
       { key: 'captures', label: 'Add replacement captures…', disabled: false, run: host.addCaptures },
       { key: 'revise', label: 'Revise tag layout…', disabled: !view, run: () => { void reviseLayout(); } });
     if (stage === 'update_reconstruction' && view) {

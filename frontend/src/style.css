@@ -494,9 +494,10 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .side-panel[open] { display: flex; flex-direction: column; gap: 12px; }
 .side-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; }
 .side-panel-header h2 { margin: 0; font-size: 17px; font-weight: 600; color: #edf1f7; }
-.side-panel-context, .side-panel-actions, .side-panel-status { flex: none; }
+.side-panel-context, .side-panel-actions, .side-panel-status, .side-panel-footer { flex: none; }
 .side-panel-context { color: #b7c1cf; }
-.side-panel-context:empty, .side-panel-actions:empty, .side-panel-status:empty { display: none; }
+.side-panel-context:empty, .side-panel-actions:empty, .side-panel-status:empty, .side-panel-footer:empty { display: none; }
+.side-panel-footer { border-top: 1px solid #454a54; padding-top: 14px; }
 .side-panel-body { flex: 1 1 auto; overflow: auto; min-height: 0; }
 .side-panel-status pre { max-height: 130px; overflow: auto; white-space: pre-wrap; font-size: 11px; }
 .side-panel .side-panel-close { display: inline-flex; align-items: center; justify-content: center;
@@ -640,10 +641,35 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-measure-panel .measurement-row strong { flex-basis: 100%; }
 .scan-measure-panel .measurement-row input[type=text] { width: 110px; }
 .scan-measure-panel .measurement-row [role=alert] { flex-basis: 100%; }
-.scan-workflow-stages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0; margin: 0 0 10px; list-style-position: inside; }
-.scan-workflow-stages li { min-width: 0; }
-.scan-workflow-stages button { text-align: left; }
-.scan-workflow-stages button[aria-current=step] { border-color: #8bb7e8; color: #fff; }
+.scan-workflow-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; margin: 4px 0 12px; list-style: none; }
+.scan-workflow-stages li { position: relative; min-width: 0; }
+.scan-workflow-stages li:not(:last-child)::after { content: ''; position: absolute; top: 16px;
+  left: calc(50% + 20px); right: calc(-50% + 20px); height: 2px; background: #48515e; }
+.scan-workflow-stages li[data-state=complete]::after { background: #79bd9b; }
+.scan-workflow-stages button { display: flex; flex-direction: column; align-items: center; gap: 7px;
+  width: 100%; min-width: 0; padding: 0 5px; border: 0; background: transparent; color: #aeb9c8; text-align: center; }
+.scan-workflow-stages button:hover:not(:disabled) .scan-workflow-label { color: #fff; text-decoration: underline; }
+.scan-workflow-marker { display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box;
+  border: 2px solid #667181; border-radius: 50%; font-size: 13px; font-weight: 600; background: #23272d; }
+.scan-workflow-label { font-size: 12px; line-height: 1.35; }
+.scan-workflow-step-state { min-height: 13px; font-size: 10px; line-height: 1.3; color: #93a2b5; }
+.scan-workflow-stages button[aria-current=step] { color: #fff; font-weight: 600; }
+.scan-workflow-stages button[aria-current=step] .scan-workflow-marker { border-color: #9ac4f7; background: #32577f;
+  box-shadow: 0 0 0 3px #8bb7e81f; }
+.scan-workflow-stages li[data-state=complete] .scan-workflow-marker { color: #15261c; background: #8aceaa; border-color: #8aceaa; }
+.scan-workflow-stages li[data-state=needs-updating] .scan-workflow-marker { border-color: #e2b369; }
+.scan-workflow-stages li[data-state=needs-updating] .scan-workflow-step-state { color: #e2b369; }
+.scan-workflow-step-count { margin: 0 0 5px !important; color: #9cafc5; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.scan-measure-panel .scan-workflow-title { margin-top: 0; font-size: 20px; }
+.scan-workflow-description { color: #b7c1cf; }
+.scan-workflow-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scan-workflow-navigation button { padding: 8px 18px; min-height: 36px; }
+.scan-workflow-navigation .scan-workflow-next { margin-left: auto; background: #365f8a; border-color: #82afe1; color: #fff; font-weight: 600; }
+.scan-workflow-footer-reason { margin: 0 0 10px; color: #b7c1cf; font-size: 12px; }
+.scan-workflow-completion { display: flex; align-items: center; gap: 14px; padding: 16px;
+  margin: 12px 0; border: 1px solid #577a65; border-radius: 6px; background: #263b30; }
+.scan-workflow-completion > span { display: grid; place-items: center; flex: none; width: 32px; height: 32px;
+  border-radius: 50%; color: #15261c; background: #8aceaa; font-size: 20px; }
 .scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
 .scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
 .scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }

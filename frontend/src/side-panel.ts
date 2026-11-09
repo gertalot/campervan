@@ -1,6 +1,7 @@
 /** Shared nonmodal shell; callers own content, actions and domain state, not dismissal behavior. */
 export interface SidePanel {
   element: HTMLDialogElement; context: HTMLElement; actions: HTMLElement; status: HTMLElement; body: HTMLElement;
+  footer: HTMLElement;
   closeButton: HTMLButtonElement;
   open(): void;
   close(options?: { focus?: HTMLElement; restoreFocus?: boolean }): void;
@@ -27,11 +28,12 @@ export function createSidePanel(options: {
   const status = document.createElement('div'); status.className = 'side-panel-status';
   status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   const body = document.createElement('div'); body.className = 'side-panel-body';
-  element.append(header, context, actions, status, body); document.body.append(element);
+  const footer = document.createElement('div'); footer.className = 'side-panel-footer';
+  element.append(header, context, actions, status, body, footer); document.body.append(element);
   let returnFocus: HTMLElement | null = null;
   let closingFocus: HTMLElement | null | undefined;
   const panel: SidePanel = {
-    element, context, actions, status, body, closeButton,
+    element, context, actions, status, body, footer, closeButton,
     get isOpen() { return element.open; },
     open() {
       if (element.open) return;

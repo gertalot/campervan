@@ -98,6 +98,13 @@ settings are saved. Stage labels describe progress and stale reports; they are a
 source inputs can prevent the calculation that requires them, but an incomplete physical network can still support
 an explicitly labelled best-effort correction.
 
+The stages form an editable stepper: connected numbered steps, completion checks, one current step and persistent
+**Back**/**Continue** navigation. Each step can also be selected directly. The final step offers **Preview corrections**,
+then **Update mesh**, and shows completion with **Done** only after the corrected result is saved. Measuring settings
+belong inside the Measure step. This follows the navigation/progress separation in the
+[USWDS step indicator](https://designsystem.digital.gov/components/step-indicator/) and the editable
+[Material UI stepper pattern](https://mui.com/material-ui/react-stepper/#non-linear).
+
 ### 1. Review capture
 
 Inspect the surface, tags and coverage. **Review placement** evaluates the tag arrangement and explains weak geometry,
