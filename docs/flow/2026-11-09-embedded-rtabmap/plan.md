@@ -1,6 +1,7 @@
 # Installed RTAB-Map binary integration plan
 
-**Status:** revised on 9 November 2026 after installation of the official app. Planning only.
+**Status:** implemented and code-reviewed on 9 November 2026. Processing-time library tracing and Gert's visual
+acceptance remain pending; see [implementation evidence](implementation-notes.md) and [review](reviews/03-plan-completeness.md).
 **Goal:** use installed RTAB-Map CLI binaries for capture processing without native compilation, defaulting to
 `/Applications/RTABMap.app` on this Mac and allowing another installation directory to be configured.
 **Architecture:** call the app's existing exporter/reprocessor executables from the current processing worker.
@@ -70,15 +71,15 @@ by this plan. Retain upstream notices; official distribution is not itself a sec
 **Spec coverage:** N1, N4 under the superseding decisions above.
 **Changes:** evidence in this Flow folder only. No installation or binary modifications.
 
-- [ ] Run the two absolute tool paths with `--version`, supplying `DYLD_LIBRARY_PATH` and `DYLD_FRAMEWORK_PATH` equal
+- [x] Run the two absolute tool paths with `--version`, supplying `DYLD_LIBRARY_PATH` and `DYLD_FRAMEWORK_PATH` equal
   to `/Applications/RTABMap.app/Contents/Frameworks` only in each child process's environment. Do not export variables
   globally, launch the GUI or change Gatekeeper/quarantine. Confirm actual version and g2o support; report any macOS
   approval requirement plainly. If an invocation stalls, stop it and inspect the actual cause rather than retrying.
-- [ ] For these same invocations, add `DYLD_PRINT_LIBRARIES=1` to the child environment and retain dyld diagnostics.
+- [x] For these same invocations, add `DYLD_PRINT_LIBRARIES=1` to the child environment and retain dyld diagnostics.
   Inspect actual resolved library paths; non-system libraries must resolve inside the app, with none loaded from
   Homebrew or `/usr/local`. Read `otool -L`/run paths only as needed to explain a named loader failure. Do not assume
   the existence of bundled files proves their runtime use. Remove diagnostic printing for normal processing.
-- [ ] Record actual output/status, app version, two executable SHA-256 values, release URL/checksum, installed bundle
+- [x] Record actual output/status, app version, two executable SHA-256 values, release URL/checksum, installed bundle
   size and notices location. If unsuccessful, stop dependent implementation with the precise failure. No automatic
   alternative build, relocation or security bypass.
 
@@ -127,10 +128,12 @@ Flow folder. The settings addition is the existing configuration boundary's dire
 
 ## Self-review and phase boundary
 
-The installation is already complete. Two bounded tasks remain: establish the installed CLI launch environment,
-then make the small pipeline change and process representative captures. This plan preserves the existing data,
-logging and job owners and does not change the installed bundle. Only this plan was edited; implementation has not
-started. The key unproven point is actual runtime loading under the process-local environment.
+The installed CLI environment, configurable pipeline integration and documentation are implemented. One real run
+published 851 frames, 17 tags, graph and mesh assets in 177.972 seconds, with original hashes unchanged. Task 1's
+startup traces show app/system library resolution. The representative-run checkbox remains open because tracing
+was not retained during processing; the visual checkbox awaits Gert. No reconstruction rerun was made for review.
+The six final Flow review roles found no actionable code defects. This is code completion, not a claim that the
+remaining runtime-trace or visual acceptance evidence exists. No compilation or installed-bundle changes occurred.
 
 Sources: [official release](https://github.com/introlab/rtabmap/releases/tag/0.24.2),
 [release assets/checksums](https://github.com/introlab/rtabmap/releases/expanded_assets/0.24.2), direct bundle inspection,

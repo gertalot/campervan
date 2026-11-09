@@ -1,0 +1,9 @@
+# Documentation sync review
+
+**Scope and identity:** Revised installed-binary plan `docs/flow/2026-11-09-embedded-rtabmap/plan.md`, base `72c2f1a808dd69a6f138c60f8985c3fc24fbadfb`, head `726a7fd2a949166d0a6ed91f3353c93c622456dd`, on `develop`. Excluded the unrelated scan-library and scan-solutions changes. Reviewed the supplied final code diff, README and photogrammetry setup and direct claims against the settings, resolver, subprocess environment, provenance and existing evidence. Historical source-build plans are superseded by the revised plan.
+
+**Findings:** None. The documented default app location, authoritative override, Linux PATH discovery, scoped bundle environment and provenance agree with `src/campervan/settings.py:43-54` and `src/campervan/scans.py:62-87,339-342,391-402,420-422`. The README's requirement for both tools is conservative: a single database without tag detection only resolves the exporter (`scans.py:340-341`). The old standalone export command at `docs/photogrammetry.md:21-25` records how an existing preview was produced, rather than giving the new processing setup.
+
+**Evidence and limits:** `implementation-notes.md` records successful version invocations and app/system startup library paths, plus a successful representative multi-database publication. Processing-time dynamically loaded libraries were not audited, and visual acceptance, Linux, override, disconnected input and photo texturing remain unexercised. Documentation states the startup-only library observation and does not claim Linux verification. No runtime acceptance is implied by this review.
+
+**Commands:** Read-only inspection with `cat`, `rg`, `nl`, `sed` and `head` of the worker contexts, execution policy, supplied diff, plan, implementation notes, README, photogrammetry documentation, settings, scan processing and rebuild code. No tests, experiments, services, browsers, builds or reruns were performed. This report is the only write.
