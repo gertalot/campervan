@@ -34,7 +34,10 @@ function(component name url hash)
   cmake_parse_arguments(C "" "SUBDIR;PATCH" "ARGS" ${ARGN})
   set(patch_command "")
   if(C_PATCH)
-    set(patch_command ${CMAKE_COMMAND} -DSOURCE_DIR=<SOURCE_DIR> -DTOOL_DIR=${CACHE_ROOT}/tools -DPRIVATE_PREFIX=${PREFIX} -P ${C_PATCH})
+    # Include the patch content in the command identity, not only its path.
+    file(SHA256 "${C_PATCH}" patch_input_hash)
+    set(patch_command ${CMAKE_COMMAND} -DSOURCE_DIR=<SOURCE_DIR> -DTOOL_DIR=${CACHE_ROOT}/tools
+      -DPRIVATE_PREFIX=${PREFIX} -DPATCH_INPUT_HASH=${patch_input_hash} -P ${C_PATCH})
   endif()
   ExternalProject_Add(${name} URL "${url}" URL_HASH "SHA256=${hash}"
     DOWNLOAD_DIR "${CACHE_ROOT}/archives" LIST_SEPARATOR "|" DOWNLOAD_NAME "${name}.tar.gz" DOWNLOAD_EXTRACT_TIMESTAMP TRUE
