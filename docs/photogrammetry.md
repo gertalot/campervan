@@ -1,10 +1,11 @@
 # Van scanning, measurement and CAD workflow
 
-Status: workflow recorded 6 November 2026; local reconstruction added 8 November 2026. The CLI extracts RTAB-Map RGB-D
-captures and uses Open3D for TSDF fusion, cleanup and colour baking, with optional OpenMVS photo texturing. Scan displays
-the resulting clouds and meshes. Database import, local processing progress and per-layout measurement editing are
-available in the browser as of 9 November. Joint GTSAM analysis, explicit corrected reconstruction, and measurement
-suggestions are implemented; physical/visual acceptance remains pending. CAD overlay remains unimplemented.
+Status: the four-stage measurement workflow replaces the earlier analysis/acceptance UI. The CLI extracts RTAB-Map
+RGB-D captures and uses Open3D for TSDF fusion, cleanup and colour baking, with optional OpenMVS photo texturing.
+The browser imports databases, shows job progress and edits per-layout physical measurements. Independent physical
+assessment and joint scan correction have different meanings, described below. Source implementation is recorded;
+the integrated workflow's normal-job execution and Gert's visual/physical acceptance remain pending. CAD overlay
+remains unimplemented.
 
 The [repeatable reconstruction implementation plan](superpowers/plans/2026-11-08-scan-reconstruction.md) scopes the
 current unmeasured trial: saved poses, Open3D fusion and cleanup, texture comparison, and a scripting-first entry point
@@ -62,7 +63,7 @@ Existing Python application / FastAPI
     └─ build123d: parametric CAD authored through Codex
     ↕ scan assets, observations, constraints, status and CAD display geometry
 Existing browser application / Three.js
-    └─ Proposed Scan tab: navigate, measure, optimise and compare with CAD
+    └─ Scan tab: inspect, enter physical ranges, assess them and preview/rebuild corrections
 ```
 
 | Tool | Responsibility |
@@ -80,210 +81,160 @@ service. Keep scan processing separate from CAD regeneration so a measurement ed
 
 ## Workflow
 
-### 1. Prepare reference targets and measurements
+Keep the original RTAB-Map databases. They retain RGB-D frames, calibration, original graph relationships and poses
+needed for corrected reconstruction; an exported PLY or OBJ alone is insufficient. Place flat, stationary AprilTags
+with unique IDs around the capture, including different heights and long spans. Record the family and actual printed
+black-square size, excluding paper margins. Only 36h11 is currently supported. Measure straight centre-to-centre
+ranges: a tape bent around trim does not represent the application's straight-line constraint.
 
-Place flat, stationary AprilTags around the region to capture. Use a supported tag family and unique IDs for distinct
-physical targets. Record the family, IDs and actual printed tag dimensions; the tag-size convention concerns its
-border, not the paper margins. AprilTag pose estimation uses camera calibration and known target size.
-See the [AprilTag pose-estimation documentation](https://github.com/AprilRobotics/apriltag#pose-estimation).
+Import captures through **Scan → Manage scans…**, or use the [CLI processing instructions](#cli-processing).
+Choose a saved layout only while its physical tags remain fixed. Capture groups organise files; membership and
+matching tag numbers do not establish physical layout compatibility. Keep changed door positions or moved geometry
+as separate capture configurations.
 
-Distribute targets across the interior, including different heights and long spans. Measure straight centre-to-centre
-distances with a suitable physical measuring tool. Record units and estimated measurement uncertainty. A distance
-following curved trim or a bent tape is not the straight-line constraint represented in the application.
+Open **Review and improve scan…** to work through four stages. The nonmodal panel leaves the viewer available for
+orbit/pan and does not resize its canvas. The selected stage, checklist order/current pair, acknowledged values and
+settings are saved. Stage labels describe progress and stale reports; they are advice, not precision gates. Missing
+source inputs can prevent the calculation that requires them, but an incomplete physical network can still support
+an explicitly labelled best-effort correction.
 
-Assign each measurement one of two roles:
+### 1. Review capture
 
-| Role | Use |
+Inspect the surface, tags and coverage. **Review placement** evaluates the tag arrangement and explains weak geometry,
+coverage and expected measuring effort through the same planner used for checklists. Captured positions are planning
+estimates, not evidence of physical accuracy. Missing reviewed scene context is stated explicitly; this workflow does
+not recognise regions or install a recognition model.
+
+After **Process captures**, **Review capture** opens the completed result and this stage. Completion should preserve
+another selected result or an active edit; use the offered result action when ready. Processing progress and errors
+remain available if the import dialog is closed.
+
+### 2. Measure
+
+Set **Typical measuring precision (mm)** to a realistic range standard deviation. Its editable initial value is
+**3 mm**, not a guaranteed bound or a precision inferred from decimal places. Individual pairs can override it;
+blank per-pair precision uses the saved default. **Generate checklist** supplies ordered pairs. Type the actual
+physical distance into a row; the scan estimate is a separate label and is not an observation.
+
+Rows accept `mm`, `cm`, `m`, `in` and `ft`; bare values mean millimetres. Only positive finite values can be saved.
+**Enter** saves and advances after acknowledgement. Leaving an edited, nonempty row also saves; **Save** is explicit.
+**Escape** restores acknowledged text and keeps normal editing focus. Saving, Saved and error feedback distinguish
+acknowledged values from drafts. A failed save retains its draft; resolve the error and retry. A revision conflict
+refreshes the acknowledged state without silently overwriting it. Resolve unsaved fields before a workflow action.
+
+The tape tool (**T**) selects the same tag pairs and uses the same physical measurement session. Select two tags,
+type the physical centre-to-centre distance in the bottom field and press Enter. Selecting a pair may display an
+existing distance or a separately labelled scan estimate; it never saves a prefill automatically. Escape restores a
+dirty tape edit, then cancels the pair; at the first-tag prompt it exits the tool. The contextual Restore / Cancel
+pair / Done control performs the same action. Turning tape mode off hides saved lines. Camera navigation and normal
+writing remain available; the workflow panel can be used without tape mode.
+
+Use **Cannot measure this pair…** to record an access reason instead of entering an invented distance. Candidate
+precision applies to that proposed pair and is carried into its first physical observation. Saved physical distances,
+precision and exclusions are shared by compatible captures using the layout. Checklist order and candidate settings
+belong to the source workflow.
+
+### 3. Check accuracy
+
+**Check measurements** assesses the physical ranges independently of the scan. It fits Point3 positions using only
+entered ranges and effective sigmas. Captured coordinates initialise and orient the fit; they are absent from its
+objective and information matrix. Display alignment and numerical gauge anchors do not provide physical information.
+
+Read these three report sections separately:
+
+| Section | Meaning and limits |
 | --- | --- |
-| Optimisation input | Constrain the reconstructed positions of its endpoints. |
-| Independent check | Assess the result without contributing to the optimisation. |
+| Completeness | Connectivity, generic 3D uniqueness, actual geometric rank and remaining motions. |
+| Consistency | Fitted-minus-entered and standardised residuals, robust weights and redundancy. |
+| Uncertainty | Free-network covariance and approximate 95% positional ellipsoids under stated noise assumptions. |
 
-Keep the tags and the surfaces they describe fixed during a capture. Treat different door positions or other changed
-geometry as separate configurations rather than forcing them into one static reconstruction.
+Connected does not necessarily mean determined. Downweighted readings need review; a network without redundant
+observations cannot strongly check itself. Rank deficiency is unbounded. Unresolved global ambiguity remains Unknown
+even when a local covariance exists.
 
-### 2. Capture and export from RTAB-Map iOS
+The editable **5 mm positional target** means the longest semi-axis of a tag's 3D 95% ellipsoid, not a range sigma or
+a guaranteed physical error bound. Its equal-weight free-network alignment convention removes arbitrary rigid motion.
+The generic topology certificate is probabilistic and is reported separately from actual geometric rank/conditioning.
+Sparse, disconnected, coincident or poorly distributed inputs expose diagnostics rather than invented finite precision.
+A physical fit cannot establish LiDAR calibration or accuracy of unmeasured surfaces.
 
-Start with a small representative region, such as a rear corner, before scanning the whole van. Capture overlapping
-views of the surfaces and targets, including revisits that support loop closures.
+**Suggest more** uses the same all-useful-pairs planner as **Generate checklist** and **Review placement**. It considers
+all eligible unmeasured pairs, including possible connections across weak/disconnected parts, rather than a fixed
+shortlist. It explains geometry/rank improvements before finite precision where necessary, and separates rechecks of
+existing observations from new information. The independent **5 mm meaningful-improvement threshold** controls useful
+additional suggestions; it is distinct from the positional target. Candidate sigmas affect predicted benefit. Benefits
+from a shared baseline overlap and must not be added together. Alternatives show their individual baseline gains;
+recommended checklist rows also show marginal gains after earlier proposed ranges. The batch recalculates those
+gains and removes redundant proposed pairs. Unavailable global gains remain Unknown; finite local-model gains are
+labelled separately and do not establish global uniqueness.
 
-Save and transfer the original RTAB-Map `.db` file. Also export a point cloud or mesh if useful for an initial preview.
-The iOS app supports database export, geometry export and AprilTags; see its
-[official description](https://apps.apple.com/ca/app/rtab-map-3d-lidar-scanner/id1564774365).
+Clearance labels are **No obstruction detected**, **Unknown** and **Obstructed**. The assessment uses the finite tape
+segment, neighbouring mesh rays and retained depth/pose coverage. An absent surface alone does not establish a clear
+path. If the physical shape cannot be registered to the source, clearance stays Unknown. Unknown is not a clear path;
+manual exclusions record reach/access or obstacles the scan cannot decide.
+Inspect the reasons and highlights before attempting a measurement. Physical assessments do not rebuild geometry.
 
-Retain the database even after exporting geometry. A fused PLY or OBJ alone generally lacks the frame relationships
-needed to rebuild the scan after changing camera poses. Confirm that the chosen capture settings retain the RGB-D
-frames and calibration needed by this workflow. Record the app version and relevant capture settings with the scan.
+### 4. Update reconstruction
 
-### 3. Import frames and the original graph
+**Preview corrections** is a separate joint, scan-assisted fit. It uses original camera/tag observations and graph
+constraints together with the physical ranges. Its movement and residual summaries are conditional on scan and
+measurement assumptions; they do not establish measurement-only completeness or precision. Reviewed source-bound
+relationships and cleanup masks are optional inputs when supplied. Missing/disabled relationships, absent support,
+missing tolerances or unusable geometry are inactive with individual reasons. Cleanup masks refer to original frame
+pixels and exclude depth samples during reconstruction; they never rewrite the original database. Missing masks
+retain the ordinary fusion path with an explicit skipped-context explanation. This workflow provides no
+region-recognition/editor setup.
 
-Inspect a real database before choosing the importer. Prefer calling RTAB-Map's native tools from Python over
-reimplementing its compressed formats. Its tools include database inspection, image and geometry export, reprocessing
-and graph inspection. See the
-[RTAB-Map command-line reference](https://introlab.github.io/rtabmap/api/latest/tools.html).
+Inspect the preview over the unchanged original surface. **Update mesh** explicitly rebuilds a new result from the
+retained RGB-D frames and corrected poses; editing measurements, checking accuracy and previewing corrections never
+rebuild automatically. A stale preview requires a new preview before updating. Inputs and saved solution/graph
+content are rechecked immediately before reconstruction, and freshness is checked again when the result completes.
+A result completed against changed inputs retains its assets and reports the mismatch instead of becoming the current
+corrected result. A failed action reports its actual error and retains the previous successful report; no automatic
+retry is implied.
 
-Python's `sqlite3` reads the tables, but compressed depth, calibration and transform blobs need RTAB-Map-specific
-decoding. The schema also varies with database version. Use a limited, version-aware reader where native exports do
-not supply what the optimiser needs. The
-[database implementation](https://github.com/introlab/rtabmap/blob/master/corelib/src/DBDriverSqlite3.cpp) and
-[exporter](https://github.com/introlab/rtabmap/blob/master/tools/Export/main.cpp) provide the source references.
+The new result retains its source/layout/group association and records correction provenance. Originals and entered
+physical distances remain intact. A completed rebuild never switches the displayed result automatically. Use
+**Show original** and **Show corrected result** to compare results explicitly. Camera position, projection, pan and
+zoom are preserved across result/layer changes.
+Use **Fit** when a deliberate new framing is wanted. Physical checks not included in fitting and Gert's visual
+inspection remain necessary before relying on the mesh for fabrication. No CAD dimension changes automatically.
 
-Preserve these inputs:
+### Saved layouts, state and freshness
 
-- Frame and node IDs, timestamps, RGB images and depth images, plus depth confidence where available.
-- Camera intrinsics, image dimensions, depth units and sensor-to-node transforms.
-- Original odometry and loop-closure links, their uncertainty, and available landmark observations.
-- Initial and saved optimised poses, with an explicit record of their coordinate convention.
+Managed layout definitions and separate measurement documents live under `data/scan-tag-layouts/<layout-id>/`.
+The original trial uses `data/scan-measurements.json`. `--measurements FILE` on `scan process` or `scan align` records
+the intended physical layout without applying its distances. Reuse it only while the tags remain fixed.
 
-A list of camera poses alone is insufficient for recreating the optimisation problem. Confirm which export supplies
-the original graph links and information matrices. Translate pose conventions and covariance ordering explicitly.
+When tags move, choose **Revise tag layout…** and classify unchanged, moved, removed and added IDs. Only observations
+and exclusions whose two endpoints are confirmed unchanged are copied, with their original precision/provenance;
+the old layout remains intact. Existing captures are not rebound: choose the new layout for replacement captures.
+New layouts do not inherit vehicle-axis roles. Reviewed context references need reconfirmation for the revised layout. A fresh layout instead starts with an empty physical measurement document.
 
-Keep the imported database unchanged. Store measurements, manual corrections and derived outputs separately so another
-optimisation can start from the same original observations.
+Physical observations are authoritative in the measurement document: canonical positive `tag_a < tag_b`, `distance_m`,
+entered text, source run and optional `sigma_m`; the default sigma and access exclusions are stored there too. Storage
+and numerical coordinates use metres; precision/target controls display millimetres. Fitted distances and XYZ positions
+never overwrite physical observations. Files use revision checks and atomic replacement; malformed files and failed
+writes are errors, not permission to reset data.
 
-### 4. Inspect the scan and define distances
+`scan-workflows.json`, beside the project file, stores source workflows, immutable profile revisions, stages,
+checklists, settings and artifact references. Separate captures can share one physical layout while retaining their
+own source workflow. Immutable report snapshots live in the adjacent `scan-workflow-artifacts/<id>/` directory.
+Freshness depends on relevant content: changing source geometry does not invalidate an otherwise identical physical
+range assessment; planning and correction additionally depend on their scan evidence/settings. Stale reports remain
+inspectable, with reasons. Moving or renaming a group does not change numerical freshness. A missing source makes
+source-dependent work unavailable while preserving observations.
 
-Add a Scan tab inside the existing application. Give it a dedicated scene and controls while sharing the existing
-Three.js runtime. Keep the current OCP CAD viewer and avoid another OCP WebSocket connection. Reuse cached tessellated
-CAD geometry for the scan overlay; any new asset endpoint should use the existing FastAPI application.
+This replaces the old workflow directly. Obsolete analysis/history files are not read or automatically migrated;
+there is no old/new mode or acceptance-history/rollback owner. Existing capture and physical measurement files remain.
 
-The proposed view provides:
+The workflow uses the existing scan-job owner and shared progress presentation for import, assessment and rebuild.
+One expensive scan action runs at a time. The API registers workflow reads/edits and explicit actions under
+`/api/v1/scans/workflows`; physical values remain under `/api/v1/scans/measurements`, and explicit layout revision uses
+`POST /api/v1/scans/layouts/{id}/revise`. The backend supplies action eligibility and stale/unavailable reasons; a
+visible error or missing input is not an accuracy certification. No new service is required.
 
-- Orbit, pan, zoom and fit controls, with camera poses and image viewpoints available for inspection.
-- Coloured point-cloud and optional mesh layers, AprilTag IDs and centres, and a CAD overlay.
-- Selection of two arbitrary reference points, with snapping to recognised tags for measured tag pairs.
-- Straight constraint lines, measured-distance entry, uncertainty, and input/check roles.
-- A list of constraints showing measured and reconstructed distances and signed errors.
-- An Optimise action, visible processing status or errors, and refreshed geometry that preserves the camera view.
-
-Use a visible measurement mode so selecting or dragging endpoints has a clear meaning alongside camera navigation.
-Retain normal focus and text editing while entering measurements. Show numerical errors alongside any colour coding.
-The detailed interaction design remains part of implementation planning.
-
-For precise tag measurements, select the tag identity and inspect its original RGB observations. Retain detected image
-corners and centres by frame. If RTAB-Map does not retain the required image observations, detect them again in the
-saved RGB frames. Known tag size, depth and observations from multiple viewpoints can support the initial 3D estimate.
-
-Support manual correction of an observation in its image or on the observed surface. A click in an RGB image defines
-a ray; depth or multiple views are needed to locate it in 3D. Retain the originating frame, image coordinates and any
-surface/depth association. Saving only a world-space XYZ position would lose the relationship after reconstruction.
-Associate repeated observations of the same physical tag with one landmark.
-
-#### Implemented tape-measure interaction
-
-The Scan viewer's tape icon (**T**) selects tag centres, highlights the endpoints and previews a line to the pointer
-or hovered destination. A second tag establishes the pair. Its bottom Distance field starts with an existing physical
-measurement or the current scan distance, separately labelled. The distance is full 3D centre-to-centre, independent
-of display alignment. First numeric typing replaces the prefill without an extra field click. Accepted units are
-`mm`, `cm`, `m`, `in` and `ft`; bare values mean mm. Enter validates and saves a positive finite value in metres.
-
-Escape discards dirty text and restores the previous value, leaving the pair selected; another Escape cancels the
-pair. At the first-tag prompt, Escape exits the tool. Measurement shortcuts are handled before the renderer's own
-shortcuts, preserving normal text-field and menu handling. The status line overlays the viewer without resizing it.
-Clicking empty canvas cancels unfinished work. Camera drags over 4 px, pinch and wheel zoom do not commit or
-cancel it. Switching captures or leaving Scan discards the draft. Tool preference survives layer/tab changes; turning
-it off hides its lines. Saved lines are green and labelled; editing is gold and the rubber-band line is dashed.
-The tool temporarily shows tags even when the ordinary tag toggle is off. Tag targets support keyboard focus and
-Enter/Space while measuring. The tape button shows its T shortcut. A contextual Restore / Cancel pair / Done button
-executes the same action as Escape; there is no generic Scan actions menu.
-
-The toolbar's **Manage measurements…** button lists saved tag pairs, measured distance, current scan distance and signed residual.
-It opens independently of tape mode without discarding the active draft. It supports
-editing and explicit removal. Missing endpoints show Unavailable. Selecting a reversed pair edits the same record.
-An API/save error keeps the draft visibly unsaved. Revision conflicts refresh stored values and require another Enter.
-Prefills are never stored merely by selecting a pair; accepting one requires explicit Enter.
-
-Physical constraints live in a separate, explicitly supplied measurement document. Its version-1 schema contains a
-`tag_layout_id`, `revision` and `distances`. Each record stores canonical positive `tag_a < tag_b`, `distance_m`,
-`entered_text`, `source_run_id` and nullable `sigma_m`. Compatible optional fields are `default_sigma_m` and
-`excluded_pairs` (canonical tag IDs and a physical-access reason). No XYZ positions or fitted distances overwrite these
-observations. A missing per-pair sigma uses an explicitly entered default; no noise is inferred from decimal places.
-The original supplied `data/scan-measurements.json` started empty; later entered values belong to the user.
-
-The app stores measurements alongside its project file as `scan-measurements.json`, just as the planner stores its
-own adjacent data file. No environment setting is required. The reusable store still takes an explicit path, and
-the offline pipeline still requires `--measurements FILE`; neither contains this van's tag identities or distances.
-
-Run processing/alignment accepts explicit `--measurements FILE`, recording the document's layout ID without applying
-its distances. All current completed runs have been associated this way. New captures can reuse the document while
-the physical tags remain fixed. Different arrangements require another ID/document; matching tag numbers alone do
-not establish compatibility. Saving requires both tags in the selected run and a matching layout ID. The file persists
-independently of reconstruction outputs, using a short locally serialized revision check and atomic file replacement.
-
-The existing API provides GET `/api/v1/scans/measurements` and PUT/DELETE
-`/api/v1/scans/measurements/{tag_a}/{tag_b}`. PUT accepts revision, layout ID, distance in metres, entered text and
-source run; DELETE accepts revision and layout ID. Mutations return the updated document. Invalid input is 422,
-layout/revision conflicts are 409, and filesystem errors are shown plainly. Existing scan asset routes remain intact.
-Saving a distance still does not run GTSAM or rebuild anything automatically. The analysis workflow below is explicit.
-
-#### Implemented analysis, acceptance and recommendations
-
-`frontend/src/side-panel.ts` owns the shared right-side shell for Manage scans and Manage measurements: header/title,
-accessible X, context/actions/status/body slots, scrolling, Escape/focus restoration and single-panel ownership.
-The scans manager is modal; measurements is nonmodal for viewport inspection. Domain controllers provide content and
-keep their own state. Neither panel participates in the viewer grid or changes canvas size. Closing measurements hides
-its unapplied overlay, retaining the draft in that tab while inputs remain current; a fresh load never activates an
-unapplied preview. Modal import/delete confirmations remain separate.
-
-The panel supplies an editable 3 mm default when no measuring precision has been saved. Analyse and Suggest more are
-not disabled by blank/invalid/unsaved precision fields: clicking validates, shows inline field errors and focuses the
-problem, or saves valid precision and proceeds. Save precision remains a separate optional action. Existing saved
-precision is retained. The default is a visible modelling assumption, not a claim about Gert's actual measuring error.
-
-**Analyse uncertainty** uses that saved precision. It snapshots the selected run/layout and measurement
-revision, leaving the measurement file untouched. Original RTAB-Map transforms/information come from retained 0.24
-SQLite Link rows. Saved global poses initialise the fit; they are not turned into invented independent observations.
-Inverse stored edges are deduplicated only when transforms/information agree. Links outside the saved localised graph
-are counted as excluded; saved graph nodes remain even when their images were omitted. Gravity uses the recorded
-Optimizer/GravitySigma and native attitude-factor convention. The graph format records its source hash and each
-exported optical camera's local transform. Existing runs extract this derived graph without repeating fusion.
-
-GTSAM 4.3.0 Pose3 between/prior/attitude factors model camera/landmark observations, and robust Huber Pose3 range factors
-add physical distances. When gravity observes global roll/pitch, only translation/yaw gauge is fixed; otherwise the
-root pose is fixed. An existing absolute prior replaces this gauge constraint. Disconnected/unobservable graphs yield
-diagnostics and qualitative possible connections, never finite-looking scores produced by arbitrary weak priors.
-
-The preview shows fitted tag positions/movement vectors over the unchanged original surface. The list compares
-original/fitted distances and residuals, marking downweighted readings. Covariance summaries compare the scan-only
-model with the scan-plus-current-distances model, linearised at their fits. Joint pose covariance is transformed to
-world tag-centre covariance, retaining cross-correlations. Approximate 95% intervals are conditional on those noise
-assumptions; they are not an empirical calibration of LiDAR bias or physical accuracy.
-
-**Apply** validates measurement revision plus source manifest/graph/mesh hashes and solution-history revision, then
-starts a new reconstruction through the existing scan worker. Corrected optical poses and matching landmarks are
-supplied together. It reuses retained RGB/depth/confidence via hard links, so deleting a source result does not remove
-the corrected result's frame copies. Original observations are retained in its graph. Original DBs, distance records,
-source manifest and geometry remain unchanged. Corresponding explicit alignment roles are recalculated where present;
-new layouts receive none implicitly. Successful corrected results stay in the same group/layout and compatible camera
-frame, labelled distance-adjusted. Rebuild failure keeps the accepted solution and original surface for explicit retry.
-Automatic result selection does not interrupt an active tape draft/text field; Show corrected result remains available.
-
-**Revert** clears an unapplied preview or returns to its source result after acceptance, including after reload. It
-does not undo physical measurements, later precision edits or delete results. Accepted entries/history are stored in
-project-adjacent `scan-solutions.json`; immutable analysis snapshots/poses/covariance are under `.local/scan-analyses/`.
-Editing a distance, precision or physical exclusion invalidates earlier analysis/suggestions. Stale Apply is 409 and
-requires explicit reanalysis. Analysis, suggestions and rebuild share the existing single-active-subprocess owner.
-
-**Suggest more** enumerates all unmeasured pairs and predicts the effect of adding one independent range with the
-chosen precision. Each candidate updates the full correlated tag-centre covariance using a rank-one information
-update. Its score is the largest reduction in approximate 95% half-width across all tag-to-tag target dimensions.
-The default 5 mm threshold is editable; all qualifying pairs are returned, not a top-one/top-N shortlist. Rows identify
-the affected dimension, before/after interval and overlapping gain profiles. Individual gains share a baseline and
-cannot be summed. Outlying/low-precision measured pairs are separately offered for remeasurement. New observations
-invalidate the old report before another analysis/suggestion request.
-
-Physical clearance uses Open3D finite mesh rays between centres plus nearby clearance rays. Endpoint tolerance is
-twice the fusion voxel size. Large preview movements relative to the source mesh yield Unknown. For rays with no
-obstruction, source depth/calibration/poses must show free-space coverage of the sampled interior segment; missing
-surfaces alone never establish clearance. Mixed neighbouring hits, incomplete coverage and missing geometry remain
-Unknown. Obstructed pairs and manually excluded pairs are hidden by the default filter but inspectable. A manual
-Not physically measurable reason handles reach/access and unmodelled obstacles. This is not a hand-reach simulator.
-
-API: PUT `/api/v1/scans/measurements/settings` saves revisioned default/per-pair precision and exclusions. POST
-`/api/v1/scans/analyses` creates a snapshot/job; GET `/api/v1/scans/analyses/{id}` returns job/preview/acceptance state;
-POST suffixes `/apply`, `/revert` and `/suggestions` perform those explicit actions. Status includes bounded native logs,
-stale-input flags and qualitative diagnostics when applicable. No new service or automatic retry was introduced.
-
-#### Result library
+### Result library
 
 The quick **Result** selector contains active discoveries, using display names and capture-group headings when needed.
 **Manage scans…** opens a modal side panel over the viewport, with search, Active / Archived / All filters, processing
@@ -332,7 +283,7 @@ pressed state and keyboard activation. The bottom stage/save prompt uses a polit
 [WAI status-message guidance](https://www.w3.org/WAI/WCAG21/Understanding/status-messages.html). Validation remains
 adjacent to the input. This is not a comprehensive accessibility audit.
 
-### 5. Optimise camera poses and landmarks
+## Joint correction model
 
 Use a batch GTSAM factor graph with camera poses and tag landmarks as unknowns. Connect them through the original
 odometry and loop-closure constraints and tag observations. Add measured distances between landmark centres, with
@@ -360,10 +311,10 @@ Pose optimisation also cannot correct every LiDAR error. A rigid transform of on
 that frame. Persistent depth scale, bias or local distortion would need a separate correction model supported by
 measured residuals. Begin with camera and landmark optimisation; add depth calibration only if the sample justifies it.
 
-Retain the original result and each accepted correction's inputs and settings so Gert can compare or revert results.
+Retain the original result and correction inputs/settings so Gert can compare source and corrected results.
 Keep independent check measurements outside the optimiser.
 
-### 6. Reconstruct and assess the result
+## Reconstruction limits
 
 Reproject the original RGB-D frames using corrected camera poses, then assemble a coloured point cloud. Open3D can
 also fuse RGB-D observations into a truncated signed distance field (TSDF) and extract a mesh. See its
@@ -382,7 +333,7 @@ Filter and downsample display geometry as needed, while retaining the original o
 measurement refinement. Serve binary geometry assets and small metadata documents rather than large point arrays in
 the project's JSON files. Measure actual scan sizes before choosing more elaborate rendering mechanisms.
 
-### 7. Align to the van and refine CAD
+## Align to the van and refine CAD
 
 Keep scan processing and optimisation in metres. Store a separate scan-to-vehicle alignment and convert units once at
 the CAD/display boundary. Keep every camera, tag, constraint and geometry layer consistent with that transform.
@@ -519,9 +470,9 @@ diagnostics and retain sources for a manually requested rerun. Stopping/reloadin
 there is no automatic resume or retry. A hard process crash is not a managed recovery mechanism.
 
 Measurement GET accepts optional `tag_layout_id`; PUT/DELETE resolve the submitted layout to its own measurement store.
-The no-query GET and original document remain compatible with the old trial. On result changes the frontend loads the
-matching document and ignores stale reads from a previous selection. Creating a layout does not reuse measured distances,
-optimise geometry or set vehicle axes.
+The no-query GET selects the original trial document. On result changes the frontend loads the matching document and
+ignores stale reads from a previous selection. Creating a layout does not reuse measured distances, optimise geometry
+or set vehicle axes.
 
 API: GET `/api/v1/scans/imports` lists imported sources, managed layouts and processing summaries; POST
 `/api/v1/scans/captures?group_id=...&filename=...` streams one raw database body; POST `/api/v1/scans/layouts` creates
@@ -654,7 +605,7 @@ native labelled selects/buttons and the existing tab keyboard behaviour, followi
 
 These are unmeasured visual trials. Original captures remain unchanged and need their own backup. `.local/scans` is
 ignored derived storage, not archival storage. Browser uploads invoke the same `process_scan` function through the
-existing CLI in an API-managed subprocess. GTSAM distance adjustment now uses the explicit analysis/Apply workflow;
+existing CLI in an API-managed subprocess. GTSAM distance adjustment uses explicit Preview corrections → Update mesh;
 measured CAD-datum alignment and physical validation remain later work.
 
 ### Trial outputs from 8 November 2026

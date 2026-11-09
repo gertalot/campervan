@@ -110,7 +110,8 @@ To process new captures, open **Scan → Manage scans…** and click **Add captu
 (for example `interior-v1`), or drop `.db` files onto that group. Review the selected databases, choose **Create new
 tag layout…** for newly placed tags, and enter the layout name and actual printed tag size. Choose a result name,
 surface detail and optional photographic texture, then click **Process captures**. The dialog shows upload progress,
-processing stages and a processing log. **Show result in viewer** opens the finished reconstruction in its group.
+processing stages and a processing log. **Review capture** opens the finished reconstruction and its measurement
+workflow; **Show result in viewer** remains available.
 
 Previously imported databases remain selectable for another run without uploading again. Processing continues when
 the dialog closes; use **Show processing progress…** in the group to return. One reconstruction runs at a time.
@@ -151,52 +152,49 @@ Library preferences live in `data/scan-library.json`, separately from assets and
 The Interior trial group keeps three useful results active and archives earlier experiments. The 5 mm / 10 mm labels
 describe fusion resolution, not an accuracy ranking.
 
-### Measure between AprilTags
+### Review and improve a scan
 
-In **Scan**, click the tape-measure icon (**T**), then two tags. The bottom Distance field starts with the scan's
-centre-to-centre distance or an existing measured value. Start typing to replace it; use units such as `841 mm`,
-`12.4cm` or `1.2m`. **Enter** saves. **Esc** restores an edited value; a second Esc or an empty-space click cancels
-the pair. Turning the tool off hides saved lines. The toolbar's **Manage measurements…** button reviews, edits and removes
-saved pairs even when the tape tool is off. The status overlay offers **Restore**, **Cancel pair** or **Done** for
-the current Escape action.
+Open **Review and improve scan…** for a result with a tag layout. The four stages share the same saved physical
+measurements as the tape tool. Stage status is advice; incomplete measurements can still support a clearly labelled
+best-effort correction when the required source inputs exist.
 
-The status line overlays the viewer without resizing it. Escape at the first-tag prompt exits the tool.
-The original trial uses `data/scan-measurements.json`; layouts created through import each have a separate
-`data/scan-tag-layouts/<layout-id>/measurements.json`. No extra settings are needed. New documents start empty, and
-the viewer selects the document associated with the displayed result. For manual CLI captures pass the intended
-document with `--measurements FILE` to `scan process` (or `scan align` for an existing run). Reuse that file
-while the physical tags stay fixed; use a new document/layout ID after moving them. No measurement is applied to
-geometry automatically.
+| Stage | Action |
+| --- | --- |
+| Review capture | Inspect the scan and tags; use **Review placement** for coverage and geometry advice. |
+| Measure | Set precision, **Generate checklist**, and enter physical centre-to-centre distances. |
+| Check accuracy | **Check measurements** assesses physical ranges; **Suggest more** offers pairs and rechecks. |
+| Update reconstruction | Inspect **Preview corrections**, then explicitly **Update mesh** for a new result. |
 
-### Analyse measurements and improve the reconstruction
+The editable defaults have different meanings: **3 mm** measuring precision is one standard deviation of a range;
+**5 mm** positional target is the longest semi-axis of a tag's approximate 95% uncertainty ellipsoid; the separate
+**5 mm** meaningful-improvement threshold controls additional suggestions. These are assumptions and goals, not a
+woodworking accuracy guarantee. Scan coordinates initialise/orient the physical assessment; they do not constrain its
+fit or supply its information. The correction preview is a separate, scan-assisted calculation.
 
-**Manage measurements…** uses the same side-panel component as **Manage scans…**, with an X close control and actions
-above the list. The measurements panel leaves the viewer usable for orbit/pan inspection and does not resize it.
+The checklist and tape accept `mm`, `cm`, `m`, `in` and `ft`; bare values mean millimetres. **Enter** saves a row and
+advances after acknowledgement; leaving an edited nonempty row also saves. **Escape** restores its saved value. Save
+errors retain the draft for correction or retry. The scan estimate is labelled separately and is never saved merely
+by selecting a pair. Precision fields use millimetres; individual pairs can override the default.
 
-**Typical measuring precision (mm)** starts at an editable **3 mm** when no value is saved. Analyse and Suggest more
-stay available while editing; clicking either validates and saves the chosen precision before continuing. Save precision
-is also available separately. Missing/invalid values have a red field indicator and an adjacent explanation.
-Precision is one standard deviation, not a guaranteed error bound; individual rows can override it (blank means use
-the default). **Analyse uncertainty** fits the
-original camera/tag observations together with the measured distances using GTSAM. It previews proposed tag movements,
-original/fitted distances, residuals and approximate 95% uncertainty intervals. Inconsistent readings are downweighted
-and marked Check. No entered distance is replaced with the fitted value.
+The planner considers all useful pairs, rather than a fixed shortlist. Inspect overlapping benefits and access
+reasons: **Unknown** clearance is not evidence of a clear path. Record **Cannot measure this pair…** when needed.
+Suggestions and physical checks never rebuild geometry. Changed inputs mark affected reports as needing an update;
+review current reports before rebuilding. Originals and entered distances remain intact. A completed rebuild never
+switches the displayed result automatically. Use **Show original** or **Show corrected result** to compare results in
+their capture group without resetting the camera.
 
-**Apply** rebuilds a separate corrected result using fitted camera/tag poses; it keeps the source result and physical
-measurements. The new result opens when ready unless that would interrupt measurement entry; **Show corrected result**
-is also available. **Revert** discards an unapplied preview or returns to its source result after Apply. Failed builds
-retain the solution and allow **Retry rebuild**. Accepted history survives reload in `data/scan-solutions.json`.
+Reuse a saved tag layout across captures only while the physical tags remain fixed. If tags move, use **Revise tag
+layout…** and identify unchanged, moved, removed and added tags: only pairs whose two endpoints are confirmed unchanged
+are carried forward. Existing captures keep their layout; select the revised layout for replacement captures.
+A fresh layout starts with separate empty measurements and no inherited vehicle-axis roles.
+See [the scan workflow guide](docs/photogrammetry.md#workflow) for assumptions and revision details.
 
-**Suggest more** lists every unmeasured pair predicted to reduce uncertainty by the selected threshold (initially
-5 mm), ranked by expected benefit. The metric is reduction in the approximate 95% uncertainty half-width of at least
-one tag-to-tag dimension. Gains share the same baseline and must not be added together. Expand a row to inspect the
-affected dimension, clearance and overlapping benefits; **Measure pair** uses the normal tape-entry flow.
+For a quick pair, enable the tape icon (**T**) and select two tags. Type the physical distance in the bottom field and
+press **Enter**. **Escape** restores an edit, then cancels the pair; at the first-tag prompt it exits the tool. Turning
+the tool off hides saved lines. The workflow panel remains usable without tape mode and leaves orbit/pan available.
 
-Clearance has three categories: No obstruction detected, Unknown, and Obstructed. The check uses the straight tape
-segment, nearby mesh rays and observed depth coverage. Unknown is not a clear path; large proposed movements may need
-Apply/rebuild before clearance can be assessed. **Show tape path** highlights the pair/obstruction, and **Not physically
-measurable…** records a manual exclusion. Separate suggestions flag readings worth remeasuring.
-
-Analysis requires a connected, observable graph. If uncertainty cannot be quantified, the panel shows diagnostics and
-potential connections without invented millimetre benefits. Predictions depend on the stated noise assumptions; use
-separate physical checks not included in fitting before relying on them for fabrication. No CAD dimensions change.
+Workflow state is stored beside the project in `data/scan-workflows.json`; managed layouts and physical measurements
+live in `data/scan-tag-layouts/`. The original trial uses `data/scan-measurements.json`. Manual CLI captures select the
+intended document with `--measurements FILE` on `scan process` or `scan align`. Existing capture and measurement files
+are retained; obsolete analysis/history files are not read or automatically migrated by the replacement workflow.
+The four-stage workflow still needs Gert's visual and physical acceptance in the running app.
