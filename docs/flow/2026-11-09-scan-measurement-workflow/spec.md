@@ -1,30 +1,30 @@
-# Scan review, measurement and reconstruction workflow
+# Measurement network and reconstruction workflow
 
-**Status:** approved by Gert, 9 November 2026; implementation planning has not started.
-**Flow folder:** [2026-11-09-scan-measurement-workflow](./).
-**Research:** [repository evidence and UX sources](research.md).
-**Approval:** staged side panel and consolidated written specification, including the normative scene-review contract.
+**Status:** approved requirements reorganised into a split draft; boundary review pending.
+**Flow folder:** [scan-measurement-workflow](./).
+**Programme and dependencies:** [scope index](README.md).
+**Binding shared ownership:** [shared contracts](shared-contracts.md).
+**Approved baseline:** [original combined specification](approved-combined-spec.md), approved at commit `5e32a66`.
 
-## 1. Outcome and boundary
+## Scope boundary
 
-After uploading RTAB-Map databases, the user can review the reconstructed space and tag placement, obtain an efficient
-measurement checklist, enter physical distances directly, assess the independently measured 3D shape, improve it with
-additional measurements, and explicitly build a corrected textured reconstruction. Work resumes across sessions and
-repeats with future captures. The original databases and entered measurements remain separate from derived outputs.
+Deliver the staged workflow, tag-placement advice, direct measurement entry, independent physical-network analysis,
+all-useful-pair suggestions and explicit reconstruction correction. This scope owns the shared workflow state,
+measurement save session, stage composition, pair editor and job-status presentation. Its final verification is the
+physical measure/analyse/improve/correct loop, using existing captures and the current importer.
 
-This is one local scan workflow in the existing application. It does not change CAD generation, furniture, the Plan
-editor, the shared renderer's navigation, or app-wide architectural ownership. No new service, cloud dependency,
-frontend framework or generic workflow engine is introduced. The selected local recognition pipeline is specified
-in §6.1 and the normative [scene-review contract](scene-review-design.md). No tests are created or run.
+Embedded native packaging is owned by the [RTAB-Map scope](../2026-11-09-embedded-rtabmap/spec.md). Automatic semantic
+recognition, region editing, geometry-derived axes and reusable-knowledge authoring UI are owned by the
+[scene-review scope](../2026-11-09-scan-scene-review/spec.md). They are not deliverables of this implementation plan.
+This workflow consumes their typed artifacts when present; absent scene context is explicitly unavailable and does
+not block measuring, analysis or best-effort correction. No second manual region editor or recognition placeholder
+implementation is introduced here. Existing imported meshes, tag references and native graph remain usable.
+Before scene delivery, Review capture exposes the existing source/tag information and placement findings; it does
+not claim semantic review completed. The rest of this scope's cycle remains usable and independently verifiable.
 
-Replace the Homebrew RTAB-Map executable dependency with an app-managed minimal RTAB-Map native library and a narrow
-Python binding. Preserve its database decoding, marker detection and multi-session registration algorithms. The
-installed processing package must include its non-system runtime dependencies and work without Homebrew RTAB-Map
-or its dependency installations. This is a packaging/integration change, not a replacement SLAM implementation.
-
-The measurement-only shape and the captured reconstruction are distinct evidence sources. A measurement completeness
-or uncertainty result must never depend on scan poses, gravity, wall assumptions or invented landmark priors filling
-missing constraints. Geometry-assisted results are explicitly separate. Mesh correction is a later explicit action.
+The source boundary below is the existing local scan subsystem. No CAD, planner, renderer-navigation or app-wide
+ownership redesign, new service/cloud dependency, framework or general workflow engine is introduced. Original
+sources and physical measurements are retained. No tests are created or run; no services are started by the agent.
 
 ## 2. User decisions and approaches
 
@@ -64,7 +64,6 @@ checklist entry does not exist: current Edit/Measure pair actions route back to 
 | Measurement-only fit and rigidity | Scan analysis domain with explicit measurement mode | Position-only model, independent of scan factors |
 | Pair selection and placement scoring | Extend `scan_suggestions.py` | One candidate/visibility/information-scoring mechanism |
 | Native graph and scan correction | `scan_graph.py`, scan-conditioned analysis path | Original graph plus physical constraints |
-| Native import and reprocessing | Replace executable calls in `scans.py` with a scan-owned native adapter | Bundled RTAB-Map core, binding and required native libraries |
 | Fusion, cleanup and textures | `scans.py`, `scan_rebuild.py`, existing texturing | Same publication/reconstruction path |
 
 Extraction into small scan-specific files is permitted where it establishes these owners. It must remove the
@@ -114,85 +113,7 @@ Review capture. If the user has switched result, tab or begun another edit, anno
 instead of taking over. A fresh import creates a workflow record; reopening a known result resumes that record.
 Historical/unmanaged results can start a workflow lazily without altering their original manifests or measurements.
 
-## 6. Review capture: geometry, coordinates and placement
-
-### 6.1 Automatic scene understanding and geometry context
-
-On import, intelligently analyse the captured space to recognise and spatially segment floor, ceiling, walls,
-wheel wells, windows/openings, front seats and the complex front/cab area. Use the point cloud/mesh and original
-posed RGB-D observations together where useful. Plane detection alone is not this feature, and a collection of
-manual region-labelling controls does not satisfy it. Vehicle/scene context guides recognition; tag IDs, dimensions
-and physical placements remain data, not hardcoded project logic.
-
-Make region generation target-directed: locate the requested interior features in scene context before generating
-their detailed masks/3D associations. Do not ask the recogniser to name every class-agnostic patch, handle or piece
-of trim. Keep the target feature vocabulary in configuration data and restrict accepted semantic detections to it.
-An unobserved/unlocatable target produces no detection; do not force an unrelated patch into a requested category.
-Uncertainty remains evidence/status about a target detection, not an extra object category to identify.
-
-Produce source-associated 3D regions with semantic labels, spatial extent, detection confidence/evidence and
-relationships such as above/below, opposite sides, approximately parallel and roughly symmetric. Distinguish
-observed geometry from inferred labels/relationships; do not generate missing metric geometry from a recognition
-model. Merge supporting observations across views rather than treating each image mask as a separate object.
-Missing depth on glass can support a window label/outline without inventing a measured glass surface.
-
-Show detected regions as selectable coloured overlays with a compact named list in Review capture. Selecting a
-feature highlights its observed extent and supporting images. The user can inspect, correct, merge/split or dismiss
-an incorrect detection using the same region editor. Review is correction of automatic analysis, not a prerequisite
-to manually naming every feature. Low-confidence/missing detections remain explicitly uncertain and do not block
-best-effort processing. Candidate windows require visual/spatial support; holes alone do not establish windows.
-
-Use the recognised scene to propose alignment/centre plane, distinguish wheel wells from side walls, identify
-exterior geometry through openings, scope body symmetry to appropriate surfaces, and exempt front seats/dashboard
-from box-shaped assumptions. Tag-placement and tape-path assessments consume these source-associated regions through
-the existing overlay and visibility owners. Detection uncertainty propagates as uncertainty in advice; it is not
-converted into exact physical constraints. Optional user-supplied approximate geometry statements remain an input
-to this interpretation rather than a replacement for automatic recognition.
-
-Use Qwen3.5-9B MLX 4-bit target-feature proposals, SAM2.1 Hiera tiny box/point-guided boundaries, calibrated RGB-D
-association and Open3D geometric checks, followed by one scene-level reconciliation call to the same VLM and
-rechecking. Exact artifact revisions, input/output contracts, matching criteria and initial editable defaults are
-part of the normative [scene-review contract](scene-review-design.md). This is the selected design; the complete
-pipeline is not yet demonstrated. Do not substitute another backend or a new semantic optimiser silently.
-
-The shared panel contains a feature list linked to the actual observed 3D regions. Selection from the list or model
-shows the same feature's label, Automatic/User-corrected provenance, supporting source images, boundary and measured
-conflicts. Provide Show/hide, Relabel, Edit boundary and Dismiss detection as distinct named actions. Relabel preserves
-the region; boundary editing previews mask changes in an original supporting image before Save boundary/Cancel.
-Dismiss removes an interpretation, not scan points. Add missing feature, merge and split reuse the same region editor.
-Rerunning analysis preserves user corrections; Restore automatic result is an explicit per-feature action. Explain
-What supports this? and Why flagged? using actual images and geometric residuals rather than only model confidence.
-
-Region editing selects detected patches by click; remaining regions can be marked by a polygon on a chosen original
-RGB frame, using its depth/other observations for 3D association. This is a bounded mask/region editor, not a general
-mesh editor. Persist original frame/pixel or source-element association, not only derived world XYZ coordinates.
-Where depth is missing, an image label can remain a 2D exclusion; it cannot invent a 3D surface or occluder.
-
-Supported context: approximately planar floor; ceiling above/approximately parallel; roughly parallel opposite walls;
-approximate bilateral body symmetry; roughly orthogonal main directions; interior boundary/openings; and a front
-region exempt from simple box/symmetry expectations. Relationships are selectable and individually enabled, with
-visible angular/linear tolerances. Suggested tolerances derive from fitted-patch residuals and sensor resolution,
-are labelled estimates, and have editable numerical values before use. Recognition checks have explicit initial
-defaults in the scene-review contract; those defaults are engineering tolerances, not measured precision. Optional
-geometry factors used to change the reconstruction still require explicit configured tolerances before use; missing
-values leave a factor inactive with a reason. The user can proceed without these optional assumptions.
-
-Symmetry concerns corresponding body regions, excluding openings, seats and other identified asymmetric features.
-It must not mirror every point, fill absent surfaces or erase genuine taper/curvature to force an ideal box.
-
-### 6.2 Axes and origin
-
-Propose Z from the floor normal and the longitudinal direction/centre plane from reviewed geometry and explicit tag
-references. Preserve the project's right-handed coordinates. Front/back direction requires a confirmed semantic or
-tag reference; an approximately rectangular volume cannot supply its sign. Origin is explicitly selected, for example
-a tag centre or its projection onto floor/centre plane. Show the proposed axes and reference in the viewer before
-**Use these axes**. On a slope, van-floor up and gravity up are distinct; do not force the floor to world level.
-
-Extend the current explicit `TagAlignment`/reference-transform mechanism rather than introducing another alignment
-stack. Store reusable reference definitions with context; per-capture solved transforms remain derived. Missing
-reference tags or surfaces yield an actionable unaligned state, not borrowed roles from another layout.
-
-### 6.3 Assess tag placement before measuring
+## 6. Tag-placement advice and optional scene inputs
 
 Evaluate all detected tags together: spatial extent along all three directions, weak modes of a feasible range
 network, original multi-view observation support/consistency, and likely measurable straight-line connections.
@@ -215,6 +136,10 @@ its coverage is not an accuracy improvement. State additions' assumed measuring 
 rank by visual even spacing alone.
 All material recommendations remain inspectable. Main actions are **Continue to measurements** and
 **Add replacement captures…**. Explain why recapture is recommended without making it mandatory.
+
+Semantic regions and geometry-derived axes are supplied by the scene-review scope. This owner performs the
+placement/network comparison and consumes supported regions for candidate surfaces/access; it can return qualitative
+or Unknown advice when they are absent. It does not invent semantic regions to complete its placement report.
 
 ## 7. Measure: one persistent checklist and editor
 
@@ -386,6 +311,11 @@ or **Corrected reconstruction** provenance and meaningful settings in Details. T
 step: distances/context save as edited, analysis snapshots on analysis, new geometry on successful Update mesh.
 **Show original** changes the viewed result; it never rolls back distances or deletes the corrected result.
 
+This owner implements graph fitting, original RGB-D reconstruction and application of supplied reviewed
+source-associated context/masks. The scene scope supplies region editing and cleanup-selection UI through this
+existing stage; absent optional masks/relationships are skipped with a visible reason. End-to-end scene cleanup
+verification belongs to that scope; this scope verifies the explicit physical-distance correction/rebuild path.
+
 ## 10. Persistence, layouts and freshness
 
 Extend the existing layouts/measurement store and add a small project-adjacent `scan-workflows.json` supplied by the
@@ -436,6 +366,11 @@ and original provenance. Old data is retained under the old layout. Reconfirm af
 new placements with the same numeric ID must not be merged into one static reconstruction; replacement captures
 using the revised layout are processed separately, even if displayed in the same capture group.
 
+The store/schema/freshness foundation is owned here. Scene processing owns feature interpretations and their
+content, writing through this same revisioned store. The scene scope implements textual/structured knowledge
+editing and promotion UI. Source run and source associations stay explicit, regardless of which importer produced
+them. No separate scene store or competing artifact-freshness policy is permitted.
+
 ## 11. Direct application contracts
 
 Reuse `/api/v1/scans/measurements` and its revisioned mutations/settings for every physical input. Reuse uploads,
@@ -477,38 +412,14 @@ without adding a second UI implementation. These are specific design decisions, 
 
 ## 13. Algorithms and dependency choices
 
-Existing GTSAM/Open3D/native texturing and RTAB-Map processing algorithms are reused. RTAB-Map packaging and its
-Python integration change as specified below. No alternative optimiser, mesher or web component framework is added.
+Existing GTSAM/Open3D/native texturing and RTAB-Map processing algorithms are reused. RTAB-Map packaging changes in
+its separate scope; this scope uses the existing importer contract. No alternative optimiser, mesher or web
+component framework is added.
 Existing `gtsam.RangeFactor3` point-to-point range factors serve the independent fit; do not
 reimplement their residuals/Jacobians. NumPy/SciPy already present through scan dependencies provide SVD/eigen/covariance algebra.
 Declare direct use in the scan extra if needed without opportunistic upgrades.
 
-### 13.1 App-managed RTAB-Map
-
-Use a version-pinned minimal native build, initially targeting the existing macOS/Apple Silicon and Python 3.13
-environment. Expose only the import/reprocessing operations the scan pipeline needs through a Python extension,
-running inside the existing processing worker rather than adding a service or invoking the Homebrew tools.
-Preserve original inputs, frame IDs, depth/confidence, calibration, optical transforms, graph constraints and saved
-pose semantics. Reuse upstream processing orchestration where needed; a binding must not silently change session
-joining, landmark handling or disconnected-session behavior. Keep the current g2o reprocessing strategy initially;
-switching to GTSAM here is a separate algorithmic decision, not required to remove Homebrew.
-
-Exclude the desktop GUI, visualization and unused capture SDKs/integrations. PCL and OpenCV remain required native
-dependencies; their own builds must also exclude unnecessary integrations. Linking the existing Homebrew core or
-copying a library that still resolves dependencies through `/opt/homebrew` does not meet this requirement. Package
-required non-system libraries with relocatable loader paths and record versions, build options and license notices.
-Retain the separate Python OpenCV/GTSAM/Open3D packages where used; do not assume their wheels expose a compatible
-C++ SDK or can be linked as replacements for native build dependencies.
-
-Establish the installed runtime footprint and temporary build/download space before large builds. Do not promise
-a size saving before measuring the packaged dependency closure. Before removing Homebrew packages, demonstrate
-real database import, tag detection and multi-session processing with dependency resolution confined to the package
-and macOS system libraries. No automated test suite is introduced. Uninstalling Homebrew software is a separate
-explicit cleanup action; preserve dependencies required by other installed software.
-
-See [native integration investigation](rtabmap-integration-research.md). No native build/binding has yet been made.
-
-### 13.2 Rigidity and recognition
+### 13.1 Measurement rigidity
 
 For generic 3D graph rigidity, propose the scan-only optional dependency **PyRigi 1.3.0** rather than writing a global
 rigidity package. Its [documented global-rigidity check](https://pyrigi.github.io/PyRigi/development/internal_reference/graph/global_rigidity.html)
@@ -522,7 +433,6 @@ runtime cost on Python 3.13 must be confirmed without adding a test suite during
 | Hand-written global rigidity | Could avoid a dependency but duplicates specialist exact/probabilistic mathematics and carries a larger correctness burden. Reject as the default. Small application-specific range Jacobian/scoring code remains appropriate. |
 | Fixed four-anchor lateration | A useful sufficient construction when feasible, but can demand inaccessible anchor connections and additional measurements. Reject as the only planner/checker; it would undermine the user's placement/effort objective. |
 | Rank/count alone | Existing numerical stack can check local rank but cannot establish generic global rigidity. Reject as a substitute for the separate graph check. |
-| Semantic recognition backend | Select the pinned Qwen9B/MLX and SAM2.1/RGB-D/Open3D hybrid in the scene-review contract, with explicit geometric checks and bounded reconciliation. Local execution and useful target detections are demonstrated; complete multi-view quality is not. Retained false positives define required contradiction/review behavior. User correction supplements automatic detection. No cloud service or additional backend is selected. |
 
 Sources checked 9 November 2026: [PyRigi upstream](https://github.com/PyRigi/PyRigi),
 [PyPI metadata](https://pypi.org/project/pyrigi/), [generic/global rigidity paper](https://arxiv.org/abs/0710.0926),
@@ -534,31 +444,25 @@ GlobFit is algorithmic precedent, not a new runtime dependency or promise to rep
 
 ## 14. Acceptance and verification boundary
 
-Acceptance is Gert's manual inspection/use of the existing app. Do not create/run tests, start services, automate
-browser flows or delegate implementation reviews without a subsequent explicit request. Applicable fast static
-checks may be specified in the implementation plan; existing unrelated failures are reported separately.
+Gert manually inspects the existing app; no tests, browser automation, service launches or extra processing are run
+as part of this planning change. Existing required checks and manual verification are assigned in this scope's
+future implementation plan. These criteria own the corresponding original baseline acceptance clauses:
 
-The implementation must demonstrate through the real UI:
+| ID | Required result | Baseline |
+| --- | --- | --- |
+| M1 | Import completion hands off to the new model/review without interrupting selection or editing. | AC1 |
+| M2 | Tag-placement advice is explained, preserves spatial coverage and compares effort/precision fairly; unavailable geometry is explicit. | AC2 placement clause |
+| M3 | Sparse/disconnected/degenerate measurement networks remain incomplete even when captured poses look confident. | AC4 |
+| M4 | Checklist values can be entered without clicking tags; tape and rows share parsing, save state and authoritative values. | AC5 |
+| M5 | Numeric typing/Escape preserve normal editing; invalid/conflicted/failed values stay visibly unsaved. | AC6 |
+| M6 | All four stages use one shell, all pair contexts one editor, all job contexts one status/log view; future scene content reuses them. | AC7 |
+| M7 | Completeness, residuals, uncertainty and scan movement are distinct, including ambiguous/degenerate cases. | AC8 |
+| M8 | Initial and extra-pair planning share one scoring/visibility mechanism and expose all meaningfully useful pairs. | AC9 |
+| M9 | Reload preserves acknowledged measurements, capture selection and workflow; moved tags cannot silently inherit distances. | AC10 |
+| M10 | Only explicit correction/rebuild publishes new geometry; original sources and physical values remain intact. | AC11 |
+| M11 | Old-layout measurements, legacy results/library actions and camera/navigation controls remain usable. | AC12 |
 
-- Import produces an inspectable model and a clear review handoff; completion never interrupts another edit.
-- Reviewed geometry/axes and tag-placement advice are explained and reusable, with honest Unknown states.
-- Automatic scene analysis attempts floor, ceiling, walls, wheel wells, windows and front-seat/cab recognition and
-  displays source-associated labelled regions; manual labelling alone does not satisfy the recognition requirement.
-- A sparse physical network remains incomplete even when the scan or context supplies confident positions.
-- Suggested checklist entry works without selecting tags; tape and row edits show the same saved value.
-- Numeric typing/Escape do not trigger viewer controls; invalid/conflicted/failed values remain visibly unsaved.
-- All four stages use one shell; all pair contexts one editor; all job contexts one status/log view.
-- Reports distinguish completeness, residuals, uncertainty and scan movement, including degenerate/ambiguous cases.
-- Initial and extra-pair recommendations use the same objective/feasibility mechanism, exposing all useful pairs.
-- Reload retains acknowledged values, selected capture and workflow; moved tags cannot silently inherit distances.
-- Only explicit correction/rebuild produces new geometry; original captures/measurements remain available.
-- Existing old-layout measurements, legacy results/library actions and the native camera controls remain usable.
-- Native import/reprocessing uses the app-managed package without Homebrew RTAB-Map or Homebrew runtime linkage.
-- Selecting a region/list entry exposes source evidence; relabeling preserves its boundary, and rerunning analysis
-  preserves user corrections. A vertical door-panel/floor conflict and missing opposing wheel-well observation are
-  explained; they do not silently pass as a complete scene or manufacture geometry.
-- New captures reuse textual/structured van knowledge while retaining separate region bindings and corrections.
-
-README and `docs/photogrammetry.md` must describe these new semantics when implemented, superseding the old combined
-measurement-analysis/Apply description. This document specifies the outcome and boundaries; it is not the phased
-implementation plan. The required six reviews run once before final user approval.
+README and docs/photogrammetry.md updates belong here for measurement-only semantics, shared workflow and explicit
+correction. Other scopes own their factual import/scene documentation changes; do not rewrite their sections here.
+All preserved requirements above remain binding; this table identifies final verification ownership rather than
+reducing the detailed contracts. Plan only this file's scope, not the other two scopes as extra tasks.

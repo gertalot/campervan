@@ -1,6 +1,7 @@
 # Specification review record
 
-Spec: [spec.md](spec.md). Status: six reviews, decision walkthrough and final written-spec approval complete.
+Original spec: [approved combined baseline](approved-combined-spec.md). Status: six reviews, decision walkthrough
+and original written-spec approval complete. The later [scope split](README.md) awaits boundary review.
 
 ## Author self-review
 
@@ -172,3 +173,23 @@ The numerical defaults are engineering choices to review, not sensor calibration
 investigation establishes source-level integration points and the broad installed linkage baseline, not a working
 isolated package or guaranteed disk saving. Gert gave final written-spec approval on 9 November 2026. This completes
 flow:plan; implementation planning remains a separate user-invoked phase.
+
+## Authorised split after the implementation-plan scope check
+
+The implementation-plan phase identified three independently deliverable outcomes in the approved combined spec.
+Gert authorised returning to planning and splitting those scopes without changing the approved design.
+
+- Embedded RTAB-Map owns the native importer replacement and runtime isolation, verified using the existing app.
+- Measurement workflow owns physical fitting/planning/correction and its shared stage/store/freshness foundations.
+- Scene review owns recognition, region editing, reusable-knowledge authoring and reviewed-context integration,
+  consuming those shared foundations and existing captures.
+
+The original approved text is archived unchanged. The scope index maps all 15 acceptance bullets and every source
+section to an active owner. Shared contracts assign producers/consumers once; they are not another delivery project.
+Native delivery does not depend on new UX. Measurement delivery does not require recognition. Scene integration
+depends on the shared workflow foundation rather than implementing a duplicate panel/store and migrating it later.
+
+The focused split self-review checked requirement coverage, ownership, data seams, dependency order and relative
+references. Original tool choices, limitations and evidence remain binding. No new requirement, algorithm, runtime,
+experiment or application edit is introduced. The original six reviews are not repeated. Boundary review of the
+three written split specs remains pending; their semantics retain the original approval.
