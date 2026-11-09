@@ -22,8 +22,10 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
   const checklists = new Map<string, { batches: ChecklistBatch[]; error: string; blocked: boolean; version: number; attempt: number }>();
   const drafts = new Map<string, Draft>();
   const precisionDrafts = new Map<string, string>();
+  const candidateDrafts = new Map<string, Map<string, string>>();
+  const exclusions = new Map<string, { pair: Pair; reason: string | null; error: string; blocked: boolean; version: number; attempt: number }>();
   let settingsError = '';
-  const pending = new Map<string, { text: string; promise: Promise<boolean> }>();
+  const pending = new Map<string, { text: string; promise: Promise<boolean> }[]>();
   const conflicts = new Map<string, number>();
   const listeners = new Set<() => void>();
   let queue: Promise<unknown> = Promise.resolve();
@@ -55,7 +57,7 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
   }
   function commit(pair: Pair): Promise<boolean> {
     const key = pairKey(pair); const value = draft(pair); const text = value.text;
-    const existing = pending.get(key); if (existing?.text === text) return existing.promise;
+    const existing = pending.get(key)?.at(-1); if (existing?.text === text) return existing.promise;
     if (text === value.saved && !existing) { value.state = 'Saved'; value.error = ''; notify(); return Promise.resolve(true); }
     let distance: number;
     try { distance = parseDistance(text); } catch (reason) { value.state = 'Not saved'; value.error = (reason as Error).message; notify(); return Promise.resolve(false); }
@@ -65,28 +67,32 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
     value.state = 'Saving'; value.error = ''; notify();
     const conflictVersion = conflicts.get(key) ?? 0;
     const promise: Promise<boolean> = enqueue(async () => {
-      if ((conflicts.get(key) ?? 0) !== conflictVersion) {
-        value.state = 'Not saved'; value.error = 'The document changed. Retry saving this value.';
-        if (pending.get(key)?.promise === promise) pending.delete(key); notify(); return false;
-      }
       try {
+        if ((conflicts.get(key) ?? 0) !== conflictVersion) {
+          value.error = 'The document changed. Retry saving this value.'; return false;
+        }
         if (!record(pair) && !workflowId) throw new Error('Wait for this capture’s workflow to load before saving.');
-        if (!record(pair) && precisionDrafts.has(key)) throw new Error('Save the pair precision before saving this distance.');
+        if (!record(pair) && workflowId && candidateDrafts.get(workflowId)?.has(key)) throw new Error('Save the pair precision before saving this distance.');
         const candidate = workflowId ? workflowViews.get(workflowId)?.workflow.candidate_sigmas[key] : undefined;
         document = await saveMeasurement(document, { tag_a: Math.min(pair.tag_a, pair.tag_b), tag_b: Math.max(pair.tag_a, pair.tag_b),
           distance_m: distance, entered_text: text.trim(), source_run_id: sourceId,
           ...(!record(pair) && candidate !== undefined ? { sigma_m: candidate } : {}) });
         value.saved = text.trim(); if (value.text === text) value.text = value.saved;
-        value.state = value.text === value.saved ? 'Saved' : 'Not saved'; value.error = ''; return true;
+        value.error = ''; return true;
       } catch (reason) {
         if (reason instanceof ApiError && reason.status === 409) {
           conflicts.set(key, (conflicts.get(key) ?? 0) + 1);
           try { await refresh(); } catch { /* retain the original conflict */ }
         }
         value.state = 'Not saved'; value.error = `${reason instanceof Error ? reason.message : String(reason)} Retry saving this value.`; return false;
-      } finally { if (pending.get(key)?.promise === promise) pending.delete(key); notify(); }
+      } finally {
+        const outstanding = (pending.get(key) ?? []).filter(item => item.promise !== promise);
+        if (outstanding.length) pending.set(key, outstanding); else pending.delete(key);
+        value.state = outstanding.length ? 'Saving' : value.error || value.text !== value.saved ? 'Not saved' : 'Saved';
+        notify();
+      }
     });
-    pending.set(key, { text, promise }); return promise;
+    pending.set(key, [...pending.get(key) ?? [], { text, promise }]); notify(); return promise;
   }
   async function mutate(action: () => Promise<MeasurementDocument>) {
     return enqueue(async () => {
@@ -116,10 +122,32 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
       }
     });
   }
+  function saveExclusion(key: string, change: { pair: Pair; reason: string | null; error: string; blocked: boolean; version: number; attempt: number }) {
+    const { pair, reason, version, attempt } = change;
+    return enqueue(async () => {
+      if (change.blocked || change.attempt !== attempt) throw new Error(change.error || 'Retry saving this exclusion.');
+      try {
+        const excluded = (document.excluded_pairs ?? []).filter(item => pairKey(item) !== key);
+        if (reason) excluded.push({ tag_a: Math.min(pair.tag_a, pair.tag_b), tag_b: Math.max(pair.tag_a, pair.tag_b), reason });
+        document = await configureMeasurements(document, document.default_sigma_m ?? null, {}, excluded);
+        if (change.version === version) exclusions.delete(key);
+        notify(); return true;
+      } catch (failure) {
+        change.blocked = true; change.attempt++;
+        change.error = `${failure instanceof Error ? failure.message : String(failure)} Retry saving this exclusion.`;
+        if (failure instanceof ApiError && failure.status === 409) { try { await refresh(); } catch { /* retain the original conflict */ } }
+        notify(); throw failure;
+      }
+    });
+  }
   return {
     get document() { return document; }, get workflow() { return workflow; }, draft, setDraft, commit,
-    precisionDraft(key: string) { return precisionDrafts.get(key); },
-    setPrecisionDraft(key: string, text: string) { precisionDrafts.set(key, text); notify(); },
+    precisionDraft(key: string, candidate = false) { return candidate ? workflow && candidateDrafts.get(workflow.workflow.id)?.get(key) : precisionDrafts.get(key); },
+    setPrecisionDraft(key: string, text: string, candidate = false) {
+      if (candidate) { if (!workflow) return; const id = workflow.workflow.id;
+        let values = candidateDrafts.get(id); if (!values) { values = new Map(); candidateDrafts.set(id, values); } values.set(key, text);
+      } else precisionDrafts.set(key, text); notify();
+    },
     bindWorkflow(view: WorkflowView | null) { workflow = view; if (view) workflowViews.set(view.workflow.id, view); notify(); },
     checklistDraft() { return workflow ? checklists.get(workflow.workflow.id) : undefined; },
     setChecklist(batches: ChecklistBatch[]) {
@@ -139,7 +167,7 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
     },
     setCandidateSigma(pair: Pair, sigma: number | null) {
       const bound = workflow; if (!bound) return Promise.reject(new Error('Workflow is unavailable.'));
-      const key = pairKey(pair); const submitted = precisionDrafts.get(key);
+      const key = pairKey(pair); const values = candidateDrafts.get(bound.workflow.id); const submitted = values?.get(key);
       return enqueue(async () => {
         try {
           const current = workflowViews.get(bound.workflow.id) ?? bound;
@@ -148,7 +176,9 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
           const saved = await editWorkflow(bound.workflow.id, { revision: current.revision, candidate_sigmas });
           workflowViews.set(bound.workflow.id, saved);
           if (workflow?.workflow.id === bound.workflow.id) workflow = saved;
-          if (precisionDrafts.get(key) === submitted) precisionDrafts.delete(key);
+          if (values && candidateDrafts.get(bound.workflow.id) === values && values.get(key) === submitted) {
+            values.delete(key); if (!values.size) candidateDrafts.delete(bound.workflow.id);
+          }
           settingsError = ''; notify(); return saved;
         } catch (reason) {
           if (reason instanceof ApiError && reason.status === 409) {
@@ -162,12 +192,19 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
     },
     remove(pair: Pair) { return mutate(async () => { const row = record(pair); if (!row) return document;
       const result = await removeMeasurement(document, row); const value = draft(pair); value.saved = ''; if (value.text === row.entered_text) value.text = ''; value.state = value.text ? 'Not saved' : 'Saved'; return result; }); },
+    exclusionDraft(pair: Pair) { return exclusions.get(pairKey(pair)); },
     setExclusion(pair: Pair, reason: string | null) {
-      return mutate(() => {
-        const excluded = (document.excluded_pairs ?? []).filter(item => pairKey(item) !== pairKey(pair));
-        if (reason) excluded.push({ tag_a: Math.min(pair.tag_a, pair.tag_b), tag_b: Math.max(pair.tag_a, pair.tag_b), reason });
-        return configureMeasurements(document, document.default_sigma_m ?? null, {}, excluded);
-      });
+      const key = pairKey(pair); let change = exclusions.get(key);
+      if (!change) { change = { pair, reason, error: '', blocked: false, version: 0, attempt: 0 }; exclusions.set(key, change); }
+      else { change.reason = reason; change.version++; }
+      notify();
+      if (change.blocked) return Promise.reject(new Error(change.error));
+      return saveExclusion(key, change);
+    },
+    retryExclusion(pair: Pair) {
+      const key = pairKey(pair); const change = exclusions.get(key);
+      if (!change) return Promise.reject(new Error('No exclusion change to retry.'));
+      change.blocked = false; notify(); return saveExclusion(key, change);
     },
     async configure(change: MeasurementSettings) {
       const keys = [...Object.keys(change.pair_sigmas ?? {}), ...(change.default_sigma_m === undefined ? [] : ['default'])];
@@ -183,10 +220,12 @@ export function createMeasurementSession(initial: MeasurementDocument, source: (
     async flush() { await queue; const unsaved = [...drafts.entries()].filter(([, value]) => value.state !== 'Saved' || value.text !== value.saved);
       const checklist = workflow ? checklists.get(workflow.workflow.id) : undefined;
       const checklistFailures = [...checklists].map(([workflowId, value]) => ({ workflowId, error: value.error }));
-      return { ok: !unsaved.length && !precisionDrafts.size && !settingsError && !checklists.size, settingsError, checklistError: checklist?.error ?? '', checklistFailures, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
+      const candidatePrecision = [...candidateDrafts].flatMap(([workflowId, values]) => [...values.keys()].map(key => ({ workflowId, key })));
+      const exclusionDrafts = [...exclusions.values()].map(({ pair, reason, error }) => ({ pair, reason, error }));
+      return { ok: !unsaved.length && !precisionDrafts.size && !candidatePrecision.length && !exclusions.size && !settingsError && !checklists.size, candidatePrecision, exclusionDrafts, settingsError, checklistError: checklist?.error ?? '', checklistFailures, precision: [...precisionDrafts.keys()], pairs: unsaved.map(([key]) => { const [tag_a, tag_b] = key.split(':').map(Number); return { tag_a, tag_b }; }) }; },
     refresh() { return enqueue(refresh); },
     subscribe(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener); },
-    hasUnsaved() { return !!checklists.size || !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
+    hasUnsaved() { return !!exclusions.size || !!candidateDrafts.size || !!checklists.size || !!precisionDrafts.size || [...drafts.values()].some(value => value.state !== 'Saved' || value.text !== value.saved); },
   };
 }
 export type MeasurementSession = ReturnType<typeof createMeasurementSession>;
