@@ -8,7 +8,7 @@ import numpy as np
 from campervan.scan_measurements import MeasurementDocument
 from campervan.scan_network import NETWORK_SETTINGS
 from campervan.scan_suggestions import (
-    PLANNER_SETTINGS, plan_measurements, planning_state, refresh_state, select_batch, summary,
+    PLANNER_SETTINGS, plan_measurements, planning_state, refresh_state, select_batch, source_associations, summary,
 )
 from campervan.scan_visibility import assess_segments
 from campervan.scan_workflows import fingerprint
@@ -167,8 +167,8 @@ def review_placement(run: Path, manifest: dict[str, Any], measurements: Measurem
                 extra_pairs.append({"tag_a": a, "tag_b": b, "state": "proposed", "estimate_m": length,
                                     "sigma_m": candidate["sigma_m"], "manual_exclusion": None,
                                     "eligible": length >= NETWORK_SETTINGS["coincident_m"]})
-            source_positions = registration["positions"] | {candidate["tag_id"]: point}
-            moved = {tag: float(np.linalg.norm(source_positions[tag] - captured[tag])) for tag in ids}
+            source_positions, moved = source_associations(registration, captured)
+            source_positions = source_positions | {candidate["tag_id"]: point}
             moved[candidate["tag_id"]] = 0.0
             assess_segments(run, extra_pairs, source_positions, moved, manifest=manifest)
             for pair in extra_pairs:

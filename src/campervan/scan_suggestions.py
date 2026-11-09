@@ -16,7 +16,7 @@ PLANNER_ALGORITHM_VERSION = "physical-pair-planner-1"
 PLANNER_SETTINGS = {
     "network": NETWORK_SETTINGS, "selection": "connectivity-rank-rigidity-worst-ellipsoid",
     "reverse_delete": "proposed-only", "overlap_cosine": .9, "confidence": .95,
-    "visibility": "finite-segment-observed-depth-2", "registration": "weighted-proper-rigid-no-scale",
+    "visibility": "finite-segment-observed-depth-3", "registration": "weighted-proper-rigid-no-scale",
 }
 
 
@@ -26,6 +26,16 @@ def _pair(row: dict[str, Any]) -> tuple[int, int]:
 
 def _pair_wire(row: dict[str, Any]) -> dict[str, int]:
     return {"tag_a": row["tag_a"], "tag_b": row["tag_b"]}
+
+
+def source_associations(registration: dict[str, Any], captured: dict[int, Any]) -> tuple[dict[int, Any], dict[int, float]]:
+    """Only registered planning endpoints have source positions suitable for clearance checks."""
+    if registration["status"] != "registered":
+        # The captured fallback is a reference, not a source transform of the possibly deformed range fit.
+        return {}, {}
+    positions = registration["positions"]
+    moved = {tag: float(np.linalg.norm(point - captured[tag])) for tag, point in positions.items()}
+    return positions, moved
 
 
 def _components(ids: list[int], edges: list[tuple[int, int]]) -> list[list[int]]:
@@ -290,8 +300,7 @@ def plan_measurements(run: Path, manifest: dict[str, Any], measurements: Measure
     pairs = enumerate_pairs(network, measurements, planning["candidate_sigmas"])
     captured = {tag["id"]: np.asarray(tag["pose"], dtype=float)[:3, 3] for tag in manifest.get("tags", [])}
     registration = register_measured_shape(network, captured)
-    positions = registration["positions"]
-    moved = {tag: float(np.linalg.norm(point - captured[tag])) for tag, point in positions.items()}
+    positions, moved = source_associations(registration, captured)
     assess_segments(run, pairs, positions, moved, manifest=manifest)
     for pair in pairs:
         pair["check_access"] = pair["clearance"] == "unknown"
