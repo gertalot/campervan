@@ -55,7 +55,7 @@ export function createMeasurePanel(host: Host) {
     if (!result?.ok) { status.textContent = 'Save or resolve the highlighted draft first.'; return; }
     if (![targetValue, improvementValue].every(value => Number.isFinite(value) && value > 0)) { status.textContent = 'Enter positive target and improvement values.'; return; }
     try { await session.editMetadata({ target_mm: targetValue, improvement_mm: improvementValue });
-      if (host.session() === session && session.workflow?.workflow.id === workflowId && targetDrafts.get(workflowId) === submitted) targetDrafts.delete(workflowId); render(); }
+      if (targetDrafts.get(workflowId) === submitted) targetDrafts.delete(workflowId); render(); }
     catch (reason) { status.textContent = String(reason); }
   })(); };
   const status = document.createElement('p'); status.setAttribute('role', 'status'); side.status.append(status);
