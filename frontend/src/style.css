@@ -636,3 +636,8 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .measurement-field-error { color: #ffb5b5; font-size: 12px; }
 .measurement-field-error:empty { display: none; }
 .measurement-precision .measurement-field-error { flex-basis: 100%; }
+
+.scan-measure-panel .measurement-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid #454a54; }
+.scan-measure-panel .measurement-row strong { flex-basis: 100%; }
+.scan-measure-panel .measurement-row input[type=text] { width: 110px; }
+.scan-measure-panel .measurement-row [role=alert] { flex-basis: 100%; }

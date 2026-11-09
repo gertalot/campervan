@@ -1,8 +1,7 @@
 /** Tag tape measure: interaction state and physical constraints, never geometry optimisation. */
-import { ApiError } from './api';
 import { createMeasurePanel } from './scan-measure-panel';
-import { readMeasurements, saveMeasurement, removeMeasurement,
-  type MeasurementDocument, type DistanceMeasurement } from './scan-measurements-api';
+import { readMeasurements, type MeasurementDocument, type DistanceMeasurement } from './scan-measurements-api';
+import { createMeasurementSession, type MeasurementSession } from './scan-measure-session';
 import type { createScanTags, ScanTag, MeasurementPreview } from './scan-tags';
 
 export interface MeasurementCapture { id?: string; name?: string; display_name?: string; group_name?: string | null;
@@ -16,15 +15,6 @@ interface Host {
 }
 const mm = (metres: number) => `${(metres * 1000).toFixed(1)} mm`;
 const emptyRecords: DistanceMeasurement[] = [];
-export function parseDistance(value: string): number {
-  const match = value.trim().match(/^(\d+(?:\.\d*)?|\.\d+)\s*(mm|cm|m|in|ft)?$/i);
-  if (!match) throw new Error('Enter a positive distance in mm, cm, m, in or ft (for example 841 mm).');
-  const scale: Record<string, number> = { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 };
-  const result = Number(match[1]) * scale[(match[2] ?? 'mm').toLowerCase()];
-  if (!Number.isFinite(result) || result <= 0) throw new Error('Distance must be greater than zero.');
-  return result;
-}
-
 export function createScanMeasure(host: Host) {
   const { panel, container, bar } = host;
   bar.innerHTML = `<span role="status" aria-live="polite" data-prompt></span>
@@ -54,6 +44,9 @@ export function createScanMeasure(host: Host) {
   let error = '';
   let configured = false;
   let measurementData: MeasurementDocument | null = null;
+  let session: MeasurementSession | null = null;
+  const sessions = new Map<string, MeasurementSession>();
+  window.addEventListener('beforeunload', event => { if ([...sessions.values()].some(item => item.hasUnsaved())) event.preventDefault(); });
   let readError = '';
   let layoutName = '';
   let reading = true;
@@ -68,14 +61,9 @@ export function createScanMeasure(host: Host) {
   };
   tape.title = `${commands.tape.label} (${commands.tape.shortcut})`;
 
-  const manager = createMeasurePanel({ capture: host.capture, document: () => measurementData, layoutName: () => layoutName,
-    busy: () => busy, error: () => error || readError,
-    canSwitch: () => first === null && !busy,
-    distance, selectPair(a, b) { selectPair(a, b); container.focus({ preventScroll: true }); },
-    remove: deleteRecord, refresh: refreshDocument,
-    preview: result => host.overlay()?.setAnalysis(result?.movements ?? []),
-    highlight: pair => host.overlay()?.setSuggestedPair(pair ? { from: pair.tag_a, to: pair.tag_b, hit: pair.hit } : null),
-    view: host.view });
+  const manager = createMeasurePanel({ capture: host.capture, session: () => session, layoutName: () => layoutName,
+    error: () => error || readError, distance,
+    highlight: pair => host.overlay()?.setSuggestedPair(pair ? { from: pair.tag_a, to: pair.tag_b } : null) });
 
   function distance(a: number, b: number): number | null {
     const tags = host.capture()?.tags ?? [];
@@ -84,9 +72,6 @@ export function createScanMeasure(host: Host) {
   }
   function records() {
     return measurementData && host.capture()?.tag_layout_id === measurementData.tag_layout_id ? measurementData.distances : emptyRecords;
-  }
-  function savedPair() {
-    return records().find(r => (r.tag_a === first && r.tag_b === second) || (r.tag_a === second && r.tag_b === first));
   }
   function unavailable(): string {
     if (reading) return 'Loading measurement document…';
@@ -110,7 +95,7 @@ export function createScanMeasure(host: Host) {
     let stage = 'Select first tag · T or Esc to exit';
     if (host.loading()) stage = 'Loading scan…';
     else if (busy) stage = 'Saving…';
-    else if (second !== null && first !== null) stage = `Tags ${first} ↔ ${second} · Scan: ${mm(distance(first, second)!)} · Enter distance`;
+    else if (second !== null && first !== null) stage = `Tags ${first} ↔ ${second} · Scan estimate: ${mm(distance(first, second)!)} · ${session?.draft({ tag_a: first, tag_b: second }).state ?? 'Not saved'}`;
     else if (first !== null) stage = 'Select second tag · Esc or click empty space to cancel';
     const message = [notice, stage, unavailable()].filter(Boolean).join(' · ');
     if (prompt.textContent !== message) prompt.textContent = message;
@@ -131,7 +116,8 @@ export function createScanMeasure(host: Host) {
   function selectPair(a: number, b: number) {
     if (host.loading() || distance(a, b) === null) return;
     active = true; generation++; first = a; second = b; hover = null; pointer = undefined; error = notice = '';
-    baseline = savedPair()?.entered_text ?? mm(distance(a, b)!); input.value = baseline; paint();
+    const value = session?.draft({ tag_a: a, tag_b: b });
+    baseline = value?.saved ?? ''; input.value = value?.text ?? ''; paint();
   }
   function selectTag(id: number) {
     if (!active || busy || host.loading()) return;
@@ -144,20 +130,35 @@ export function createScanMeasure(host: Host) {
     const token = ++readGeneration;
     reading = true; readError = '';
     if (host.capture() && !host.capture()?.tag_layout_id) {
-      measurementData = null; layoutName = 'No tag layout'; reading = false;
+      measurementData = null; session = null; layoutName = 'No tag layout'; reading = false;
       readError = 'Select a reconstruction associated with a tag layout to manage measurements.';
       manager.refresh(); paint(); return;
     }
-    if (host.capture()?.tag_layout_id && host.capture()?.tag_layout_id !== measurementData?.tag_layout_id) measurementData = null;
+    if (host.capture()?.tag_layout_id && host.capture()?.tag_layout_id !== measurementData?.tag_layout_id) { measurementData = null; session = null; }
     manager.refresh(); paint();
     try {
       const response = await readMeasurements(host.capture()?.tag_layout_id);
       if (token !== readGeneration) return;
       configured = response.configured; measurementData = response.document; layoutName = response.layout_name ?? response.document?.tag_layout_id ?? ''; readError = '';
+      if (response.document) {
+        let next = sessions.get(response.document.tag_layout_id);
+        if (!next) {
+          next = createMeasurementSession(response.document, () => host.capture()?.id);
+          const owned = next;
+          next.subscribe(() => { if (session === owned) { measurementData = owned.document;
+            if (first !== null && second !== null && document.activeElement !== input) {
+              const value = owned.draft({ tag_a: first, tag_b: second }); input.value = value.text; baseline = value.saved; error = value.error;
+            } manager.refresh(); paint(); } });
+          sessions.set(response.document.tag_layout_id, next);
+        } else await next.refresh();
+        if (token !== readGeneration) return;
+        session = next; measurementData = next.document;
+      } else session = null;
       if (first !== null && second !== null && distance(first, second) !== null) {
         const dirty = input.value !== baseline;
-        baseline = savedPair()?.entered_text ?? mm(distance(first, second)!);
-        if (!dirty) input.value = baseline;
+        const value = session?.draft({ tag_a: first, tag_b: second });
+        baseline = value?.saved ?? '';
+        if (!dirty) input.value = value?.text ?? '';
       }
     } catch (reason) {
       if (token !== readGeneration) return;
@@ -165,52 +166,31 @@ export function createScanMeasure(host: Host) {
     }
     reading = false; manager.refresh(); paint();
   }
-  async function save() {
-    if (busy || first === null || second === null || host.loading()) return;
-    let metres: number;
-    try { metres = parseDistance(input.value); } catch (reason) { error = (reason as Error).message; paint(); return; }
-    const reason = unavailable(); const capture = host.capture();
-    if (reason || !measurementData || !capture?.id) { error = reason || 'Select a completed capture before saving.'; paint(); return; }
-    const token = generation; const a = first; const b = second;
-    const record = { tag_a: Math.min(a, b), tag_b: Math.max(a, b), distance_m: metres,
-      entered_text: input.value.trim(), source_run_id: capture.id };
-    busy = true; error = notice = ''; paint();
-    try {
-      const saved = await saveMeasurement(measurementData, record);
-      if (host.capture()?.tag_layout_id === saved.tag_layout_id) measurementData = saved;
-      if (generation === token) { cancel(); notice = `Saved tags ${a} ↔ ${b}: ${mm(metres)}`; container.focus({ preventScroll: true }); }
-    } catch (reason) {
-      if (reason instanceof ApiError && reason.status === 409) {
-        await refreshDocument();
-        if (generation === token) baseline = savedPair()?.entered_text ?? mm(distance(a, b)!);
-      }
-      error = `Tags ${a} ↔ ${b} not saved: ${reason instanceof Error ? reason.message : String(reason)}`;
-    } finally { busy = false; manager.refresh(); paint(); }
+  async function save(advance = true) {
+    if (first === null || second === null || host.loading() || !session) return;
+    const reason = unavailable(); if (reason) { error = reason; paint(); return; }
+    const a = first; const b = second; const token = generation; const owned = session;
+    owned.setDraft({ tag_a: a, tag_b: b }, input.value);
+    const ok = await owned.commit({ tag_a: a, tag_b: b });
+    if (generation !== token || session !== owned) return;
+    const value = owned.draft({ tag_a: a, tag_b: b }); baseline = value.saved; error = value.error;
+    if (ok && value.state === 'Saved' && advance) { cancel(); notice = `Saved tags ${a} ↔ ${b}`; container.focus({ preventScroll: true }); }
+    paint();
   }
   function escape() {
     if (busy) return;
     if (second !== null && input.value !== baseline) {
-      input.value = baseline; input.select(); error = ''; notice = 'Previous value restored'; paint();
+      input.value = baseline; if (first !== null && second !== null) session?.setDraft({ tag_a: first, tag_b: second }, baseline); input.select(); error = ''; notice = 'Previous value restored'; paint();
     }
     else if (first === null) setActive(false);
     else cancel();
   }
   function showList() { manager.open(); }
-  async function deleteRecord(record: DistanceMeasurement) {
-    if (!measurementData || busy) return;
-    busy = true; manager.render(); paint();
-    try { measurementData = await removeMeasurement(measurementData, record); cancel(); }
-    catch (reason) {
-      if (reason instanceof ApiError && reason.status === 409) await refreshDocument();
-      error = `Measurement not removed: ${reason instanceof Error ? reason.message : String(reason)}`;
-    } finally {
-      busy = false; manager.refresh(); paint();
-    }
-  }
   tape.onclick = commands.tape.run; listButton.onclick = commands.list.run; escapeButton.onclick = commands.escape.run;
-  input.oninput = () => { error = notice = ''; paint(); };
+  input.oninput = () => { if (first !== null && second !== null) session?.setDraft({ tag_a: first, tag_b: second }, input.value); error = notice = ''; paint(); };
+  input.onblur = () => { if (!error && input.value.trim() && input.value !== baseline) void save(false); };
   input.onkeydown = event => {
-    if (event.isComposing) return;
+    event.stopPropagation(); if (event.isComposing) return;
     if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); void save(); }
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!event.repeat) commands.escape.run(); }
   };
@@ -261,12 +241,13 @@ export function createScanMeasure(host: Host) {
     else if (active && second !== null && !busy && !host.loading() && /^[\d.]$/.test(event.key)) {
       // Focusing the field does not retarget this key event away from the viewer.
       event.preventDefault(); event.stopPropagation();
-      input.value = event.key; error = notice = ''; input.focus(); paint();
+      input.value = event.key; if (first !== null && second !== null) session?.setDraft({ tag_a: first, tag_b: second }, input.value); error = notice = ''; input.focus(); paint();
     }
   }, true);
   void refreshDocument(); paint();
   return {
     cancel, refresh: paint, reload: refreshDocument,
+    session: () => session, flush: () => manager.flush(),
     clearCapture() { setActive(false); manager.refresh(); },
     attach() { (container.querySelector('.tcv_cad_toolbar') ?? panel.querySelector('.scan-controls'))?.append(tools); paint(); },
     tabChanged(shown: boolean) { if (!shown) { cancel(); manager.hide(); } paint(); },

@@ -1,6 +1,7 @@
 /** Group-level database import, explicit tag setup and progress over the existing reconstruction CLI. */
-import { createTagLayout, processCaptures, readScanImports, readScanJob, uploadCapture,
+import { createTagLayout, processCaptures, readScanImports, uploadCapture,
   type ScanImports, type ProcessingJob } from './scan-import-api';
+import { jobStatus, createJobView } from './scan-job-status';
 interface Host {
   defaultLayout(group: string): string | undefined;
   changed(): Promise<void>;
@@ -38,7 +39,6 @@ export function createScanImport(host: Host) {
     <section data-progress hidden><h3>Processing</h3><p role="status" aria-live="polite" data-stage></p>
       <progress aria-label="Capture processing progress"></progress>
       <button type="button" data-view hidden>Show result in viewer</button>
-      <details><summary>Show processing log</summary><pre data-log></pre></details>
     </section>`;
   document.body.append(dialog);
   const get = <T extends HTMLElement>(selector: string) => dialog.querySelector<T>(selector)!;
@@ -49,11 +49,14 @@ export function createScanImport(host: Host) {
   const resolution = get<HTMLSelectElement>('[data-resolution]'); const photo = get<HTMLInputElement>('[data-photo]');
   const error = get<HTMLParagraphElement>('[data-error]'); const progressPanel = get<HTMLElement>('[data-progress]');
   const stage = get<HTMLElement>('[data-stage]'); const meter = get<HTMLProgressElement>('progress');
-  const log = get<HTMLElement>('[data-log]'); const view = get<HTMLButtonElement>('[data-view]');
+  const view = get<HTMLButtonElement>('[data-view]');
   let data: ScanImports = { captures: [], layouts: [], jobs: [] };
   let group = ''; let queued: File[] = []; let selected = new Set<string>();
   let busy = false; let currentJob: ProcessingJob | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  const jobs = jobStatus;
+  const subscriptions = new Map<string, () => void>();
+  const jobView = createJobView(() => { if (currentJob?.state === 'processing') void jobs.refresh(currentJob.id); else void start(); });
+  progressPanel.append(jobView.element); jobView.element.hidden = true;
   const terminal = new Set<string>();
   const activities = new Set<{ group: string; name: string; node: HTMLElement }>();
   function fail(reason: unknown) { error.textContent = reason instanceof Error ? reason.message : String(reason); }
@@ -104,11 +107,8 @@ export function createScanImport(host: Host) {
       : job.state === 'processing' ? job.stage : job.state;
   }
   function showJob(job: ProcessingJob) {
-    currentJob = job; progressPanel.hidden = false; meter.removeAttribute('value'); meter.hidden = job.state !== 'processing';
-    const text = `${job.name} · ${jobLabel(job)}`
-      + (job.error ? ` · ${job.error}` : '');
-    if (stage.textContent !== text) stage.textContent = text;
-    log.textContent = job.log_tail ?? ''; view.hidden = !job.result_key;
+    currentJob = job; progressPanel.hidden = false; jobView.element.hidden = false; jobView.update(job); stage.hidden = true; meter.removeAttribute('value'); meter.hidden = job.state !== 'processing';
+    view.hidden = !job.result_key;
     view.textContent = job.state === 'completed' ? 'Show result in viewer' : 'Show available result in viewer';
     view.onclick = () => { if (job.result_key) { dialog.close(); host.view(job.result_key); } };
   }
@@ -128,16 +128,20 @@ export function createScanImport(host: Host) {
   async function refresh() {
     data = await readScanImports(); paintActivities();
     if (!busy) get<HTMLButtonElement>('[data-process]').disabled = data.jobs.some(job => job.state === 'processing');
-    if (!timer && data.jobs.some(job => job.state === 'processing')) timer = setTimeout(() => { timer = undefined; void poll(); }, 2000);
-  }
-  async function poll() {
-    try {
-      await refresh();
-      if (dialog.open && currentJob) showJob(await readScanJob(currentJob.id));
-      const finished = data.jobs.filter(job => job.state !== 'processing' && !terminal.has(job.id));
-      for (const job of finished) terminal.add(job.id);
-      if (finished.length) await host.changed();
-    } catch (reason) { fail(reason); }
+    for (const job of data.jobs) {
+      if (!subscriptions.has(job.id) && job.state !== 'processing') terminal.add(job.id);
+      jobs.publish(job);
+      if (!subscriptions.has(job.id)) subscriptions.set(job.id, jobs.subscribe(job.id, updated => {
+        const index = data.jobs.findIndex(item => item.id === updated.id);
+        if (index >= 0) data.jobs[index] = updated;
+        if (currentJob?.id === updated.id) showJob(updated);
+        paintActivities();
+        if (!busy) get<HTMLButtonElement>('[data-process]').disabled = data.jobs.some(item => item.state === 'processing');
+        if (updated.state !== 'processing' && !terminal.has(updated.id)) {
+          terminal.add(updated.id); void host.changed();
+        }
+      }));
+    }
   }
   async function open(id: string, label: string, incoming: File[] = []) {
     if (busy) { if (!dialog.open) dialog.showModal(); return; }
@@ -153,7 +157,7 @@ export function createScanImport(host: Host) {
       layoutName.value = label; name.value = `${label} — reconstruction`; layoutChanged();
       setBusy(false); addFiles(incoming);
       const job = data.jobs.find(item => item.group_id === id);
-      currentJob = job; if (job) showJob(await readScanJob(job.id));
+      currentJob = job; if (job) { showJob(job); void jobs.refresh(job.id); }
       files.focus();
     } catch (reason) { setBusy(false); fail(reason); }
   }
@@ -166,7 +170,7 @@ export function createScanImport(host: Host) {
     const resultName = name.value.trim(); const size = Number(tagSize.value);
     const settings = { voxel_mm: Number(resolution.value), sdf_trunc_mm: Number(resolution.value) * 5,
       texture_mode: photo.checked ? 'photo' : 'baked' };
-    setBusy(true); error.textContent = ''; progressPanel.hidden = false; meter.hidden = false; view.hidden = true; log.textContent = '';
+    setBusy(true); error.textContent = ''; progressPanel.hidden = false; jobView.element.hidden = true; stage.hidden = false; meter.hidden = false; view.hidden = true;
     try {
       while (queued.length) {
         const file = queued[0]; stage.textContent = `Uploading ${file.name}…`; meter.max = 1; meter.value = 0;
@@ -181,7 +185,7 @@ export function createScanImport(host: Host) {
       meter.removeAttribute('value'); stage.textContent = 'Starting reconstruction…';
       const job = await processCaptures({ group_id: group, capture_ids: [...selected], layout_id: layout.value,
         name: resultName, settings });
-      showJob(job); await refresh(); await host.changed();
+      jobs.publish(job); showJob(job); await refresh(); await host.changed();
     } catch (reason) { fail(reason); meter.hidden = true; }
     finally { setBusy(false); }
   }
