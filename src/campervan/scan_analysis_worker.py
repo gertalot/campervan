@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from campervan.scan_measurements import MeasurementDocument
-from campervan.scans import SCAN_RUNS, read_json
+from campervan.scans import SCAN_RUNS, read_json, write_json
 
 
 def main() -> None:
@@ -12,7 +12,15 @@ def main() -> None:
     directory = Path(location).resolve()
     request = read_json(directory / "request.json")
     source = SCAN_RUNS / request["run_id"]
-    if kind == "analyse":
+    if kind == "check-measurements":
+        from campervan.scan_network import analyse_network
+        from campervan.scan_workflow_models import ArtifactEnvelope
+
+        payload = analyse_network(request["run"], MeasurementDocument.model_validate(request["measurements"]),
+                                  request["settings"], directory)
+        artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
+        write_json(directory / "artifact.json", artifact.model_dump())
+    elif kind == "analyse":
         from campervan.scan_analysis import analyse
 
         analyse(source, MeasurementDocument.model_validate(request["measurements"]), directory)

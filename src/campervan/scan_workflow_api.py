@@ -1,5 +1,6 @@
 """Workflow persistence and eligibility routes for the scan workspace."""
 
+import sys
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -8,12 +9,13 @@ from pydantic import Field
 
 from campervan.scan_layouts import ReviseTagLayout, ScanLayouts
 from campervan.scan_library import ScanLibraryStore
+from campervan.scan_network import ALGORITHM_VERSION, NETWORK_SETTINGS
 from campervan.scan_processing import ScanProcessing, identifier
 from campervan.scan_workflow_models import (
     ArtifactEnvelope, ArtifactStatus, ChecklistBatch, Model, ProfileRef, ProfileRevision, SourceBinding, Stage, Workflow,
 )
 from campervan.scan_workflows import ScanWorkflowStore, WorkflowConflict, artifact_status, capture_inputs
-from campervan.scans import scan_asset, scan_manifest
+from campervan.scans import scan_asset, scan_manifest, write_json
 
 
 class CreateWorkflow(Model):
@@ -56,18 +58,31 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
     def read_artifact(item: Workflow, document, artifact_id: str):
         identifier(artifact_id)
         try:
-            artifact = ArtifactEnvelope.model_validate_json((artifact_directory / f"{artifact_id}.json").read_text())
+            artifact = ArtifactEnvelope.model_validate_json((artifact_directory / artifact_id / "artifact.json").read_text())
         except FileNotFoundError as error:
             raise HTTPException(404, "Artifact not found.") from error
         if artifact.id != artifact_id or artifact.workflow_id != item.id or artifact.source_run_id != item.source_run_id or artifact.layout_id != item.layout_id:
             raise HTTPException(404, "Artifact not found for this workflow.")
         try:
-            current = capture_inputs(item, document, layouts, artifact.kind, artifact.algorithm_version,
-                                     settings=artifact.assumptions.get("settings"),
+            # Compare against the current producer, never replay a saved version/settings as current policy.
+            algorithm = ALGORITHM_VERSION if artifact.kind == "measurement_network" else artifact.algorithm_version
+            settings = NETWORK_SETTINGS if artifact.kind == "measurement_network" else artifact.assumptions.get("settings")
+            current = capture_inputs(item, document, layouts, artifact.kind, algorithm,
+                                     settings=settings,
                                      context_used=artifact.assumptions.get("context_used", True))["fingerprints"]
         except (ValueError, OSError, KeyError) as error:
             return artifact, ArtifactStatus(status="unavailable", reasons=[f"Source evidence unavailable: {error}"])
         return artifact, artifact_status(artifact, current)
+
+    def actions(source_available: bool) -> dict[str, Any]:
+        result = {name: {"available": False, "reasons": ["Producer unavailable."]}
+                  for name in ("review-placement", "plan-measurements", "check-measurements", "suggest-more",
+                               "preview-correction", "update-mesh")}
+        reasons = ([] if source_available else ["Source capture is unavailable."])
+        if any(not task.done() for task in processing.tasks.values()):
+            reasons.append("Another scan task is running. Wait for it to finish.")
+        result["check-measurements"] = {"available": not reasons, "reasons": reasons}
+        return result
 
     def view(document, item: Workflow) -> dict[str, Any]:
         preference = library.read().entries.get(f"run:{item.source_run_id}")
@@ -98,7 +113,7 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
         return {"revision": document.revision, "workflow": displayed, "measurement": measurement,
                 "source_available": available, "profile": (document.profiles[item.profile_ref.profile_id][item.profile_ref.revision - 1] if item.profile_ref else None),
                 "artifacts": artifacts, "stages": stages, "jobs": jobs,
-                "actions": {name: {"available": False, "reasons": ["Producer unavailable."]} for name in ("review-placement", "plan-measurements", "check-measurements", "suggest-more", "preview-correction", "update-mesh")}}
+                "actions": actions(available)}
 
     @app.post("/api/v1/scans/workflows")
     def create(request: CreateWorkflow):
@@ -160,19 +175,62 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
         except (ValueError, OSError, KeyError) as error:
             raise HTTPException(422, str(error)) from error
 
-    @app.post("/api/v1/scans/workflows/{workflow_id}/actions/{action}")
-    def action(workflow_id: str, action: Action, request: ActionRequest):
+    @app.post("/api/v1/scans/workflows/{workflow_id}/actions/{action}", status_code=202)
+    async def action(workflow_id: str, action: Action, request: ActionRequest):
         document = store.read()
         item = workflow(document, workflow_id)
         if document.revision != request.revision:
             raise HTTPException(409, "Workflow data changed. Refresh and retry.")
         try:
             scan_manifest(item.source_run_id)
-            if layouts.measurements(item.layout_id).read().revision != request.measurement_revision:
+            eligibility = actions(True)[action]
+            if not eligibility["available"]:
+                raise HTTPException(409 if action == "check-measurements" else 503, " ".join(eligibility["reasons"]))
+            snapshot = capture_inputs(item, document, layouts, "measurement_network", ALGORITHM_VERSION,
+                                      settings=NETWORK_SETTINGS, context_used=False)
+            if snapshot["measurement_revision"] != request.measurement_revision:
                 raise HTTPException(409, "Measurements changed. Refresh and retry.")
+            value = str(uuid4())
+            directory = artifact_directory / value
+            directory.mkdir(parents=True)
+            envelope = ArtifactEnvelope(
+                id=value, kind="measurement_network", algorithm_version=ALGORITHM_VERSION,
+                workflow_id=item.id, source_run_id=item.source_run_id, layout_id=item.layout_id,
+                measurement_revision=snapshot["measurement_revision"], profile_ref=None,
+                fingerprints=snapshot["fingerprints"], job_id=value, payload={},
+                assumptions={"settings": NETWORK_SETTINGS, "context_used": False,
+                             "physical_inputs": snapshot["inputs"]["physical"],
+                             "capture_role": "Initial coordinates and display mirror convention only."},
+            )
+            write_json(directory / "request.json", {
+                "run_id": item.source_run_id, "run": snapshot["run"],
+                "measurements": snapshot["measurements"], "settings": NETWORK_SETTINGS,
+                "artifact": envelope.model_dump(),
+            })
+
+            def publish(job):
+                artifact, _ = read_artifact(item, store.read(), value)
+
+                def freshness(current_document):
+                    _, status = read_artifact(current_document.workflows[item.id], current_document, value)
+                    return status
+
+                job["artifact_status"] = store.publish(artifact, freshness).model_dump()
+                job["artifact_id"] = artifact.id
+
+            preference = library.read().entries.get(f"run:{item.source_run_id}")
+            processing.start_action(
+                value, "analysis",
+                [sys.executable, "-u", "-m", "campervan.scan_analysis_worker", "check-measurements",
+                 str(directory.resolve())],
+                {"run_id": item.source_run_id, "source_run_id": item.source_run_id,
+                 "workflow_id": item.id, "layout_id": item.layout_id, "artifact_kind": "measurement_network",
+                 "group_id": preference.group_id if preference else None, "name": "Check measurements"},
+                publish=publish,
+            )
+            return {"id": value, "artifact_id": value}
         except (OSError, ValueError) as error:
             raise HTTPException(422, f"Source or measurements unavailable: {error}") from error
-        raise HTTPException(503, f"{action} is unavailable until its producer is installed.")
 
     @app.get("/api/v1/scans/workflows/{workflow_id}/artifacts/{artifact_id}")
     def artifact(workflow_id: str, artifact_id: str):

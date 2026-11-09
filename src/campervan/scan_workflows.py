@@ -30,12 +30,28 @@ class ScanWorkflowStore:
             if document.revision != revision:
                 raise WorkflowConflict("Workflow data changed. Refresh and retry.")
             change(document)
-            document.revision += 1
-            document = WorkflowDocument.model_validate(document.model_dump())
-            temporary = self.path.with_suffix(".tmp")
-            temporary.write_text(document.model_dump_json(indent=2) + "\n", encoding="utf-8")
-            temporary.replace(self.path)
-            return document
+            return self._save(document)
+
+    def publish(self, artifact: ArtifactEnvelope,
+                freshness: Callable[[WorkflowDocument], ArtifactStatus]) -> ArtifactStatus:
+        """The API job owner merges a successful immutable result into current edits."""
+        with self.lock:
+            document = self.read()
+            item = document.workflows[artifact.workflow_id]
+            if item.source_run_id != artifact.source_run_id or item.layout_id != artifact.layout_id:
+                raise ValueError("Artifact no longer belongs to this workflow source/layout.")
+            status = freshness(document)
+            item.artifact_refs[artifact.kind] = artifact.id
+            self._save(document)
+            return status
+
+    def _save(self, document: WorkflowDocument) -> WorkflowDocument:
+        document.revision += 1
+        document = WorkflowDocument.model_validate(document.model_dump())
+        temporary = self.path.with_suffix(".tmp")
+        temporary.write_text(document.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        temporary.replace(self.path)
+        return document
 
 
 def fingerprint(value: Any) -> str:
@@ -76,11 +92,11 @@ def capture_inputs(item: Any, document: WorkflowDocument, layouts: Any, kind: st
 
     run = scan_manifest(item.source_run_id)
     measurements = layouts.measurements(item.layout_id).read()
-    tags = sorted(tag["id"] for tag in run.get("tags", []))
+    tags = sorted({tag["id"] for tag in run.get("tags", [])})
     physical = {
         "tags": tags,
         "layout_id": item.layout_id,
-        "distances": sorted((r.tag_a, r.tag_b, r.distance_m, r.sigma_m or measurements.default_sigma_m or .003)
+        "distances": sorted((r.tag_a, r.tag_b, r.distance_m, r.sigma_m or measurements.default_sigma_m)
                             for r in measurements.distances if r.tag_a in tags and r.tag_b in tags),
     }
     source = None
@@ -128,5 +144,5 @@ def capture_inputs(item: Any, document: WorkflowDocument, layouts: Any, kind: st
                     "candidate_sigmas": item.candidate_sigmas, "target_mm": item.target_mm,
                     "improvement_mm": item.improvement_mm}
     inputs = {"physical": physical, "source": source, "context": context, "planning": planning, "settings": settings}
-    return {"measurement_revision": measurements.revision, "measurements": measurements.model_dump(),
+    return {"run": run, "measurement_revision": measurements.revision, "measurements": measurements.model_dump(),
             "inputs": inputs, "fingerprints": fingerprint_inputs(kind, algorithm_version, **inputs)}

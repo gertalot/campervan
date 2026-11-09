@@ -25,6 +25,9 @@ campervan = "campervan.cli:main"
 scan = [
     "gtsam==4.3.0",
     "open3d==0.20.0",
+    "numpy==2.5.4",
+    "scipy==1.18.1",
+    "pyrigi==1.3.0",
 ]
 
 [dependency-groups]

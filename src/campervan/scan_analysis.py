@@ -8,6 +8,7 @@ import numpy as np
 
 from campervan.scan_graph import GraphDocument, ensure_graph
 from campervan.scan_measurements import MeasurementDocument
+from campervan.scan_network import pair_jacobian
 from campervan.scans import file_hash, read_json, write_json
 
 
@@ -123,16 +124,6 @@ def _covariance(graph: Any, values: Any, ids: list[int]) -> Any:
     if not np.isfinite(result).all() or np.min(np.linalg.eigvalsh(result)) < -1e-8:
         raise UnobservableGraph("Joint covariance is invalid; uncertainty cannot be quantified.")
     return result
-
-
-def pair_jacobian(positions: Any, a: int, b: int) -> Any:
-    delta = positions[a] - positions[b]
-    length = np.linalg.norm(delta)
-    if length < 1e-6:
-        raise ValueError("Coincident tag centres cannot constrain a distance.")
-    row = np.zeros(positions.size)
-    row[3 * a : 3 * a + 3], row[3 * b : 3 * b + 3] = delta / length, -delta / length
-    return row
 
 
 def _analyse(run: Path, measurements: MeasurementDocument, output: Path) -> dict[str, Any]:

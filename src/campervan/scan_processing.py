@@ -6,7 +6,7 @@ import signal
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -127,7 +127,8 @@ class ScanProcessing:
         task.add_done_callback(lambda _: self.tasks.pop(value, None))
         return job
 
-    def start_action(self, work_id: str, kind: str, command: list[str], metadata: dict[str, Any]) -> dict[str, Any]:
+    def start_action(self, work_id: str, kind: str, command: list[str], metadata: dict[str, Any],
+                     publish: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
         if any(not task.done() for task in self.tasks.values()):
             raise ValueError("Another scan task is running. Wait for it to finish.")
         self.jobs.mkdir(parents=True, exist_ok=True)
@@ -142,7 +143,7 @@ class ScanProcessing:
             "created_at": datetime.now(UTC).isoformat(),
         }
         self._save(job)
-        task = asyncio.create_task(self._run(job, []))
+        task = asyncio.create_task(self._run(job, [], publish))
         self.tasks[work_id] = task
         task.add_done_callback(lambda _: self.tasks.pop(work_id, None))
         return job
@@ -153,7 +154,8 @@ class ScanProcessing:
         write_json(temporary, job)
         temporary.replace(path)
 
-    async def _run(self, job: dict[str, Any], captures: list[dict[str, Any]]) -> None:
+    async def _run(self, job: dict[str, Any], captures: list[dict[str, Any]],
+                   publish: Callable[[dict[str, Any]], None] | None = None) -> None:
         value = job["id"]
         output = SCAN_RUNS / job["run_id"]
         measurements = self.layouts.directory / job["layout_id"] / "measurements.json"
@@ -194,6 +196,8 @@ class ScanProcessing:
                 raise RuntimeError(f"Processing exited with code {code}. See the processing log below.")
             if "result_key" not in job and job.get("kind") != "analysis":
                 raise RuntimeError("Processing finished without publishing a result. See the log below.")
+            if publish is not None:
+                publish(job)
             job.update(state="completed", stage="Ready to view")
         except asyncio.CancelledError:
             job.update(state="interrupted", error="API stopped during processing. Imported databases are retained.")

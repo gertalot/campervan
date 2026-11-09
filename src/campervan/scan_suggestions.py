@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from campervan.scan_analysis import pair_jacobian
+from campervan.scan_network import pair_jacobian
 from campervan.scan_measurements import MeasurementDocument
 from campervan.scan_visibility import assess_segments
 from campervan.scans import read_json, write_json
