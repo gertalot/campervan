@@ -65,8 +65,8 @@ def register_scan_workflows(app: FastAPI, store: ScanWorkflowStore, layouts: Sca
             current = capture_inputs(item, document, layouts, artifact.kind, artifact.algorithm_version,
                                      settings=artifact.assumptions.get("settings"),
                                      context_used=artifact.assumptions.get("context_used", True))["fingerprints"]
-        except (ValueError, OSError, KeyError):
-            current = None
+        except (ValueError, OSError, KeyError) as error:
+            return artifact, ArtifactStatus(status="unavailable", reasons=[f"Source evidence unavailable: {error}"])
         return artifact, artifact_status(artifact, current)
 
     def view(document, item: Workflow) -> dict[str, Any]:

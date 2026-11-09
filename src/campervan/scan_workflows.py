@@ -72,7 +72,7 @@ def fingerprint_inputs(kind: str, algorithm_version: str, *, physical: Any, sour
 def capture_inputs(item: Any, document: WorkflowDocument, layouts: Any, kind: str,
                    algorithm_version: str, *, settings: Any = None, context_used: bool = True) -> dict[str, Any]:
     """Read acknowledged inputs once for a worker request and its later freshness comparison."""
-    from campervan.scans import SCAN_RUNS, file_hash, scan_manifest
+    from campervan.scans import SCAN_RUNS, file_hash, read_json, scan_manifest
 
     run = scan_manifest(item.source_run_id)
     measurements = layouts.measurements(item.layout_id).read()
@@ -87,13 +87,37 @@ def capture_inputs(item: Any, document: WorkflowDocument, layouts: Any, kind: st
     context = None
     if kind != "measurement_network":
         root = (SCAN_RUNS / item.source_run_id).resolve()
-        assets = {}
-        for name in sorted(run.get("assets", [])):
+
+        def evidence(name: str, *, required: bool = False) -> str | None:
             path = (root / name).resolve()
-            if not path.is_relative_to(root) or not path.is_file():
-                raise ValueError(f"Source asset unavailable: {name}")
-            assets[name] = file_hash(path)
-        source = {"manifest": run, "assets": assets}
+            if Path(name).is_absolute() or not path.is_relative_to(root):
+                raise ValueError("Source evidence must be relative to its run.")
+            if not path.is_file():
+                if required:
+                    raise ValueError(f"Required source evidence unavailable: {name}")
+                return None
+            return file_hash(path)
+
+        files = {name: evidence(name, required=(name == "graph.json" and kind == "scan_correction"))
+                 for name in ("graph.json", "frames.json", "poses.json", "mesh.ply")}
+        frame_assets: dict[str, str | None] = {}
+        if files["frames.json"] is not None:
+            frames = read_json(root / "frames.json")
+            fields = ("rgb", "depth", "confidence") if kind in ("context_review", "scan_correction") else (
+                "depth", "confidence"
+            )
+            for frame in frames["frames"]:
+                for field in fields:
+                    name = frame.get(field)
+                    if name:
+                        frame_assets[name] = evidence(name)
+        if context_used and item.source_binding:
+            for mask in item.source_binding.masks:
+                frame_assets[mask.asset] = evidence(mask.asset)
+            for region in item.source_binding.regions:
+                for support in region.support:
+                    frame_assets[support.asset] = evidence(support.asset)
+        source = {"manifest": run, "files": files, "frame_assets": dict(sorted(frame_assets.items()))}
         if context_used:
             profile = (document.profiles[item.profile_ref.profile_id][item.profile_ref.revision - 1].model_dump()
                        if item.profile_ref else None)
