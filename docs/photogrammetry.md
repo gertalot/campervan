@@ -535,7 +535,21 @@ determinate, reconstruction progress is indeterminate. These choices require Ger
 
 ### CLI processing
 
-The scripting entry point is `campervan scan process`, available after installing the optional scan dependencies:
+On macOS, download `RTABMap-0.24.2-Darwin-Tahoe-Apple-Silicon-cv4.dmg` from the
+[official 0.24.2 release](https://github.com/introlab/rtabmap/releases/tag/0.24.2), verify its SHA-256 against the
+[release checksums](https://github.com/introlab/rtabmap/releases/expanded_assets/0.24.2), and drag `RTABMap.app` to
+`/Applications`. The verified DMG hash was `e1ada2b05fb274287b6a3d8f3785224afc9ba13422b948500afad2d7e7d11872`;
+the installed app occupies 677M according to `du -sh`. Its bundled libraries are used automatically in RTAB-Map child
+processes. Both installed tools reported version 0.24.2 with g2o enabled on macOS 26.6.2 arm64; their version invocations
+loaded only app and system libraries. CAD-only use does not require RTAB-Map.
+
+The optional `CAMPERVAN_RTABMAP_BIN_DIR=/path/to/bin` setting selects a directory containing the required executables;
+it is authoritative and does not fall back to another location. Without it, macOS uses the installed app and Linux
+uses PATH. Linux runtime compatibility has not been exercised. Each completed run records the resolved executable
+paths and hashes, together with the native version, in `run.json`.
+
+The scripting entry point is `campervan scan process`; `uv sync --locked --extra scan` installs only its Python scan
+dependencies:
 
 ```sh
 uv sync --locked --extra scan

@@ -67,6 +67,12 @@ See [static export and GitHub Pages](docs/static-site.md) for publishing instruc
 The **Scan** tab displays exported point clouds and completed reconstruction runs using the same navigation as CAD.
 Processing runs offline, without starting the application or viewer services:
 
+For scan processing on macOS, download the [official RTAB-Map 0.24.2 release](https://github.com/introlab/rtabmap/releases/tag/0.24.2),
+verify the DMG checksum against the release assets, and drag `RTABMap.app` to `/Applications`. The app supplies its
+native libraries; the processor configures its child processes automatically. CAD-only use does not need RTAB-Map.
+Set `CAMPERVAN_RTABMAP_BIN_DIR=/path/to/bin` to select another installation; both required tools must be there.
+On Linux, the default discovery uses PATH, but runtime compatibility has not yet been verified.
+
 ```sh
 uv sync --locked --extra scan
 uv run --locked --extra scan campervan scan process data/van-interior-merged-tags.db \

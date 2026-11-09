@@ -14,6 +14,7 @@ class Settings:
     ui_host: str = "127.0.0.1"
     ui_port: int = 5173
     development: bool = False
+    rtabmap_bin_dir: str | None = None
 
     @property
     def viewer_url(self) -> str:
@@ -50,4 +51,5 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         ui_host=values.get("CAMPERVAN_UI_HOST", defaults.ui_host),
         ui_port=_port(values, "CAMPERVAN_UI_PORT", defaults.ui_port),
         development=_development(values),
+        rtabmap_bin_dir=values.get("CAMPERVAN_RTABMAP_BIN_DIR"),
     )

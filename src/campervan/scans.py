@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import sqlite3
 import struct
 import subprocess
+import sys
 import time
 import zlib
 from collections.abc import Callable
@@ -15,6 +17,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from campervan.settings import load_settings
 
 SCAN_RUNS = Path(".local/scans")
 
@@ -55,12 +59,44 @@ def file_hash(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def native_command(command: list[str], log: Path, cwd: Path | None = None) -> None:
+def rtabmap_tool(name: Literal["rtabmap-export", "rtabmap-reprocess"], directory: str | None) -> Path:
+    if directory is not None or sys.platform == "darwin":
+        location = Path(directory if directory is not None else "/Applications/RTABMap.app/Contents/bin")
+        location = location.expanduser().resolve()
+        candidate = location / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate.resolve()
+        raise ValueError(f"{name} not found or executable in {location}; set CAMPERVAN_RTABMAP_BIN_DIR to its directory.")
+    found = shutil.which(name)
+    if found:
+        return Path(found).resolve()
+    raise ValueError(f"{name} not found on PATH; set CAMPERVAN_RTABMAP_BIN_DIR to its directory.")
+
+
+def rtabmap_environment(tool: Path) -> dict[str, str] | None:
+    contents = tool.parent.parent
+    frameworks = contents / "Frameworks"
+    if (
+        sys.platform == "darwin"
+        and tool.parent.name == "bin"
+        and contents.name == "Contents"
+        and contents.parent.suffix == ".app"
+        and frameworks.is_dir()
+    ):
+        return {**os.environ, "DYLD_LIBRARY_PATH": str(frameworks), "DYLD_FRAMEWORK_PATH": str(frameworks)}
+    return None
+
+
+def native_command(
+    command: list[str], log: Path, cwd: Path | None = None, *, env: dict[str, str] | None = None
+) -> None:
     """Keep the real diagnostics visible and retain them with this run."""
     with log.open("a", encoding="utf-8") as stream:
         stream.write(f"\nDirectory: {cwd or Path.cwd()}\nCommand: {json.dumps(command)}\n")
         stream.flush()
-        with subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as process:
+        with subprocess.Popen(
+            command, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        ) as process:
             assert process.stdout is not None
             try:
                 for line in process.stdout:
@@ -174,7 +210,9 @@ def _camera_poses(path: Path) -> dict[str, list[list[float]]]:
     return poses
 
 
-def extract_frames(database: Path, output: Path, log: Path, poses: Path | None = None) -> dict[str, Any]:
+def extract_frames(
+    database: Path, output: Path, log: Path, poses: Path | None, tool: Path, env: dict[str, str] | None
+) -> dict[str, Any]:
     import cv2
     import numpy as np
 
@@ -185,7 +223,7 @@ def extract_frames(database: Path, output: Path, log: Path, poses: Path | None =
     directory.mkdir()
     native_command(
         [
-            "rtabmap-export",
+            str(tool),
             "--images_id",
             "--poses_camera",
             "--poses_format",
@@ -199,6 +237,7 @@ def extract_frames(database: Path, output: Path, log: Path, poses: Path | None =
             str(database),
         ],
         log,
+        env=env,
     )
     pose_files = sorted(directory.glob("capture_camera_poses*.txt"))
     if len(pose_files) != 1:
@@ -297,9 +336,10 @@ def process_scan(
     if poses and (not poses.is_file() or poses.resolve().is_relative_to(output)):
         raise ValueError("External poses must be an existing file outside the output directory.")
     infos = [database_info(path) for path in inputs]
-    for tool in ["rtabmap-export"] + (["rtabmap-reprocess"] if len(inputs) > 1 or settings.tag_family else []):
-        if not shutil.which(tool):
-            raise ValueError(f"{tool} is not installed or is not on PATH.")
+    bin_dir = load_settings().rtabmap_bin_dir
+    export_tool = rtabmap_tool("rtabmap-export", bin_dir)
+    reprocess_tool = rtabmap_tool("rtabmap-reprocess", bin_dir) if len(inputs) > 1 or settings.tag_family else None
+    export_env = rtabmap_environment(export_tool)
     output.mkdir(parents=True, exist_ok=False)
     working = output / "working"
     working.mkdir()
@@ -350,13 +390,22 @@ def process_scan(
     write_json(working / "request.json", manifest)
     manifest["versions"] = stage(
         "Native versions",
-        lambda: subprocess.check_output(["rtabmap-export", "--version"], text=True, stderr=subprocess.STDOUT),
+        lambda: subprocess.check_output(
+            [str(export_tool), "--version"], text=True, stderr=subprocess.STDOUT, env=export_env
+        ),
     )
+    version = re.search(r"RTAB-Map:\s*([^\s]+)", manifest["versions"])
+    tools = [export_tool] + ([reprocess_tool] if reprocess_tool else [])
+    manifest["native_provenance"] = {
+        "rtabmap_version": version.group(1) if version else None,
+        "tools": {tool.name: {"path": str(tool), "sha256": file_hash(tool)} for tool in tools},
+    }
     if len(copies) > 1 or settings.tag_family:
         if not re.search(r"With g2o:\s+true", manifest["versions"]):
             raise RuntimeError("Multi-session processing requires an RTAB-Map build with g2o enabled.")
         database = working / "merged.db"
-        command = ["rtabmap-reprocess", "-abort_disconnected_sessions", "--Optimizer/Strategy", "1"]
+        assert reprocess_tool is not None
+        command = [str(reprocess_tool), "-abort_disconnected_sessions", "--Optimizer/Strategy", "1"]
         if settings.tag_family:
             assert settings.tag_size_mm is not None  # Validated as a pair by ScanSettings.
             command += [
@@ -368,7 +417,10 @@ def process_scan(
                 str(settings.tag_size_mm / 1000),
             ]
         command += [";".join(str(p) for p in copies), str(database)]
-        stage("Merge sessions / detect tags (g2o)", lambda: native_command(command, log))
+        stage(
+            "Merge sessions / detect tags (g2o)",
+            lambda: native_command(command, log, env=rtabmap_environment(reprocess_tool)),
+        )
         manifest["pose_source"] = "rtabmap_merge_g2o" if len(copies) > 1 else "rtabmap_reprocess_g2o"
     else:
         database = copies[0]
@@ -376,7 +428,9 @@ def process_scan(
     if poses:
         manifest["pose_source"] = "external_camera_poses"
         manifest["external_poses"] = {"path": str(poses.resolve()), "sha256": file_hash(poses)}
-    manifest["frames"] = stage("Extract RGB-D and cameras", lambda: extract_frames(database, output, log, poses))
+    manifest["frames"] = stage(
+        "Extract RGB-D and cameras", lambda: extract_frames(database, output, log, poses, export_tool, export_env)
+    )
     # Saved landmarks cannot be reused with independently corrected external camera poses.
     manifest["tags"] = [] if poses else stage("Read saved tag poses", lambda: saved_tags(database))
     manifest["tag_note"] = (

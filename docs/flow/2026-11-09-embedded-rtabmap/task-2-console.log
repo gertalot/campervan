@@ -1,0 +1,1048 @@
+[Native versions]
+[Merge sessions / detect tags (g2o)]
+Will abort if not all sessions are connected at the end (-abort_disconnected_sessions option).
+Custom parameters:
+  Marker/Dictionary =       20
+  Marker/Length =           0.08
+  Optimizer/Strategy =      1
+  RGBD/MarkerDetection =    true
+[Warning] Parameter Mem/UseOdomFeatures is set to false for convenience as there are more than one input database (which could contain different features). Set Mem/UseOdomFeatures explicitly to suppress this warning.
+Set working directory to "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working".
+Reprocessing data of "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/input-0.db;/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/input-1.db;/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/input-2.db"...
+High variance detected, triggering a new map...
+[1794024053.389207] Processed 1/890 nodes [id=1 map=0 graph=1 hyp=0]... 41ms
+[1794024054.405963] Processed 2/890 nodes [id=2 map=0 graph=1 hyp=0]... 24ms
+[1794024055.422719] Processed 3/890 nodes [id=3 map=0 graph=1 hyp=0]... 20ms
+[1794024056.439476] Processed 4/890 nodes [id=4 map=0 graph=2 hyp=0]... 23ms
+[1794024057.456231] Processed 5/890 nodes [id=5 map=0 graph=3 hyp=0]... 23ms
+[1794024058.472987] Processed 6/890 nodes [id=6 map=0 graph=4 hyp=0]... 19ms
+[1794024059.489743] Processed 7/890 nodes [id=7 map=0 graph=4 hyp=0]... 18ms
+[1794024060.506499] Processed 8/890 nodes [id=8 map=0 graph=5 hyp=0]... 19ms
+[1794024061.523254] Processed 9/890 nodes [id=9 map=0 graph=6 hyp=0]... 22ms
+[1794024062.540010] Processed 10/890 nodes [id=10 map=0 graph=7 hyp=0]... 23ms
+[1794024063.573433] Processed 11/890 nodes [id=11 map=0 graph=8 hyp=0]... 28ms
+[1794024064.590189] Processed 12/890 nodes [id=12 map=0 graph=9 hyp=0]... 31ms
+[1794024065.606944] Processed 13/890 nodes [id=13 map=0 graph=10 hyp=0]... 30ms
+[1794024066.623699] Processed 14/890 nodes [id=14 map=0 graph=11 hyp=33]... 36ms
+[1794024067.640455] Processed 15/890 nodes [id=15 map=0 graph=13 hyp=22]... 42ms
+[1794024068.657210] Processed 16/890 nodes [id=16 map=0 graph=14 hyp=12]... 41ms Loop on landmark 15
+[1794024069.673965] Processed 17/890 nodes [id=17 map=0 graph=15 hyp=5]... 27ms Loop on landmark 15
+[1794024070.690720] Processed 18/890 nodes [id=18 map=0 graph=17 hyp=5]... 28ms Loop on landmark 15
+[1794024071.724143] Processed 19/890 nodes [id=19 map=0 graph=18 hyp=6]... 28ms Loop on landmark 15
+[1794024072.740897] Processed 20/890 nodes [id=20 map=0 graph=19 hyp=8]... 28ms Loop on landmark 5
+[1794024073.740984] Processed 21/890 nodes [id=21 map=0 graph=22 hyp=6]... 22ms Loop on landmark 5
+[1794024074.757738] Processed 22/890 nodes [id=22 map=0 graph=23 hyp=8]... 22ms Loop on landmark 14
+[1794024075.774493] Processed 23/890 nodes [id=23 map=0 graph=24 hyp=7]... 22ms Loop on landmark 8
+[1794024076.807915] Processed 24/890 nodes [id=24 map=0 graph=26 hyp=4]... 23ms Loop on landmark 14
+[1794024077.824670] Processed 25/890 nodes [id=25 map=0 graph=28 hyp=4]... 26ms
+[1794024078.841424] Processed 26/890 nodes [id=26 map=0 graph=29 hyp=5]... 29ms
+[1794024079.858179] Processed 27/890 nodes [id=27 map=0 graph=30 hyp=7]... 30ms Loop on landmark 10
+[1794024080.874933] Processed 28/890 nodes [id=28 map=0 graph=32 hyp=8]... 28ms Loop on landmark 10
+[1794024081.891687] Processed 29/890 nodes [id=29 map=0 graph=34 hyp=6]... 35ms Loop on landmark 10
+[1794024082.908442] Processed 30/890 nodes [id=30 map=0 graph=35 hyp=5]... 29ms Loop on landmark 13
+[1794024083.941864] Processed 31/890 nodes [id=31 map=0 graph=36 hyp=6]... 25ms Loop on landmark 13
+[1794024084.958618] Processed 32/890 nodes [id=32 map=0 graph=38 hyp=6]... 27ms Loop on landmark 13
+[1794024085.975372] Processed 33/890 nodes [id=33 map=0 graph=39 hyp=8]... 26ms Loop on landmark 13
+[1794024086.992126] Processed 34/890 nodes [id=34 map=0 graph=40 hyp=9]... 24ms
+[1794024088.008880] Processed 35/890 nodes [id=35 map=0 graph=41 hyp=7]... 25ms
+[1794024089.025634] Processed 36/890 nodes [id=36 map=0 graph=43 hyp=7]... 28ms Loop on landmark 4
+[1794024090.042387] Processed 37/890 nodes [id=37 map=0 graph=44 hyp=7]... 26ms Loop on landmark 16
+[1794024091.075809] Processed 38/890 nodes [id=38 map=0 graph=45 hyp=5]... 29ms
+[1794024092.092562] Processed 39/890 nodes [id=39 map=0 graph=46 hyp=6]... 36ms
+[1794024093.109316] Processed 40/890 nodes [id=40 map=0 graph=47 hyp=7]... 31ms Loop on landmark 16
+[1794024094.126069] Processed 41/890 nodes [id=41 map=0 graph=49 hyp=8]... 34ms
+[1794024095.159491] Processed 42/890 nodes [id=42 map=0 graph=50 hyp=6]... 29ms Loop on landmark 12
+[1794024096.176244] Processed 43/890 nodes [id=43 map=0 graph=51 hyp=5]... 34ms Loop on landmark 12
+[1794024097.192997] Processed 44/890 nodes [id=44 map=0 graph=52 hyp=4]... 48ms Loop on landmark 12
+[1794024098.209750] Processed 45/890 nodes [id=45 map=0 graph=53 hyp=7]... 48ms Loop on landmark 16
+[1794024099.226503] Processed 46/890 nodes [id=46 map=0 graph=54 hyp=9]... 50ms Prox on 36 [0]
+[1794024100.259924] Processed 47/890 nodes [id=47 map=0 graph=55 hyp=12]... 58ms Loop on 35 [0]
+[1794024101.276677] Processed 48/890 nodes [id=48 map=0 graph=56 hyp=15]... 66ms
+[1794024102.293430] Processed 49/890 nodes [id=49 map=0 graph=57 hyp=14]... 64ms Loop on 34 [0]
+[1794024103.310183] Processed 50/890 nodes [id=50 map=0 graph=58 hyp=13]... 62ms Loop on 34 [0]
+[1794024104.326936] Processed 51/890 nodes [id=51 map=0 graph=59 hyp=10]... 54ms
+[1794024105.360356] Processed 52/890 nodes [id=52 map=0 graph=60 hyp=11]... 72ms
+[1794024106.377109] Processed 53/890 nodes [id=53 map=0 graph=61 hyp=11]... 61ms Loop on landmark 10
+[1794024107.393861] Processed 54/890 nodes [id=54 map=0 graph=62 hyp=12]... 56ms Loop on 28 [0]
+[1794024108.410614] Processed 55/890 nodes [id=55 map=0 graph=63 hyp=9]... 32ms Loop on landmark 10
+[1794024109.427366] Processed 56/890 nodes [id=56 map=0 graph=64 hyp=7]... 32ms
+[1794024110.460786] Processed 57/890 nodes [id=57 map=0 graph=65 hyp=8]... 37ms
+[1794024111.477539] Processed 58/890 nodes [id=58 map=0 graph=66 hyp=9]... 41ms Loop on landmark 12
+[1794024112.494291] Processed 59/890 nodes [id=59 map=0 graph=67 hyp=5]... 46ms Loop on landmark 12
+[1794024113.527711] Processed 60/890 nodes [id=60 map=0 graph=68 hyp=5]... 52ms Loop on landmark 12
+[1794024114.544463] Processed 61/890 nodes [id=61 map=0 graph=69 hyp=10]... 39ms
+[1794024115.561215] Processed 62/890 nodes [id=62 map=0 graph=70 hyp=8]... 36ms
+[1794024116.577967] Processed 63/890 nodes [id=63 map=0 graph=71 hyp=6]... 53ms Loop on landmark 8
+[1794024117.611387] Processed 64/890 nodes [id=64 map=0 graph=72 hyp=9]... 64ms Prox on 22 [0]
+[1794024118.628139] Processed 65/890 nodes [id=65 map=0 graph=73 hyp=11]... 62ms Loop on 23 [0]
+[1794024119.678227] Processed 66/890 nodes [id=66 map=0 graph=74 hyp=11]... 61ms Loop on 22 [0]
+[1794024120.694978] Processed 67/890 nodes [id=67 map=0 graph=75 hyp=11]... 48ms Loop on 25 [0]
+[1794024121.711730] Processed 68/890 nodes [id=68 map=0 graph=76 hyp=12]... 73ms
+[1794024122.745148] Processed 69/890 nodes [id=69 map=0 graph=78 hyp=13]... 61ms
+[1794024123.761899] Processed 70/890 nodes [id=70 map=0 graph=79 hyp=13]... 68ms Loop on landmark 10
+[1794024124.778651] Processed 71/890 nodes [id=71 map=0 graph=80 hyp=12]... 71ms Loop on landmark 10
+[1794024125.795402] Processed 72/890 nodes [id=72 map=0 graph=82 hyp=13]... 73ms
+[1794024126.812152] Processed 73/890 nodes [id=73 map=0 graph=83 hyp=11]... 57ms Loop on 54 [0]
+[1794024127.845572] Processed 74/890 nodes [id=74 map=0 graph=85 hyp=11]... 67ms
+[1794024128.862322] Processed 75/890 nodes [id=75 map=0 graph=86 hyp=9]... 56ms Loop on landmark 13
+[1794024129.879073] Processed 76/890 nodes [id=76 map=0 graph=87 hyp=9]... 51ms Loop on landmark 6
+[1794024130.912492] Processed 77/890 nodes [id=77 map=0 graph=88 hyp=12]... 63ms
+[1794024131.929242] Processed 78/890 nodes [id=78 map=0 graph=89 hyp=13]... 59ms Loop on landmark 6
+[1794024132.945993] Processed 79/890 nodes [id=79 map=0 graph=90 hyp=10]... 46ms Loop on landmark 6
+[1794024133.962743] Processed 80/890 nodes [id=80 map=0 graph=91 hyp=12]... 47ms Loop on 70 [0]
+[1794024134.996162] Processed 81/890 nodes [id=81 map=0 graph=92 hyp=12]... 42ms Loop on 70 [0]
+[1794024136.012912] Processed 82/890 nodes [id=82 map=0 graph=93 hyp=10]... 44ms Prox on 69 [0]
+[1794024137.029663] Processed 83/890 nodes [id=83 map=0 graph=95 hyp=10]... 54ms Prox on 69 [0]
+[1794024138.063081] Processed 84/890 nodes [id=84 map=0 graph=96 hyp=13]... 61ms Prox on 68 [0]
+[1794024139.079832] Processed 85/890 nodes [id=85 map=0 graph=97 hyp=15]... 54ms Loop on 68 [0]
+[1794024140.096582] Processed 86/890 nodes [id=86 map=0 graph=98 hyp=17]... 52ms Loop on 68 [0]
+[1794024141.113332] Processed 87/890 nodes [id=87 map=0 graph=99 hyp=14]... 50ms Loop on 68 [0]
+[1794024142.130082] Processed 88/890 nodes [id=88 map=0 graph=100 hyp=11]... 50ms Loop on 68 [0]
+[1794024143.163500] Processed 89/890 nodes [id=89 map=0 graph=101 hyp=10]... 60ms
+[1794024144.180250] Processed 90/890 nodes [id=90 map=0 graph=102 hyp=8]... 88ms Prox on 68 [0]
+[1794024145.197001] Processed 91/890 nodes [id=91 map=0 graph=103 hyp=8]... 81ms Loop on landmark 5
+[1794024146.213751] Processed 92/890 nodes [id=92 map=0 graph=104 hyp=10]... 50ms Prox on 18 [0]
+[1794024147.230501] Processed 93/890 nodes [id=93 map=0 graph=105 hyp=11]... 48ms Loop on 18 [0]
+[1794024148.247251] Processed 94/890 nodes [id=94 map=0 graph=106 hyp=10]... 44ms
+[1794024149.264001] Processed 95/890 nodes [id=95 map=0 graph=107 hyp=6]... 36ms
+[1794024150.280751] Processed 96/890 nodes [id=96 map=0 graph=108 hyp=8]... 49ms
+[1794024151.314169] Processed 97/890 nodes [id=97 map=0 graph=109 hyp=9]... 63ms
+[1794024152.330918] Processed 98/890 nodes [id=98 map=0 graph=110 hyp=7]... 49ms
+[1794024153.347668] Processed 99/890 nodes [id=99 map=0 graph=111 hyp=6]... 49ms
+[1794024154.364418] Processed 100/890 nodes [id=100 map=0 graph=111 hyp=5]... 43ms
+[1794024155.381167] Processed 101/890 nodes [id=101 map=0 graph=112 hyp=8]... 60ms
+[1794024156.397917] Processed 102/890 nodes [id=102 map=0 graph=113 hyp=3]... 50ms
+[1794024157.414666] Processed 103/890 nodes [id=103 map=0 graph=114 hyp=7]... 34ms
+[1794024158.448083] Processed 104/890 nodes [id=104 map=0 graph=115 hyp=4]... 43ms
+[1794024159.464833] Processed 105/890 nodes [id=105 map=0 graph=116 hyp=4]... 38ms
+[1794024160.481582] Processed 106/890 nodes [id=106 map=0 graph=117 hyp=6]... 32ms
+[1794024161.498332] Processed 107/890 nodes [id=107 map=0 graph=118 hyp=6]... 33ms
+[1794024162.531749] Processed 108/890 nodes [id=108 map=0 graph=120 hyp=5]... 30ms
+[1794024163.548498] Processed 109/890 nodes [id=109 map=0 graph=121 hyp=4]... 45ms Loop on landmark 11
+[1794024164.565247] Processed 110/890 nodes [id=110 map=0 graph=122 hyp=5]... 31ms
+[1794024165.598664] Processed 111/890 nodes [id=111 map=0 graph=123 hyp=6]... 34ms
+[1794024166.615413] Processed 112/890 nodes [id=112 map=0 graph=124 hyp=5]... 40ms Loop on landmark 7
+[1794024167.632162] Processed 113/890 nodes [id=113 map=0 graph=125 hyp=7]... 47ms Loop on landmark 7
+[1794024168.648911] Processed 114/890 nodes [id=114 map=0 graph=125 hyp=8]... 45ms Loop on landmark 7
+[1794024169.682328] Processed 115/890 nodes [id=115 map=0 graph=126 hyp=5]... 57ms Loop on landmark 7
+[1794024170.699077] Processed 116/890 nodes [id=116 map=0 graph=127 hyp=6]... 47ms Loop on landmark 7
+[1794024171.715825] Processed 117/890 nodes [id=117 map=0 graph=128 hyp=5]... 46ms Loop on landmark 3
+[1794024172.732574] Processed 118/890 nodes [id=118 map=0 graph=129 hyp=5]... 63ms Loop on landmark 3
+[1794024173.749322] Processed 119/890 nodes [id=119 map=0 graph=130 hyp=4]... 62ms Loop on landmark 14
+[1794024174.766071] Processed 120/890 nodes [id=120 map=0 graph=131 hyp=6]... 36ms
+[1794024175.799487] Processed 121/890 nodes [id=121 map=0 graph=132 hyp=7]... 52ms Loop on landmark 14
+[1794024176.816235] Processed 122/890 nodes [id=122 map=0 graph=133 hyp=8]... 55ms Loop on landmark 14
+[1794024177.832983] Processed 123/890 nodes [id=123 map=0 graph=134 hyp=10]... 52ms
+[1794024178.849731] Processed 124/890 nodes [id=124 map=0 graph=135 hyp=10]... 54ms
+[1794024179.866479] Processed 125/890 nodes [id=125 map=0 graph=136 hyp=11]... 68ms
+[1794024180.899895] Processed 126/890 nodes [id=126 map=0 graph=137 hyp=10]... 70ms
+[1794024181.916643] Processed 127/890 nodes [id=127 map=0 graph=138 hyp=11]... 59ms
+[1794024182.933390] Processed 128/890 nodes [id=128 map=0 graph=139 hyp=12]... 56ms
+[1794024183.950138] Processed 129/890 nodes [id=129 map=0 graph=140 hyp=15]... 59ms
+[1794024184.983553] Processed 130/890 nodes [id=130 map=0 graph=141 hyp=18]... 60ms Loop on 109 [0]
+[1794024186.000300] Processed 131/890 nodes [id=131 map=0 graph=142 hyp=18]... 60ms Loop on 109 [0]
+[1794024187.017047] Processed 132/890 nodes [id=132 map=0 graph=142 hyp=19]... 60ms Loop on 109 [0]
+[1794024188.033794] Processed 133/890 nodes [id=133 map=0 graph=143 hyp=20]... 62ms Loop on 109 [0]
+[1794024189.067209] Processed 134/890 nodes [id=134 map=0 graph=143 hyp=21]... 60ms Loop on 109 [0]
+[1794024190.067288] Processed 135/890 nodes [id=135 map=0 graph=144 hyp=21]... 61ms Loop on 109 [0]
+[1794024191.100703] Processed 136/890 nodes [id=136 map=0 graph=145 hyp=17]... 62ms Loop on 109 [0]
+[1794024192.134117] Processed 137/890 nodes [id=137 map=0 graph=146 hyp=14]... 62ms Loop on 109 [0]
+[1794024193.150864] Processed 138/890 nodes [id=138 map=0 graph=147 hyp=9]... 64ms Prox on 109 [0]
+[1794024194.167611] Processed 139/890 nodes [id=139 map=0 graph=148 hyp=8]... 56ms
+[1794024195.184358] Processed 140/890 nodes [id=140 map=0 graph=149 hyp=8]... 59ms
+[1794024196.217773] Processed 141/890 nodes [id=141 map=0 graph=150 hyp=9]... 91ms
+[1794024197.234520] Processed 142/890 nodes [id=142 map=0 graph=151 hyp=9]... 63ms
+[1794024198.251266] Processed 143/890 nodes [id=143 map=0 graph=152 hyp=6]... 56ms
+[1794024199.268013] Processed 144/890 nodes [id=144 map=0 graph=154 hyp=6]... 58ms
+[1794024200.301427] Processed 145/890 nodes [id=145 map=0 graph=154 hyp=6]... 45ms
+[1794024201.318174] Processed 146/890 nodes [id=146 map=0 graph=155 hyp=5]... 69ms
+[1794024202.334920] Processed 147/890 nodes [id=147 map=0 graph=156 hyp=5]... 71ms Loop on landmark 4
+[1794024203.351666] Processed 148/890 nodes [id=148 map=0 graph=157 hyp=5]... 71ms Loop on landmark 13
+[1794024204.368413] Processed 149/890 nodes [id=149 map=0 graph=158 hyp=7]... 68ms Loop on landmark 13
+[1794024205.385159] Processed 150/890 nodes [id=150 map=0 graph=159 hyp=6]... 70ms Loop on landmark 13
+[1794024206.401905] Processed 151/890 nodes [id=151 map=0 graph=160 hyp=4]... 92ms Loop on landmark 13
+[1794024207.418652] Processed 152/890 nodes [id=152 map=0 graph=161 hyp=4]... 68ms Loop on landmark 13
+[1794024208.452066] Processed 153/890 nodes [id=153 map=0 graph=162 hyp=4]... 71ms Loop on landmark 13
+[1794024209.468812] Processed 154/890 nodes [id=154 map=0 graph=163 hyp=6]... 62ms Loop on landmark 13
+[1794024210.468890] Processed 155/890 nodes [id=155 map=0 graph=164 hyp=6]... 57ms Loop on landmark 13
+[1794024211.502304] Processed 156/890 nodes [id=156 map=0 graph=165 hyp=5]... 67ms Loop on landmark 13
+[1794024212.519049] Processed 157/890 nodes [id=157 map=0 graph=166 hyp=3]... 45ms Loop on landmark 13
+[1794024213.535795] Processed 158/890 nodes [id=158 map=0 graph=167 hyp=4]... 58ms Loop on landmark 9
+[1794024214.552540] Processed 159/890 nodes [id=159 map=0 graph=168 hyp=6]... 58ms Loop on landmark 9
+[1794024215.585953] Processed 160/890 nodes [id=160 map=0 graph=169 hyp=5]... 30ms
+[1794024216.702706] Processed 161/890 nodes [id=161 map=0 graph=170 hyp=8]... 54ms
+[1794024217.702783] Processed 162/890 nodes [id=162 map=0 graph=171 hyp=9]... 69ms
+[1794024218.719528] Processed 163/890 nodes [id=163 map=0 graph=172 hyp=9]... 77ms
+[1794024219.719605] Processed 164/890 nodes [id=164 map=0 graph=173 hyp=7]... 59ms
+[1794024220.786353] Processed 165/890 nodes [id=165 map=0 graph=174 hyp=6]... 55ms
+[1794024221.819766] Processed 166/890 nodes [id=166 map=0 graph=175 hyp=7]... 58ms
+[1794024222.819843] Processed 167/890 nodes [id=167 map=0 graph=176 hyp=6]... 75ms
+[1794024223.853255] Processed 168/890 nodes [id=168 map=0 graph=177 hyp=8]... 72ms Loop on landmark 8
+[1794024224.936671] Processed 169/890 nodes [id=169 map=0 graph=178 hyp=7]... 66ms
+[1794024225.970084] Processed 170/890 nodes [id=170 map=0 graph=179 hyp=7]... 63ms
+[1794024227.020164] Processed 171/890 nodes [id=171 map=0 graph=180 hyp=4]... 51ms
+[1794024228.020241] Processed 172/890 nodes [id=172 map=0 graph=181 hyp=5]... 57ms Loop on landmark 9
+[1794024229.103657] Processed 173/890 nodes [id=173 map=0 graph=182 hyp=4]... 89ms
+[1794024230.187073] Processed 174/890 nodes [id=174 map=0 graph=183 hyp=6]... 72ms
+[1794024231.270489] Processed 175/890 nodes [id=175 map=0 graph=184 hyp=4]... 78ms
+[1794024232.270565] Processed 176/890 nodes [id=176 map=0 graph=185 hyp=3]... 88ms
+[1794024233.320644] Processed 177/890 nodes [id=177 map=0 graph=186 hyp=3]... 78ms
+[1794024234.354056] Processed 178/890 nodes [id=178 map=0 graph=187 hyp=4]... 88ms
+[1794024235.387468] Processed 179/890 nodes [id=179 map=0 graph=188 hyp=4]... 70ms Loop on landmark 12
+[1794024236.404212] Processed 180/890 nodes [id=180 map=0 graph=189 hyp=4]... 81ms Loop on landmark 12
+[1794024237.504295] Processed 181/890 nodes [id=181 map=0 graph=190 hyp=2]... 76ms Loop on landmark 12
+[1794024238.537707] Processed 182/890 nodes [id=182 map=0 graph=191 hyp=3]... 73ms Loop on landmark 12
+[1794024239.571119] Processed 183/890 nodes [id=183 map=0 graph=192 hyp=3]... 61ms Loop on landmark 12
+[1794024240.571195] Processed 184/890 nodes [id=184 map=0 graph=193 hyp=3]... 43ms
+[1794024241.604606] Processed 185/890 nodes [id=185 map=0 graph=194 hyp=1]... 37ms
+[1794024242.721358] Processed 186/890 nodes [id=186 map=0 graph=195 hyp=4]... 40ms
+[1794024243.754769] Processed 187/890 nodes [id=187 map=0 graph=196 hyp=8]... 69ms Prox on 177 [0]
+[1794024244.754845] Processed 188/890 nodes [id=188 map=0 graph=197 hyp=10]... 71ms Prox on 177 [0]
+[1794024245.754920] Processed 189/890 nodes [id=189 map=0 graph=198 hyp=11]... 97ms Loop on landmark 16
+[1794024246.754996] Processed 190/890 nodes [id=190 map=0 graph=199 hyp=8]... 65ms
+[1794024247.821743] Processed 191/890 nodes [id=191 map=0 graph=200 hyp=8]... 77ms
+[1794024248.838486] Processed 192/890 nodes [id=192 map=0 graph=201 hyp=9]... 85ms
+[1794024249.838561] Processed 193/890 nodes [id=193 map=0 graph=202 hyp=8]... 58ms
+[1794024250.871973] Processed 194/890 nodes [id=194 map=0 graph=203 hyp=8]... 79ms
+[1794024251.922052] Processed 195/890 nodes [id=195 map=0 graph=204 hyp=10]... 85ms Prox on 140 [0]
+[1794024252.938795] Processed 196/890 nodes [id=196 map=0 graph=205 hyp=13]... 76ms
+[1794024253.938870] Processed 197/890 nodes [id=197 map=0 graph=206 hyp=12]... 84ms
+[1794024254.955613] Processed 198/890 nodes [id=198 map=0 graph=207 hyp=9]... 48ms
+[1794024256.005692] Processed 199/890 nodes [id=199 map=0 graph=208 hyp=7]... 46ms
+[1794024257.005767] Processed 200/890 nodes [id=200 map=0 graph=209 hyp=7]... 62ms
+[1794024258.005842] Processed 201/890 nodes [id=201 map=0 graph=210 hyp=4]... 50ms
+[1794024259.055921] Processed 202/890 nodes [id=202 map=0 graph=211 hyp=5]... 45ms
+[1794024260.072663] Processed 203/890 nodes [id=203 map=0 graph=212 hyp=5]... 62ms Loop on landmark 17
+[1794024261.106074] Processed 204/890 nodes [id=204 map=0 graph=213 hyp=6]... 61ms Loop on landmark 17
+[1794024262.106148] Processed 205/890 nodes [id=205 map=0 graph=214 hyp=6]... 72ms Prox on 133 [0]
+[1794024263.139559] Processed 206/890 nodes [id=206 map=0 graph=215 hyp=8]... 47ms Loop on landmark 11
+[1794024264.156301] Processed 207/890 nodes [id=207 map=0 graph=216 hyp=9]... 46ms Loop on landmark 11
+[1794024265.189711] Processed 208/890 nodes [id=208 map=0 graph=217 hyp=7]... 48ms Loop on landmark 11
+[1794024266.206453] Processed 209/890 nodes [id=209 map=0 graph=218 hyp=6]... 61ms Loop on landmark 11
+[1794024267.223196] Processed 210/890 nodes [id=210 map=0 graph=219 hyp=5]... 66ms
+[1794024268.339946] Processed 211/890 nodes [id=211 map=0 graph=220 hyp=4]... 53ms
+[1794024269.356688] Processed 212/890 nodes [id=212 map=0 graph=221 hyp=7]... 47ms
+[1794024270.373430] Processed 213/890 nodes [id=213 map=0 graph=222 hyp=5]... 68ms Prox on 118 [0]
+[1794024271.423509] Processed 214/890 nodes [id=214 map=0 graph=223 hyp=5]... 68ms Prox on 118 [0]
+[1794024272.440252] Processed 215/890 nodes [id=215 map=0 graph=224 hyp=4]... 60ms Loop on landmark 3
+[1794024273.557002] Processed 216/890 nodes [id=216 map=0 graph=225 hyp=4]... 64ms Loop on landmark 7
+[1794024274.557076] Processed 217/890 nodes [id=217 map=0 graph=226 hyp=4]... 63ms Loop on landmark 7
+[1794024275.690494] Processed 218/890 nodes [id=218 map=0 graph=227 hyp=4]... 57ms Loop on landmark 7
+[1794024276.723905] Processed 219/890 nodes [id=219 map=0 graph=228 hyp=6]... 77ms Loop on landmark 7
+[1794024277.740648] Processed 220/890 nodes [id=220 map=0 graph=229 hyp=7]... 69ms Loop on landmark 1
+[1794024278.774058] Processed 221/890 nodes [id=221 map=0 graph=230 hyp=8]... 68ms Loop on landmark 1
+[1794024279.774133] Processed 222/890 nodes [id=222 map=0 graph=231 hyp=9]... 74ms Prox on 80 [0]
+[1794024280.790875] Processed 223/890 nodes [id=223 map=0 graph=232 hyp=9]... 64ms Prox on 82 [0]
+[1794024281.840954] Processed 224/890 nodes [id=224 map=0 graph=233 hyp=10]... 77ms Prox on 78 [0]
+[1794024282.857696] Processed 225/890 nodes [id=225 map=0 graph=234 hyp=10]... 69ms Prox on 77 [0]
+[1794024283.857771] Processed 226/890 nodes [id=226 map=0 graph=235 hyp=7]... 59ms Loop on landmark 6
+[1794024284.891181] Processed 227/890 nodes [id=227 map=0 graph=236 hyp=8]... 51ms Loop on landmark 17
+[1794024285.924592] Processed 228/890 nodes [id=228 map=0 graph=236 hyp=8]... 47ms Loop on landmark 17
+[1794024286.924666] Processed 229/890 nodes [id=229 map=0 graph=237 hyp=6]... 58ms Loop on landmark 6
+[1794024287.941408] Processed 230/890 nodes [id=230 map=0 graph=238 hyp=9]... 76ms Loop on landmark 2
+[1794024288.974819] Processed 231/890 nodes [id=231 map=0 graph=239 hyp=7]... 70ms Loop on landmark 1
+[1794024289.991561] Processed 232/890 nodes [id=232 map=0 graph=240 hyp=9]... 83ms Prox on 82 [0]
+[1794024291.008304] Processed 233/890 nodes [id=233 map=0 graph=241 hyp=10]... 78ms Prox on 83 [0]
+[1794024292.041714] Processed 234/890 nodes [id=234 map=0 graph=242 hyp=11]... 87ms
+[1794024293.041788] Processed 235/890 nodes [id=235 map=0 graph=243 hyp=9]... 62ms
+[1794024294.091866] Processed 236/890 nodes [id=236 map=0 graph=244 hyp=7]... 63ms
+[1794024295.108609] Processed 237/890 nodes [id=237 map=0 graph=245 hyp=7]... 54ms
+[1794024296.125351] Processed 238/890 nodes [id=238 map=0 graph=246 hyp=9]... 92ms
+[1794024297.158761] Processed 239/890 nodes [id=239 map=0 graph=247 hyp=11]... 82ms
+[1794024298.158836] Processed 240/890 nodes [id=240 map=0 graph=248 hyp=14]... 86ms
+[1794024299.292253] Processed 241/890 nodes [id=241 map=0 graph=249 hyp=12]... 66ms Loop on 208 [0]
+[1794024300.425671] Processed 242/890 nodes [id=242 map=0 graph=250 hyp=10]... 66ms
+[1794024301.442413] Processed 243/890 nodes [id=243 map=0 graph=251 hyp=11]... 70ms Loop on 205 [0]
+[1794024302.475823] Processed 244/890 nodes [id=244 map=0 graph=252 hyp=8]... 69ms
+[1794024303.475897] Processed 245/890 nodes [id=245 map=0 graph=253 hyp=8]... 75ms
+[1794024304.509307] Processed 246/890 nodes [id=246 map=0 graph=254 hyp=7]... 70ms
+[1794024305.626057] Processed 247/890 nodes [id=247 map=0 graph=255 hyp=9]... 94ms
+[1794024306.742806] Processed 248/890 nodes [id=248 map=0 graph=256 hyp=10]... 87ms
+[1794024307.876224] Processed 249/890 nodes [id=249 map=0 graph=257 hyp=8]... 90ms
+[1794024308.909634] Processed 250/890 nodes [id=250 map=0 graph=258 hyp=6]... 67ms
+[1794024309.926376] Processed 251/890 nodes [id=251 map=0 graph=259 hyp=7]... 68ms
+[1794024310.943118] Processed 252/890 nodes [id=252 map=0 graph=260 hyp=6]... 82ms
+[1794024311.959860] Processed 253/890 nodes [id=253 map=0 graph=261 hyp=6]... 83ms
+[1794024312.993270] Processed 254/890 nodes [id=254 map=0 graph=262 hyp=6]... 47ms
+[1794024313.993344] Processed 255/890 nodes [id=255 map=0 graph=263 hyp=4]... 44ms
+[1794024314.993418] Processed 256/890 nodes [id=256 map=0 graph=264 hyp=3]... 77ms
+[1794024316.026828] Processed 257/890 nodes [id=257 map=0 graph=265 hyp=3]... 62ms
+[1794024317.076905] Processed 258/890 nodes [id=258 map=0 graph=266 hyp=4]... 65ms
+[1794024318.093647] Processed 259/890 nodes [id=259 map=0 graph=267 hyp=3]... 37ms
+[1794024319.127057] Processed 260/890 nodes [id=260 map=0 graph=268 hyp=4]... 39ms
+[1794024320.127131] Processed 261/890 nodes [id=261 map=0 graph=269 hyp=0]... 45ms
+[1794024321.143873] Processed 262/890 nodes [id=262 map=0 graph=270 hyp=5]... 84ms
+[1794024322.177283] Processed 263/890 nodes [id=263 map=0 graph=271 hyp=6]... 64ms
+[1794024323.310699] Processed 264/890 nodes [id=264 map=0 graph=272 hyp=3]... 124ms
+[1794024324.327441] Processed 265/890 nodes [id=265 map=0 graph=273 hyp=5]... 98ms
+[1794024325.444190] Processed 266/890 nodes [id=266 map=0 graph=274 hyp=1]... 72ms
+[1794024326.477600] Processed 267/890 nodes [id=267 map=0 graph=275 hyp=4]... 77ms
+[1794024327.494342] Processed 268/890 nodes [id=268 map=0 graph=276 hyp=3]... 124ms
+[1794024328.494416] Processed 269/890 nodes [id=269 map=0 graph=277 hyp=5]... 86ms
+[1794024329.544492] Processed 270/890 nodes [id=270 map=0 graph=278 hyp=4]... 84ms Loop on landmark 11
+[1794024330.544566] Processed 271/890 nodes [id=271 map=0 graph=279 hyp=4]... 54ms
+[1794024331.577975] Processed 272/890 nodes [id=272 map=0 graph=280 hyp=8]... 62ms
+[1794024332.694723] Processed 273/890 nodes [id=273 map=0 graph=281 hyp=6]... 60ms
+[1794024333.711464] Processed 274/890 nodes [id=274 map=0 graph=282 hyp=5]... 41ms
+[1794024334.828212] Processed 275/890 nodes [id=275 map=0 graph=282 hyp=4]... 38ms
+[1794024335.961628] Processed 276/890 nodes [id=276 map=0 graph=282 hyp=4]... 36ms
+High variance detected, triggering a new map...
+[1794024392.504875] Processed 277/890 nodes [id=277 map=1 graph=2 hyp=75]... 92ms
+[1794024393.538286] Processed 278/890 nodes [id=278 map=1 graph=2 hyp=44]... 37ms
+[1794024394.555029] Processed 279/890 nodes [id=279 map=1 graph=3 hyp=21]... 41ms
+[1794024395.571771] Processed 280/890 nodes [id=280 map=1 graph=4 hyp=7]... 47ms
+[1794024396.588514] Processed 281/890 nodes [id=281 map=1 graph=5 hyp=6]... 50ms
+[1794024397.605257] Processed 282/890 nodes [id=282 map=1 graph=6 hyp=7]... 54ms
+[1794024398.605331] Processed 283/890 nodes [id=283 map=1 graph=6 hyp=7]... 62ms
+[1794024399.622074] Processed 284/890 nodes [id=284 map=1 graph=6 hyp=6]... 37ms
+[1794024400.655485] Processed 285/890 nodes [id=285 map=1 graph=6 hyp=4]... 37ms
+[1794024401.672227] Processed 286/890 nodes [id=286 map=1 graph=6 hyp=4]... 37ms
+[1794024402.672302] Processed 287/890 nodes [id=287 map=1 graph=6 hyp=4]... 38ms
+[1794024403.705713] Processed 288/890 nodes [id=288 map=1 graph=6 hyp=5]... 37ms
+[1794024404.705788] Processed 289/890 nodes [id=289 map=1 graph=6 hyp=4]... 39ms
+[1794024405.722531] Processed 290/890 nodes [id=290 map=1 graph=6 hyp=6]... 37ms
+High variance detected, triggering a new map...
+[1794024860.182716] Processed 291/890 nodes [id=291 map=2 graph=2 hyp=88]... 108ms
+[1794024861.199461] Processed 292/890 nodes [id=292 map=2 graph=5 hyp=84]... 52ms Loop on 277 [1]
+[1794024862.216207] Processed 293/890 nodes [id=293 map=2 graph=5 hyp=92]... 50ms Loop on 277 [1]
+[1794024863.232952] Processed 294/890 nodes [id=294 map=2 graph=7 hyp=92]... 51ms
+[1794024864.266366] Processed 295/890 nodes [id=295 map=2 graph=8 hyp=93]... 75ms
+[1794024865.283111] Processed 296/890 nodes [id=296 map=2 graph=9 hyp=85]... 91ms
+[1794024866.299856] Processed 297/890 nodes [id=297 map=2 graph=10 hyp=80]... 106ms
+[1794024867.316601] Processed 298/890 nodes [id=298 map=2 graph=11 hyp=71]... 74ms
+[1794024868.333346] Processed 299/890 nodes [id=299 map=2 graph=12 hyp=44]... 75ms
+[1794024869.350091] Processed 300/890 nodes [id=300 map=2 graph=13 hyp=23]... 64ms
+[1794024870.366836] Processed 301/890 nodes [id=301 map=2 graph=15 hyp=9]... 65ms
+[1794024871.383580] Processed 302/890 nodes [id=302 map=2 graph=16 hyp=5]... 70ms
+[1794024872.400325] Processed 303/890 nodes [id=303 map=2 graph=17 hyp=3]... 66ms
+[1794024873.417070] Processed 304/890 nodes [id=304 map=2 graph=17 hyp=4]... 58ms
+[1794024874.433814] Processed 305/890 nodes [id=305 map=2 graph=18 hyp=6]... 43ms
+[1794024875.450559] Processed 306/890 nodes [id=306 map=2 graph=19 hyp=6]... 57ms
+[1794024876.483971] Processed 307/890 nodes [id=307 map=2 graph=20 hyp=3]... 62ms
+[1794024877.500715] Processed 308/890 nodes [id=308 map=2 graph=21 hyp=3]... 60ms
+[1794024878.517459] Processed 309/890 nodes [id=309 map=2 graph=22 hyp=3]... 57ms
+[1794024879.534203] Processed 310/890 nodes [id=310 map=2 graph=23 hyp=2]... 44ms
+[1794024880.550946] Processed 311/890 nodes [id=311 map=2 graph=24 hyp=3]... 56ms
+[1794024881.567690] Processed 312/890 nodes [id=312 map=2 graph=26 hyp=6]... 87ms
+[1794024882.584434] Processed 313/890 nodes [id=313 map=2 graph=27 hyp=6]... 78ms
+[1794024883.601178] Processed 314/890 nodes [id=314 map=2 graph=28 hyp=7]... 76ms
+[1794024884.617921] Processed 315/890 nodes [id=315 map=2 graph=29 hyp=4]... 79ms
+[1794024885.634665] Processed 316/890 nodes [id=316 map=2 graph=30 hyp=6]... 70ms
+[1794024886.651408] Processed 317/890 nodes [id=317 map=2 graph=31 hyp=4]... 76ms
+[1794024887.668151] Processed 318/890 nodes [id=318 map=2 graph=32 hyp=4]... 83ms
+[1794024888.684894] Processed 319/890 nodes [id=319 map=2 graph=33 hyp=2]... 82ms
+[1794024889.701636] Processed 320/890 nodes [id=320 map=2 graph=34 hyp=0]... 48ms
+[1794024890.718379] Processed 321/890 nodes [id=321 map=2 graph=35 hyp=3]... 50ms
+[1794024891.735121] Processed 322/890 nodes [id=322 map=2 graph=36 hyp=6]... 84ms
+[1794024892.768532] Processed 323/890 nodes [id=323 map=2 graph=37 hyp=9]... 119ms
+[1794024893.785274] Processed 324/890 nodes [id=324 map=2 graph=317 hyp=9]... 115ms Loop on 38 [0]
+[1794024894.802016] Processed 325/890 nodes [id=325 map=2 graph=318 hyp=10]... 78ms
+[1794024895.818758] Processed 326/890 nodes [id=326 map=2 graph=319 hyp=9]... 70ms
+[1794024896.835500] Processed 327/890 nodes [id=327 map=2 graph=320 hyp=9]... 94ms
+[1794024897.852242] Processed 328/890 nodes [id=328 map=2 graph=321 hyp=9]... 125ms
+[1794024898.868984] Processed 329/890 nodes [id=329 map=2 graph=322 hyp=12]... 107ms
+[1794024899.885726] Processed 330/890 nodes [id=330 map=2 graph=323 hyp=11]... 128ms
+[1794024900.902467] Processed 331/890 nodes [id=331 map=2 graph=324 hyp=11]... 142ms
+[1794024901.919208] Processed 332/890 nodes [id=332 map=2 graph=325 hyp=5]... 141ms
+[1794024902.935950] Processed 333/890 nodes [id=333 map=2 graph=326 hyp=5]... 88ms
+[1794024903.952691] Processed 334/890 nodes [id=334 map=2 graph=327 hyp=4]... 58ms
+[1794024904.986100] Processed 335/890 nodes [id=335 map=2 graph=328 hyp=7]... 63ms
+[1794024906.002841] Processed 336/890 nodes [id=336 map=2 graph=329 hyp=5]... 85ms
+[1794024907.019582] Processed 337/890 nodes [id=337 map=2 graph=330 hyp=5]... 69ms
+[1794024908.036322] Processed 338/890 nodes [id=338 map=2 graph=331 hyp=2]... 60ms
+[1794024909.053062] Processed 339/890 nodes [id=339 map=2 graph=332 hyp=3]... 52ms
+[1794024910.086471] Processed 340/890 nodes [id=340 map=2 graph=333 hyp=5]... 52ms
+[1794024911.103211] Processed 341/890 nodes [id=341 map=2 graph=334 hyp=0]... 60ms
+[1794024912.119951] Processed 342/890 nodes [id=342 map=2 graph=335 hyp=4]... 58ms
+[1794024913.153360] Processed 343/890 nodes [id=343 map=2 graph=336 hyp=7]... 55ms
+[1794024914.153432] Processed 344/890 nodes [id=344 map=2 graph=337 hyp=8]... 62ms
+[1794024915.186840] Processed 345/890 nodes [id=345 map=2 graph=338 hyp=5]... 41ms
+[1794024916.203581] Processed 346/890 nodes [id=346 map=2 graph=339 hyp=6]... 57ms
+[1794024917.220321] Processed 347/890 nodes [id=347 map=2 graph=340 hyp=5]... 55ms
+[1794024918.253729] Processed 348/890 nodes [id=348 map=2 graph=341 hyp=5]... 59ms
+[1794024919.270469] Processed 349/890 nodes [id=349 map=2 graph=342 hyp=5]... 64ms
+[1794024920.287210] Processed 350/890 nodes [id=350 map=2 graph=343 hyp=5]... 80ms
+[1794024921.303950] Processed 351/890 nodes [id=351 map=2 graph=344 hyp=7]... 97ms
+[1794024922.320689] Processed 352/890 nodes [id=352 map=2 graph=345 hyp=9]... 105ms
+[1794024923.337429] Processed 353/890 nodes [id=353 map=2 graph=345 hyp=9]... 51ms
+[1794024924.354169] Processed 354/890 nodes [id=354 map=2 graph=346 hyp=7]... 59ms
+[1794024925.387576] Processed 355/890 nodes [id=355 map=2 graph=347 hyp=6]... 54ms
+[1794024926.404316] Processed 356/890 nodes [id=356 map=2 graph=348 hyp=3]... 56ms
+[1794024927.421055] Processed 357/890 nodes [id=357 map=2 graph=349 hyp=2]... 56ms
+[1794024928.437795] Processed 358/890 nodes [id=358 map=2 graph=350 hyp=3]... 63ms
+[1794024929.454534] Processed 359/890 nodes [id=359 map=2 graph=351 hyp=4]... 63ms
+[1794024930.487941] Processed 360/890 nodes [id=360 map=2 graph=352 hyp=4]... 103ms Loop on landmark 11
+[1794024931.504680] Processed 361/890 nodes [id=361 map=2 graph=353 hyp=5]... 138ms Loop on landmark 11
+[1794024932.521420] Processed 362/890 nodes [id=362 map=2 graph=354 hyp=8]... 150ms Prox on 277 [1]
+[1794024933.538158] Processed 363/890 nodes [id=363 map=2 graph=355 hyp=11]... 117ms Loop on 297 [2]
+[1794024934.554897] Processed 364/890 nodes [id=364 map=2 graph=356 hyp=12]... 119ms Loop on 296 [2]
+[1794024935.571635] Processed 365/890 nodes [id=365 map=2 graph=357 hyp=9]... 111ms Prox on 295 [2]
+[1794024936.588373] Processed 366/890 nodes [id=366 map=2 graph=358 hyp=5]... 87ms
+[1794024937.605111] Processed 367/890 nodes [id=367 map=2 graph=359 hyp=4]... 83ms
+[1794024938.621849] Processed 368/890 nodes [id=368 map=2 graph=360 hyp=6]... 74ms
+[1794024939.638587] Processed 369/890 nodes [id=369 map=2 graph=361 hyp=3]... 81ms
+[1794024940.655324] Processed 370/890 nodes [id=370 map=2 graph=362 hyp=4]... 74ms
+[1794024941.672061] Processed 371/890 nodes [id=371 map=2 graph=363 hyp=8]... 120ms
+[1794024942.688798] Processed 372/890 nodes [id=372 map=2 graph=364 hyp=13]... 109ms
+[1794024943.705535] Processed 373/890 nodes [id=373 map=2 graph=365 hyp=12]... 97ms
+[1794024944.738940] Processed 374/890 nodes [id=374 map=2 graph=366 hyp=7]... 64ms
+[1794024945.755677] Processed 375/890 nodes [id=375 map=2 graph=367 hyp=11]... 96ms
+[1794024946.772414] Processed 376/890 nodes [id=376 map=2 graph=368 hyp=13]... 111ms
+[1794024947.772483] Processed 377/890 nodes [id=377 map=2 graph=369 hyp=12]... 109ms
+[1794024948.789219] Processed 378/890 nodes [id=378 map=2 graph=370 hyp=6]... 148ms Loop on landmark 5
+[1794024949.822624] Processed 379/890 nodes [id=379 map=2 graph=371 hyp=3]... 113ms
+[1794024950.839360] Processed 380/890 nodes [id=380 map=2 graph=372 hyp=5]... 92ms Loop on landmark 5
+[1794024951.856097] Processed 381/890 nodes [id=381 map=2 graph=373 hyp=2]... 92ms
+[1794024952.872833] Processed 382/890 nodes [id=382 map=2 graph=374 hyp=3]... 101ms
+[1794024953.889569] Processed 383/890 nodes [id=383 map=2 graph=375 hyp=3]... 101ms
+[1794024954.906306] Processed 384/890 nodes [id=384 map=2 graph=376 hyp=5]... 103ms
+[1794024955.923042] Processed 385/890 nodes [id=385 map=2 graph=377 hyp=8]... 114ms
+[1794024956.956447] Processed 386/890 nodes [id=386 map=2 graph=378 hyp=10]... 74ms
+[1794024957.973183] Processed 387/890 nodes [id=387 map=2 graph=379 hyp=7]... 65ms
+[1794024958.989920] Processed 388/890 nodes [id=388 map=2 graph=380 hyp=8]... 86ms
+[1794024960.006657] Processed 389/890 nodes [id=389 map=2 graph=381 hyp=6]... 93ms
+[1794024961.023394] Processed 390/890 nodes [id=390 map=2 graph=382 hyp=5]... 85ms
+[1794024962.040131] Processed 391/890 nodes [id=391 map=2 graph=383 hyp=4]... 83ms
+[1794024963.056868] Processed 392/890 nodes [id=392 map=2 graph=384 hyp=4]... 83ms
+[1794024964.073605] Processed 393/890 nodes [id=393 map=2 graph=385 hyp=2]... 52ms
+[1794024965.107010] Processed 394/890 nodes [id=394 map=2 graph=386 hyp=2]... 46ms
+[1794024966.107080] Processed 395/890 nodes [id=395 map=2 graph=387 hyp=3]... 77ms
+[1794024967.140485] Processed 396/890 nodes [id=396 map=2 graph=388 hyp=2]... 74ms
+[1794024968.157222] Processed 397/890 nodes [id=397 map=2 graph=389 hyp=4]... 90ms
+[1794024969.173959] Processed 398/890 nodes [id=398 map=2 graph=390 hyp=6]... 101ms
+[1794024970.207363] Processed 399/890 nodes [id=399 map=2 graph=391 hyp=8]... 101ms
+[1794024971.224101] Processed 400/890 nodes [id=400 map=2 graph=392 hyp=5]... 80ms
+[1794024972.240837] Processed 401/890 nodes [id=401 map=2 graph=393 hyp=4]... 91ms
+[1794024973.257574] Processed 402/890 nodes [id=402 map=2 graph=394 hyp=6]... 101ms Prox on 33 [0]
+[1794024974.274311] Processed 403/890 nodes [id=403 map=2 graph=395 hyp=8]... 95ms Prox on 33 [0]
+[1794024975.291047] Processed 404/890 nodes [id=404 map=2 graph=396 hyp=9]... 113ms
+[1794024976.307784] Processed 405/890 nodes [id=405 map=2 graph=397 hyp=11]... 107ms Loop on 225 [0]
+[1794024977.341187] Processed 406/890 nodes [id=406 map=2 graph=398 hyp=12]... 104ms
+[1794024978.357924] Processed 407/890 nodes [id=407 map=2 graph=399 hyp=13]... 115ms Loop on 223 [0]
+High variance detected, triggering a new map...
+[1794025024.556485] Processed 408/890 nodes [id=408 map=3 graph=400 hyp=84]... 162ms Loop on 362 [2]
+[1794025025.573229] Processed 409/890 nodes [id=409 map=3 graph=400 hyp=68]... 137ms Loop on 362 [2]
+[1794025026.589973] Processed 410/890 nodes [id=410 map=3 graph=401 hyp=68]... 63ms Loop on landmark 11
+[1794025027.623384] Processed 411/890 nodes [id=411 map=3 graph=402 hyp=46]... 129ms Loop on 362 [2]
+[1794025028.640127] Processed 412/890 nodes [id=412 map=3 graph=403 hyp=24]... 150ms Loop on 297 [2]
+[1794025029.656870] Processed 413/890 nodes [id=413 map=3 graph=404 hyp=14]... 119ms
+[1794025030.673612] Processed 414/890 nodes [id=414 map=3 graph=405 hyp=11]... 101ms
+[1794025031.673686] Processed 415/890 nodes [id=415 map=3 graph=406 hyp=7]... 48ms
+[1794025032.690428] Processed 416/890 nodes [id=416 map=3 graph=407 hyp=6]... 108ms Loop on landmark 12
+[1794025033.707169] Processed 417/890 nodes [id=417 map=3 graph=408 hyp=3]... 105ms Loop on landmark 12
+[1794025034.723910] Processed 418/890 nodes [id=418 map=3 graph=409 hyp=5]... 96ms Loop on landmark 12
+[1794025035.740651] Processed 419/890 nodes [id=419 map=3 graph=410 hyp=3]... 80ms
+[1794025036.774059] Processed 420/890 nodes [id=420 map=3 graph=411 hyp=4]... 75ms
+[1794025037.774132] Processed 421/890 nodes [id=421 map=3 graph=412 hyp=4]... 67ms
+[1794025038.790872] Processed 422/890 nodes [id=422 map=3 graph=413 hyp=5]... 86ms
+[1794025039.807612] Processed 423/890 nodes [id=423 map=3 graph=414 hyp=2]... 56ms
+[1794025040.824352] Processed 424/890 nodes [id=424 map=3 graph=415 hyp=2]... 76ms
+[1794025041.841091] Processed 425/890 nodes [id=425 map=3 graph=416 hyp=2]... 55ms
+[1794025042.857831] Processed 426/890 nodes [id=426 map=3 graph=417 hyp=5]... 75ms
+[1794025043.874570] Processed 427/890 nodes [id=427 map=3 graph=418 hyp=5]... 72ms
+[1794025044.891309] Processed 428/890 nodes [id=428 map=3 graph=419 hyp=7]... 70ms
+[1794025045.908048] Processed 429/890 nodes [id=429 map=3 graph=420 hyp=3]... 55ms
+[1794025046.924786] Processed 430/890 nodes [id=430 map=3 graph=421 hyp=3]... 84ms
+[1794025047.941525] Processed 431/890 nodes [id=431 map=3 graph=422 hyp=5]... 52ms
+[1794025048.958264] Processed 432/890 nodes [id=432 map=3 graph=423 hyp=5]... 64ms
+[1794025049.991669] Processed 433/890 nodes [id=433 map=3 graph=424 hyp=4]... 62ms
+[1794025051.008408] Processed 434/890 nodes [id=434 map=3 graph=425 hyp=5]... 55ms
+[1794025052.025146] Processed 435/890 nodes [id=435 map=3 graph=426 hyp=3]... 58ms
+[1794025053.041884] Processed 436/890 nodes [id=436 map=3 graph=427 hyp=4]... 64ms
+[1794025054.058622] Processed 437/890 nodes [id=437 map=3 graph=428 hyp=6]... 78ms
+[1794025055.075360] Processed 438/890 nodes [id=438 map=3 graph=429 hyp=5]... 98ms
+[1794025056.092097] Processed 439/890 nodes [id=439 map=3 graph=430 hyp=5]... 71ms
+[1794025057.108835] Processed 440/890 nodes [id=440 map=3 graph=431 hyp=6]... 80ms
+[1794025058.125572] Processed 441/890 nodes [id=441 map=3 graph=432 hyp=5]... 97ms
+[1794025059.142309] Processed 442/890 nodes [id=442 map=3 graph=433 hyp=5]... 67ms
+[1794025060.142378] Processed 443/890 nodes [id=443 map=3 graph=434 hyp=8]... 76ms
+[1794025061.159115] Processed 444/890 nodes [id=444 map=3 graph=435 hyp=5]... 76ms
+[1794025062.175851] Processed 445/890 nodes [id=445 map=3 graph=436 hyp=4]... 66ms
+[1794025063.225923] Processed 446/890 nodes [id=446 map=3 graph=437 hyp=5]... 67ms
+[1794025064.242659] Processed 447/890 nodes [id=447 map=3 graph=438 hyp=9]... 64ms
+[1794025065.259394] Processed 448/890 nodes [id=448 map=3 graph=439 hyp=6]... 55ms
+[1794025066.276130] Processed 449/890 nodes [id=449 map=3 graph=440 hyp=4]... 58ms
+[1794025067.309533] Processed 450/890 nodes [id=450 map=3 graph=441 hyp=5]... 61ms
+[1794025068.309600] Processed 451/890 nodes [id=451 map=3 graph=442 hyp=4]... 137ms Loop on landmark 17
+[1794025069.343002] Processed 452/890 nodes [id=452 map=3 graph=443 hyp=7]... 129ms Prox on 403 [2]
+[1794025070.376404] Processed 453/890 nodes [id=453 map=3 graph=444 hyp=8]... 129ms Prox on 404 [2]
+[1794025071.393138] Processed 454/890 nodes [id=454 map=3 graph=445 hyp=10]... 132ms Prox on 74 [0]
+[1794025072.409872] Processed 455/890 nodes [id=455 map=3 graph=446 hyp=12]... 133ms
+[1794025073.426605] Processed 456/890 nodes [id=456 map=3 graph=447 hyp=13]... 157ms Loop on 406 [2]
+[1794025074.443339] Processed 457/890 nodes [id=457 map=3 graph=448 hyp=6]... 148ms
+[1794025075.460072] Processed 458/890 nodes [id=458 map=3 graph=449 hyp=4]... 95ms
+[1794025076.476805] Processed 459/890 nodes [id=459 map=3 graph=450 hyp=3]... 104ms Prox on 153 [0]
+[1794025077.543542] Processed 460/890 nodes [id=460 map=3 graph=451 hyp=2]... 107ms Loop on landmark 6
+[1794025078.576943] Processed 461/890 nodes [id=461 map=3 graph=452 hyp=4]... 128ms Loop on landmark 6
+[1794025079.577008] Processed 462/890 nodes [id=462 map=3 graph=453 hyp=5]... 84ms Loop on landmark 6
+[1794025080.610409] Processed 463/890 nodes [id=463 map=3 graph=454 hyp=5]... 89ms Loop on landmark 6
+[1794025081.610476] Processed 464/890 nodes [id=464 map=3 graph=455 hyp=3]... 90ms Loop on landmark 6
+[1794025082.643878] Processed 465/890 nodes [id=465 map=3 graph=456 hyp=3]... 118ms Loop on landmark 6
+[1794025083.643944] Processed 466/890 nodes [id=466 map=3 graph=457 hyp=2]... 103ms Loop on landmark 6
+[1794025084.677346] Processed 467/890 nodes [id=467 map=3 graph=458 hyp=3]... 135ms Loop on landmark 6
+[1794025085.677413] Processed 468/890 nodes [id=468 map=3 graph=459 hyp=8]... 159ms Prox on 154 [0]
+[1794025086.677480] Processed 469/890 nodes [id=469 map=3 graph=460 hyp=9]... 133ms Prox on 459 [3]
+[1794025087.710883] Processed 470/890 nodes [id=470 map=3 graph=461 hyp=9]... 132ms Prox on 154 [0]
+[1794025088.744286] Processed 471/890 nodes [id=471 map=3 graph=462 hyp=6]... 113ms Loop on landmark 9
+[1794025089.744353] Processed 472/890 nodes [id=472 map=3 graph=463 hyp=7]... 145ms Loop on landmark 9
+[1794025090.744420] Processed 473/890 nodes [id=473 map=3 graph=464 hyp=7]... 134ms Loop on landmark 9
+[1794025091.777823] Processed 474/890 nodes [id=474 map=3 graph=465 hyp=5]... 189ms Loop on landmark 9
+[1794025092.811227] Processed 475/890 nodes [id=475 map=3 graph=466 hyp=7]... 120ms
+[1794025093.811294] Processed 476/890 nodes [id=476 map=3 graph=467 hyp=9]... 94ms
+[1794025094.844698] Processed 477/890 nodes [id=477 map=3 graph=468 hyp=6]... 129ms
+[1794025095.844766] Processed 478/890 nodes [id=478 map=3 graph=469 hyp=6]... 90ms
+[1794025096.878170] Processed 479/890 nodes [id=479 map=3 graph=470 hyp=5]... 91ms
+[1794025097.878239] Processed 480/890 nodes [id=480 map=3 graph=471 hyp=5]... 133ms
+[1794025098.878307] Processed 481/890 nodes [id=481 map=3 graph=472 hyp=2]... 91ms Loop on landmark 8
+[1794025099.911712] Processed 482/890 nodes [id=482 map=3 graph=473 hyp=4]... 99ms Loop on landmark 8
+[1794025100.911781] Processed 483/890 nodes [id=483 map=3 graph=474 hyp=4]... 91ms Loop on landmark 8
+[1794025101.945186] Processed 484/890 nodes [id=484 map=3 graph=475 hyp=7]... 176ms Loop on landmark 8
+[1794025102.945255] Processed 485/890 nodes [id=485 map=3 graph=476 hyp=6]... 238ms Loop on landmark 8
+[1794025103.978660] Processed 486/890 nodes [id=486 map=3 graph=477 hyp=8]... 138ms Prox on 111 [0]
+[1794025104.978730] Processed 487/890 nodes [id=487 map=3 graph=478 hyp=8]... 112ms Prox on 111 [0]
+[1794025106.012136] Processed 488/890 nodes [id=488 map=3 graph=479 hyp=6]... 83ms Loop on landmark 14
+[1794025107.012206] Processed 489/890 nodes [id=489 map=3 graph=480 hyp=5]... 98ms Loop on landmark 14
+[1794025108.045612] Processed 490/890 nodes [id=490 map=3 graph=481 hyp=4]... 93ms Loop on landmark 3
+[1794025109.045682] Processed 491/890 nodes [id=491 map=3 graph=482 hyp=1]... 118ms Loop on landmark 3
+[1794025110.079087] Processed 492/890 nodes [id=492 map=3 graph=483 hyp=2]... 106ms Loop on landmark 7
+[1794025111.079158] Processed 493/890 nodes [id=493 map=3 graph=484 hyp=5]... 140ms Prox on 113 [0]
+[1794025112.112564] Processed 494/890 nodes [id=494 map=3 graph=485 hyp=8]... 124ms Prox on 113 [0]
+[1794025113.112634] Processed 495/890 nodes [id=495 map=3 graph=486 hyp=10]... 175ms Prox on 117 [0]
+[1794025114.146040] Processed 496/890 nodes [id=496 map=3 graph=487 hyp=9]... 146ms Prox on 117 [0]
+[1794025115.146110] Processed 497/890 nodes [id=497 map=3 graph=488 hyp=5]... 115ms Loop on landmark 3
+[1794025116.179516] Processed 498/890 nodes [id=498 map=3 graph=489 hyp=5]... 130ms Loop on landmark 3
+[1794025117.179587] Processed 499/890 nodes [id=499 map=3 graph=490 hyp=4]... 131ms
+[1794025118.212993] Processed 500/890 nodes [id=500 map=3 graph=491 hyp=3]... 98ms
+[1794025119.213063] Processed 501/890 nodes [id=501 map=3 graph=492 hyp=2]... 63ms
+[1794025120.213133] Processed 502/890 nodes [id=502 map=3 graph=493 hyp=5]... 123ms Prox on 236 [0]
+[1794025121.246539] Processed 503/890 nodes [id=503 map=3 graph=494 hyp=7]... 139ms Prox on 375 [2]
+[1794025122.246609] Processed 504/890 nodes [id=504 map=3 graph=495 hyp=6]... 135ms Prox on 235 [0]
+[1794025123.280015] Processed 505/890 nodes [id=505 map=3 graph=496 hyp=6]... 124ms Prox on 79 [0]
+[1794025124.280084] Processed 506/890 nodes [id=506 map=3 graph=497 hyp=8]... 121ms Prox on 82 [0]
+[1794025125.313490] Processed 507/890 nodes [id=507 map=3 graph=498 hyp=9]... 112ms Prox on 80 [0]
+[1794025126.313560] Processed 508/890 nodes [id=508 map=3 graph=499 hyp=10]... 141ms Prox on 405 [2]
+[1794025127.346966] Processed 509/890 nodes [id=509 map=3 graph=500 hyp=10]... 160ms Prox on 405 [2]
+[1794025128.347035] Processed 510/890 nodes [id=510 map=3 graph=501 hyp=6]... 136ms Loop on landmark 2
+[1794025129.380441] Processed 511/890 nodes [id=511 map=3 graph=502 hyp=4]... 106ms Loop on landmark 2
+[1794025130.380510] Processed 512/890 nodes [id=512 map=3 graph=503 hyp=3]... 125ms Loop on landmark 2
+[1794025131.413914] Processed 513/890 nodes [id=513 map=3 graph=504 hyp=3]... 66ms
+[1794025132.413982] Processed 514/890 nodes [id=514 map=3 graph=505 hyp=3]... 62ms
+[1794025133.447384] Processed 515/890 nodes [id=515 map=3 graph=506 hyp=4]... 112ms Loop on landmark 7
+[1794025134.447453] Processed 516/890 nodes [id=516 map=3 graph=507 hyp=4]... 110ms Loop on landmark 7
+[1794025135.480857] Processed 517/890 nodes [id=517 map=3 graph=508 hyp=5]... 124ms Loop on landmark 7
+[1794025136.514261] Processed 518/890 nodes [id=518 map=3 graph=509 hyp=1]... 110ms Loop on landmark 3
+[1794025137.514330] Processed 519/890 nodes [id=519 map=3 graph=510 hyp=3]... 66ms
+[1794025138.547734] Processed 520/890 nodes [id=520 map=3 graph=511 hyp=6]... 64ms
+[1794025139.547803] Processed 521/890 nodes [id=521 map=3 graph=512 hyp=4]... 60ms
+[1794025140.581208] Processed 522/890 nodes [id=522 map=3 graph=513 hyp=5]... 68ms
+[1794025141.581277] Processed 523/890 nodes [id=523 map=3 graph=514 hyp=5]... 57ms
+[1794025142.614682] Processed 524/890 nodes [id=524 map=3 graph=515 hyp=5]... 76ms
+[1794025143.614751] Processed 525/890 nodes [id=525 map=3 graph=516 hyp=6]... 158ms Prox on 277 [1]
+[1794025144.648156] Processed 526/890 nodes [id=526 map=3 graph=517 hyp=7]... 158ms Prox on 294 [2]
+[1794025145.648226] Processed 527/890 nodes [id=527 map=3 graph=518 hyp=7]... 150ms Prox on 297 [2]
+[1794025146.681630] Processed 528/890 nodes [id=528 map=3 graph=519 hyp=6]... 87ms
+[1794025147.681700] Processed 529/890 nodes [id=529 map=3 graph=520 hyp=4]... 111ms Loop on landmark 17
+[1794025148.715104] Processed 530/890 nodes [id=530 map=3 graph=521 hyp=3]... 55ms
+[1794025149.715173] Processed 531/890 nodes [id=531 map=3 graph=522 hyp=7]... 69ms
+[1794025150.748577] Processed 532/890 nodes [id=532 map=3 graph=523 hyp=4]... 86ms
+High variance detected, triggering a new map...
+[1794025249.679039] Processed 533/890 nodes [id=533 map=4 graph=524 hyp=74]... 226ms Loop on landmark 11
+[1794025250.712453] Processed 534/890 nodes [id=534 map=4 graph=524 hyp=44]... 170ms Loop on landmark 11
+[1794025251.712532] Processed 535/890 nodes [id=535 map=4 graph=525 hyp=16]... 149ms Loop on landmark 11
+[1794025252.712610] Processed 536/890 nodes [id=536 map=4 graph=526 hyp=9]... 128ms Loop on landmark 11
+[1794025253.746023] Processed 537/890 nodes [id=537 map=4 graph=527 hyp=9]... 136ms Prox on 241 [0]
+[1794025254.746101] Processed 538/890 nodes [id=538 map=4 graph=527 hyp=8]... 165ms Loop on landmark 11
+[1794025255.779514] Processed 539/890 nodes [id=539 map=4 graph=528 hyp=8]... 129ms Loop on landmark 11
+[1794025256.812927] Processed 540/890 nodes [id=540 map=4 graph=529 hyp=4]... 121ms Loop on landmark 11
+[1794025257.813005] Processed 541/890 nodes [id=541 map=4 graph=530 hyp=4]... 129ms Loop on landmark 11
+[1794025258.813082] Processed 542/890 nodes [id=542 map=4 graph=531 hyp=5]... 110ms Loop on landmark 11
+[1794025259.846495] Processed 543/890 nodes [id=543 map=4 graph=532 hyp=8]... 71ms
+[1794025260.846572] Processed 544/890 nodes [id=544 map=4 graph=533 hyp=6]... 74ms
+[1794025261.879984] Processed 545/890 nodes [id=545 map=4 graph=534 hyp=8]... 115ms Prox on 533 [4]
+[1794025262.880061] Processed 546/890 nodes [id=546 map=4 graph=535 hyp=5]... 73ms
+[1794025263.913474] Processed 547/890 nodes [id=547 map=4 graph=535 hyp=4]... 68ms
+[1794025264.913550] Processed 548/890 nodes [id=548 map=4 graph=536 hyp=6]... 83ms
+[1794025265.946963] Processed 549/890 nodes [id=549 map=4 graph=537 hyp=5]... 81ms
+[1794025266.947040] Processed 550/890 nodes [id=550 map=4 graph=538 hyp=7]... 130ms Prox on 94 [0]
+[1794025267.980452] Processed 551/890 nodes [id=551 map=4 graph=539 hyp=8]... 139ms Prox on 94 [0]
+[1794025268.980529] Processed 552/890 nodes [id=552 map=4 graph=540 hyp=7]... 155ms Prox on 94 [0]
+[1794025269.980605] Processed 553/890 nodes [id=553 map=4 graph=541 hyp=7]... 133ms Prox on 94 [0]
+[1794025271.014017] Processed 554/890 nodes [id=554 map=4 graph=542 hyp=7]... 134ms Prox on 94 [0]
+[1794025272.014094] Processed 555/890 nodes [id=555 map=4 graph=543 hyp=8]... 125ms
+[1794025273.047506] Processed 556/890 nodes [id=556 map=4 graph=544 hyp=7]... 128ms Prox on 89 [0]
+[1794025274.047583] Processed 557/890 nodes [id=557 map=4 graph=545 hyp=4]... 119ms Loop on landmark 3
+[1794025275.080996] Processed 558/890 nodes [id=558 map=4 graph=546 hyp=5]... 128ms Loop on landmark 7
+[1794025276.081072] Processed 559/890 nodes [id=559 map=4 graph=547 hyp=6]... 130ms Loop on landmark 7
+[1794025277.114484] Processed 560/890 nodes [id=560 map=4 graph=548 hyp=4]... 144ms Loop on landmark 7
+[1794025278.114561] Processed 561/890 nodes [id=561 map=4 graph=549 hyp=5]... 136ms
+[1794025279.147972] Processed 562/890 nodes [id=562 map=4 graph=550 hyp=7]... 134ms Prox on 111 [0]
+[1794025280.148048] Processed 563/890 nodes [id=563 map=4 graph=551 hyp=7]... 143ms
+[1794025281.181460] Processed 564/890 nodes [id=564 map=4 graph=552 hyp=7]... 132ms
+[1794025282.181536] Processed 565/890 nodes [id=565 map=4 graph=553 hyp=7]... 132ms
+[1794025283.214948] Processed 566/890 nodes [id=566 map=4 graph=554 hyp=5]... 128ms Prox on 556 [4]
+[1794025284.215024] Processed 567/890 nodes [id=567 map=4 graph=555 hyp=6]... 145ms Prox on 554 [4]
+[1794025285.248435] Processed 568/890 nodes [id=568 map=4 graph=556 hyp=6]... 159ms
+[1794025286.248511] Processed 569/890 nodes [id=569 map=4 graph=556 hyp=6]... 160ms Prox on 555 [4]
+[1794025287.281922] Processed 570/890 nodes [id=570 map=4 graph=557 hyp=6]... 145ms
+[1794025288.281997] Processed 571/890 nodes [id=571 map=4 graph=558 hyp=9]... 154ms Prox on 92 [0]
+[1794025289.315408] Processed 572/890 nodes [id=572 map=4 graph=559 hyp=9]... 170ms
+[1794025290.315483] Processed 573/890 nodes [id=573 map=4 graph=560 hyp=9]... 162ms
+[1794025291.348895] Processed 574/890 nodes [id=574 map=4 graph=561 hyp=9]... 147ms
+[1794025292.348970] Processed 575/890 nodes [id=575 map=4 graph=562 hyp=9]... 156ms
+[1794025293.382381] Processed 576/890 nodes [id=576 map=4 graph=562 hyp=9]... 127ms
+[1794025294.382456] Processed 577/890 nodes [id=577 map=4 graph=563 hyp=9]... 146ms
+[1794025295.415867] Processed 578/890 nodes [id=578 map=4 graph=564 hyp=9]... 154ms
+[1794025296.415942] Processed 579/890 nodes [id=579 map=4 graph=565 hyp=10]... 149ms Prox on 16 [0]
+[1794025297.416017] Processed 580/890 nodes [id=580 map=4 graph=566 hyp=9]... 146ms Prox on 533 [4]
+[1794025298.449427] Processed 581/890 nodes [id=581 map=4 graph=567 hyp=8]... 161ms Prox on 533 [4]
+[1794025299.449503] Processed 582/890 nodes [id=582 map=4 graph=568 hyp=6]... 175ms Prox on 533 [4]
+[1794025300.482913] Processed 583/890 nodes [id=583 map=4 graph=569 hyp=4]... 99ms
+[1794025301.482988] Processed 584/890 nodes [id=584 map=4 graph=570 hyp=6]... 88ms
+[1794025302.516399] Processed 585/890 nodes [id=585 map=4 graph=571 hyp=8]... 131ms
+[1794025303.516474] Processed 586/890 nodes [id=586 map=4 graph=572 hyp=11]... 164ms
+[1794025304.549885] Processed 587/890 nodes [id=587 map=4 graph=573 hyp=14]... 184ms
+[1794025305.549959] Processed 588/890 nodes [id=588 map=4 graph=574 hyp=15]... 179ms Loop on 18 [0]
+[1794025306.583369] Processed 589/890 nodes [id=589 map=4 graph=575 hyp=15]... 221ms Loop on 18 [0]
+[1794025307.616780] Processed 590/890 nodes [id=590 map=4 graph=576 hyp=15]... 103ms Loop on landmark 15
+[1794025308.616854] Processed 591/890 nodes [id=591 map=4 graph=577 hyp=14]... 214ms
+[1794025309.650265] Processed 592/890 nodes [id=592 map=4 graph=578 hyp=12]... 168ms Loop on 18 [0]
+[1794025310.650339] Processed 593/890 nodes [id=593 map=4 graph=579 hyp=12]... 99ms Loop on landmark 14
+[1794025311.650414] Processed 594/890 nodes [id=594 map=4 graph=580 hyp=12]... 208ms
+[1794025312.683824] Processed 595/890 nodes [id=595 map=4 graph=580 hyp=10]... 207ms Prox on 566 [4]
+[1794025313.683898] Processed 596/890 nodes [id=596 map=4 graph=581 hyp=10]... 102ms Loop on landmark 14
+[1794025314.717308] Processed 597/890 nodes [id=597 map=4 graph=582 hyp=10]... 158ms Prox on 570 [4]
+[1794025315.717382] Processed 598/890 nodes [id=598 map=4 graph=583 hyp=9]... 163ms Prox on 568 [4]
+[1794025316.750792] Processed 599/890 nodes [id=599 map=4 graph=584 hyp=10]... 175ms Prox on 566 [4]
+[1794025317.750866] Processed 600/890 nodes [id=600 map=4 graph=585 hyp=10]... 115ms Loop on landmark 14
+[1794025318.784276] Processed 601/890 nodes [id=601 map=4 graph=586 hyp=11]... 190ms Loop on 565 [4]
+[1794025319.784350] Processed 602/890 nodes [id=602 map=4 graph=587 hyp=11]... 164ms Loop on 564 [4]
+[1794025320.817760] Processed 603/890 nodes [id=603 map=4 graph=588 hyp=11]... 215ms Loop on 564 [4]
+[1794025321.817834] Processed 604/890 nodes [id=604 map=4 graph=589 hyp=11]... 93ms Loop on landmark 14
+[1794025322.817909] Processed 605/890 nodes [id=605 map=4 graph=589 hyp=11]... 161ms Prox on 564 [4]
+[1794025323.851318] Processed 606/890 nodes [id=606 map=4 graph=590 hyp=8]... 177ms Prox on 563 [4]
+[1794025324.851393] Processed 607/890 nodes [id=607 map=4 graph=591 hyp=4]... 161ms
+[1794025325.851467] Processed 608/890 nodes [id=608 map=4 graph=592 hyp=5]... 151ms Prox on 563 [4]
+[1794025326.884876] Processed 609/890 nodes [id=609 map=4 graph=593 hyp=5]... 93ms Loop on landmark 14
+[1794025327.884950] Processed 610/890 nodes [id=610 map=4 graph=594 hyp=4]... 153ms Loop on landmark 14
+[1794025328.918360] Processed 611/890 nodes [id=611 map=4 graph=595 hyp=5]... 158ms Loop on landmark 14
+[1794025329.918435] Processed 612/890 nodes [id=612 map=4 graph=596 hyp=4]... 155ms Prox on 111 [0]
+[1794025330.951845] Processed 613/890 nodes [id=613 map=4 graph=597 hyp=4]... 95ms Loop on landmark 14
+[1794025331.951918] Processed 614/890 nodes [id=614 map=4 graph=598 hyp=4]... 152ms Prox on 600 [4]
+[1794025332.985328] Processed 615/890 nodes [id=615 map=4 graph=599 hyp=4]... 95ms Loop on landmark 14
+[1794025333.985402] Processed 616/890 nodes [id=616 map=4 graph=600 hyp=5]... 159ms Prox on 600 [4]
+[1794025335.018812] Processed 617/890 nodes [id=617 map=4 graph=601 hyp=5]... 88ms Loop on landmark 14
+[1794025336.018886] Processed 618/890 nodes [id=618 map=4 graph=602 hyp=4]... 142ms Loop on landmark 14
+[1794025337.052295] Processed 619/890 nodes [id=619 map=4 graph=603 hyp=4]... 143ms Loop on landmark 14
+[1794025338.052369] Processed 620/890 nodes [id=620 map=4 graph=604 hyp=6]... 143ms Loop on landmark 14
+[1794025339.085779] Processed 621/890 nodes [id=621 map=4 graph=605 hyp=5]... 135ms
+[1794025340.085852] Processed 622/890 nodes [id=622 map=4 graph=606 hyp=5]... 139ms
+[1794025341.085926] Processed 623/890 nodes [id=623 map=4 graph=606 hyp=6]... 158ms
+[1794025342.119335] Processed 624/890 nodes [id=624 map=4 graph=607 hyp=6]... 153ms
+[1794025343.119409] Processed 625/890 nodes [id=625 map=4 graph=608 hyp=6]... 160ms
+[1794025344.152818] Processed 626/890 nodes [id=626 map=4 graph=608 hyp=7]... 164ms
+[1794025345.152892] Processed 627/890 nodes [id=627 map=4 graph=609 hyp=8]... 168ms
+[1794025346.186301] Processed 628/890 nodes [id=628 map=4 graph=610 hyp=9]... 150ms Prox on 587 [4]
+[1794025347.186374] Processed 629/890 nodes [id=629 map=4 graph=611 hyp=8]... 164ms Prox on 586 [4]
+[1794025348.219784] Processed 630/890 nodes [id=630 map=4 graph=612 hyp=8]... 192ms Prox on 586 [4]
+[1794025349.219857] Processed 631/890 nodes [id=631 map=4 graph=613 hyp=6]... 177ms Prox on 584 [4]
+[1794025350.253266] Processed 632/890 nodes [id=632 map=4 graph=614 hyp=6]... 165ms
+[1794025351.253339] Processed 633/890 nodes [id=633 map=4 graph=615 hyp=6]... 144ms
+[1794025352.253412] Processed 634/890 nodes [id=634 map=4 graph=615 hyp=6]... 150ms
+[1794025353.286822] Processed 635/890 nodes [id=635 map=4 graph=616 hyp=5]... 88ms
+[1794025354.286895] Processed 636/890 nodes [id=636 map=4 graph=617 hyp=4]... 105ms
+[1794025355.320304] Processed 637/890 nodes [id=637 map=4 graph=618 hyp=4]... 96ms
+[1794025356.320377] Processed 638/890 nodes [id=638 map=4 graph=619 hyp=4]... 136ms
+[1794025357.353786] Processed 639/890 nodes [id=639 map=4 graph=620 hyp=3]... 131ms
+[1794025358.353859] Processed 640/890 nodes [id=640 map=4 graph=621 hyp=6]... 128ms
+[1794025359.387268] Processed 641/890 nodes [id=641 map=4 graph=622 hyp=6]... 170ms
+[1794025360.387341] Processed 642/890 nodes [id=642 map=4 graph=623 hyp=6]... 160ms
+[1794025361.420749] Processed 643/890 nodes [id=643 map=4 graph=624 hyp=7]... 154ms
+[1794025362.420822] Processed 644/890 nodes [id=644 map=4 graph=625 hyp=9]... 150ms
+[1794025363.454230] Processed 645/890 nodes [id=645 map=4 graph=626 hyp=8]... 143ms
+[1794025364.454302] Processed 646/890 nodes [id=646 map=4 graph=627 hyp=8]... 147ms
+[1794025365.487710] Processed 647/890 nodes [id=647 map=4 graph=628 hyp=6]... 154ms
+[1794025366.487782] Processed 648/890 nodes [id=648 map=4 graph=629 hyp=7]... 174ms
+[1794025367.521189] Processed 649/890 nodes [id=649 map=4 graph=630 hyp=5]... 170ms Loop on landmark 14
+[1794025368.521261] Processed 650/890 nodes [id=650 map=4 graph=631 hyp=5]... 174ms
+[1794025369.554668] Processed 651/890 nodes [id=651 map=4 graph=632 hyp=5]... 155ms
+[1794025370.554740] Processed 652/890 nodes [id=652 map=4 graph=633 hyp=7]... 172ms
+[1794025371.588147] Processed 653/890 nodes [id=653 map=4 graph=634 hyp=7]... 143ms Prox on 564 [4]
+[1794025372.588219] Processed 654/890 nodes [id=654 map=4 graph=635 hyp=9]... 141ms Prox on 119 [0]
+[1794025373.621625] Processed 655/890 nodes [id=655 map=4 graph=636 hyp=7]... 167ms Prox on 215 [0]
+[1794025374.621697] Processed 656/890 nodes [id=656 map=4 graph=637 hyp=6]... 173ms Prox on 119 [0]
+[1794025375.655104] Processed 657/890 nodes [id=657 map=4 graph=638 hyp=9]... 143ms Prox on 119 [0]
+[1794025376.655175] Processed 658/890 nodes [id=658 map=4 graph=639 hyp=14]... 186ms Loop on 648 [4]
+[1794025377.688582] Processed 659/890 nodes [id=659 map=4 graph=640 hyp=14]... 86ms Loop on landmark 14
+[1794025378.688653] Processed 660/890 nodes [id=660 map=4 graph=641 hyp=16]... 183ms Loop on 647 [4]
+[1794025379.722059] Processed 661/890 nodes [id=661 map=4 graph=642 hyp=17]... 185ms Loop on 646 [4]
+[1794025380.722130] Processed 662/890 nodes [id=662 map=4 graph=643 hyp=17]... 172ms Loop on 644 [4]
+[1794025381.755536] Processed 663/890 nodes [id=663 map=4 graph=644 hyp=18]... 147ms Loop on 643 [4]
+[1794025382.755607] Processed 664/890 nodes [id=664 map=4 graph=645 hyp=19]... 175ms Loop on 642 [4]
+[1794025383.789013] Processed 665/890 nodes [id=665 map=4 graph=646 hyp=20]... 165ms Prox on 640 [4]
+[1794025384.789083] Processed 666/890 nodes [id=666 map=4 graph=647 hyp=17]... 159ms Loop on 640 [4]
+[1794025385.822489] Processed 667/890 nodes [id=667 map=4 graph=648 hyp=17]... 122ms Loop on 641 [4]
+[1794025386.855894] Processed 668/890 nodes [id=668 map=4 graph=649 hyp=17]... 160ms Loop on 641 [4]
+[1794025387.855964] Processed 669/890 nodes [id=669 map=4 graph=650 hyp=16]... 161ms Loop on 643 [4]
+[1794025388.889370] Processed 670/890 nodes [id=670 map=4 graph=651 hyp=13]... 156ms
+[1794025389.889439] Processed 671/890 nodes [id=671 map=4 graph=652 hyp=13]... 156ms Loop on 660 [4]
+[1794025390.922844] Processed 672/890 nodes [id=672 map=4 graph=653 hyp=14]... 169ms Loop on 660 [4]
+[1794025391.922914] Processed 673/890 nodes [id=673 map=4 graph=654 hyp=13]... 146ms Loop on 660 [4]
+[1794025392.956318] Processed 674/890 nodes [id=674 map=4 graph=655 hyp=12]... 162ms Loop on 655 [4]
+[1794025393.956388] Processed 675/890 nodes [id=675 map=4 graph=656 hyp=13]... 159ms Loop on 655 [4]
+[1794025394.989792] Processed 676/890 nodes [id=676 map=4 graph=657 hyp=13]... 171ms
+[1794025395.989861] Processed 677/890 nodes [id=677 map=4 graph=658 hyp=12]... 149ms Loop on 217 [0]
+[1794025397.023265] Processed 678/890 nodes [id=678 map=4 graph=659 hyp=11]... 159ms Loop on 217 [0]
+[1794025398.023334] Processed 679/890 nodes [id=679 map=4 graph=660 hyp=8]... 152ms
+[1794025399.056739] Processed 680/890 nodes [id=680 map=4 graph=661 hyp=7]... 96ms
+[1794025400.056808] Processed 681/890 nodes [id=681 map=4 graph=662 hyp=10]... 132ms Prox on 219 [0]
+[1794025401.090213] Processed 682/890 nodes [id=682 map=4 graph=663 hyp=12]... 146ms Loop on 219 [0]
+[1794025402.090282] Processed 683/890 nodes [id=683 map=4 graph=664 hyp=10]... 169ms Prox on 219 [0]
+[1794025403.090351] Processed 684/890 nodes [id=684 map=4 graph=665 hyp=8]... 163ms Prox on 219 [0]
+[1794025404.123756] Processed 685/890 nodes [id=685 map=4 graph=666 hyp=5]... 120ms Loop on landmark 1
+[1794025405.123826] Processed 686/890 nodes [id=686 map=4 graph=667 hyp=4]... 75ms
+[1794025406.157231] Processed 687/890 nodes [id=687 map=4 graph=668 hyp=3]... 146ms Loop on landmark 1
+[1794025407.157301] Processed 688/890 nodes [id=688 map=4 graph=669 hyp=5]... 80ms
+[1794025408.190707] Processed 689/890 nodes [id=689 map=4 graph=670 hyp=4]... 131ms Loop on landmark 1
+[1794025409.224113] Processed 690/890 nodes [id=690 map=4 graph=671 hyp=4]... 155ms
+[1794025410.224183] Processed 691/890 nodes [id=691 map=4 graph=672 hyp=4]... 154ms
+[1794025411.257588] Processed 692/890 nodes [id=692 map=4 graph=673 hyp=5]... 154ms
+[1794025412.257659] Processed 693/890 nodes [id=693 map=4 graph=674 hyp=5]... 163ms
+[1794025413.257729] Processed 694/890 nodes [id=694 map=4 graph=675 hyp=3]... 141ms
+[1794025414.291135] Processed 695/890 nodes [id=695 map=4 graph=676 hyp=3]... 140ms
+[1794025415.291205] Processed 696/890 nodes [id=696 map=4 graph=677 hyp=3]... 155ms
+[1794025416.324612] Processed 697/890 nodes [id=697 map=4 graph=677 hyp=4]... 171ms Loop on landmark 10
+[1794025417.324682] Processed 698/890 nodes [id=698 map=4 graph=678 hyp=5]... 166ms
+[1794025418.358088] Processed 699/890 nodes [id=699 map=4 graph=679 hyp=3]... 175ms
+[1794025419.358159] Processed 700/890 nodes [id=700 map=4 graph=680 hyp=3]... 163ms Loop on landmark 14
+[1794025420.391564] Processed 701/890 nodes [id=701 map=4 graph=681 hyp=4]... 167ms Loop on landmark 8
+[1794025421.391634] Processed 702/890 nodes [id=702 map=4 graph=682 hyp=3]... 161ms Loop on landmark 8
+[1794025422.425040] Processed 703/890 nodes [id=703 map=4 graph=683 hyp=7]... 169ms Prox on 595 [4]
+[1794025423.425109] Processed 704/890 nodes [id=704 map=4 graph=684 hyp=6]... 179ms Loop on landmark 5
+[1794025424.458514] Processed 705/890 nodes [id=705 map=4 graph=685 hyp=6]... 157ms
+[1794025425.458583] Processed 706/890 nodes [id=706 map=4 graph=686 hyp=5]... 158ms
+[1794025426.458652] Processed 707/890 nodes [id=707 map=4 graph=687 hyp=4]... 163ms
+[1794025427.492056] Processed 708/890 nodes [id=708 map=4 graph=688 hyp=5]... 152ms
+[1794025428.492124] Processed 709/890 nodes [id=709 map=4 graph=689 hyp=5]... 138ms
+[1794025429.525528] Processed 710/890 nodes [id=710 map=4 graph=690 hyp=8]... 161ms
+[1794025430.558932] Processed 711/890 nodes [id=711 map=4 graph=691 hyp=8]... 164ms Prox on 540 [4]
+[1794025431.559000] Processed 712/890 nodes [id=712 map=4 graph=692 hyp=9]... 147ms Prox on 533 [4]
+[1794025432.592404] Processed 713/890 nodes [id=713 map=4 graph=693 hyp=7]... 177ms Prox on 417 [3]
+[1794025433.592472] Processed 714/890 nodes [id=714 map=4 graph=694 hyp=7]... 93ms
+[1794025434.625876] Processed 715/890 nodes [id=715 map=4 graph=695 hyp=7]... 76ms
+[1794025435.625944] Processed 716/890 nodes [id=716 map=4 graph=696 hyp=4]... 82ms
+[1794025436.626012] Processed 717/890 nodes [id=717 map=4 graph=697 hyp=4]... 58ms
+[1794025437.659416] Processed 718/890 nodes [id=718 map=4 graph=698 hyp=3]... 91ms
+[1794025438.659485] Processed 719/890 nodes [id=719 map=4 graph=699 hyp=4]... 95ms
+[1794025439.692889] Processed 720/890 nodes [id=720 map=4 graph=700 hyp=4]... 96ms
+[1794025440.692958] Processed 721/890 nodes [id=721 map=4 graph=701 hyp=5]... 65ms
+[1794025441.726362] Processed 722/890 nodes [id=722 map=4 graph=702 hyp=4]... 79ms
+[1794025442.726432] Processed 723/890 nodes [id=723 map=4 graph=703 hyp=4]... 77ms
+[1794025443.759836] Processed 724/890 nodes [id=724 map=4 graph=704 hyp=6]... 86ms
+[1794025444.759906] Processed 725/890 nodes [id=725 map=4 graph=705 hyp=7]... 170ms
+[1794025445.793310] Processed 726/890 nodes [id=726 map=4 graph=706 hyp=7]... 172ms Prox on 196 [0]
+[1794025446.793380] Processed 727/890 nodes [id=727 map=4 graph=707 hyp=3]... 80ms
+[1794025447.826784] Processed 728/890 nodes [id=728 map=4 graph=708 hyp=4]... 103ms
+[1794025448.860189] Processed 729/890 nodes [id=729 map=4 graph=709 hyp=6]... 168ms
+[1794025449.860258] Processed 730/890 nodes [id=730 map=4 graph=710 hyp=7]... 158ms
+[1794025450.893662] Processed 731/890 nodes [id=731 map=4 graph=711 hyp=5]... 170ms
+[1794025451.893731] Processed 732/890 nodes [id=732 map=4 graph=712 hyp=5]... 165ms
+[1794025452.893800] Processed 733/890 nodes [id=733 map=4 graph=713 hyp=7]... 157ms
+[1794025453.927204] Processed 734/890 nodes [id=734 map=4 graph=714 hyp=6]... 242ms
+[1794025454.927273] Processed 735/890 nodes [id=735 map=4 graph=715 hyp=5]... 152ms
+[1794025455.960677] Processed 736/890 nodes [id=736 map=4 graph=716 hyp=5]... 175ms
+[1794025456.960746] Processed 737/890 nodes [id=737 map=4 graph=717 hyp=5]... 157ms
+[1794025457.994150] Processed 738/890 nodes [id=738 map=4 graph=718 hyp=7]... 158ms
+[1794025458.994219] Processed 739/890 nodes [id=739 map=4 graph=719 hyp=7]... 159ms
+[1794025460.027624] Processed 740/890 nodes [id=740 map=4 graph=720 hyp=7]... 180ms Prox on 196 [0]
+[1794025461.027692] Processed 741/890 nodes [id=741 map=4 graph=721 hyp=6]... 151ms Prox on 196 [0]
+[1794025462.061097] Processed 742/890 nodes [id=742 map=4 graph=722 hyp=7]... 137ms Prox on 732 [4]
+[1794025463.061166] Processed 743/890 nodes [id=743 map=4 graph=723 hyp=10]... 148ms
+[1794025464.094570] Processed 744/890 nodes [id=744 map=4 graph=724 hyp=12]... 142ms
+[1794025465.094638] Processed 745/890 nodes [id=745 map=4 graph=725 hyp=12]... 148ms
+[1794025466.128042] Processed 746/890 nodes [id=746 map=4 graph=726 hyp=11]... 170ms Loop on 733 [4]
+[1794025467.161446] Processed 747/890 nodes [id=747 map=4 graph=727 hyp=11]... 167ms Loop on landmark 13
+[1794025468.161515] Processed 748/890 nodes [id=748 map=4 graph=728 hyp=10]... 159ms
+[1794025469.194918] Processed 749/890 nodes [id=749 map=4 graph=728 hyp=9]... 131ms Loop on landmark 13
+[1794025470.194987] Processed 750/890 nodes [id=750 map=4 graph=729 hyp=10]... 157ms
+[1794025471.228391] Processed 751/890 nodes [id=751 map=4 graph=730 hyp=11]... 161ms
+[1794025472.228460] Processed 752/890 nodes [id=752 map=4 graph=731 hyp=11]... 156ms Loop on landmark 9
+[1794025473.261864] Processed 753/890 nodes [id=753 map=4 graph=732 hyp=3]... 154ms Loop on landmark 9
+[1794025474.261933] Processed 754/890 nodes [id=754 map=4 graph=733 hyp=3]... 143ms Loop on landmark 6
+[1794025475.295337] Processed 755/890 nodes [id=755 map=4 graph=734 hyp=2]... 175ms Loop on landmark 6
+[1794025476.295406] Processed 756/890 nodes [id=756 map=4 graph=735 hyp=2]... 178ms Loop on landmark 6
+[1794025477.328810] Processed 757/890 nodes [id=757 map=4 graph=735 hyp=2]... 137ms Loop on landmark 6
+[1794025478.328879] Processed 758/890 nodes [id=758 map=4 graph=736 hyp=2]... 125ms Loop on landmark 6
+[1794025479.362284] Processed 759/890 nodes [id=759 map=4 graph=737 hyp=4]... 79ms
+[1794025480.362353] Processed 760/890 nodes [id=760 map=4 graph=738 hyp=4]... 97ms
+[1794025481.395757] Processed 761/890 nodes [id=761 map=4 graph=739 hyp=8]... 179ms Prox on 460 [3]
+[1794025482.429162] Processed 762/890 nodes [id=762 map=4 graph=740 hyp=4]... 154ms Loop on landmark 2
+[1794025483.429230] Processed 763/890 nodes [id=763 map=4 graph=741 hyp=3]... 149ms Prox on 152 [0]
+[1794025484.462635] Processed 764/890 nodes [id=764 map=4 graph=742 hyp=4]... 173ms Prox on 152 [0]
+[1794025485.462703] Processed 765/890 nodes [id=765 map=4 graph=743 hyp=6]... 172ms Prox on 742 [4]
+[1794025486.496108] Processed 766/890 nodes [id=766 map=4 graph=744 hyp=5]... 142ms Loop on landmark 17
+[1794025487.496176] Processed 767/890 nodes [id=767 map=4 graph=745 hyp=4]... 168ms Loop on landmark 17
+[1794025488.529580] Processed 768/890 nodes [id=768 map=4 graph=746 hyp=5]... 176ms Loop on landmark 17
+[1794025489.529648] Processed 769/890 nodes [id=769 map=4 graph=747 hyp=6]... 228ms Prox on 528 [3]
+[1794025490.563052] Processed 770/890 nodes [id=770 map=4 graph=748 hyp=8]... 206ms Prox on 526 [3]
+[1794025491.596455] Processed 771/890 nodes [id=771 map=4 graph=749 hyp=10]... 210ms Prox on 528 [3]
+[1794025492.596523] Processed 772/890 nodes [id=772 map=4 graph=750 hyp=7]... 152ms
+[1794025493.629926] Processed 773/890 nodes [id=773 map=4 graph=751 hyp=7]... 223ms Prox on 138 [0]
+[1794025494.629994] Processed 774/890 nodes [id=774 map=4 graph=752 hyp=7]... 217ms
+[1794025495.663397] Processed 775/890 nodes [id=775 map=4 graph=753 hyp=8]... 150ms
+[1794025496.696800] Processed 776/890 nodes [id=776 map=4 graph=754 hyp=7]... 164ms
+[1794025497.696868] Processed 777/890 nodes [id=777 map=4 graph=755 hyp=8]... 99ms
+[1794025498.730271] Processed 778/890 nodes [id=778 map=4 graph=756 hyp=7]... 81ms
+[1794025499.730338] Processed 779/890 nodes [id=779 map=4 graph=757 hyp=6]... 96ms
+[1794025500.763740] Processed 780/890 nodes [id=780 map=4 graph=758 hyp=5]... 149ms
+[1794025501.763807] Processed 781/890 nodes [id=781 map=4 graph=759 hyp=10]... 186ms
+[1794025502.797210] Processed 782/890 nodes [id=782 map=4 graph=760 hyp=10]... 210ms
+[1794025503.830612] Processed 783/890 nodes [id=783 map=4 graph=761 hyp=10]... 191ms
+[1794025504.830678] Processed 784/890 nodes [id=784 map=4 graph=762 hyp=9]... 187ms
+[1794025505.864080] Processed 785/890 nodes [id=785 map=4 graph=763 hyp=6]... 177ms Loop on landmark 10
+[1794025506.897482] Processed 786/890 nodes [id=786 map=4 graph=764 hyp=6]... 192ms
+[1794025507.897548] Processed 787/890 nodes [id=787 map=4 graph=765 hyp=5]... 181ms
+[1794025508.930950] Processed 788/890 nodes [id=788 map=4 graph=766 hyp=9]... 179ms Prox on 750 [4]
+[1794025509.931016] Processed 789/890 nodes [id=789 map=4 graph=767 hyp=9]... 194ms
+[1794025510.964417] Processed 790/890 nodes [id=790 map=4 graph=768 hyp=9]... 200ms Prox on 745 [4]
+[1794025511.964483] Processed 791/890 nodes [id=791 map=4 graph=769 hyp=7]... 146ms Loop on landmark 13
+[1794025512.997884] Processed 792/890 nodes [id=792 map=4 graph=770 hyp=7]... 158ms Loop on landmark 13
+[1794025514.031285] Processed 793/890 nodes [id=793 map=4 graph=771 hyp=4]... 183ms Loop on landmark 13
+[1794025515.031350] Processed 794/890 nodes [id=794 map=4 graph=772 hyp=4]... 140ms Loop on landmark 13
+[1794025516.064751] Processed 795/890 nodes [id=795 map=4 graph=773 hyp=5]... 170ms
+[1794025517.064817] Processed 796/890 nodes [id=796 map=4 graph=774 hyp=7]... 157ms Loop on landmark 13
+[1794025518.098218] Processed 797/890 nodes [id=797 map=4 graph=775 hyp=5]... 162ms Loop on landmark 13
+[1794025519.098283] Processed 798/890 nodes [id=798 map=4 graph=776 hyp=4]... 167ms Loop on landmark 13
+[1794025520.131683] Processed 799/890 nodes [id=799 map=4 graph=777 hyp=6]... 174ms
+[1794025521.165084] Processed 800/890 nodes [id=800 map=4 graph=778 hyp=7]... 194ms Loop on landmark 4
+[1794025522.165149] Processed 801/890 nodes [id=801 map=4 graph=779 hyp=6]... 205ms Loop on landmark 4
+[1794025523.198550] Processed 802/890 nodes [id=802 map=4 graph=780 hyp=6]... 206ms
+[1794025524.198615] Processed 803/890 nodes [id=803 map=4 graph=781 hyp=6]... 245ms Prox on 403 [2]
+[1794025525.232015] Processed 804/890 nodes [id=804 map=4 graph=782 hyp=7]... 197ms
+[1794025526.232080] Processed 805/890 nodes [id=805 map=4 graph=783 hyp=8]... 204ms Prox on 39 [0]
+[1794025527.265480] Processed 806/890 nodes [id=806 map=4 graph=784 hyp=10]... 105ms
+[1794025528.298881] Processed 807/890 nodes [id=807 map=4 graph=785 hyp=11]... 204ms Loop on 325 [2]
+[1794025529.298945] Processed 808/890 nodes [id=808 map=4 graph=786 hyp=10]... 76ms
+[1794025530.299010] Processed 809/890 nodes [id=809 map=4 graph=787 hyp=10]... 75ms
+[1794025531.332410] Processed 810/890 nodes [id=810 map=4 graph=788 hyp=6]... 63ms
+[1794025532.365810] Processed 811/890 nodes [id=811 map=4 graph=789 hyp=6]... 98ms
+[1794025533.365875] Processed 812/890 nodes [id=812 map=4 graph=790 hyp=6]... 88ms
+[1794025534.399275] Processed 813/890 nodes [id=813 map=4 graph=791 hyp=8]... 76ms
+[1794025535.399340] Processed 814/890 nodes [id=814 map=4 graph=792 hyp=6]... 67ms
+[1794025536.399405] Processed 815/890 nodes [id=815 map=4 graph=793 hyp=6]... 81ms
+[1794025537.432805] Processed 816/890 nodes [id=816 map=4 graph=794 hyp=9]... 99ms
+[1794025538.466206] Processed 817/890 nodes [id=817 map=4 graph=795 hyp=11]... 94ms
+[1794025539.466271] Processed 818/890 nodes [id=818 map=4 graph=796 hyp=11]... 96ms
+[1794025540.499672] Processed 819/890 nodes [id=819 map=4 graph=797 hyp=7]... 79ms
+[1794025541.499737] Processed 820/890 nodes [id=820 map=4 graph=798 hyp=9]... 179ms Prox on 440 [3]
+[1794025542.533138] Processed 821/890 nodes [id=821 map=4 graph=799 hyp=7]... 90ms
+[1794025543.533203] Processed 822/890 nodes [id=822 map=4 graph=800 hyp=8]... 108ms
+[1794025544.566604] Processed 823/890 nodes [id=823 map=4 graph=801 hyp=7]... 81ms
+[1794025545.566669] Processed 824/890 nodes [id=824 map=4 graph=802 hyp=4]... 74ms
+[1794025546.600071] Processed 825/890 nodes [id=825 map=4 graph=803 hyp=4]... 73ms
+[1794025547.600136] Processed 826/890 nodes [id=826 map=4 graph=804 hyp=3]... 68ms
+[1794025548.633537] Processed 827/890 nodes [id=827 map=4 graph=805 hyp=1]... 66ms
+[1794025549.633602] Processed 828/890 nodes [id=828 map=4 graph=806 hyp=3]... 62ms
+[1794025550.667002] Processed 829/890 nodes [id=829 map=4 graph=807 hyp=4]... 63ms
+[1794025551.700403] Processed 830/890 nodes [id=830 map=4 graph=808 hyp=5]... 72ms
+[1794025552.733803] Processed 831/890 nodes [id=831 map=4 graph=809 hyp=4]... 62ms
+[1794025553.733867] Processed 832/890 nodes [id=832 map=4 graph=810 hyp=4]... 72ms
+[1794025554.767267] Processed 833/890 nodes [id=833 map=4 graph=811 hyp=3]... 59ms
+[1794025555.767331] Processed 834/890 nodes [id=834 map=4 graph=812 hyp=2]... 81ms
+[1794025556.800732] Processed 835/890 nodes [id=835 map=4 graph=813 hyp=3]... 70ms
+[1794025557.800796] Processed 836/890 nodes [id=836 map=4 graph=814 hyp=2]... 71ms
+[1794025558.834195] Processed 837/890 nodes [id=837 map=4 graph=815 hyp=3]... 69ms
+[1794025559.834259] Processed 838/890 nodes [id=838 map=4 graph=816 hyp=4]... 55ms
+[1794025560.867658] Processed 839/890 nodes [id=839 map=4 graph=817 hyp=2]... 85ms
+[1794025561.867722] Processed 840/890 nodes [id=840 map=4 graph=818 hyp=3]... 192ms Loop on landmark 11
+[1794025562.901121] Processed 841/890 nodes [id=841 map=4 graph=819 hyp=3]... 168ms Loop on landmark 11
+[1794025563.901185] Processed 842/890 nodes [id=842 map=4 graph=820 hyp=3]... 188ms Loop on landmark 11
+[1794025564.934584] Processed 843/890 nodes [id=843 map=4 graph=821 hyp=3]... 189ms Loop on landmark 11
+[1794025565.934649] Processed 844/890 nodes [id=844 map=4 graph=822 hyp=2]... 78ms
+[1794025566.968048] Processed 845/890 nodes [id=845 map=4 graph=823 hyp=2]... 71ms
+[1794025567.968112] Processed 846/890 nodes [id=846 map=4 graph=824 hyp=0]... 94ms
+[1794025569.001512] Processed 847/890 nodes [id=847 map=4 graph=825 hyp=6]... 87ms
+[1794025570.001576] Processed 848/890 nodes [id=848 map=4 graph=826 hyp=3]... 86ms
+[1794025571.034976] Processed 849/890 nodes [id=849 map=4 graph=827 hyp=3]... 84ms
+[1794025572.035040] Processed 850/890 nodes [id=850 map=4 graph=828 hyp=7]... 81ms
+[1794025573.068441] Processed 851/890 nodes [id=851 map=4 graph=829 hyp=4]... 81ms
+[1794025574.068506] Processed 852/890 nodes [id=852 map=4 graph=830 hyp=2]... 157ms Loop on landmark 11
+[1794025575.101905] Processed 853/890 nodes [id=853 map=4 graph=831 hyp=3]... 181ms Loop on landmark 11
+[1794025576.101970] Processed 854/890 nodes [id=854 map=4 graph=832 hyp=4]... 181ms Loop on landmark 11
+[1794025577.135370] Processed 855/890 nodes [id=855 map=4 graph=833 hyp=6]... 180ms Loop on landmark 11
+[1794025578.168771] Processed 856/890 nodes [id=856 map=4 graph=834 hyp=8]... 172ms Prox on 836 [4]
+[1794025579.168836] Processed 857/890 nodes [id=857 map=4 graph=835 hyp=12]... 199ms Loop on 836 [4]
+[1794025580.202235] Processed 858/890 nodes [id=858 map=4 graph=836 hyp=15]... 201ms Loop on 836 [4]
+[1794025581.202300] Processed 859/890 nodes [id=859 map=4 graph=837 hyp=15]... 183ms Loop on 835 [4]
+[1794025582.235699] Processed 860/890 nodes [id=860 map=4 graph=838 hyp=12]... 186ms Loop on 835 [4]
+[1794025583.235764] Processed 861/890 nodes [id=861 map=4 graph=839 hyp=12]... 192ms Loop on 832 [4]
+[1794025584.269164] Processed 862/890 nodes [id=862 map=4 graph=840 hyp=6]... 91ms
+[1794025585.269227] Processed 863/890 nodes [id=863 map=4 graph=841 hyp=4]... 99ms
+[1794025586.302626] Processed 864/890 nodes [id=864 map=4 graph=842 hyp=5]... 100ms
+[1794025587.302690] Processed 865/890 nodes [id=865 map=4 graph=843 hyp=3]... 95ms
+[1794025588.336089] Processed 866/890 nodes [id=866 map=4 graph=844 hyp=3]... 90ms
+[1794025589.336152] Processed 867/890 nodes [id=867 map=4 graph=845 hyp=2]... 81ms
+[1794025590.369550] Processed 868/890 nodes [id=868 map=4 graph=846 hyp=0]... 74ms
+[1794025591.402949] Processed 869/890 nodes [id=869 map=4 graph=847 hyp=3]... 178ms Loop on landmark 11
+[1794025592.403012] Processed 870/890 nodes [id=870 map=4 graph=848 hyp=2]... 165ms Loop on landmark 11
+[1794025593.436410] Processed 871/890 nodes [id=871 map=4 graph=849 hyp=5]... 175ms Loop on landmark 11
+[1794025594.436473] Processed 872/890 nodes [id=872 map=4 graph=850 hyp=5]... 85ms
+[1794025595.469871] Processed 873/890 nodes [id=873 map=4 graph=851 hyp=5]... 75ms
+[1794025596.469934] Processed 874/890 nodes [id=874 map=4 graph=852 hyp=4]... 77ms
+[1794025597.503332] Processed 875/890 nodes [id=875 map=4 graph=853 hyp=3]... 72ms
+[1794025598.570066] Processed 876/890 nodes [id=876 map=4 graph=854 hyp=4]... 77ms
+[1794025599.603464] Processed 877/890 nodes [id=877 map=4 graph=855 hyp=5]... 69ms
+[1794025600.636862] Processed 878/890 nodes [id=878 map=4 graph=856 hyp=4]... 72ms
+[1794025601.636925] Processed 879/890 nodes [id=879 map=4 graph=857 hyp=5]... 81ms
+[1794025602.670324] Processed 880/890 nodes [id=880 map=4 graph=858 hyp=4]... 74ms
+[1794025603.670387] Processed 881/890 nodes [id=881 map=4 graph=859 hyp=5]... 73ms
+[1794025604.703786] Processed 882/890 nodes [id=882 map=4 graph=860 hyp=3]... 71ms
+[1794025605.703849] Processed 883/890 nodes [id=883 map=4 graph=861 hyp=4]... 80ms
+[1794025606.703913] Processed 884/890 nodes [id=884 map=4 graph=862 hyp=5]... 79ms
+[1794025607.737312] Processed 885/890 nodes [id=885 map=4 graph=863 hyp=3]... 68ms
+[1794025608.770711] Processed 886/890 nodes [id=886 map=4 graph=864 hyp=5]... 82ms
+[1794025609.770775] Processed 887/890 nodes [id=887 map=4 graph=865 hyp=4]... 80ms
+[1794025610.804175] Processed 888/890 nodes [id=888 map=4 graph=866 hyp=5]... 88ms
+[1794025611.937581] Processed 889/890 nodes [id=889 map=4 graph=867 hyp=5]... 106ms
+[1794025612.937645] Processed 890/890 nodes [id=890 map=4 graph=868 hyp=5]... 204ms Loop on landmark 11
+Total loop closures = 178 (Loop=68, Prox=110, In Motion=178/890, Intra=103, Inter=75)
+Sessions linked to the last pose: 5/5
+Closing database "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/merged.db"...
+Closing database "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/merged.db"... done!
+[Extract RGB-D and cameras]
+Opening database "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/merged.db"...
+Opening database "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/merged.db"... done (0.000211s).
+Loading optimized poses from database...
+Loading optimized poses from database... done (868 optimized poses loaded).
+Export images...
+Processed 9/868 (1%) nodes...
+Processed 18/868 (2%) nodes...
+Processed 27/868 (3%) nodes...
+Processed 35/868 (4%) nodes...
+Processed 44/868 (5%) nodes...
+Processed 53/868 (6%) nodes...
+Processed 61/868 (7%) nodes...
+Processed 70/868 (8%) nodes...
+Processed 79/868 (9%) nodes...
+Processed 87/868 (10%) nodes...
+Processed 96/868 (11%) nodes...
+Processed 105/868 (12%) nodes...
+Processed 113/868 (13%) nodes...
+Processed 122/868 (14%) nodes...
+Processed 131/868 (15%) nodes...
+Processed 139/868 (16%) nodes...
+Processed 148/868 (17%) nodes...
+Processed 157/868 (18%) nodes...
+Processed 165/868 (19%) nodes...
+Processed 174/868 (20%) nodes...
+Processed 183/868 (21%) nodes...
+Processed 191/868 (22%) nodes...
+Processed 200/868 (23%) nodes...
+Processed 209/868 (24%) nodes...
+Processed 217/868 (25%) nodes...
+Processed 226/868 (26%) nodes...
+Processed 235/868 (27%) nodes...
+Processed 244/868 (28%) nodes...
+Processed 252/868 (29%) nodes...
+Processed 261/868 (30%) nodes...
+Processed 270/868 (31%) nodes...
+Processed 278/868 (32%) nodes...
+Processed 287/868 (33%) nodes...
+Processed 296/868 (34%) nodes...
+Processed 304/868 (35%) nodes...
+Processed 313/868 (36%) nodes...
+Processed 322/868 (37%) nodes...
+Processed 330/868 (38%) nodes...
+Processed 339/868 (39%) nodes...
+Processed 348/868 (40%) nodes...
+Processed 356/868 (41%) nodes...
+Processed 365/868 (42%) nodes...
+Processed 374/868 (43%) nodes...
+Processed 382/868 (44%) nodes...
+Processed 391/868 (45%) nodes...
+Processed 400/868 (46%) nodes...
+Processed 408/868 (47%) nodes...
+Processed 417/868 (48%) nodes...
+Processed 426/868 (49%) nodes...
+Processed 434/868 (50%) nodes...
+Processed 443/868 (51%) nodes...
+Processed 452/868 (52%) nodes...
+Processed 461/868 (53%) nodes...
+Processed 469/868 (54%) nodes...
+Processed 478/868 (55%) nodes...
+Processed 487/868 (56%) nodes...
+Processed 495/868 (57%) nodes...
+Processed 504/868 (58%) nodes...
+Processed 513/868 (59%) nodes...
+Processed 521/868 (60%) nodes...
+Processed 530/868 (61%) nodes...
+Processed 539/868 (62%) nodes...
+Processed 547/868 (63%) nodes...
+Processed 556/868 (64%) nodes...
+Processed 565/868 (65%) nodes...
+Processed 573/868 (66%) nodes...
+Processed 582/868 (67%) nodes...
+Processed 591/868 (68%) nodes...
+Processed 599/868 (69%) nodes...
+Processed 608/868 (70%) nodes...
+Processed 617/868 (71%) nodes...
+Processed 625/868 (72%) nodes...
+Processed 634/868 (73%) nodes...
+Processed 643/868 (74%) nodes...
+Processed 651/868 (75%) nodes...
+Processed 660/868 (76%) nodes...
+Processed 669/868 (77%) nodes...
+Processed 678/868 (78%) nodes...
+Processed 686/868 (79%) nodes...
+Processed 695/868 (80%) nodes...
+Processed 704/868 (81%) nodes...
+Processed 712/868 (82%) nodes...
+Processed 721/868 (83%) nodes...
+Processed 730/868 (84%) nodes...
+Processed 738/868 (85%) nodes...
+Processed 747/868 (86%) nodes...
+Processed 756/868 (87%) nodes...
+Processed 764/868 (88%) nodes...
+Processed 773/868 (89%) nodes...
+Processed 782/868 (90%) nodes...
+Processed 790/868 (91%) nodes...
+Processed 799/868 (92%) nodes...
+Processed 808/868 (93%) nodes...
+Processed 816/868 (94%) nodes...
+Processed 825/868 (95%) nodes...
+Processed 834/868 (96%) nodes...
+Processed 842/868 (97%) nodes...
+Processed 851/868 (98%) nodes...
+851 images exported!
+851 camera poses exported to "/Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109/working/extracted/capture_camera_poses.txt". (min=[-0.908848,-0.882810,-0.160387] max=[1.341285,0.596895,0.996735])
+[Read saved tag poses]
+[Export original graph observations]
+[Open3D fusion and cleanup]
+Fused 1/851 frames
+Fused 51/851 frames
+Fused 101/851 frames
+Fused 151/851 frames
+Fused 201/851 frames
+Fused 251/851 frames
+Fused 301/851 frames
+Fused 351/851 frames
+Fused 401/851 frames
+Fused 451/851 frames
+Fused 501/851 frames
+Fused 551/851 frames
+Fused 601/851 frames
+Fused 651/851 frames
+Fused 701/851 frames
+Fused 751/851 frames
+Fused 801/851 frames
+Fused 851/851 frames
+[1;33m[Open3D WARNING] Write Ply clamped color value to valid range[0;m
+[1;33m[Open3D WARNING] Write Ply clamped color value to valid range[0;m
+[1;33m[Open3D WARNING] Write Ply clamped color value to valid range[0;m
+Mesh: 609,163 original → 601,049 cleaned → 499,893 display triangles
+[Bake colour texture]
+UV mesh: 499,893 manifold triangles
+Generating UV atlas…
+[Open3D INFO] actual parallel_partitions 9
+Baking 4096×4096 colour texture…
+[Open3D INFO] .obj export is text-based; write_ascii=false is ignored.
+Completed /Users/gert/Code/campervan/.local/scans/embedded-rtabmap-20261109: 851 frames, 178.0s
