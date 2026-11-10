@@ -1,5 +1,6 @@
 /.venv/
-# Saved inputs in data/ are versioned; caches, recovery files and temporary writes are not.
+# Local project inputs and scan data never belong in Git.
+/data/
 /.local/
 /data/*.tmp
 /.venv-prod/

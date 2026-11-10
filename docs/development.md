@@ -8,7 +8,7 @@ See the [README](../README.md#run-locally) for dependencies and local startup co
 - `src/campervan/parameters.py`: dimensions and live-control metadata.
 - `frontend/src/`: TypeScript web interface.
 - `src/campervan/materials.json`: product catalogue and supplier details.
-- `data/`: saved project inputs, versioned with the source.
+- `data/`: local project inputs and scan data; ignored by Git. Back up this directory separately.
 - `.local/`: generated model cache and plan recovery files, ignored by Git.
 
 Use Python through `uv run --locked`. `make setup` installs the locked dependencies without activating the virtual
