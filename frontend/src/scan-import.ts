@@ -2,7 +2,6 @@
 import { createTagLayout, processCaptures, readScanImports, uploadCapture,
   type ScanImports, type ProcessingJob } from './scan-import-api';
 import { jobStatus, createJobView } from './scan-job-status';
-import { createWorkflow } from './scan-workflow-api';
 interface Host {
   defaultLayout(group: string): string | undefined;
   changed(): Promise<void>;
@@ -57,6 +56,7 @@ export function createScanImport(host: Host) {
   let data: ScanImports = { captures: [], layouts: [], jobs: [] };
   let group = ''; let queued: File[] = []; let selected = new Set<string>();
   let busy = false; let currentJob: ProcessingJob | undefined;
+  let layoutSelectionRequired = false;
   const handoffs = new Map<string, number>();
   const jobs = jobStatus;
   const subscriptions = new Map<string, () => void>();
@@ -66,10 +66,10 @@ export function createScanImport(host: Host) {
   const activities = new Set<{ group: string; name: string; node: HTMLElement }>();
   function fail(reason: unknown) { error.textContent = reason instanceof Error ? reason.message : String(reason); }
   function layoutChanged() {
-    newLayout.hidden = !!layout.value;
-    for (const input of newLayout.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input,select')) input.disabled = !!layout.value;
+    newLayout.hidden = layoutSelectionRequired || !!layout.value;
+    for (const input of newLayout.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input,select')) input.disabled = newLayout.hidden;
   }
-  layout.onchange = layoutChanged;
+  layout.onchange = () => { layoutSelectionRequired = false; layout.required = false; layoutChanged(); };
   function fileRows() {
     fileList.replaceChildren();
     for (const capture of data.captures.filter(item => item.group_id === group)) {
@@ -146,7 +146,6 @@ export function createScanImport(host: Host) {
           terminal.add(updated.id);
           void (async () => { try { await host.changed();
               if (updated.state !== 'completed' || !updated.result_key) return;
-              await createWorkflow(updated.run_id, updated.layout_id);
               const token = handoffs.get(updated.id); const autoOpen = token !== undefined && dialog.open
                 && currentJob?.id === updated.id && token === host.interactionGeneration() && host.canAutoOpen();
               if (autoOpen) dialog.close(); host.completed(updated.result_key, autoOpen);
@@ -156,7 +155,7 @@ export function createScanImport(host: Host) {
       }));
     }
   }
-  async function open(id: string, label: string, incoming: File[] = []) {
+  async function open(id: string, label: string, incoming: File[] = [], layoutId?: string) {
     if (busy) { if (!dialog.open) dialog.showModal(); return; }
     group = id; queued = []; error.textContent = ''; progressPanel.hidden = true;
     get<HTMLElement>('[data-group]').textContent = `Capture group: ${label}`;
@@ -166,9 +165,17 @@ export function createScanImport(host: Host) {
       await refresh(); selected = new Set(data.captures.filter(item => item.group_id === id).map(item => item.id));
       layout.replaceChildren(new Option('Create new tag layout…', ''));
       for (const item of data.layouts) layout.add(new Option(`${item.name} · ${item.tag_size_mm} mm ${item.tag_family}`, item.id));
-      layout.value = host.defaultLayout(id) ?? ''; if (layout.selectedIndex < 0) layout.selectedIndex = 0;
+      const chosenLayout = layoutId ?? host.defaultLayout(id) ?? '';
+      layout.value = chosenLayout;
+      const missingLayout = !!chosenLayout && layout.selectedIndex < 0;
+      layoutSelectionRequired = missingLayout;
+      if (missingLayout) {
+        const missing = new Option('Choose a tag layout…', '', true, true); missing.disabled = true;
+        layout.prepend(missing); layout.required = true;
+      } else layout.required = false;
       layoutName.value = label; name.value = `${label} — reconstruction`; layoutChanged();
       setBusy(false); addFiles(incoming);
+      if (missingLayout) fail(new Error('The selected result’s tag layout is unavailable. Choose the correct layout explicitly before processing.'));
       const job = data.jobs.find(item => item.group_id === id);
       currentJob = job; if (job) { showJob(job); void jobs.refresh(job.id); }
       files.focus();
@@ -177,6 +184,7 @@ export function createScanImport(host: Host) {
   form.onsubmit = event => { event.preventDefault(); void start(); };
   async function start() {
     if (busy) return;
+    if (layoutSelectionRequired) { fail(new Error('Choose the correct tag layout before processing.')); return; }
     if (data.jobs.some(job => job.state === 'processing')) { fail(new Error('A reconstruction is already running. Wait for it to finish.')); return; }
     if (!selected.size && !queued.length) { fail(new Error('Choose at least one capture database.')); return; }
     if (!name.value.trim() || (!layout.value && !layoutName.value.trim())) { fail(new Error('Enter a result and tag-layout name.')); return; }

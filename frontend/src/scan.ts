@@ -11,7 +11,7 @@ import { createViewerCamera, type CameraViewer, type CameraState } from './viewe
 import { onTab } from './tabs';
 import { assetUrl } from './site-runtime';
 import { createScanTags } from './scan-tags';
-import { createScanMeasure } from './scan-measure';
+import { createScanWorkflowPanel } from './scan-workflow-panel';
 import { readScanResults, type ScanResult as Scan, type ScanLayer as Layer } from './scan-library-api';
 import { createScanLibrary } from './scan-library';
 
@@ -91,8 +91,7 @@ export function setupScan(panel: HTMLElement) {
         <span data-tag-count>AprilTags</span></label>
       <p role="status" aria-live="polite">Select Scan to load the processed result.</p>
     </div>
-    <div id="scan-viewer" aria-label="Interactive scan viewer"></div>
-    <div class="scan-measure-status" data-measure-bar hidden></div>`;
+    <div id="scan-viewer" aria-label="Interactive scan viewer"></div>`;
   const select = panel.querySelector<HTMLSelectElement>('[data-scan]')!;
   const layers = panel.querySelector<HTMLSelectElement>('[data-layer]')!;
   const size = panel.querySelector<HTMLInputElement>('input[type=range]')!;
@@ -120,24 +119,39 @@ export function setupScan(panel: HTMLElement) {
   panel.querySelector('.scan-controls')!.append(completion);
   let tagOverlay: ReturnType<typeof createScanTags> | undefined;
   let renderedScan: Scan | undefined;
-  const measure = createScanMeasure({ panel, container, bar: panel.querySelector<HTMLElement>('[data-measure-bar]')!,
-    capture: () => renderedScan, overlay: () => tagOverlay, loading: () => loading,
-    view: async key => { await refreshScans(); await changeResult(key); },
-    addCaptures: () => { void manager.addCaptures(renderedScan?.key ?? select.value); },
-    layoutTagIds: layout => scans.filter(scan => scan.tag_layout_id === layout).flatMap(scan => (scan.tags ?? []).map(tag => tag.id)) });
+  const workflow = createScanWorkflowPanel({
+    capture: () => renderedScan, loading: () => loading,
+    addCaptures: () => manager.addCaptures(renderedScan?.key ?? select.value),
+  });
+  const workflowTools = document.createElement('div'); workflowTools.className = 'scan-workflow-tools';
+  workflowTools.dataset.campervanControl = 'true';
+  const reviewButton = document.createElement('button'); reviewButton.type = 'button';
+  reviewButton.textContent = 'Review capture…'; reviewButton.setAttribute('aria-haspopup', 'dialog');
+  reviewButton.setAttribute('aria-controls', 'scan-workflow'); reviewButton.onclick = () => workflow.openReview();
+  workflowTools.append(reviewButton);
+  function refreshWorkflow() { workflow.refresh(); reviewButton.disabled = loading || !renderedScan; }
+  function attachWorkflow() {
+    (container.querySelector('.tcv_cad_toolbar') ?? panel.querySelector('.scan-controls'))?.append(workflowTools);
+    refreshWorkflow();
+  }
   const camera = createViewerCamera(container, () => viewer, 'campervan.scan.camera.reference', () => loading);
-  measure.attach();
+  attachWorkflow();
   const manager = createScanLibrary({ results: () => scans, currentKey: () => select.value,
     view: key => changeResult(key), changed: preserveSelection => refreshScans(preserveSelection), interactionGeneration: () => interactionGeneration,
-    canAutoOpen: () => !panel.hidden && !measure.hasUnsaved(),
+    canAutoOpen: () => !panel.hidden,
     importCompleted(key, autoOpen) {
       const announce = (detail = 'Capture processing complete.') => { completion.replaceChildren(`${detail} `); const button = document.createElement('button');
         button.type = 'button'; button.textContent = 'Review capture'; button.onclick = () => { void review(false); }; completion.append(button); };
       const review = async (guard: boolean) => {
-        if (!guard) { completion.replaceChildren(); await changeResult(key); measure.openReview(); return; }
+        if (!guard) {
+          completion.replaceChildren(); await changeResult(key);
+          if (renderedScan?.key === key) workflow.openReview();
+          else announce('Could not display the completed capture.');
+          return;
+        }
         const token = interactionGeneration; const sceneToken = generation; const previousKey = select.value;
         const previousLayer = layers.value; const previousScan = renderedScan;
-        const valid = () => token === interactionGeneration && sceneToken === generation && !panel.hidden && !measure.hasUnsaved()
+        const valid = () => token === interactionGeneration && sceneToken === generation && !panel.hidden
           && select.value === previousKey && layers.value === previousLayer && renderedScan === previousScan
           && scans.some(item => item.key === key && !item.archived);
         const scan = scans.find(item => item.key === key && !item.archived); if (!scan || !page || !valid()) { announce(); return; }
@@ -147,9 +161,10 @@ export function setupScan(panel: HTMLElement) {
         catch (error) { announce(`Could not load the completed capture: ${error instanceof Error ? error.message : String(error)}.`); return; }
         if (!valid()) { disposeObject(root); announce(); return; }
         completion.replaceChildren(); await changeResult(key, { layer, root });
-        if (token !== interactionGeneration || panel.hidden || measure.hasUnsaved()) announce(); else measure.openReview();
+        if (token !== interactionGeneration || panel.hidden || renderedScan?.key !== key) announce();
+        else workflow.openReview();
       };
-      if (autoOpen && !panel.hidden && !measure.hasUnsaved()) void review(true); else announce();
+      if (autoOpen && !panel.hidden) void review(true); else announce();
     } });
   panel.querySelector<HTMLButtonElement>('[data-manage]')!.onclick = () => { void manager.open(); };
   tags.onchange = () => { tagOverlay?.setVisible(tags.checked); };
@@ -196,7 +211,7 @@ export function setupScan(panel: HTMLElement) {
     let saved = camera.cameraState()
       ?? JSON.parse(localStorage.getItem('campervan.scan.camera.reference') ?? 'null') as CameraState | null;
     loading = true;
-    measure.refresh();
+    refreshWorkflow();
     camera.cancelCameraAnimation();
     status.textContent = `Loading ${scan.display_name} · ${layer.label}…`;
     let root: Object3D | undefined;
@@ -224,7 +239,7 @@ export function setupScan(panel: HTMLElement) {
       for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
       group.add(root);
       renderedScan = scan;
-      await measure.reload();
+      refreshWorkflow();
       if (token !== generation) { root = undefined; return; }
       tagOverlay ??= createScanTags(container, () => viewer?.rendered.camera.camera as unknown as Camera);
       tagOverlay.setTags(scan.tags ?? [], aligned ? scan.alignment!.matrix : undefined);
@@ -261,7 +276,7 @@ export function setupScan(panel: HTMLElement) {
       if (root) disposeObject(root);
       if (token === generation) status.textContent = error instanceof Error ? error.message : String(error);
     } finally {
-      if (token === generation) { loading = false; camera.saveCamera(); measure.attach(); }
+      if (token === generation) { loading = false; camera.saveCamera(); attachWorkflow(); }
     }
   }
 
@@ -272,7 +287,7 @@ export function setupScan(panel: HTMLElement) {
     if (group) for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
     material = undefined; renderedScan = undefined;
     tagOverlay?.setTags([]); tagCount.textContent = 'AprilTags (0)'; tags.disabled = true;
-    pointSize.hidden = true; size.disabled = true; measure.clearCapture(); measure.attach();
+    pointSize.hidden = true; size.disabled = true; attachWorkflow();
     camera.cancelCameraAnimation(); viewer?.update(true, false);
     status.textContent = 'No active results — open Manage scans to restore one.';
   }
@@ -358,12 +373,12 @@ export function setupScan(panel: HTMLElement) {
   layers.onchange = () => { void loadLayer(); };
   refresh.onclick = () => {
     refresh.disabled = true;
-    void Promise.all([refreshScans(), measure.reload(), manager.refresh()]).catch(error => { status.textContent = String(error); })
-      .finally(() => { refresh.disabled = false; });
+    void Promise.all([refreshScans(), manager.refresh()]).catch(error => { status.textContent = String(error); })
+      .finally(() => { refresh.disabled = false; refreshWorkflow(); });
   };
   onTab(tab => {
     interactionGeneration++;
-    measure.tabChanged(tab === 'scan');
+    if (tab !== 'scan') workflow.hide();
     if (tab !== 'scan') { camera.cancelCameraAnimation(); return; }
     if (!initialized) { initialized = true; void initialize(); }
     else if (viewer?.ready) page!.resize();

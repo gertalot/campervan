@@ -3,12 +3,13 @@ export interface ImportedCapture { id: string; group_id: string; filename: strin
 export interface TagLayout { id: string; name: string; tag_family: string; tag_size_mm: number }
 export interface ProcessingJob {
   id: string; run_id: string; group_id: string | null; name: string; layout_id: string;
-  state: 'processing' | 'completed' | 'failed' | 'interrupted'; stage: string; error: string | null; log_tail?: string;
+  state: 'processing' | 'completed' | 'failed' | 'interrupted' | 'cancelled'; stage: string; error: string | null; log_tail?: string;
   result_key?: string;
 }
 export interface ScanImports { captures: ImportedCapture[]; layouts: TagLayout[]; jobs: ProcessingJob[] }
 export const readScanImports = () => request<ScanImports>('scans/imports');
 export const readScanJob = (id: string) => request<ProcessingJob>(`scans/process/${encodeURIComponent(id)}`);
+export const cancelScanJob = (id: string) => request<ProcessingJob>(`scans/process/${encodeURIComponent(id)}/cancel`, 'POST');
 export const createTagLayout = (name: string, tag_size_mm: number) =>
   request<TagLayout>('scans/layouts', 'POST', { name, tag_size_mm, tag_family: '36h11' });
 export const processCaptures = (body: unknown) => request<ProcessingJob>('scans/process', 'POST', body);

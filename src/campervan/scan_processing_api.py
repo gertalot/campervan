@@ -88,3 +88,8 @@ def register_scan_processing(app: FastAPI, processing: ScanProcessing, layouts: 
     @app.get("/api/v1/scans/process/{job_id}")
     def progress(job_id: str) -> dict[str, Any]:
         return operation(lambda: processing.job(job_id))
+
+    @app.post("/api/v1/scans/process/{job_id}/cancel")
+    async def cancel(job_id: str) -> dict[str, Any]:
+        operation(lambda: processing.job(job_id))
+        return await processing.cancel(job_id)

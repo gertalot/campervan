@@ -38,6 +38,7 @@ class ScanProcessing:
         self.captures = library.path.parent / "scan-captures"
         self.jobs = SCAN_RUNS.parent / "scan-jobs"
         self.tasks: dict[str, asyncio.Task[None]] = {}
+        self.cancel_requests: set[str] = set()
 
     def capture(self, value: str) -> dict[str, Any]:
         data: dict[str, Any] = read_json(self.captures / identifier(value) / "capture.json")
@@ -80,6 +81,23 @@ class ScanProcessing:
             key=lambda job: job["created_at"],
             reverse=True,
         )
+
+    async def cancel(self, value: str) -> dict[str, Any]:
+        job = self.job(identifier(value), include_log=False)
+        task = self.tasks.get(value)
+        if job["state"] != "processing" or task is None or task.done():
+            return self.job(value)
+        if value not in self.cancel_requests:
+            self.cancel_requests.add(value)
+            task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        # A task cancelled before its coroutine starts never enters _run's finally block.
+        saved = read_json(self.jobs / f"{value}.json")
+        if saved["state"] == "processing":
+            saved.update(state="cancelled", stage="Cancelled", error=None, finished_at=datetime.now(UTC).isoformat())
+            self._save(saved)
+        self.cancel_requests.discard(value)
+        return self.job(value)
 
     def start(self, request: ProcessCaptures) -> dict[str, Any]:
         if any(not task.done() for task in self.tasks.values()):
@@ -200,7 +218,10 @@ class ScanProcessing:
                 publish(job)
             job.update(state="completed", stage="Ready to view")
         except asyncio.CancelledError:
-            job.update(state="interrupted", error="API stopped during processing. Imported databases are retained.")
+            if value in self.cancel_requests:
+                job.update(state="cancelled", stage="Cancelled", error=None)
+            else:
+                job.update(state="interrupted", error="API stopped during processing. Imported databases are retained.")
             raise
         except Exception as error:
             job.update(state="failed", error=str(error))

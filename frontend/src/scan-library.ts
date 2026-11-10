@@ -426,7 +426,8 @@ export function createScanLibrary(host: Host) {
         if (!group || !library.groups[group]) {
           await open(); message('Choose or create a capture group, then select Add capture databases.'); return;
         }
-        await importer.open(group, library.groups[group]);
+        const result = host.results().find(item => item.key === resultKey);
+        await importer.open(group, library.groups[group], [], result?.tag_layout_id ?? undefined);
       } catch (error) { await open(); message(error); }
     },
     refresh,

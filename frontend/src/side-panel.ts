@@ -12,9 +12,9 @@ export function createSidePanel(options: {
   id: string; title: string; onClose?(): void;
 }): SidePanel {
   const element = document.createElement('dialog'); element.id = options.id; element.className = 'side-panel';
-  // Both panels dismiss through outside clicks, Escape or X without blocking the canvas.
+  // Outside clicks leave both panels open; Escape and X close them without blocking the canvas.
   // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog#closedby
-  element.setAttribute('closedby', 'any');
+  element.setAttribute('closedby', 'closerequest');
   element.setAttribute('aria-labelledby', `${options.id}-title`);
   const header = document.createElement('div'); header.className = 'side-panel-header';
   const title = document.createElement('h2'); title.id = `${options.id}-title`; title.textContent = options.title;

@@ -103,7 +103,10 @@ class SourceBinding(Model):
     placement_candidates: list[PlacementCandidate] = Field(default_factory=list)
 
 
-Stage = Literal["review_capture", "measure", "check_accuracy", "update_reconstruction"]
+Stage = Literal[
+    "review_capture", "understand_scene", "improve_layout", "take_measurements", "check_measurements",
+    "update_reconstruction",
+]
 ArtifactKind = Literal["measurement_network", "measurement_plan", "placement_review", "context_review", "scan_correction"]
 
 

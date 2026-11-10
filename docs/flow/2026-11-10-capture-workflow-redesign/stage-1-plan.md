@@ -1,6 +1,6 @@
 # Stage 1 — Review capture: implementation plan
 
-Status: ready for Gert's review; planning only. [Flow folder](./) · [approved specification](spec.md).
+Status: implemented and source-reviewed; awaiting Gert's visual acceptance. [Flow folder](./) · [approved specification](spec.md).
 
 **Goal:** Gert can inspect a reconstructed scene and tags, add capture databases to its group, explicitly reconstruct
 again and inspect the new result using the same viewer. A basic tag-layout scan is sufficient.
@@ -99,31 +99,31 @@ export function createScanWorkflowPanel(host: CaptureReviewHost): {
 };
 ```
 
-- [ ] Create the panel using `createSidePanel({ id: 'scan-workflow', title: 'Review and improve scan' })`.
+- [x] Create the panel using `createSidePanel({ id: 'scan-workflow', title: 'Review and improve scan' })`.
   Show `Step 1 of 6 — Review capture`, the actual result/group name once, and one primary `Add capture databases…`
   action. Short copy: `Inspect the reconstruction and detected tags. Add more captures if you need more detail.
   A basic scan is enough to start checking tag placement.` Do not recreate a detected-tag chip grid or generic
   navigation tutorial. Existing viewer controls and tag visibility remain the inspection tools.
-- [ ] Define the six approved stage names/IDs once in this panel. Stage 1 is current; stages 2–6 are noninteractive
+- [x] Define the six approved stage names/IDs once in this panel. Stage 1 is current; stages 2–6 are noninteractive
   upcoming labels with the accessible explanation `Available in a later stage of this workflow's implementation`.
   No clickable empty pages or enabled Continue-to-scene action. The next plan replaces stage 2's unavailable state.
   This is staged delivery, not a precision/completeness gate. Do not claim the six-stage process is complete.
-- [ ] Replace `createScanMeasure` in `setupScan` with the new panel. Create a `Review capture…` toolbar button using
+- [x] Replace `createScanMeasure` in `setupScan` with the new panel. Create a `Review capture…` toolbar button using
   existing toolbar sizing. Remove the old tape icon, measurement-entry status bar, old keyboard handlers and manager
   wiring. They return only through later approved stages, not through hidden old UI. Persisted distances remain intact.
-- [ ] Replace `measure.*` call sites in `scan.ts` with panel `refresh/openReview/hide` where relevant; remove measurement
+- [x] Replace `measure.*` call sites in `scan.ts` with panel `refresh/openReview/hide` where relevant; remove measurement
   session reads, flush/unsaved checks and `reload` calls that are no longer relevant to a read-only stage. Keep the
   existing camera methods, asset loaders, tag rendering and load-generation guards. Do not replace the renderer.
-- [ ] Remove the deleted confidence module's import/state/`setConfidence` presentation from `scan-tags.ts`; retain
+- [x] Remove the deleted confidence module's import/state/`setConfidence` presentation from `scan-tags.ts`; retain
   tag outlines, IDs and the single shared highlight owner. Remove only CSS selectors belonging to deleted workflow
   views/status bars. Keep shared panel, toolbar, scan-library and tag-selection styling.
-- [ ] Remove `register_scan_workflows` and `ScanWorkflowStore` imports/initialisation from `api.py`; delete the old
+- [x] Remove `register_scan_workflows` and `ScanWorkflowStore` imports/initialisation from `api.py`; delete the old
   route module, not the independent measurement/layout/import/library APIs. Keep domain numerical modules and their
   directly used artifact/source types. No replacement workflow HTTP API is needed for read-only stage 1.
-- [ ] Change the retained Python Stage literal to `review_capture`, `understand_scene`, `improve_layout`,
+- [x] Change the retained Python Stage literal to `review_capture`, `understand_scene`, `improve_layout`,
   `take_measurements`, `check_measurements`, `update_reconstruction`. Discard old workflow progress once, preserving
   reusable `profiles`. Do not convert old stages or create new workflow records during import.
-- [ ] Source-check remaining imports/calls with `rg -n 'createScanMeasure|createWorkflow|register_scan_workflows|scan-measure-panel|scan-measure-session|scan-workflow-api|scan-tag-confidence' frontend/src src/campervan`.
+- [x] Source-check remaining imports/calls with `rg -n 'createScanMeasure|createWorkflow|register_scan_workflows|scan-measure-panel|scan-measure-session|scan-workflow-api|scan-tag-confidence' frontend/src src/campervan`.
   Resolve direct dangling references caused by these deletions only. Other domain measurement/rebuild functionality
   is retained for later stages, not refactored in anticipation of them.
 
@@ -140,23 +140,23 @@ export function createScanWorkflowPanel(host: CaptureReviewHost): {
 open(id: string, label: string, incoming: File[] = [], layoutId?: string): Promise<void>
 ```
 
-- [ ] Extend `createScanImport().open` with the optional explicit layout ID. `createScanLibrary().addCaptures(resultKey)`
+- [x] Extend `createScanImport().open` with the optional explicit layout ID. `createScanLibrary().addCaptures(resultKey)`
   looks up the current `ScanResult` and passes its `tag_layout_id` as that fourth argument. Calls from group management
   continue to use the group's default layout; drag-and-drop retains its existing third argument. This is explicit
   invocation context, not a compatibility branch or new persisted state.
-- [ ] When an explicit current-result layout is provided, select it instead of the group default. If unavailable,
+- [x] When an explicit current-result layout is provided, select it instead of the group default. If unavailable,
   display the actual error and require a deliberate layout selection; never silently create a new layout. Keep the
   existing explanation that moved tags require a different layout. Do not implement tag revision UI in stage 1.
-- [ ] Preserve the existing imported-database checklist and cumulative selection. Keep the selection visible and
+- [x] Preserve the existing imported-database checklist and cumulative selection. Keep the selection visible and
   editable: group members may include scans from another layout. Gert chooses only databases from the unchanged
   physical arrangement. No automatic inference that every database in a group has the same tag arrangement.
-- [ ] Keep `start()` using `{ group_id, capture_ids, layout_id, name, settings }` through the existing process endpoint.
+- [x] Keep `start()` using `{ group_id, capture_ids, layout_id, name, settings }` through the existing process endpoint.
   Preserve duplicate upload handling, native settings, cancellation and job progress. No processing starts merely
   from opening the panel or adding a file. Remove `createWorkflow` from the completion callback; pass successful
   results straight through the existing completion host callbacks.
-- [ ] Use the current `addCaptures` group-resolution behaviour for ungrouped/loose results: open Manage scans with its
+- [x] Use the current `addCaptures` group-resolution behaviour for ungrouped/loose results: open Manage scans with its
   existing actionable explanation, rather than inventing a group. Missing tags are not an error for visual inspection.
-- [ ] Source-trace both call paths: group/drop import and current-result add-capture. Verify that only the latter
+- [x] Source-trace both call paths: group/drop import and current-result add-capture. Verify that only the latter
   supplies the explicit current layout and that neither changes measurement documents for an existing layout.
 
 ## Task 3 — Complete handoff, factual docs and visual acceptance
@@ -166,22 +166,22 @@ open(id: string, label: string, incoming: File[] = [], layoutId?: string): Promi
 **Files:** `frontend/src/scan.ts`, `frontend/src/scan-workflow-panel.ts`,
 `docs/photogrammetry.md`, `docs/flow/2026-11-09-scan-measurement-workflow/README.md`.
 
-- [ ] Adapt existing `importCompleted` handoff to open stage 1 on the newly loaded result. Preserve the interaction
+- [x] Adapt existing `importCompleted` handoff to open stage 1 on the newly loaded result. Preserve the interaction
   and scene tokens so navigating to another result/tab during processing or asset loading takes precedence. If
   automatic handoff is no longer appropriate, show the existing explicit `Review capture` completion action.
   Failed/cancelled processing leaves the current result available with the existing job error/progress presentation.
-- [ ] Keep `sessionStorage` result/layer selection and existing `CameraState` persistence. Panel refresh follows
+- [x] Keep `sessionStorage` result/layer selection and existing `CameraState` persistence. Panel refresh follows
   `renderedScan`, not a future selected-but-unloaded result. No geometry-fit or view reset on panel open/close,
   cumulative reconstruction handoff or result/layer selection. Use existing latest-load generation/disposal logic.
-- [ ] In `docs/photogrammetry.md`, replace the obsolete four-stage UI instructions with the approved six-stage outline,
+- [x] In `docs/photogrammetry.md`, replace the obsolete four-stage UI instructions with the approved six-stage outline,
   marking only Review capture implemented. Explain basic scan -> visual review -> add databases -> explicit process
   -> inspect result, followed by later detailed capture after layout work becomes available. Document the deliberate
   temporary absence of the old measurement UI and preservation of physical data; no old-workflow fallback instructions.
   In the older scope index, link to the new approved spec and this stage-specific plan as the active workflow change.
-- [ ] Perform one accumulated source review restricted to these tasks: closed imports, no old reachable UI/API,
+- [x] Perform one accumulated source review restricted to these tasks: closed imports, no old reachable UI/API,
   group/layout context, unchanged source/measurement writes, shared shell behaviour, guarded completion and preserved
   camera. Run `git diff --check` once; no tests, build/lint, service launch or automated browser interaction.
-- [ ] Commit only the stage-1 code/docs and explicit workflow-progress cutover. Record what was source-checked and
+- [x] Commit only the stage-1 code/docs and explicit workflow-progress cutover. Record what was source-checked and
   what awaits Gert. Do not mark visual or real capture acceptance complete until Gert reports the result.
 
 ### Gert's visual acceptance (not an automated test suite)

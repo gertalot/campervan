@@ -1,5 +1,11 @@
 # Scan workflow: split specification index
 
+The user-facing workflow is superseded by the approved
+[six-stage redesign](../2026-11-10-capture-workflow-redesign/spec.md), delivered one stage at a time. The
+[stage 1 plan](../2026-11-10-capture-workflow-redesign/stage-1-plan.md) replaces the old interface with visual capture
+review and cumulative database import. The old measurement UI/API is removed; its domain algorithms and physical
+input data remain for later stages. This older index records the original technical split, not the current UX.
+
 The combined design was approved on 9 November 2026. Gert subsequently authorised splitting its independently
 deliverable work after the implementation-plan scope check. Existing decisions and evidence remain approved;
 Gert approved the split boundaries and delivery order on 9 November 2026. No implementation plan or application change is part of this split.

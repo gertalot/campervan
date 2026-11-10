@@ -1,11 +1,11 @@
 # Van scanning, measurement and CAD workflow
 
-Status: the four-stage measurement workflow replaces the earlier analysis/acceptance UI. The CLI extracts RTAB-Map
-RGB-D captures and uses Open3D for TSDF fusion, cleanup and colour baking, with optional OpenMVS photo texturing.
-The browser imports databases, shows job progress and edits per-layout physical measurements. Independent physical
-assessment and joint scan correction have different meanings, described below. Source implementation is recorded;
-the integrated workflow's normal-job execution and Gert's visual/physical acceptance remain pending. CAD overlay
-remains unimplemented.
+Status: stage 1 of the replacement six-stage workflow is implemented for visual inspection. Import databases,
+reconstruct the scene and tags, then use **Review capture…** to inspect the result and add further captures. The old
+measurement/analysis workflow and its HTTP routes have been removed. Saved physical measurements, tag layouts and
+capture assets remain intact. Stages 2–6 are upcoming and are implemented individually after Gert's visual feedback.
+The CLI still extracts RTAB-Map RGB-D and uses Open3D for fusion, with optional OpenMVS photo texturing. Existing
+numerical/correction modules remain available for the later workflow stages; their presence is not a completed UX.
 
 The [repeatable reconstruction implementation plan](superpowers/plans/2026-11-08-scan-reconstruction.md) scopes the
 current unmeasured trial: saved poses, Open3D fusion and cleanup, texture comparison, and a scripting-first entry point
@@ -81,176 +81,67 @@ service. Keep scan processing separate from CAD regeneration so a measurement ed
 
 ## Workflow
 
-Keep the original RTAB-Map databases. They retain RGB-D frames, calibration, original graph relationships and poses
-needed for corrected reconstruction; an exported PLY or OBJ alone is insufficient. Place flat, stationary AprilTags
-with unique IDs around the capture, including different heights and long spans. Record the family and actual printed
-black-square size, excluding paper margins. Only 36h11 is currently supported. Measure straight centre-to-centre
-ranges: a tape bent around trim does not represent the application's straight-line constraint.
+The [approved workflow specification](flow/2026-11-10-capture-workflow-redesign/spec.md) replaces the previous
+four-stage workflow completely. Delivery is one stage at a time; the
+[stage 1 plan](flow/2026-11-10-capture-workflow-redesign/stage-1-plan.md) covers the currently available interface.
 
-Import captures through **Scan → Manage scans…**, or use the [CLI processing instructions](#cli-processing).
-Choose a saved layout only while its physical tags remain fixed. Capture groups organise files; membership and
-matching tag numbers do not establish physical layout compatibility. Keep changed door positions or moved geometry
-as separate capture configurations.
+| Stage | Availability | Purpose |
+| --- | --- | --- |
+| 1. Review capture | Implemented; awaiting Gert's visual acceptance | Inspect the reconstructed scene/tags and add more databases |
+| 2. Understand the scene | Upcoming | Explicitly analyse/correct regions and set axes/origin |
+| 3. Improve tag layout | Upcoming | Compare tag placement and predicted measuring effort |
+| 4. Take measurements | Upcoming | Enter the recommended distances directly in a checklist |
+| 5. Check measurements | Upcoming | Fit the network and investigate disagreement or missing constraints |
+| 6. Update reconstruction | Upcoming | Preview corrections, rebuild and save |
 
-Open **Review and improve scan…** to work through four stages. The nonmodal panel leaves the viewer available for
-orbit/pan and does not resize its canvas. The selected stage, checklist order/current pair, acknowledged values and
-settings are saved. Stage labels describe progress and stale reports; they are advice, not precision gates. Missing
-source inputs can prevent the calculation that requires them, but an incomplete physical network can still support
-an explicitly labelled best-effort correction.
+### Review capture
 
-The stages form an editable stepper: connected numbered steps, completion checks, one current step and persistent
-**Back**/**Continue** navigation. Each step can also be selected directly. The final step offers **Preview corrections**,
-then **Update mesh**, and shows completion with **Done** only after the corrected result is saved. Measuring settings
-belong inside the Measure step. This follows the navigation/progress separation in the
-[USWDS step indicator](https://designsystem.digital.gov/components/step-indicator/) and the editable
-[Material UI stepper pattern](https://mui.com/material-ui/react-stepper/#non-linear).
+Start with a basic capture that shows the tags and relevant geometry. Import databases through **Scan → Manage
+scans… → Add capture databases…**, or drop files onto a capture group. Select the physical tag layout and explicitly
+choose **Process captures**. Reconstruction does not require tape measurements or complete interior coverage.
 
-### 1. Review capture
+After successful processing, the app shows the result and opens **Review capture** when it can do so without taking
+over a view you changed during processing. Otherwise it offers an explicit **Review capture** completion action.
+You can also open **Review capture…** from the viewer toolbar. The shared nonmodal panel shows stage 1 of the six-stage
+process. The remaining stages are upcoming, without empty navigable screens or the former workflow's controls.
 
-Inspect the surface, tags and coverage. A compact count opens a list of clickable detected tags. **Analyse tag placement** evaluates the tag arrangement and explains weak geometry,
-coverage and expected measuring effort through the same planner used for checklists. Captured positions are planning
-estimates, not evidence of physical accuracy. Analysis assumptions and missing surface evidence are available under
-**How this advice was calculated**; this workflow does not recognise regions or install a recognition model.
+Inspect the actual surface and tag outlines using the existing viewer. Use the Result and Layer selectors to inspect
+other saved reconstructions or surface/texture layers. A missing tag does not block visual inspection. Camera position,
+projection, pan and zoom are preserved across result/layer changes; use **Fit** when you deliberately want new framing.
+The panel overlays the viewer. Canvas clicks leave it open; **X** or **Escape** closes it, consistently with Manage scans.
 
-The same page presents three connected vertical steps: **Check tag placement**, then **Record tag changes** and
-**Capture again and import**, both marked **If needed**. Record moved, added or removed tags before importing a capture
-made with the new arrangement. **Import capture databases…** opens the existing database import dialog for this result's
-capture group. Ungrouped results first ask you to choose or create a capture group. If the current capture is usable,
-choose **Continue** to Measure without recapturing.
+If you want more detail, choose **Add capture databases…** in Review capture. This opens the same importer in the
+current result's capture group and selects that result's tag layout. Existing imported databases are listed alongside
+new files; review the cumulative selection, then explicitly choose **Process captures**. The new result stays in the
+same group, and previous results remain selectable for human inspection. There is no automatic coverage score,
+missing-area classifier, before/after assessment or recommended-viewpoint engine.
 
-After **Process captures**, **Review capture** opens the completed result and this stage. Completion should preserve
-another selected result or an active edit; use the offered result action when ready. Processing progress and errors
-remain available if the import dialog is closed.
+Capture groups do not establish physical compatibility. Include only databases made with the same tag arrangement
+and compatible object/door positions. If the selected result's layout is unavailable, the importer asks you to choose
+one explicitly rather than silently creating a different layout. For an ungrouped result, use Manage scans to choose
+or create a group before adding captures. Upload and reconstruction progress/cancellation reuse the existing job UI.
+Closing the import dialog does not cancel the job. Failures retain imported sources and the previous view.
 
-### 2. Measure
+Once the tag-layout stage becomes available, the intended strategy is to settle tag placement from basic scans,
+then spend time on detailed captures with the tags fixed. Adding databases does not erase existing physical distances.
+Scene understanding is not run automatically on import, navigation or reload.
 
-Set **Typical measuring precision (mm)** to a realistic range standard deviation. Its editable initial value is
-**3 mm**, not a guaranteed bound or a precision inferred from decimal places. Individual pairs can override it;
-blank per-pair precision uses the saved default. **Generate checklist** supplies ordered pairs. Type the actual
-physical distance into a row; the scan estimate is a separate label and is not an observation.
+### Saved input data
 
-Rows accept `mm`, `cm`, `m`, `in` and `ft`; bare values mean millimetres. Only positive finite values can be saved.
-**Enter** saves and advances after acknowledgement. Leaving an edited, nonempty row also saves; **Save** is explicit.
-**Escape** restores acknowledged text and keeps normal editing focus. Saving, Saved and error feedback distinguish
-acknowledged values from drafts. A failed save retains its draft; resolve the error and retry. A revision conflict
-refreshes the acknowledged state without silently overwriting it. Resolve unsaved fields before a workflow action.
+Managed tag layouts and measurements remain under `data/scan-tag-layouts/<layout-id>/`; the original trial measurement
+file is `data/scan-measurements.json`. A layout is reusable only while its physical tags remain in place. New layouts
+start with separate empty distance documents; do not reuse distances for moved tag IDs.
 
-The tape tool (**T**) selects the same tag pairs and uses the same physical measurement session. Select two tags,
-type the physical centre-to-centre distance in the bottom field and press Enter. Selecting a pair may display an
-existing distance or a separately labelled scan estimate; it never saves a prefill automatically. Escape restores a
-dirty tape edit, then cancels the pair; at the first-tag prompt it exits the tool. The contextual Restore / Cancel
-pair / Done control performs the same action. Turning tape mode off hides saved lines. Camera navigation and normal
-writing remain available; the workflow panel can be used without tape mode.
-
-Use **Cannot measure this pair…** to record an access reason instead of entering an invented distance. Candidate
-precision applies to that proposed pair and is carried into its first physical observation. Saved physical distances,
-precision and exclusions are shared by compatible captures using the layout. Checklist order and candidate settings
-belong to the source workflow.
-
-### 3. Check accuracy
-
-**Check measurements** assesses the physical ranges independently of the scan. It fits Point3 positions using only
-entered ranges and effective sigmas. Captured coordinates initialise and orient the fit; they are absent from its
-objective and information matrix. Display alignment and numerical gauge anchors do not provide physical information.
-
-Read these three report sections separately:
-
-| Section | Meaning and limits |
-| --- | --- |
-| Completeness | Connectivity, generic 3D uniqueness, actual geometric rank and remaining motions. |
-| Consistency | Fitted-minus-entered and standardised residuals, robust weights and redundancy. |
-| Uncertainty | Free-network covariance and approximate 95% positional ellipsoids under stated noise assumptions. |
-
-Connected does not necessarily mean determined. Downweighted readings need review; a network without redundant
-observations cannot strongly check itself. Rank deficiency is unbounded. Unresolved global ambiguity remains Unknown
-even when a local covariance exists.
-
-The editable **5 mm positional target** means the longest semi-axis of a tag's 3D 95% ellipsoid, not a range sigma or
-a guaranteed physical error bound. Its equal-weight free-network alignment convention removes arbitrary rigid motion.
-The generic topology certificate is probabilistic and is reported separately from actual geometric rank/conditioning.
-Sparse, disconnected, coincident or poorly distributed inputs expose diagnostics rather than invented finite precision.
-A physical fit cannot establish LiDAR calibration or accuracy of unmeasured surfaces.
-
-**Suggest more** uses the same all-useful-pairs planner as **Generate checklist** and **Analyse tag placement**. It considers
-all eligible unmeasured pairs, including possible connections across weak/disconnected parts, rather than a fixed
-shortlist. It explains geometry/rank improvements before finite precision where necessary, and separates rechecks of
-existing observations from new information. The independent **5 mm meaningful-improvement threshold** controls useful
-additional suggestions; it is distinct from the positional target. Candidate sigmas affect predicted benefit. Benefits
-from a shared baseline overlap and must not be added together. Alternatives show their individual baseline gains;
-recommended checklist rows also show marginal gains after earlier proposed ranges. The batch recalculates those
-gains and removes redundant proposed pairs. Unavailable global gains remain Unknown; finite local-model gains are
-labelled separately and do not establish global uniqueness.
-
-Clearance labels are **No obstruction detected**, **Unknown** and **Obstructed**. The assessment uses the finite tape
-segment, neighbouring mesh rays and retained depth/pose coverage. An absent surface alone does not establish a clear
-path. If the physical shape cannot be registered to the source, clearance stays Unknown. Unknown is not a clear path;
-manual exclusions record reach/access or obstacles the scan cannot decide.
-Inspect the reasons and highlights before attempting a measurement. Physical assessments do not rebuild geometry.
-
-### 4. Update reconstruction
-
-**Preview corrections** is a separate joint, scan-assisted fit. It uses original camera/tag observations and graph
-constraints together with the physical ranges. Its movement and residual summaries are conditional on scan and
-measurement assumptions; they do not establish measurement-only completeness or precision. Reviewed source-bound
-relationships and cleanup masks are optional inputs when supplied. Missing/disabled relationships, absent support,
-missing tolerances or unusable geometry are inactive with individual reasons. Cleanup masks refer to original frame
-pixels and exclude depth samples during reconstruction; they never rewrite the original database. Missing masks
-retain the ordinary fusion path with an explicit skipped-context explanation. This workflow provides no
-region-recognition/editor setup.
-
-Inspect the preview over the unchanged original surface. **Update mesh** explicitly rebuilds a new result from the
-retained RGB-D frames and corrected poses; editing measurements, checking accuracy and previewing corrections never
-rebuild automatically. A stale preview requires a new preview before updating. Inputs and saved solution/graph
-content are rechecked immediately before reconstruction, and freshness is checked again when the result completes.
-A result completed against changed inputs retains its assets and reports the mismatch instead of becoming the current
-corrected result. A failed action reports its actual error and retains the previous successful report; no automatic
-retry is implied.
-
-The new result retains its source/layout/group association and records correction provenance. Originals and entered
-physical distances remain intact. A completed rebuild never switches the displayed result automatically. Use
-**Show original** and **Show corrected result** to compare results explicitly. Camera position, projection, pan and
-zoom are preserved across result/layer changes.
-Use **Fit** when a deliberate new framing is wanted. Physical checks not included in fitting and Gert's visual
-inspection remain necessary before relying on the mesh for fabrication. No CAD dimension changes automatically.
-
-### Saved layouts, state and freshness
-
-Managed layout definitions and separate measurement documents live under `data/scan-tag-layouts/<layout-id>/`.
-The original trial uses `data/scan-measurements.json`. `--measurements FILE` on `scan process` or `scan align` records
-the intended physical layout without applying its distances. Reuse it only while the tags remain fixed.
-
-When tags move, choose **Record tag changes…** and classify unchanged, moved, removed and added IDs. Only observations
-and exclusions whose two endpoints are confirmed unchanged are copied, with their original precision/provenance;
-the old layout remains intact. Existing captures are not rebound: choose the new layout for replacement captures.
-New layouts do not inherit vehicle-axis roles. Reviewed context references need reconfirmation for the revised layout. A fresh layout instead starts with an empty physical measurement document.
-
-Physical observations are authoritative in the measurement document: canonical positive `tag_a < tag_b`, `distance_m`,
-entered text, source run and optional `sigma_m`; the default sigma and access exclusions are stored there too. Storage
-and numerical coordinates use metres; precision/target controls display millimetres. Fitted distances and XYZ positions
-never overwrite physical observations. Files use revision checks and atomic replacement; malformed files and failed
-writes are errors, not permission to reset data.
-
-`scan-workflows.json`, beside the project file, stores source workflows, immutable profile revisions, stages,
-checklists, settings and artifact references. Separate captures can share one physical layout while retaining their
-own source workflow. Immutable report snapshots live in the adjacent `scan-workflow-artifacts/<id>/` directory.
-Freshness depends on relevant content: changing source geometry does not invalidate an otherwise identical physical
-range assessment; planning and correction additionally depend on their scan evidence/settings. Stale reports remain
-inspectable, with reasons. Moving or renaming a group does not change numerical freshness. A missing source makes
-source-dependent work unavailable while preserving observations.
-
-This replaces the old workflow directly. Obsolete analysis/history files are not read or automatically migrated;
-there is no old/new mode or acceptance-history/rollback owner. Existing capture and physical measurement files remain.
-
-The workflow uses the existing scan-job owner and shared progress presentation for import, assessment and rebuild.
-One expensive scan action runs at a time. The API registers workflow reads/edits and explicit actions under
-`/api/v1/scans/workflows`; physical values remain under `/api/v1/scans/measurements`, and explicit layout revision uses
-`POST /api/v1/scans/layouts/{id}/revise`. The backend supplies action eligibility and stale/unavailable reasons; a
-visible error or missing input is not an accuracy certification. No new service is required.
+The old workflow's progress and artifact references were discarded at the stage-1 cutover, retaining reusable profiles.
+No old workflow API, fallback mode or automatic migration is provided. Existing source assets and numerical artifacts
+are not deleted. Stage 1 does not need a new workflow persistence service: the current result/layer and camera use the
+existing browser preferences. Physical measurement APIs remain independent, but the tape/checklist interface returns
+only when its new workflow stage is implemented.
 
 ### Result library
 
 The quick **Result** selector contains active discoveries, using display names and capture-group headings when needed.
-**Manage scans…** opens a modal side panel over the viewport, with search, Active / Archived / All filters, processing
+**Manage scans…** opens a nonmodal side panel over the viewport, with search, Active / Archived / All filters, processing
 summaries and explicit **Show in viewer** actions. **Inspect result** expands processing details and the secondary
 Rename result, Change capture group, Use at startup and Archive / Restore actions. State labels identify the result
 currently displayed and the startup default. Capture groups describe
@@ -268,7 +159,7 @@ Archiving hides a result without deleting or moving files. Missing discoveries r
 as Unavailable in the manager. New discoveries start active in Ungrouped. Reload restores the current tab's result and
 layer from session storage, provided that result is still active and available. A fresh tab uses the available active
 default, then group/name order. Metadata edits and Refresh preserve the current active result/layer and camera;
-setting the default does not switch immediately. Archiving the current result cancels its draft and uses the same
+setting the default does not switch immediately. Archiving the current result uses the same
 fallback, or clears geometry/tags if no active result remains. Restore does not replace another displayed result.
 
 GET `/api/v1/scans` remains an array with original asset identities plus library metadata and compact processing
@@ -291,12 +182,16 @@ A stale revision is rejected before file deletion. Filesystem deletion and the s
 not one transaction: a filesystem/save failure is reported plainly and the UI refreshes discovery to reflect any
 files already removed. Deleting the displayed result uses the same active fallback/empty-view behaviour as archive.
 
-The toggle follows the [WAI button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/), with its stable name,
-pressed state and keyboard activation. The bottom stage/save prompt uses a polite status region, following
-[WAI status-message guidance](https://www.w3.org/WAI/WCAG21/Understanding/status-messages.html). Validation remains
-adjacent to the input. This is not a comprehensive accessibility audit.
+The workflow progress display uses an ordered list with an explicitly identified current stage, following the
+[USWDS step-indicator guidance](https://designsystem.digital.gov/components/step-indicator/). Upcoming labels are
+not empty navigation targets. Import/job progress uses polite status messages without taking focus, following
+[WAI status-message guidance](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html). These are focused
+design decisions, not a comprehensive accessibility audit.
 
 ## Joint correction model
+
+The following describes retained numerical machinery and the intended later correction stage, not an action
+currently available in stage 1's interface.
 
 Use a batch GTSAM factor graph with camera poses and tag landmarks as unknowns. Connect them through the original
 odometry and loop-closure constraints and tag observations. Add measured distances between landmark centres, with
@@ -483,9 +378,8 @@ diagnostics and retain sources for a manually requested rerun. Stopping/reloadin
 there is no automatic resume or retry. A hard process crash is not a managed recovery mechanism.
 
 Measurement GET accepts optional `tag_layout_id`; PUT/DELETE resolve the submitted layout to its own measurement store.
-The no-query GET selects the original trial document. On result changes the frontend loads the matching document and
-ignores stale reads from a previous selection. Creating a layout does not reuse measured distances, optimise geometry
-or set vehicle axes.
+The no-query GET selects the original trial document. Stage 1 does not load/edit distances in the viewer.
+Creating a layout does not reuse measured distances, optimise geometry or set vehicle axes.
 
 API: GET `/api/v1/scans/imports` lists imported sources, managed layouts and processing summaries; POST
 `/api/v1/scans/captures?group_id=...&filename=...` streams one raw database body; POST `/api/v1/scans/layouts` creates

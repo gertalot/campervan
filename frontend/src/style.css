@@ -11,6 +11,8 @@
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { display: grid; grid-template-rows: 32px minmax(0, 1fr); height: 100dvh; }
+/* The embedded viewer stylesheet disables selection on body; application prose remains selectable. */
+html body { user-select: text; -webkit-user-select: text; }
 header { display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #34373e; background: #22252a; }
 h1 { margin: 0; font-size: 12px; font-weight: 600; }
 header #status { display: flex; align-items: center; gap: 7px; margin-left: auto; padding-left: 12px;
@@ -163,35 +165,14 @@ header button[aria-pressed="true"] { color: #eef3fa; border-bottom-color: #8bb7e
 .scan-tags circle { fill: #63edff; stroke: #15171a; }
 .scan-tags text { fill: #b9f8ff; stroke: #15171a; stroke-width: 4px; paint-order: stroke;
   font: 600 14px system-ui, sans-serif; }
-.scan-tags .is-selected polygon, .scan-tags .is-selected circle { stroke: #ffd166; }
-.scan-tags .is-selected circle { fill: #ffd166; }
-.scan-tags .is-measured:not(.is-selected) polygon { stroke: #83e5ab; }
 .scan-tags g:focus-visible polygon { stroke: white; stroke-width: 4px; }
-.scan-tags .scan-measure-line { stroke: #ffd166; stroke-width: 2px; }
-.scan-tags .scan-measure-line.is-pending { stroke-dasharray: 6 4; }
-.scan-tags .scan-measure-line.is-saved { stroke: #83e5ab; }
 .scan-tags .scan-measure-label { fill: #baf2ce; font-size: 12px; }
-#scan-viewer .tcv_cad_toolbar > .scan-measure-tools { display: inline-flex !important; gap: 4px; margin-left: 6px; }
-.scan-measure-tools button { height: 28px; min-width: 30px; padding: 3px; color: #d7e2f0; background: #30343a;
-  border: 1px solid #59616e; border-radius: 3px; cursor: pointer; }
-.scan-measure-tools button[aria-pressed=true] { color: #ffd166; background: #4b4230; border-color: #ffd166; }
-.scan-measure-tools button:disabled { opacity: .45; cursor: default; }
-.scan-measure-tools svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7px; }
-.scan-measure-status { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 7px 12px;
-  border-top: 1px solid #454a54; background: #22252af2; font-size: 13px; }
-.scan-measure-status[hidden] { display: none; }
-.scan-measure-status [data-prompt] { flex: 1 1 300px; }
-.scan-measure-status label { display: flex; align-items: center; gap: 8px; }
-.scan-measure-status input { width: 150px; color: #f1f3f7; background: #15171a; padding: 5px 7px;
-  border: 1px solid #7a8596; border-radius: 3px; font: inherit; }
-.scan-measure-status input[aria-invalid=true] { border-color: #ff9999; }
-.scan-measure-status [role=alert] { color: #ffb5b5; }
-#scan-distance-help { color: #adb8c8; font-size: 12px; }
-.scan-measure-status button, .scan-measurements-dialog button { padding: 5px 9px; background: #303741;
-  border: 1px solid #647083; border-radius: 3px; color: #edf2fa; cursor: pointer; }
-.scan-measure-tools button:focus-visible, .scan-measure-status :focus-visible {
-  outline: 2px solid #8bb7e8; outline-offset: 2px; }
+#scan-viewer .tcv_cad_toolbar > .scan-workflow-tools { display: inline-flex !important; margin-left: 6px; }
+.scan-workflow-tools button { height: 28px; padding: 3px 9px; font: inherit; font-size: 12px;
+  color: #d7e2f0; background: #30343a; border: 1px solid #59616e; border-radius: 3px; cursor: pointer; }
+.scan-workflow-tools button:hover:not(:disabled) { background: #3b4552; color: #fff; }
+.scan-workflow-tools button:disabled { opacity: .45; cursor: default; }
+.scan-workflow-tools button:focus-visible { outline: 2px solid #8bb7e8; outline-offset: 2px; }
 .scan-controls output { min-width: 4ch; }
 .scan-controls [role=status] { color: #aab3c0; }
 #bom-panel { position: absolute; inset: 0; overflow: auto; padding: 24px clamp(16px, 3vw, 48px) 60px;
@@ -552,9 +533,6 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-library-dialog [role=alert] { color: #ffb5b5; }
 .scan-library-editor { margin: 12px 0; padding: 12px; border: 1px solid #8bb7e8; border-radius: 4px; }
 .scan-library-editor[hidden] { display: none; }
-.scan-measure-tools [data-list] { padding-inline: 9px; font: inherit; font-size: 12px;
-  height: 28px; border-color: #59616e; background: #30343a; color: #d7e2f0; }
-.scan-measure-tools [data-list]:hover { background: #303741; color: #e0edff; }
 .scan-result-tools { display: flex; align-items: center; gap: 2px; }
 .scan-library-dialog .scan-result-icon { display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; padding: 4px; border-color: transparent; background: transparent; color: #b7c7da; }
@@ -607,96 +585,42 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-import-activity:empty { display: none; }
 .scan-import-activity { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; }
 .scan-import-activity span { color: #b7c1cf; }
-.measurement-actions, .measurement-precision { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
-.measurement-precision { margin: 10px 0 5px; }
-.measurement-precision label { display: flex; align-items: center; gap: 7px; }
-.scan-measure-panel input[type=number] { width: 70px; padding: 4px; }
-.scan-measure-panel .measurement-help { color: #aab8ca; font-size: 11px; margin: 5px 0 10px; }
-.scan-measure-panel [role=alert] { color: #ffb5b5; }
-.scan-measure-panel table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-.scan-measure-panel th, .scan-measure-panel td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #3b414b; }
-.scan-measure-panel th { font-size: 11px; color: #abb9ca; }
-.scan-measure-panel td button { padding: 3px 5px; border: 0; background: transparent; color: #a8c9ef; }
-.scan-measure-panel h3 { font-size: 13px; margin: 10px 0; }
-.scan-measure-panel .side-panel-body p { margin: 8px 0; }
-.scan-measure-panel article { padding: 10px 0; border-bottom: 1px solid #454a54; }
-.scan-measure-panel article button { margin: 4px 6px 0 0; }
-.scan-measure-panel summary { cursor: pointer; padding: 6px 0; }
-.scan-measure-panel :is([data-hidden], [hidden]) { display: none; }
-.scan-tags .scan-analysis-line { stroke: #da96ff; stroke-width: 2px; }
-.scan-tags .scan-analysis-dot { fill: #da96ff; stroke: #22252a; stroke-width: 1px; }
-.scan-tags .scan-analysis-label { fill: #edcaff; font-size: 11px; }
-.scan-tags .scan-suggest-line { stroke: #8bb7ff; stroke-width: 3px; stroke-dasharray: 7 4; }
-.scan-tags .scan-obstruction { fill: #ff7777; stroke: #ffcccc; stroke-width: 2px; }
-.scan-measure-panel .is-outlier td:first-child { color: #ffd166; }
-.measurement-suggestion { padding: 5px 0; border-bottom: 1px solid #454a54; }
-.measurement-suggestion summary { font-size: 12px; color: #c6dcf5; }
-.measurement-suggestion button { margin: 4px 6px 6px 0; }
-.scan-measure-panel input[aria-invalid=true] { border-color: #ff9999; outline: 1px solid #ff9999; }
-.measurement-field-error { color: #ffb5b5; font-size: 12px; }
-.measurement-field-error:empty { display: none; }
-.measurement-precision .measurement-field-error { flex-basis: 100%; }
-
-.scan-measure-panel .measurement-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid #454a54; }
-.scan-measure-panel .measurement-row strong { flex-basis: 100%; }
-.scan-measure-panel .measurement-row input[type=text] { width: 110px; }
-.scan-measure-panel .measurement-row [role=alert] { flex-basis: 100%; }
-.scan-workflow-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; margin: 4px 0 12px; list-style: none; }
-.scan-workflow-stages li { position: relative; min-width: 0; }
+.scan-workflow-stages { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  list-style: none; padding: 0; margin: 4px 0 28px; }
+.scan-workflow-stages li { position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; min-width: 0; padding: 0 3px; color: #aeb9c8; text-align: center; }
 .scan-workflow-stages li:not(:last-child)::after { content: ''; position: absolute; top: 16px;
-  left: calc(50% + 20px); right: calc(-50% + 20px); height: 2px; background: #48515e; }
-.scan-workflow-stages li[data-state=complete]::after { background: #79bd9b; }
-.scan-workflow-stages button { display: flex; flex-direction: column; align-items: center; gap: 7px;
-  width: 100%; min-width: 0; padding: 0 5px; border: 0; background: transparent; color: #aeb9c8; text-align: center; }
-.scan-workflow-stages button:hover:not(:disabled) .scan-workflow-label { color: #fff; text-decoration: underline; }
+  left: calc(50% + 19px); right: calc(-50% + 19px); height: 2px; background: #48515e; }
 .scan-workflow-marker { display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box;
   border: 2px solid #667181; border-radius: 50%; font-size: 13px; font-weight: 600; background: #23272d; }
-.scan-workflow-label { font-size: 12px; line-height: 1.35; }
-.scan-workflow-step-state { min-height: 13px; font-size: 10px; line-height: 1.3; color: #93a2b5; }
-.scan-workflow-stages button[aria-current=step] { color: #fff; font-weight: 600; }
-.scan-workflow-stages button[aria-current=step] .scan-workflow-marker { border-color: #9ac4f7; background: #32577f;
+.scan-workflow-label { font-size: 11px; line-height: 1.35; }
+.scan-workflow-step-state { margin-top: auto; font-size: 10px; color: #a3b2c5; }
+.scan-workflow-stages li[aria-current=step] { color: #fff; font-weight: 600; }
+.scan-workflow-stages li[aria-current=step] .scan-workflow-marker { border-color: #9ac4f7; background: #32577f;
   box-shadow: 0 0 0 3px #8bb7e81f; }
-.scan-workflow-stages li[data-state=complete] .scan-workflow-marker { color: #15261c; background: #8aceaa; border-color: #8aceaa; }
-.scan-workflow-stages li[data-state=needs-updating] .scan-workflow-marker { border-color: #e2b369; }
-.scan-workflow-stages li[data-state=needs-updating] .scan-workflow-step-state { color: #e2b369; }
-.scan-workflow-step-count { margin: 0 0 5px !important; color: #9cafc5; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
-.scan-measure-panel .scan-workflow-title { margin-top: 0; font-size: 20px; }
-.scan-workflow-description { color: #b7c1cf; }
-.scan-workflow-navigation { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.scan-workflow-navigation button { padding: 8px 18px; min-height: 36px; }
-.scan-workflow-navigation .scan-workflow-next { margin-left: auto; background: #365f8a; border-color: #82afe1; color: #fff; font-weight: 600; }
-.scan-workflow-footer-reason { margin: 0 0 10px; color: #b7c1cf; font-size: 12px; }
-.scan-workflow-completion { display: flex; align-items: center; gap: 14px; padding: 16px;
-  margin: 12px 0; border: 1px solid #577a65; border-radius: 6px; background: #263b30; }
-.scan-workflow-completion > span { display: grid; place-items: center; flex: none; width: 32px; height: 32px;
-  border-radius: 50%; color: #15261c; background: #8aceaa; font-size: 20px; }
-.scan-capture-overview { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px;
-  padding: 12px 0 18px; border-bottom: 1px solid #454a54; }
-.scan-capture-overview > strong { font-size: 15px; color: #edf1f7; }
-.scan-capture-overview > details { margin-left: auto; }
-.scan-capture-overview > details[open] { flex-basis: 100%; }
-.scan-capture-overview summary { color: #a8c9ef; font-size: 12px; }
-.scan-detected-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
-.scan-detected-tags button { border-radius: 14px; padding: 3px 9px; font-size: 12px; }
-.scan-review-process { margin: 24px 0 0; padding: 0; list-style: none; }
-.scan-review-process > li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 14px;
-  position: relative; padding-bottom: 28px; }
-.scan-review-process > li:last-child { padding-bottom: 0; }
-.scan-review-process > li:not(:last-child)::before { content: ''; position: absolute; left: 14px; top: 34px;
-  bottom: 4px; width: 2px; background: #48515e; }
-.scan-review-marker { display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box;
-  border: 1px solid #718ba9; border-radius: 50%; color: #cfe4ff; background: #2d4056; font-size: 13px; font-weight: 600; }
-.scan-review-process h4 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;
-  margin: 3px 0 6px; font-size: 15px; color: #edf1f7; }
-.scan-review-optional { font-size: 11px; font-weight: 400; color: #a7b5c7; }
-.scan-review-process h4 + p { margin: 0 0 12px !important; color: #b7c1cf; line-height: 1.5; }
-.scan-review-controls > p { color: #b7c1cf; font-size: 12px; }
-.scan-review-report { font-size: 12px; }
-.scan-review-report details { color: #b7c1cf; }
+.scan-workflow-step-count { margin: 0 0 5px; color: #9cafc5; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.scan-workflow-title { margin: 0 0 10px; font-size: 20px; }
+.scan-workflow-result { margin: 0 0 16px; color: #edf1f7; overflow-wrap: anywhere; }
+.scan-workflow-description { color: #b7c1cf; line-height: 1.6; }
+.scan-workflow-panel .scan-workflow-primary { margin-block: 6px 16px; background: #365f8a; border-color: #82afe1;
+  color: #fff; font-weight: 600; }
+.scan-workflow-panel [role=alert] { color: #ffb5b5; }
+.scan-workflow-panel [role=alert]:empty { display: none; }
 .scan-job-status { margin: 12px 0; }
 .scan-job-status progress { display: block; width: 100%; height: 7px; margin: 8px 0 12px; accent-color: #8bb7e8; }
 .scan-job-status progress[hidden] { display: none; }
-.scan-measure-panel .side-panel-body pre { max-width: 100%; overflow: auto; white-space: pre-wrap; }
-.scan-import-dialog [data-tags] { display: grid; gap: 6px; margin: 10px 0; }
-.scan-tags .is-highlighted circle { stroke: #ffd166; stroke-width: 4; }
-.scan-measure-panel button[aria-disabled=true] { opacity: .45; cursor: default; }
+.scan-tags { --scan-highlight: #ff50e8; --scan-highlight-back: #111318; }
+.scan-tags .scan-tag-outline-halo, .scan-tags .scan-tag-ring-halo, .scan-tags .scan-tag-ring { display: none; fill: none; }
+.scan-tags .is-highlighted .scan-tag-outline-halo { display: block; stroke: var(--scan-highlight-back); stroke-width: 9; }
+.scan-tags .is-highlighted .scan-tag-outline { stroke: var(--scan-highlight); stroke-width: 3; }
+.scan-tags .is-highlighted .scan-tag-ring-halo { display: block; stroke: var(--scan-highlight-back); stroke-width: 8; }
+.scan-tags .is-highlighted .scan-tag-ring { display: block; stroke: var(--scan-highlight); stroke-width: 3; }
+.scan-tags .is-highlighted .scan-tag-centre { fill: var(--scan-highlight); stroke: var(--scan-highlight-back); stroke-width: 2; }
+.scan-tags .is-highlighted text, .scan-tags .scan-emphasis-label { fill: white; stroke: var(--scan-highlight-back);
+  stroke-width: 6; font-size: 13px; font-weight: 700; }
+.scan-tags .scan-line-halo { stroke: var(--scan-highlight-back); stroke-width: 7; stroke-linecap: round; }
+.scan-tags .scan-line-stroke { stroke: #83e5ab; stroke-width: 2; stroke-linecap: round; }
+.scan-tags .scan-emphasis-line .scan-line-stroke { stroke: var(--scan-highlight); stroke-width: 3; }
+.scan-tags .scan-emphasis-line.is-pending .scan-line-stroke { stroke-dasharray: 7 4; }
+.scan-tags .scan-emphasis-dot { fill: var(--scan-highlight); stroke: var(--scan-highlight-back); stroke-width: 2; }
+.scan-tags .scan-highlight-face { fill: var(--scan-highlight); fill-opacity: .16; stroke: none; }
