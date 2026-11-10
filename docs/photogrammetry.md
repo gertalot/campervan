@@ -112,6 +112,8 @@ implicit UI installation. Missing tools produce a real error. Native-resolution 
 and substantial disk space; the system does not silently lower quality or substitute depth fusion.
 
 The importer accepts databases and photos in the same group and shows selected inputs before explicit processing.
+Upload instructions sit above the full-width native file picker, keeping its filename/selection status readable;
+instructions remain associated with the control following [WAI form guidance](https://www.w3.org/WAI/tutorials/forms/instructions/).
 Detailed reconstruction accepts a mixture, including original photographs extracted from selected databases.
 Source bytes/metadata remain intact; HEIC/oriented images use full-resolution working copies. Preview processing
 requires selected depth databases, although photos may be uploaded and retained separately for later processing.

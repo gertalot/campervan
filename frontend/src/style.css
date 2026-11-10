@@ -577,8 +577,9 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-import-dialog label > input:not([type=checkbox]):not([type=number]) { flex: 1; min-width: 0; }
 .scan-import-dialog input[type=number] { width: 95px; }
 .scan-import-dialog [data-new-layout] p, .scan-import-dialog fieldset > p { font-size: 11px; }
-.scan-import-drop { border: 1px dashed #7c94b1; padding: 12px; border-radius: 4px; }
-.scan-import-dialog .scan-import-drop input { width: 100%; background: transparent; border: 0; padding: 5px 0; }
+.scan-import-dialog .scan-import-drop { display: block; border: 1px dashed #7c94b1; padding: 12px; border-radius: 4px; }
+.scan-import-dialog .scan-import-drop input { display: block; width: 100%; margin-top: 8px;
+  background: transparent; border: 0; padding: 5px 0; }
 .scan-import-file { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 5px 0; }
 .scan-import-file span { overflow-wrap: anywhere; }
 .scan-import-dialog [role=alert] { color: #ffb5b5; }
