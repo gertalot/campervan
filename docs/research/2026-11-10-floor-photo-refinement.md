@@ -82,3 +82,42 @@ refuses to overwrite the existing experiment runs.
 
 No dependencies were installed, sources compiled, services started, tests run or application pipeline code changed.
 The experiment does not automatically enable photo refinement in production or start work on later UX stages.
+
+## Follow-up after Gert's visual feedback
+
+Gert found the first refined surface too soft to describe the actual floor. Two bounded alternatives were checked
+against pinned OpenMVS source and run on the same four photographs, with original camera calibration/poses unchanged.
+No additional sources were compiled or dependencies installed.
+
+| Variant | Actual processing | Outcome |
+| --- | --- | --- |
+| Image-derived dense depth, meshing, then refinement | 18.053 s densification + 1.957 s meshing + 3.598 s refinement | More relief, but large noisy distortions; not a demonstrated improvement |
+| Finer two-scale refinement of the original depth mesh | 4.106 s | Modestly stronger/sharper grooves, still soft; metric accuracy unverified |
+
+Dense reconstruction used the fresh camera scene and `--mesh-file floor-input.ply` to derive image visibility and
+initial depth-search ranges. Native implementation then releases that mesh before estimating image depths; it does
+not force the output onto the original surface. `--tower-mode 0 --estimate-roi 0` disabled synthetic tower assistance
+and automatic ROI estimation. Densification used full image resolution, three neighbour views, four threads and
+default matching/fusion settings. Meshing used no decimation or smoothing. Refinement used two scales,
+`--max-face-area 4 --gradient-step 45.05`, default regularity weight 0.2, no decimation/hole filling, and four threads.
+Output was cropped back to the same floor region.
+
+The dense route fused 62,821 points; its final crop had 75,416 faces. The central 90% of its vertex heights spanned
+about 31.7 mm around the common input plane, versus 8.3 mm for the original and 9.6 mm for the first refinement.
+Those distributions involve different vertex sampling and are not ground-truth error measures. The visible large
+distortions make the dense result unsuitable as an improvement claim, regardless of its extra triangles.
+
+Finer refinement increased the original mesh from 40,623 faces to 45,587 before the final crop (45,548 afterward).
+Its central 90% height span was about 13.1 mm. This also does not establish correct ridge depths. One copied result,
+**Floor experiment — finer photo refinement**, was added to the same capture group for Gert's inspection. The failed
+dense variant was retained only in the experiment directory, not added to the quick Result selector.
+
+Evidence: `.local/experiments/floor-photo-dense-20261110/`, including `execution.json`, native logs, the copied images,
+`comparison.png` (dense route) and `comparison-strong.png` (finer refinement). The dense pipeline had a shared
+five-minute timeout; later refinement commands were separately capped at three/two minutes and finished in seconds.
+These are finite comparisons, not a parameter sweep. No further run is automatically queued.
+
+Remaining questions are whether these views provide sufficiently accurate correspondences and whether RGB-specific
+camera-pose/calibration refinement or improved capture would help. This trial held RTAB-Map poses fixed; it did not
+perform image-based bundle adjustment. Repetitive/specular metal and changing highlights are possible limitations,
+not established causes. A 720 × 960 image is not, by itself, proof that useful finer geometry is impossible.
