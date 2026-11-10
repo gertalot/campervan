@@ -1,11 +1,15 @@
 # Capture-to-measurement workflow redesign
 
-Status: approved by Gert on 10 November 2026. [Flow folder](./). Supersedes the previous four-stage workflow,
-not the original capture data.
+Status: original six-stage workflow approved by Gert on 10 November 2026. The capture/reconstruction revision in
+section 4 has completed its single Flow review and awaits final written-spec approval. [Flow folder](./). Supersedes the previous
+four-stage workflow, not the original capture data. Sections 5–9 remain later-stage specifications, not work
+authorised by this revision.
 
 Delivery decision: plan and implement one stage at a time, starting with stage 1. All stage-specific plans live in
 this folder. Gert visually reviews each stage before the next stage is planned; do not automatically implement later
-stages. [Stage 1 implementation plan](stage-1-plan.md).
+stages. [Original stage 1 implementation plan](stage-1-plan.md) records the delivered database-only review stage;
+it does not authorise implementation of the photographic reconstruction revision below. That requires a separate
+implementation plan in this same folder after spec approval.
 
 ## 1. Outcome and hard boundary
 
@@ -16,7 +20,8 @@ measurement checklist, investigate inconsistent measurements, and explicitly reb
 This is one local hobby application. Keep the implementation direct. No backward compatibility, legacy workflow,
 parallel interface, old-stage adapter, rollback layer, new infrastructure or dependency upgrades. Reuse the existing
 domain algorithms and shared UI mechanisms; replacing the workflow does not mean rewriting working reconstruction
-or numerical libraries. Preserve original databases, source RGB-D, reconstructions, layout definitions and physical
+or numerical libraries. Section 4 now explicitly adds the missing photographic geometry reconstruction; the old
+depth-fusion/photo-texturing path is only the quick-preview mechanism. Preserve original databases, source RGB-D, reconstructions, layout definitions and physical
 distance measurements. They are input data, not the workflow being removed.
 
 The current deliverable is this specification and one spec-review pass. It authorises no application edits, model
@@ -60,14 +65,15 @@ automatic cleanup, symmetry-based reconstruction factors, general mesh editing, 
 annotation tooling are excluded. The earlier scene spec remains the algorithm reference, not an additional backlog
 to execute in full. Its mandatory automatic-on-import behaviour is superseded here.
 
-No new numerical optimiser, graph package, recognition backend or package installation strategy is selected.
+Outside the scoped capture revision in section 4, no new numerical optimiser, graph package, recognition backend or
+package installation strategy is selected.
 Existing NumPy/SciPy, Open3D, GTSAM, PyRigi and approved optional recognition dependencies retain their roles.
 Experimental-design principles inform the existing planner; this is not a new optimisation framework.
 
 ## 3. Navigation and shared interaction
 
-Entry: upload databases into a capture group, explicitly process them, then show the reconstructed result and tags
-at stage 1. Reuse the existing upload/group UX. The stages are:
+Entry: import databases for a quick preview or original photographs for detailed reconstruction into a capture group,
+explicitly process them, then show the result and tags at stage 1. Reuse the existing upload/group UX. The stages are:
 
 1. Review capture (`review_capture`).
 2. Understand the scene (`understand_scene`).
@@ -100,27 +106,198 @@ Text remains selectable. Colour always has a textual status and never stands alo
 
 ## 4. Stage 1 — Review capture
 
+### 4.1 Approved capture strategy and scope
+
+Two explicit actions serve two different purposes in this one stage:
+
+| Action | Input | Output and purpose |
+| --- | --- | --- |
+| `Create quick preview…` | RTAB-Map `.db` captures | Coarse depth-fused mesh and detected tags for spatial inspection and later tag-layout advice |
+| `Create detailed reconstruction…` | Original high-resolution still photographs | Camera alignment, dense photographic geometry, refined mesh, texture and supported tag positions |
+
+The economical sequence is quick preview, later scene/tag-layout review, repeat preview after moving tags if useful,
+then detailed photographs after placement is settled. A preview is not a prerequisite: original photos may be the
+first capture. Both actions are available at stage 1 and from the existing capture-group management entry point.
+Later stages return to these same actions, not another importer or nested wizard. This revision implements no
+tag-placement suggestions, scene understanding, physical-network fit, axes editor or reconstruction correction.
+Those remain in their existing later-stage scopes. Their current Upcoming state must not imply they are implemented.
+
+Use the existing side panel, import UI, capture store, job runner/poller, library, tag overlay, alignment owner and
+renderer. Extend those owners for source kind and processing purpose; do not create a second upload/job/result system.
+Replace the misleading `Add photographic texture` checkbox in the new capture flow with the two named actions.
+Quick preview does not offer that checkbox. Existing textured results remain viewable as ordinary saved input data.
+Do not retain a legacy import form or route adapter alongside the revised flow.
+
+### 4.2 Import, capture guidance and repetition
+
+The action opens the shared importer with current group and existing tag settings selected. Show already imported inputs,
+new files, selected cumulative inputs and result name before the explicit `Create preview` or `Reconstruct from photos`
+submit action. File selection/drop uploads or queues inputs; it never starts reconstruction automatically. Preserve
+original files, metadata and stable source identities; equal basenames from different sources must not overwrite.
+Record source kind, exact selected input identities, layout and processing settings on each result. Inputs not selected
+for this run do not contribute silently. Appending captures creates a new result; previous results remain selectable.
+All supported source types can be uploaded into the same group. Uploading is separate from choosing processing inputs:
+detailed reconstruction accepts original stills, database photographs or an explicit mixture. Show the selection and
+let Gert change it before processing; do not impose a photo-only default or silently include/exclude earlier captures.
+The depth-based preview requires databases containing depth; imported stills remain available for detailed processing.
+
+Preview guidance recommends RTAB-Map LiDAR mode on, HD mode off initially, and inspection of detected tags. HD off
+reduces colour-image memory compared with HD mode; it is not a guarantee that all tags will be readable. Capture
+missed tags closer with surrounding context. Do not promise measurement accuracy from this coarse capture.
+
+Detailed-capture guidance uses original overlapping still photographs from the iPhone Camera app, stable lighting,
+translated viewpoints and connected overview/detail passes. Preserve original resolution/EXIF and distinguish
+separate physical lenses in calibration. Do not use screenshots, texture-atlas crops or silently resized imports.
+Use a concise contextual help disclosure rather than permanent instructions occupying the viewer.
+Supported original-photo formats are JPEG, PNG and HEIC. Retain HEIC originals and use the official precompiled
+`pillow-heif` decoder to create full-resolution working images for reconstruction, preserving original metadata
+through the source mapping and handling image orientation consistently with calibration. No manual conversion,
+Homebrew/source build, broader codec framework or video importer is required by this revision.
+
+For the already-requested baseline on existing captures, detailed reconstruction may also use the original RGB
+frames extracted from selected imported databases. Label these as database photographs and show their actual
+dimensions. They enter the same photographic pipeline, without using recorded depth as its output geometry.
+No hidden four-view cap, arbitrary top-N input selection or per-dataset hardcoded tag IDs/regions is permitted.
+
+Each reconstruction detects and locates its own tags from its explicitly selected source captures and saves that tag
+set with the result. A new result recomputes positions; it does not copy the preview's solved coordinates. Do not add
+per-batch physical-layout assignment, mixed-layout gates or a tag-motion detector to this stage. Existing tag settings,
+physical measurements and reference definitions remain separate data under their existing owners; this revision does
+not redesign measurement association. Neither action edits measurements or marks later stages complete. Earlier
+captures do not enter a new reconstruction unless explicitly selected. New source-specific interpretation requires
+review; never copy old masks or solved coordinates blindly.
+
+### 4.3 Processing ownership and actual photographic geometry
+
+Quick preview reuses the current RTAB-Map extraction/pose/tag processing and Open3D RGB-D fusion. Keep its existing
+coarse settings; this work does not tune LiDAR resolution or add more voxel experiments.
+
+Detailed reconstruction uses this complete chain, with no silent fallback to depth fusion:
+
+1. Prepare selected original photographs and stable source mappings. For database photographs, extract RGB and
+   available calibration through the existing path; original camera metadata may initialise calibration, but saved
+   RTAB poses must not be held fixed as a substitute for photographic camera reconstruction.
+2. Official PyCOLMAP 4.2.1 CPU SIFT feature extraction, exhaustive matching/geometric verification and incremental
+   mapping with standard local/global bundle adjustment. Use the selected input set, standard solver defaults and
+   actual camera/lens groups. Record settings and registered/unregistered images. No custom matcher, optimiser,
+   automatic parameter search or mandatory model downloads. Exhaustive matching is the simple initial baseline;
+   it may be slow for large sets, so show image count and real progress rather than invent a runtime guarantee.
+3. Export the selected reconstruction and undistorted images using COLMAP's standard model format, including sparse
+   3D points and observation tracks. Select the component with the most registered input images, breaking ties by
+   sparse-point count then component ID. Report other components/unregistered inputs; never imply complete coverage.
+   No connected reconstruction is a real error; do not fabricate camera poses or a successful dense result.
+4. Existing OpenMVS 2.4 binaries: `InterfaceCOLMAP` → `DensifyPointCloud` → `ReconstructMesh` → `RefineMesh` → `TextureMesh`.
+   These stages create geometry from photographic correspondences and image-derived depth. The existing empty
+   `points3D.txt` plus `TextureMesh` path does not satisfy this requirement. Do not seed this baseline with a LiDAR mesh.
+5. Keep the refined full-resolution mesh as the master. Simplify only a separate viewer copy after refinement, with
+   full-resolution shaded inspection retained. Texture the photographic geometry rather than a depth-fused substitute.
+
+Use the current Mac CPU path, capped at four processing threads where supported. Dense reconstruction explicitly
+uses `resolution-level=0` and a maximum image dimension at least as large as the selected undistorted images, so it
+does not silently inherit half-resolution processing. Record actual image sizes. Preserve inputs if memory/disk
+limits cause a tool failure; show the actual error. No automatic lower-quality retry, resource framework, CUDA/Mac
+port, Windows execution integration, remote worker or processing service is part of this revision.
+
+If geometry succeeds but texture generation fails, expose the completed shaded mesh with an explicit texture error;
+do not label the job fully successful or silently substitute an older result. Retain stage outputs and native logs
+for inspection; this is not an automatic resume/checkpoint framework. A retry is an explicit new run.
+
+### 4.4 Tags, metric scale and frame
+
+Detect configured AprilTag 36h11 corners using existing OpenCV support in registered undistorted photos. Triangulate
+corresponding ordered corners with PyCOLMAP and those exact undistorted cameras/rays, respecting COLMAP/OpenCV pixel
+conventions. Use the pinned COLMAP mapper's standard `filter_max_reproj_error` and `filter_min_tri_angle` defaults
+for the geometric support policy, recording resolved values with the result. Reject behind-camera/failed estimates,
+observations exceeding that reprojection threshold and corner tracks with insufficient triangulation angle. Require
+four supported corners to use a tag's side lengths for scale; no new optimiser, tuning UI or approval gate is added.
+Keep unsupported detections labelled `Detected but not located`; they do not contribute to scale. A single-view
+detection is not a triangulated tag. These limitations never block reconstructing or inspecting the scene.
+Keep source-image detections and supporting-view identities inspectable in the existing result details/logs; no
+general annotation editor is added here.
+
+Estimate one scale from the configured printed black-square side length and supported reconstructed tag side lengths
+(median of valid side-length ratios). This establishes scale, not independent accuracy or distortion correction.
+Apply that same scale to cameras, sparse/dense geometry and tag translations before publishing metric assets.
+Do not fit tape distances in this stage or combine metre-valued monocular tag poses directly with arbitrary-scale
+SfM coordinates. If no supported metric reference is available, retain an inspectable result explicitly labelled
+arbitrary units; do not display metres or offer metric measurement against it. Missing tags do not block inspection.
+
+Reuse `TagAlignment` for any applicable existing axis/origin definition; do not force the preview's solved transform
+onto the new geometry or introduce another transform stack. Apply definitions only when required tag support and
+scale exist; otherwise show the existing unaligned reason. Interactive axes/origin editing remains stage 2.
+
+### 4.5 Shared progress, results and review
+
+Show the actual stage and available counts: preparation, matching, camera reconstruction, dense reconstruction,
+meshing, refinement, texturing, save. Use indeterminate progress when the tool supplies no measurable total; never
+invent percentages. Reuse the existing status/log/cancellation presentation. Buttons have hover, pressed and focus
+states; pending actions visibly change state. Cancel stops this run's worker/native subprocesses and retains inputs
+and previous results. Errors identify the failed operation and remain visible without opening a log.
+
+Publish both result kinds in the same capture group and existing result selector. Details identify preview versus
+photographic reconstruction, source set, dimensions, registered image counts, settings, scale source and missing
+coverage/texture limitations. Preserve the current completion handoff: show the result automatically only if Gert
+has not navigated elsewhere; otherwise announce completion with the existing explicit view action.
+
 Show the reconstructed scene and detected tags in the existing interactive viewer. Gert inspects the result and
 decides where more capture is needed. Reuse existing viewing/rendering controls; no automatic capture-quality
 classifier, coverage heatmap, residual map, missing-area detector, viewpoint advice, quality score or automated
 before/after assessment is part of this work. Do not invent sufficient-view counts, independence thresholds or
 sensor-accuracy claims. No recognition model runs in this stage.
 
-`Add capture databases…` reuses import in the same group and same physical layout, then explicitly processes the
-selected cumulative database set and displays the new result. Keep previous reconstructions available as normal
-results so Gert can inspect the improvement using the existing result selector, preserving camera/projection.
-This is ordinary capture data, not an old-workflow compatibility path. Do not add a comparison engine or new
-comparison UI. Scene analysis remains an explicit later action.
-
-The intended economical capture strategy is first a basic scan sufficient to see the tags and assess their layout,
-then a detailed, time-consuming capture once Gert is satisfied with tag placement. The workflow must support this
-without requiring complete interior coverage to reach stage 3. Added detailed scans can reuse the accepted physical
-layout, applicable distances and reusable scene/frame reference definitions. New source-specific interpretation
-still requires explicit reanalysis/review; never silently copy old masks or solved coordinates.
+Use the existing layer selector to inspect shaded simplified/full geometry and photographic texture, preserving
+camera/projection. No comparison engine or automatic before/after assessment is added. Retain original photos,
+calibration, reconstructed cameras, feature tracks, tag observations, image-derived depth and scale/frame provenance
+for later stages. Do not mislabel generated depth as original LiDAR or invent confidence values for it.
 
 Completion: Gert chooses `Continue to scene understanding`. Visual review is acceptance for the current purpose,
 not certification of completeness or accuracy. Adding further captures remains available from later stages through
 the same action, returning to this stage after processing; Gert can revisit subsequent stages without reentering data.
+
+### 4.6 Dependency decision and delivery boundary
+
+Selected: official precompiled PyCOLMAP 4.2.1 wheel (BSD licence), adding photographic camera reconstruction to the
+existing Python environment, the already installed prebuilt OpenMVS 2.4.0 tools (AGPL-3.0), and `pillow-heif` 1.8.1
+for HEIC decoding (BSD-3-Clause, bundled native components retain their licences). Official pillow-heif release
+files include a Python 3.13/macOS ARM64 wheel, approximately 4.3 MB. Official PyCOLMAP release
+metadata lists a Python 3.13/macOS 14+ ARM64 wheel; CPU sparse processing is supported. COLMAP CUDA dense stereo is
+not used on this Mac. Standard undistorted COLMAP cameras/images/points are supported by the existing importer;
+newer rigs/frames files need no custom converter. Runtime installation/interchange remains implementation evidence,
+not something this spec claims to have executed. Use binary-only installation through the project's uv environment:
+no Homebrew stack, source compilation, new Python environment or implicit installation from a UI action.
+
+Alternatives evaluated for this bounded integration:
+
+| Candidate | Decision and relevant trade-off |
+| --- | --- |
+| PyCOLMAP + installed OpenMVS | Selected: maintained official SfM API/wheels and documented interchange; adds one compiled wheel rather than a custom reconstruction engine. CPU processing can be slow; it runs in the existing cancellable worker. Free software; use official releases and retain native versions/logs. |
+| pillow-heif versus JPEG/PNG-only | HEIC decoding selected: maintained documented decoder with compatible binary wheels and metadata support; adds a small dependency rather than requiring Camera setting changes or manual export conversion. No custom codec or implicit installation. |
+| Newer OpenMVS native SfM tools | Not selected: current upstream documents `CreateStructure`, but our pinned 2.4 tool set lacks it. Upgrading and validating that different pipeline is outside this revision. |
+| Metashape | Not selected: maintained commercial desktop workflow, but purchasing/licensing and automating another application adds integration work; full marker/scale-bar features require Professional. |
+| Apple Object Capture | Not selected: no verified complete-interior/marker integration route for this workflow; it does not establish an advantage over the documented COLMAP/OpenMVS route. |
+| Custom Rust/Go/native engine | Excluded by Gert: standalone extraction/language migration is deferred; changing orchestration language does not supply the missing reconstruction algorithms. |
+
+Only this stage and its direct source/job/result contracts change. Preserve the later-stage specifications; detailed
+photo results are not claimed compatible with the current RGB-D-only stage-6 rebuild. Stage 6 must be reconciled
+when separately planned, using the retained photographic observations, rather than silently rebuilding photo results
+from LiDAR. This revision does not implement that correction backend or the unfinished scene-understanding stage.
+
+Finite capture-stage acceptance (visual/source evidence, not tests):
+
+| ID | Observable result |
+| --- | --- |
+| C1 | Both named actions are discoverable; misleading photo-texture checkbox is removed; original-photo entry does not require a preview. |
+| C2 | Existing databases produce a quick preview and tag overlays through current processing; repeated preview capture remains possible. |
+| C3 | Original stills and extracted database photographs can complete the documented photographic camera/dense/mesh/refine/texture chain; no LiDAR-geometry substitution. |
+| C4 | Explicitly selected inputs and provenance are preserved, including mixed original/database photographs; tags are recomputed per result, additional captures/results stay in the group and physical measurements are unchanged. |
+| C5 | Supported photo tags establish a recorded uniform scale; missing/unsupported tags and unscaled results are labelled honestly. |
+| C6 | Shared real progress, Cancel, errors, retry and result handoff work; previous results and sources survive failure/cancellation. |
+| C7 | Full-resolution shaded geometry and texture can be inspected in the existing viewer with camera state preserved; dense/refined masters are not prematurely simplified. |
+| C8 | One bounded connected floor/sill baseline uses existing database photographs through the complete chain; inspect actual untextured relief against the preview and record the outcome. No repeated parameter experiments or invented accuracy claims. |
+
+No implementation plan or processing is authorised by this draft. After final approval, write one finite capture-stage
+implementation plan here. Run one accumulated source review and Gert's visual inspection, not per-task reviewers,
+tests, browser automation, repeated review cycles or benchmark campaigns.
 
 ## 5. Stage 2 — Understand the scene; set axes and origin
 
@@ -285,14 +462,15 @@ artifact references. Physical distances remain in the independent measurement st
 group/result and stage on reload. Reuse existing revisions/fingerprints and atomic write/conflict handling; do not
 introduce another save coordinator, persistence framework or freshness system.
 
-For new databases with an unchanged layout: preserve distances and user intent, return to visual capture review after
+For new databases or photographs with an unchanged layout: preserve distances and user intent, return to visual capture review after
 processing, retain the old result for inspection, and mark source-dependent scene/layout/plan/correction results Needs review.
 Do not copy old region coordinates onto a new source. Preserve source-associated user corrections on the old result;
 transfer only where source identity or verified association supports it, otherwise request review. Scene reanalysis
 and axes application remain explicit. A physical-only fit need not become invalid just because a new photo arrived.
 
-For changed tags: use an explicitly revised physical layout. Do not merge old/new tag positions by ID. Existing
-unchanged-tag measurement reuse is input-data handling, not a legacy workflow compatibility requirement.
+Detected tag positions belong to their source reconstruction; do not merge old/new result coordinates by tag ID.
+Physical measurement association remains separate under its existing owner. This capture revision adds no per-batch
+layout declaration or mixed-layout gate. Changes to physical layouts/measurement reuse are not redesigned here.
 
 Replace old stage enums, API stage mappings, progress UI, obsolete nested process lists and workflow-derived state.
 Discard old workflow progress/artifact references at cutover; do not parse/translate old stages, maintain schema
@@ -306,7 +484,9 @@ historical where they conflict; update the practical photogrammetry guide and sc
 Implementation locations are the scan-owned modules listed in section 2, their direct types/callers and factual scan
 documentation. Changes to the shared panel/overlay are allowed only as needed by this workflow, preserving Manage
 scans behaviour. No unrelated CAD/planner/UI refactor, native packaging change, service, new dependency, general
-geometry editor, CAD inference, background automation or compatibility project.
+geometry editor, CAD inference, background automation or compatibility project. Section 4's explicitly selected
+PyCOLMAP and HEIC-decoder dependencies and photo-source processing are the only exceptions to this section's older no-new-dependency
+boundary. The current revision's implementation plan maps C1–C8 only; it does not absorb A3–A8 or implement later stages.
 
 Each row is an observable completion criterion, not a request for a test suite:
 
@@ -334,6 +514,21 @@ than substituting a generic score, hiding the stage or silently initiating resea
 ## 12. Research and decisions
 
 References support the listed decisions; they do not establish universal UX compliance or prove this pipeline works.
+
+Capture revision evidence: [depth diagnostic](../../research/2026-11-10-depth-detail-diagnostic.md),
+[PyCOLMAP installation](https://colmap.github.io/pycolmap/index.html),
+[official 4.2.1 release metadata](https://pypi.org/pypi/pycolmap/4.2.1/json),
+[COLMAP reconstruction and capture](https://colmap.github.io/tutorial.html),
+[camera conventions](https://colmap.github.io/cameras.html),
+[OpenMVS interchange/pipeline](https://github.com/cdcseacave/openMVS/wiki/Usage),
+[OpenCV tag detection](https://docs.opencv.org/4.13.0/d5/dae/tutorial_aruco_detection.html),
+[COLMAP point-support defaults](https://colmap.github.io/pycolmap/pycolmap.html#pycolmap.IncrementalMapperOptions),
+[HEIC decoder/binary releases](https://pypi.org/project/pillow-heif/),
+[HEIC decoding and metadata](https://pillow-heif.readthedocs.io/en/latest/pillow-plugin.html),
+[RTAB-Map capture settings](https://github.com/introlab/rtabmap/blob/master/app/ios/Settings.bundle/Mapping.plist).
+Current upstream OpenMVS documentation includes tools newer than installed 2.4; it is not permission to invoke
+unavailable binaries or upgrade the native stack. Existing worker/library/interchange sources were inspected before
+selecting reuse. No runtime install or complete photographic reconstruction was run during this planning phase.
 
 - [USWDS step indicator](https://designsystem.digital.gov/components/step-indicator/): explicit progress and current
   stage; keep navigation controls separate and use the existing shared stepper.
