@@ -1,7 +1,7 @@
 # Capture-to-measurement workflow redesign
 
 Status: original six-stage workflow approved by Gert on 10 November 2026. The capture/reconstruction revision in
-section 4 has completed its single Flow review and awaits final written-spec approval. [Flow folder](./). Supersedes the previous
+section 4 completed its single Flow review and was approved by Gert on 11 November 2026. [Flow folder](./). Supersedes the previous
 four-stage workflow, not the original capture data. Sections 5–9 remain later-stage specifications, not work
 authorised by this revision.
 
@@ -295,8 +295,8 @@ Finite capture-stage acceptance (visual/source evidence, not tests):
 | C7 | Full-resolution shaded geometry and texture can be inspected in the existing viewer with camera state preserved; dense/refined masters are not prematurely simplified. |
 | C8 | One bounded connected floor/sill baseline uses existing database photographs through the complete chain; inspect actual untextured relief against the preview and record the outcome. No repeated parameter experiments or invented accuracy claims. |
 
-No implementation plan or processing is authorised by this draft. After final approval, write one finite capture-stage
-implementation plan here. Run one accumulated source review and Gert's visual inspection, not per-task reviewers,
+This approval authorises the capture-stage specification, not implementation or processing. The next phase writes
+one finite capture-stage implementation plan here. Run one accumulated source review and Gert's visual inspection, not per-task reviewers,
 tests, browser automation, repeated review cycles or benchmark campaigns.
 
 ## 5. Stage 2 — Understand the scene; set axes and origin

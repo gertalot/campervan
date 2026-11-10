@@ -7,7 +7,8 @@ and documentation/refactor quality. No tests, processing, installation or applic
 
 Seven reported findings reduce to four distinct decisions. None are editorial obvious fixes. No out-of-scope findings
 were admitted. The decisions below were collected in ordinary chat and applied in one batched spec update on
-11 November 2026. Do not repeat the review pass. Final written-spec approval remains separate from these decisions.
+11 November 2026. Gert then approved the final written capture-stage specification on 11 November 2026.
+Do not repeat the review pass. Implementation planning remains a separate user-invoked phase.
 
 | Decision | Sources | Gert's decision |
 | --- | --- | --- |
