@@ -3,8 +3,8 @@ import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import {
-  Box3, LoadingManager, Matrix4, Mesh, MeshBasicMaterial, Points, PointsMaterial,
-  type Material, type Object3D, type Texture, type MeshPhongMaterial, type Camera,
+  Box3, LoadingManager, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, PointLight, Points, PointsMaterial, Vector3,
+  type AmbientLight, type DirectionalLight, type Material, type Object3D, type Texture, type MeshPhongMaterial, type Camera,
 } from 'three';
 import * as library from './renderer';
 import { createViewerCamera, type CameraViewer, type CameraState } from './viewer-camera';
@@ -18,6 +18,9 @@ import { createScanLibrary } from './scan-library';
 interface ScanViewer extends CameraViewer {
   rendered: CameraViewer['rendered'] & {
     nestedGroup: { groups: Record<string, Object3D> };
+    scene: Object3D;
+    ambientLight: AmbientLight;
+    directLight: DirectionalLight;
     orientationMarker: { setVisible(visible: boolean): void };
   };
   update(marker: boolean, notify: boolean): void;
@@ -34,14 +37,24 @@ function disposeObject(root: Object3D) {
   });
 }
 
-async function loadObject(url: string, kind: Layer['kind'], photo = false): Promise<Object3D> {
+function availableLayers(scan: Scan): Layer[] {
+  const available = scan.layers?.length ? scan.layers
+    : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }];
+  const surface = available.find(layer => layer.kind === 'mesh');
+  return surface ? [...available, { ...surface, id: 'shaded', label: 'Shaded surface' }] : available;
+}
+
+async function loadObject(url: string, kind: Layer['kind'], mode = ''): Promise<Object3D> {
   if (kind !== 'obj') {
     const geometry = await new PLYLoader().loadAsync(url);
     if (!geometry.getAttribute('position')?.count) { geometry.dispose(); throw new Error('The scan has no geometry.'); }
-    return kind === 'cloud'
-      ? new Points(geometry, new PointsMaterial({ size: 2, sizeAttenuation: false,
-        color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }))
-      : new Mesh(geometry, new MeshBasicMaterial({ color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }));
+    if (kind === 'cloud') return new Points(geometry, new PointsMaterial({ size: 2, sizeAttenuation: false,
+      color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }));
+    if (mode === 'shaded') {
+      if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
+      return new Mesh(geometry, new MeshStandardMaterial({ color: '#b8b8b8', roughness: 1, metalness: 0 }));
+    }
+    return new Mesh(geometry, new MeshBasicMaterial({ color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }));
   }
   // Keep the native manager open while MTL, OBJ and their texture images are loaded.
   const manager = new LoadingManager();
@@ -53,7 +66,7 @@ async function loadObject(url: string, kind: Layer['kind'], photo = false): Prom
   try {
     // OpenMVS writes Tr=1 for opaque surfaces; its convention is the inverse of standard MTL.
     const materialLoader = new MTLLoader(manager);
-    materialLoader.setMaterialOptions({ invertTrProperty: photo });
+    materialLoader.setMaterialOptions({ invertTrProperty: mode === 'photo' });
     const materials = await materialLoader.loadAsync(url.replace(/\.obj$/, '.mtl'));
     materials.preload();
     root = await new OBJLoader(manager).setMaterials(materials).loadAsync(url);
@@ -104,6 +117,8 @@ export function setupScan(panel: HTMLElement) {
   const container = panel.querySelector<HTMLElement>('#scan-viewer')!;
   let scans: Scan[] = [];
   let viewer: ScanViewer | undefined;
+  let surfaceLight: PointLight | undefined;
+  let lightDefaults: { ambient: AmbientLight; intensity: number; visible: boolean } | undefined;
   let material: PointsMaterial | undefined;
   let page: { handleMessage(message: unknown): void; resize(): void } | undefined;
   let loading = false;
@@ -157,7 +172,7 @@ export function setupScan(panel: HTMLElement) {
         const scan = scans.find(item => item.key === key && !item.archived); if (!scan || !page || !valid()) { announce(); return; }
         const layer = preferredLayer(scan);
         let root: Object3D;
-        try { root = await loadObject(layerUrl(scan, layer), layer.kind, layer.id === 'photo'); }
+        try { root = await loadObject(layerUrl(scan, layer), layer.kind, layer.id); }
         catch (error) { announce(`Could not load the completed capture: ${error instanceof Error ? error.message : String(error)}.`); return; }
         if (!valid()) { disposeObject(root); announce(); return; }
         completion.replaceChildren(); await changeResult(key, { layer, root });
@@ -176,7 +191,7 @@ export function setupScan(panel: HTMLElement) {
   };
 
   function preferredLayer(scan: Scan): Layer {
-    const available = scan.layers?.length ? scan.layers : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }];
+    const available = availableLayers(scan);
     const previous = layers.value || sessionStorage.getItem('campervan.scan.layer') || '';
     return available.find(layer => layer.id === previous)
       ?? ['colour', 'mesh', 'photo', 'cloud'].map(id => available.find(layer => layer.id === id)).find(layer => !!layer)
@@ -192,18 +207,41 @@ export function setupScan(panel: HTMLElement) {
     const chosen = scan ? preferredLayer(scan) : undefined;
     layers.replaceChildren();
     if (!scan) { layers.disabled = true; return; }
-    for (const layer of scan.layers?.length ? scan.layers : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }]) {
+    for (const layer of availableLayers(scan)) {
       layers.add(new Option(layer.id === 'photo' ? 'Photo texture (experimental)' : layer.label, layer.id));
     }
     if (chosen) layers.value = chosen.id;
     layers.disabled = layers.options.length < 2;
   }
 
+  function updateSurfaceLight() {
+    if (!surfaceLight || !viewer?.ready) return;
+    const projection = viewer.rendered.camera.camera as unknown as Camera;
+    const distance = Math.max(.1, projection.position.distanceTo(new Vector3().fromArray(viewer.getCameraTarget())));
+    surfaceLight.position.set(distance * .2, distance * .15, 0)
+      .applyQuaternion(projection.quaternion).add(projection.position);
+    // Keep illumination near the orbit target steady while zooming; use normal inverse-square attenuation.
+    surfaceLight.intensity = 3 * distance * distance;
+  }
+
+  function surfaceLighting(enabled: boolean) {
+    surfaceLight?.removeFromParent(); surfaceLight = undefined;
+    if (!viewer?.ready) return;
+    const { ambientLight, directLight, scene } = viewer.rendered;
+    if (!lightDefaults || lightDefaults.ambient !== ambientLight) {
+      lightDefaults = { ambient: ambientLight, intensity: ambientLight.intensity, visible: directLight.visible };
+    }
+    ambientLight.intensity = enabled ? .6 : lightDefaults.intensity;
+    directLight.visible = enabled ? false : lightDefaults.visible;
+    if (enabled) {
+      surfaceLight = new PointLight(0xffffff, 1); scene.add(surfaceLight); updateSurfaceLight();
+    }
+  }
+
   async function loadLayer(prepared?: { layer: Layer; root: Object3D }) {
     const scan = scans.find(item => item.key === select.value && !item.archived);
     if (!scan || !page) return;
-    const layer = prepared?.layer ?? scan.layers?.find(item => item.id === layers.value)
-      ?? { id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const };
+    const layer = prepared?.layer ?? availableLayers(scan).find(item => item.id === layers.value) ?? preferredLayer(scan);
     sessionStorage.setItem('campervan.scan.result', scan.key);
     sessionStorage.setItem('campervan.scan.layer', layer.id);
     const token = ++generation;
@@ -216,7 +254,7 @@ export function setupScan(panel: HTMLElement) {
     status.textContent = `Loading ${scan.display_name} · ${layer.label}…`;
     let root: Object3D | undefined;
     try {
-      root = prepared ? prepared.root : await loadObject(layerUrl(scan, layer), layer.kind, layer.id === 'photo');
+      root = prepared ? prepared.root : await loadObject(layerUrl(scan, layer), layer.kind, layer.id);
       if (token !== generation) { disposeObject(root); return; }
       // Navigation during an asset load takes precedence over the earlier snapshot.
       saved = camera.cameraState() ?? saved;
@@ -238,6 +276,7 @@ export function setupScan(panel: HTMLElement) {
       const group = viewer!.rendered.nestedGroup.groups['/Scan/Cloud'];
       for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
       group.add(root);
+      surfaceLighting(layer.id === 'shaded');
       renderedScan = scan;
       refreshWorkflow();
       if (token !== generation) { root = undefined; return; }
@@ -286,6 +325,7 @@ export function setupScan(panel: HTMLElement) {
     const group = viewer?.rendered.nestedGroup.groups['/Scan/Cloud'];
     if (group) for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
     material = undefined; renderedScan = undefined;
+    surfaceLighting(false);
     tagOverlay?.setTags([]); tagCount.textContent = 'AprilTags (0)'; tags.disabled = true;
     pointSize.hidden = true; size.disabled = true; attachWorkflow();
     camera.cancelCameraAnimation(); viewer?.update(true, false);
@@ -354,7 +394,7 @@ export function setupScan(panel: HTMLElement) {
         constructor(...args: any[]) {
           super(...args); viewer = this as unknown as ScanViewer;
           const update = this.update.bind(this);
-          this.update = (...args: any[]) => { update(...args); camera.updateCube(); tagOverlay?.update(); };
+          this.update = (...args: any[]) => { updateSurfaceLight(); update(...args); camera.updateCube(); tagOverlay?.update(); };
         }
       }
       page = core.createPage({

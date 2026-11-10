@@ -110,6 +110,11 @@ other saved reconstructions or surface/texture layers. A missing tag does not bl
 projection, pan and zoom are preserved across result/layer changes; use **Fit** when you deliberately want new framing.
 The panel overlays the viewer. Canvas clicks leave it open; **X** or **Escape** closes it, consistently with Manage scans.
 
+For results with a mesh, **Layer → Shaded surface** shows the same geometry in neutral grey without photo or vertex
+colour. A camera-following point light and gentle ambient light reveal surface shape; tag overlays remain available.
+This is a display option and requires no new reconstruction. Colour/photo layers keep their existing appearance.
+The option is absent for point-cloud-only results. Its exact lighting balance awaits Gert's visual feedback.
+
 If you want more detail, choose **Add capture databases…** in Review capture. This opens the same importer in the
 current result's capture group and selects that result's tag layout. Existing imported databases are listed alongside
 new files; review the cumulative selection, then explicitly choose **Process captures**. The new result stays in the
