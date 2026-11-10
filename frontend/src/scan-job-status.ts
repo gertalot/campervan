@@ -27,32 +27,42 @@ export function createJobStatus() {
       entry.listeners.add(listener); listener(entry.job); return () => entry.listeners.delete(listener);
     } };
 }
-export function createJobView(retry: () => void) {
+export function createJobView(retry: () => void, retryLabel = 'Retry') {
   let current: ProcessingJob | null = null; let cancelling: string | null = null;
   const element = document.createElement('section'); element.className = 'scan-job-status';
   const status = document.createElement('p'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  const error = document.createElement('p'); error.setAttribute('role', 'alert'); error.hidden = true;
   // No value means indeterminate progress, not an invented completion percentage.
   // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/progress
   const progress = document.createElement('progress'); progress.hidden = true;
   progress.setAttribute('aria-label', 'Scan processing progress');
   const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Show processing log';
-  const log = document.createElement('pre'); details.append(summary, log);
-  const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Retry'; button.onclick = retry;
+  const inputs = document.createElement('p');
+  const settings = document.createElement('pre');
+  const log = document.createElement('pre'); details.append(summary, inputs, settings, log);
+  const button = document.createElement('button'); button.type = 'button'; button.textContent = retryLabel; button.onclick = retry;
   const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel'; cancel.hidden = true;
   cancel.onclick = () => { const job = current; if (!job || job.state !== 'processing' || cancelling) return;
     cancelling = job.id; cancel.disabled = true; cancel.textContent = 'Cancelling…';
     void jobStatus.cancel(job.id).catch(reason => {
       if (current?.id === job.id) status.textContent = `Could not cancel: ${String(reason)}`;
     }).finally(() => { cancelling = null; cancel.disabled = false; cancel.textContent = 'Cancel'; }); };
-  element.append(status, progress, cancel, button, details);
+  element.append(status, error, progress, cancel, button, details);
   return { element,
     pending(message: string) { status.textContent = message; progress.hidden = false; progress.setAttribute('aria-label', message);
-      current = null; cancel.hidden = true;
+      current = null; cancel.hidden = true; error.hidden = true;
       element.setAttribute('aria-busy', 'true'); button.hidden = true; details.hidden = true; },
     update(job: ProcessingJob) { current = job;
-    status.textContent = `${job.name} · ${job.stage}${job.error ? ` · ${job.error}` : ''}`;
+    status.textContent = `${job.name} · ${job.stage}`;
+    error.textContent = job.error ?? ''; error.hidden = !job.error;
+    inputs.textContent = job.request
+      ? `${job.request.purpose === 'preview' ? 'Quick preview' : 'Photographic reconstruction'} inputs: ${job.request.inputs.map(input => `${input.filename} (${input.kind}, ${input.capture_id})`).join(', ')}`
+      : 'Recorded inputs and settings: Unknown';
+    settings.textContent = job.request ? JSON.stringify(job.request.settings, null, 2) : '';
     const working = job.state === 'processing' && !job.error;
     progress.hidden = !working; progress.setAttribute('aria-label', `${job.name} progress`);
+    if (working && job.progress_percent !== undefined) { progress.max = 100; progress.value = job.progress_percent; }
+    else progress.removeAttribute('value');
     element.setAttribute('aria-busy', String(working)); details.hidden = false;
     cancel.hidden = job.state !== 'processing'; cancel.disabled = cancelling === job.id;
     cancel.textContent = cancelling === job.id ? 'Cancelling…' : 'Cancel';

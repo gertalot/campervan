@@ -28,6 +28,8 @@ scan = [
     "numpy==2.5.4",
     "scipy==1.18.1",
     "pyrigi==1.3.0",
+    "pycolmap==4.2.1",
+    "pillow-heif==1.8.1",
 ]
 
 [dependency-groups]

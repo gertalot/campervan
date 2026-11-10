@@ -52,3 +52,8 @@ depending solely on browser form validation.
 - No full Flow programme, additional review cycle, stage-2 planning or implementation is triggered by this report.
 
 Admitted/deferred bead IDs: none. No `.beads` contents accessed. Stop here for Gert's visual feedback.
+
+## Later capture/reconstruction revision
+
+The 11 November 2026 revision has its own [completion and single-review evidence](05-capture-reconstruction-completeness.md).
+The stage-1 shell evidence above is retained; it is not a claim that photographic processing was already present.

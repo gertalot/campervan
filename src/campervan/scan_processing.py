@@ -2,17 +2,20 @@
 
 import asyncio
 import os
+import re
 import signal
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Annotated, Any, Callable, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from campervan.scan_alignment import TagAlignment
 from campervan.scan_layouts import ScanLayouts
 from campervan.scan_library import Name, ScanLibraryStore
+from campervan.scan_photogrammetry import PhotographicSettings
 from campervan.scans import SCAN_RUNS, ScanSettings, read_json, write_json
 
 
@@ -22,13 +25,26 @@ def identifier(value: str) -> str:
     return value
 
 
-class ProcessCaptures(BaseModel):
+class CaptureRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     group_id: str
     capture_ids: list[str] = Field(min_length=1)
     layout_id: str
     name: Name
+    alignment_definition: TagAlignment | None = None
+
+
+class PreviewCaptures(CaptureRequest):
+    purpose: Literal["preview"]
     settings: ScanSettings = Field(default_factory=ScanSettings)
+
+
+class ReconstructPhotos(CaptureRequest):
+    purpose: Literal["photographic"]
+    settings: PhotographicSettings = Field(default_factory=PhotographicSettings)
+
+
+ProcessCaptures = Annotated[PreviewCaptures | ReconstructPhotos, Field(discriminator="purpose")]
 
 
 class ScanProcessing:
@@ -44,6 +60,7 @@ class ScanProcessing:
         data: dict[str, Any] = read_json(self.captures / identifier(value) / "capture.json")
         if data["id"] != value:
             raise ValueError("Capture identity differs from its directory.")
+        data["kind"] = "database" if Path(data["filename"]).suffix.lower() == ".db" else "photo"
         return data
 
     def list_captures(self) -> list[dict[str, Any]]:
@@ -53,7 +70,7 @@ class ScanProcessing:
         data: dict[str, Any] = read_json(self.jobs / f"{identifier(value)}.json")
         if data["state"] == "processing" and value not in self.tasks:
             data.update(
-                state="interrupted", error="Processing was interrupted. The imported databases can be processed again."
+                state="interrupted", error="Processing was interrupted. The imported captures can be processed again."
             )
         if data.get("source_run_id"):
             source = self.library.read().entries.get(f"run:{data['source_run_id']}")
@@ -105,23 +122,28 @@ class ScanProcessing:
         if request.group_id not in self.library.read().groups:
             raise ValueError("Unknown capture group.")
         if len(set(request.capture_ids)) != len(request.capture_ids):
-            raise ValueError("Choose each database only once.")
+            raise ValueError("Choose each capture only once.")
         captures = [self.capture(value) for value in request.capture_ids]
         if any(capture["group_id"] != request.group_id for capture in captures):
-            raise ValueError("Choose databases belonging to this capture group.")
+            raise ValueError("Choose captures belonging to this capture group.")
+        if request.purpose == "preview" and any(capture["kind"] != "database" for capture in captures):
+            raise ValueError("Quick previews use database depth. Deselect the still photos, or choose detailed reconstruction.")
         layout = self.layouts.layout(request.layout_id)
         if self.layouts.measurements(layout.id).read().tag_layout_id != layout.id:
             raise ValueError("Measurement document belongs to another tag layout.")
         for capture in captures:
             filename = capture["filename"]
-            if Path(filename).name != filename or Path(filename).suffix.lower() != ".db":
+            if Path(filename).name != filename or Path(filename).suffix.lower() not in {
+                ".db", ".jpg", ".jpeg", ".png", ".heic"
+            }:
                 raise ValueError("Invalid stored capture filename.")
             path = self.captures / identifier(capture["id"]) / filename
             if path.is_symlink() or not path.is_file():
                 raise ValueError("Imported capture file is missing or linked elsewhere.")
-        settings = request.settings.model_copy(
-            update={"tag_family": layout.tag_family, "tag_size_mm": layout.tag_size_mm}
-        )
+        settings = request.settings
+        if request.purpose == "preview":
+            settings = settings.model_copy(update={"tag_family": layout.tag_family, "tag_size_mm": layout.tag_size_mm,
+                                                   "texture_mode": "baked"})
         value = str(uuid4())
         run_id = f"capture-{value}"
         self.jobs.mkdir(parents=True, exist_ok=True)
@@ -132,11 +154,21 @@ class ScanProcessing:
             "name": request.name,
             "layout_id": layout.id,
             "capture_ids": request.capture_ids,
+            "purpose": request.purpose,
             "settings": settings.model_dump(),
             "state": "processing",
             "stage": "Starting reconstruction",
             "error": None,
             "created_at": datetime.now(UTC).isoformat(),
+        }
+        job["request"] = {
+            "purpose": request.purpose, "name": request.name, "group_id": request.group_id,
+            "tag_layout_id": layout.id, "tag_family": layout.tag_family, "tag_size_mm": layout.tag_size_mm,
+            "settings": settings.model_dump(),
+            "alignment_definition": request.alignment_definition.model_dump() if request.alignment_definition else None,
+            "inputs": [{**capture, "capture_id": capture["id"],
+                        "path": str((self.captures / capture["id"] / capture["filename"]).resolve())}
+                       for capture in captures],
         }
         self.library.associate(request.group_id, layout.id)
         self._save(job)
@@ -179,14 +211,19 @@ class ScanProcessing:
         measurements = self.layouts.directory / job["layout_id"] / "measurements.json"
         command = job.get("command")
         if command is None:
-            command = [sys.executable, "-u", "-m", "campervan.cli", "scan", "process"]
-            for capture in captures:
-                command.append(str((self.captures / capture["id"] / capture["filename"]).resolve()))
-            command += ["--output", str(output.resolve()), "--measurements", str(measurements.resolve())]
-            for name, setting in job["settings"].items():
-                if setting is not None:
-                    command += [f"--{name.replace('_', '-')}", str(setting)]
+            if job.get("purpose") == "photographic":
+                command = [sys.executable, "-u", "-m", "campervan.cli", "scan", "reconstruct", "--request",
+                           str((self.jobs / f"{value}.json").resolve()), "--output", str(output.resolve())]
+            else:
+                command = [sys.executable, "-u", "-m", "campervan.cli", "scan", "process"]
+                for capture in captures:
+                    command.append(str((self.captures / capture["id"] / capture["filename"]).resolve()))
+                command += ["--output", str(output.resolve()), "--measurements", str(measurements.resolve())]
+                for name, setting in job["settings"].items():
+                    if setting is not None:
+                        command += [f"--{name.replace('_', '-')}", str(setting)]
         process = None
+        failure_detail = None
         try:
             with (self.jobs / f"{value}.log").open("wb") as log:
                 process = await asyncio.create_subprocess_exec(
@@ -197,11 +234,32 @@ class ScanProcessing:
                     log.write(line)
                     log.flush()
                     text = line.decode(errors="replace").strip()
+                    if text.startswith("Scan processing failed:"):
+                        failure_detail = text.removeprefix("Scan processing failed:").strip()
                     if text.startswith("[") and text.endswith("]"):
                         job["stage"] = text[1:-1]
+                        job.pop("progress_percent", None)
+                        self._save(job)
+                    elif text.startswith(("Estimated depth-maps", "Optimized depth-maps", "Fused depth-maps",
+                                          "Filtered depth-maps", "Dense fused depth-maps",
+                                          "Geometric-consistent estimated depth-maps", "Processed iterations")):
+                        job["stage"] = text
+                        percentage = re.search(r"\(([\d.]+)%", text)
+                        if percentage:
+                            job["progress_percent"] = float(percentage[1])
                         self._save(job)
                 code = await process.wait()
             if job.get("kind") != "analysis" and (output / "run.json").is_file():
+                if job.get("purpose") == "preview":
+                    manifest = read_json(output / "run.json")
+                    manifest.update(purpose="preview", units="m", inputs=job["request"]["inputs"])
+                    if definition := job["request"].get("alignment_definition"):
+                        from campervan.scan_alignment import tag_alignment
+                        try:
+                            manifest["alignment"] = tag_alignment(manifest["tags"], TagAlignment.model_validate(definition))
+                        except ValueError as error:
+                            manifest["alignment"] = {"status": "unaligned", "definition": definition, "reason": str(error)}
+                    write_json(output / "run.json", manifest)
                 source = job.get("source_run_id")
                 job["group_id"] = self.library.associate(
                     job["group_id"],
@@ -211,7 +269,7 @@ class ScanProcessing:
                 )
                 job["result_key"] = f"run:{job['run_id']}"
             if code:
-                raise RuntimeError(f"Processing exited with code {code}. See the processing log below.")
+                raise RuntimeError(failure_detail or f"Processing exited with code {code}. See the processing log below.")
             if "result_key" not in job and job.get("kind") != "analysis":
                 raise RuntimeError("Processing finished without publishing a result. See the log below.")
             if publish is not None:

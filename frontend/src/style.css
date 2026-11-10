@@ -495,6 +495,12 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
   overflow-wrap: anywhere; }
 .scan-group-drop-target { outline: 2px solid #8bb7e8; outline-offset: 3px; background: #8bb7e80a; }
 .scan-group-captures { margin: 8px 0; }
+.scan-result-provenance pre { max-height: 340px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  font-size: 11px; }
+.scan-result-provenance table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.scan-result-provenance th, .scan-result-provenance td { padding: 7px; border-bottom: 1px solid #454a54;
+  text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.scan-library-dialog dd { white-space: pre-wrap; overflow-wrap: anywhere; }
 .scan-capture-row { display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 5px 0 5px 10px; color: #b7c1cf; font-size: 12px; }
 .scan-capture-row span { overflow-wrap: anywhere; min-width: 0; }
@@ -602,6 +608,7 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-workflow-title { margin: 0 0 10px; font-size: 20px; }
 .scan-workflow-result { margin: 0 0 16px; color: #edf1f7; overflow-wrap: anywhere; }
 .scan-workflow-description { color: #b7c1cf; line-height: 1.6; }
+.scan-capture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .scan-workflow-panel .scan-workflow-primary { margin-block: 6px 16px; background: #365f8a; border-color: #82afe1;
   color: #fff; font-weight: 600; }
 .scan-workflow-panel [role=alert] { color: #ffb5b5; }

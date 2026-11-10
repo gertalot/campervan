@@ -1,16 +1,30 @@
 import { request } from './api';
 import type { ScanTag } from './scan-tags';
+import type { CapturePurpose } from './scan-import-api';
 
 export interface ScanLayer { id: string; label: string; asset: string; kind: 'cloud' | 'mesh' | 'obj' }
+export interface TagAlignmentDefinition {
+  version: 1; target_frame: string; description?: string; origin_tag: number; up_normal_tags: number[];
+  x_direction: { from_tag: number; to_tag: number }; y_direction: { from_tag: number; to_tag: number };
+}
 export interface ScanResult {
   key: string; id?: string; name: string; bytes: number; display_name: string;
   group_id: string | null; group_name: string | null; archived: boolean; is_default: boolean;
   layers?: ScanLayer[]; measured?: boolean; tag_layout_id?: string | null; tags?: ScanTag[]; tag_note?: string;
   alignment?: { status: string; matrix?: number[][]; target_frame?: string;
-    definition?: { origin_tag: number }; reason?: string };
+    definition?: TagAlignmentDefinition; reason?: string };
   created_at?: string | null; input_filenames?: string[]; pose_source?: string | null;
   settings?: { voxel_mm?: number; [key: string]: unknown }; frame_count?: number | null;
   geometry?: { triangles?: number; [key: string]: unknown };
+  purpose?: CapturePurpose; units?: 'm' | 'arbitrary'; photo_error?: string | null;
+  inputs?: { capture_id: string; kind: 'database' | 'photo'; filename: string; width?: number; height?: number }[];
+  scale?: { status: 'metric' | 'unscaled'; factor?: number | null; source?: string | null;
+    supporting_tag_ids?: number[]; reason?: string | null };
+  photo_reconstruction?: {
+    selected_image_count: number; registered_image_count: number; unregistered_image_ids: string[];
+    component_summaries: unknown[]; selected_component_id: number | string | null;
+    settings: Record<string, unknown>; versions: Record<string, unknown>; tag_support_asset: string;
+  };
   source_run_id?: string | null; reference_run_id?: string | null;
 }
 export interface ScanEntryPreferences { display_name: string | null; group_id: string | null; archived: boolean }

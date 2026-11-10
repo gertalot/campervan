@@ -1,6 +1,7 @@
 /** Project result management; source captures and measured constraints remain independent. */
 import { ApiError } from './api';
 import { createScanImport } from './scan-import';
+import { captureDescription, type CapturePurpose } from './scan-import-api';
 import { createSidePanel } from './side-panel';
 import { readScanLibrary, saveScanLibrary, deleteScanResult, deleteCaptureGroup, moveScanItem,
   type ScanLibraryDocument, type ScanResult } from './scan-library-api';
@@ -39,7 +40,7 @@ export function createScanLibrary(host: Host) {
     onClose: () => { editor.hidden = true; } });
   const dialog = side.element; dialog.classList.add('scan-library-dialog');
   const close = side.closeButton;
-  const description = element('p', 'Groups contain imported databases and processed results. Drag an item onto another group to move it. Corrections stay with their source result.');
+  const description = element('p', 'Groups contain imported databases, original photos and processed results. Drag an item onto another group to move it. Corrections stay with their source result.');
   const filters = element('div'); filters.className = 'scan-library-filters';
   const searchLabel = element('label', 'Search '); const search = element('input'); search.type = 'search';
   search.placeholder = 'Name, group or identifier'; searchLabel.append(search);
@@ -56,6 +57,7 @@ export function createScanLibrary(host: Host) {
   let library: ScanLibraryDocument | undefined;
   let busy = false;
   let focusAfterRender: string | undefined;
+  let importPurpose: CapturePurpose | undefined;
   const importer = createScanImport({
     defaultLayout: group => library?.group_layouts?.[group],
     async changed() { await host.changed(true); library = await readScanLibrary(); if (!busy) render(); },
@@ -66,7 +68,7 @@ export function createScanLibrary(host: Host) {
     closed(group) {
       if (!dialog.open) return;
       const trigger = [...list.querySelectorAll<HTMLButtonElement>('[data-import-group]')]
-        .find(button => button.dataset.importGroup === group);
+        .find(button => button.dataset.importGroup === group && button.dataset.importPurpose === importPurpose);
       (trigger ?? newGroup).focus();
     },
   });
@@ -166,7 +168,7 @@ export function createScanLibrary(host: Host) {
           : 'Permanently delete this point-cloud preview file.'
         : 'Remove this unavailable result and its saved library preferences. Any remaining published result files will also be deleted.',
       location: row.id ? `.local/scans/${row.id}/` : row.name,
-      retained: 'Original capture databases and saved tag measurements are kept. This cannot be undone.',
+      retained: 'Original captures and saved tag measurements are kept. This cannot be undone.',
       action: 'Delete result', run: revision => deleteScanResult(row.key, revision),
       restore: () => [...list.querySelectorAll<HTMLElement>('article')].find(node => node.dataset.key === row.key)
         ?.querySelector<HTMLButtonElement>('.scan-result-trash') ?? filter,
@@ -175,7 +177,7 @@ export function createScanLibrary(host: Host) {
   function confirmGroupRemoval(id: string, name: string) {
     confirmDeletion({
       title: `Delete capture group “${name}”?`,
-      description: 'Permanently delete this group, its imported database copies, generated results and linked corrections, including meshes, textures and processing history.',
+      description: 'Permanently delete this group, its imported capture copies, generated results and linked corrections, including meshes, textures and processing history.',
       retained: 'Reusable tag layouts and physical measurements are kept. Original files outside the app’s capture storage are kept. This cannot be undone.',
       action: 'Delete capture group', run: revision => deleteCaptureGroup(id, revision),
       restore: () => [...list.querySelectorAll<HTMLElement>('section')].find(node => node.dataset.groupId === id)
@@ -244,14 +246,114 @@ export function createScanLibrary(host: Host) {
         ['Triangles', row.geometry?.triangles?.toLocaleString() ?? 'Unknown'],
         ['Layers', row.layers?.map(layer => layer.label).join(', ') || 'Unknown'],
         ['Created', row.created_at ? new Date(row.created_at).toLocaleString() : 'Unknown']);
+      values.push(['Purpose', row.purpose === 'photographic' ? 'Detailed photographic reconstruction'
+        : row.purpose === 'preview' ? 'Quick depth preview' : 'Unknown'],
+        ['Units', row.units === 'arbitrary' ? 'Arbitrary units — metric scale unavailable' : 'Metres'],
+        ['Scale', row.scale ? [row.scale.status, row.scale.source, row.scale.reason].filter(Boolean).join(' · ')
+          : 'Unknown'],
+        ['Scale factor', row.scale?.factor?.toString() ?? 'Unknown'],
+        ['Scale-supporting tags', row.scale?.supporting_tag_ids?.join(', ') || 'None recorded']);
+      if (row.inputs) {
+        values.push(['Selected sources', row.inputs.map(input => `${input.filename} · ${input.kind === 'photo'
+          ? 'original photo' : 'database photographs'}${input.width && input.height
+          ? ` · ${input.width} × ${input.height} px` : ''} · ${input.capture_id}`).join('\n')],
+        ['Source counts', `${row.inputs.filter(input => input.kind === 'photo').length} original photos · ${row.inputs.filter(input => input.kind === 'database').length} databases`]);
+      }
+      const reconstruction = row.photo_reconstruction;
+      if (reconstruction) values.push(
+        ['Photographs', `${reconstruction.registered_image_count} registered / ${reconstruction.selected_image_count} selected`],
+        ['Unregistered images', reconstruction.unregistered_image_ids.join(', ') || 'None'],
+        ['Selected component', String(reconstruction.selected_component_id ?? 'Unknown')],
+        ['Components', JSON.stringify(reconstruction.component_summaries, null, 2)],
+        ['Photographic settings', JSON.stringify(reconstruction.settings, null, 2)],
+        ['Tool versions', JSON.stringify(reconstruction.versions, null, 2)]);
     }
     const dl = element('dl');
     for (const [label, value] of values) dl.append(element('dt', label), element('dd', value));
-    node.append(dl); return node;
+    node.append(dl);
+    if (row.photo_error) {
+      const failure = element('p', `Photographic processing error: ${row.photo_error}`);
+      failure.setAttribute('role', 'alert'); node.append(failure);
+    }
+    if (row.id && row.photo_reconstruction?.tag_support_asset) {
+      const support = element('details'); support.className = 'scan-result-provenance';
+      support.append(element('summary', 'Tag detections, support and image dimensions'));
+      support.append(element('p', 'Tags without geometric support are Detected but not located. They do not set scale or appear as metric overlays.'));
+      const contents = element('div'); support.append(contents);
+      let loaded = false;
+      support.ontoggle = async () => {
+        if (!support.open || loaded) return;
+        loaded = true; contents.textContent = 'Loading tag support…';
+        try {
+          const loadAsset = async (asset: string) => {
+            const response = await fetch(`/api/v1/scans/runs/${encodeURIComponent(row.id!)}/assets/${asset.split('/').map(encodeURIComponent).join('/')}`);
+            if (!response.ok) throw new Error(`Could not load ${asset} (${response.status}).`);
+            return response.json();
+          };
+          const [tagData, sources] = await Promise.all([
+            loadAsset(row.photo_reconstruction!.tag_support_asset), loadAsset('image_sources.json'),
+          ]);
+          const tags = tagData.tags as { id: number; status: string; reason?: string | null;
+            detections: { name: string; reason?: string }[]; corners: { reason?: string | null }[] }[];
+          const detections = new Map<string, { detection_count: number; reason?: string }>(
+            tagData.images.map((image: { name: string; detection_count: number; reason?: string }) => [image.name, image]),
+          );
+          const images = sources.images as { name: string; capture_id: string; width: number; height: number;
+            original_width: number; original_height: number }[];
+          contents.replaceChildren();
+          if (!tags.length) contents.append(element('p', 'No tags detected in registered images.'));
+          else {
+            const table = element('table'); table.append(element('caption', 'Detected tags'));
+            const heading = element('tr');
+            for (const label of ['Tag', 'Status', 'Observations', 'Rejection reason']) {
+              const cell = element('th', label); cell.scope = 'col'; heading.append(cell);
+            }
+            const head = element('thead'); head.append(heading); table.append(head);
+            const body = element('tbody');
+            for (const tag of tags) {
+              const row = element('tr'); row.append(element('td', String(tag.id)), element('td', tag.status));
+              const observations = element('td'); const views = element('details');
+              views.append(element('summary', `${tag.detections.length} observations`));
+              const names = element('ul');
+              for (const detection of tag.detections) {
+                names.append(element('li', `${detection.name}${detection.reason ? ` · ${detection.reason}` : ''}`));
+              }
+              views.append(names); observations.append(views); row.append(observations);
+              const reasons = [...new Set([tag.reason, ...tag.corners.map(corner => corner.reason)].filter(Boolean))];
+              row.append(element('td', reasons.join(' ') || 'None')); body.append(row);
+            }
+            table.append(body); contents.append(table);
+          }
+          const imageDetails = element('details');
+          imageDetails.append(element('summary', `Image sources and dimensions (${images.length})`));
+          const imageList = element('dl');
+          for (const image of images) {
+            const detection = detections.get(image.name);
+            const dimensions = (width: number, height: number) => width && height ? `${width} × ${height} px` : 'Unknown';
+            const description = [
+              `Original: ${dimensions(image.original_width, image.original_height)}`,
+              `Working: ${dimensions(image.width, image.height)}`, `Capture: ${image.capture_id}`,
+              detection ? `${detection.detection_count} tag detections${detection.reason ? ` · ${detection.reason}` : ''}`
+                : 'Not registered — no tag detection performed',
+            ];
+            imageList.append(element('dt', image.name), element('dd', description.join('\n')));
+          }
+          imageDetails.append(imageList); contents.append(imageDetails);
+        } catch (reason) { loaded = false; contents.textContent = reason instanceof Error ? reason.message : String(reason); }
+      };
+      node.append(support);
+    }
+    return node;
   }
   function processingSummary(row: ScanResult, available: boolean) {
     if (!available) return 'Files unavailable — saved preferences retained';
     if (!row.id) return 'Point-cloud preview — no reconstructed surface';
+    if (row.purpose === 'photographic') {
+      const photo = row.photo_reconstruction;
+      return ['Photographic reconstruction', photo ? `${photo.registered_image_count} / ${photo.selected_image_count} images registered` : '',
+        row.units === 'arbitrary' ? 'Metric scale unavailable' : 'Metric scale', row.scale?.reason ?? '']
+        .filter(Boolean).join(' · ');
+    }
     const methods: Record<string, string> = {
       saved_camera_poses: 'Reconstructed using poses saved in the database',
       rtabmap_merge_g2o: `Re-merged ${row.input_filenames?.length ?? 'multiple'} databases, then reconstructed`,
@@ -318,7 +420,7 @@ export function createScanLibrary(host: Host) {
     const needle = search.value.trim().toLocaleLowerCase();
     const filtered = rows.filter(row => (filter.value === 'All' || row.archived === (filter.value === 'Archived'))
       && `${row.display_name} ${row.name} ${row.id ?? ''} ${row.group_name ?? 'Ungrouped'}`.toLocaleLowerCase().includes(needle));
-    // Keep empty groups manageable before databases/results are added.
+    // Keep empty groups manageable before captures/results are added.
     const groups = new Map<string, string>(Object.entries(library.groups)); groups.set('', 'Ungrouped');
     for (const [id, name] of [...groups].sort((a, b) => a[1].localeCompare(b[1]))) {
       const groupRows = filtered.filter(row => (row.group_id ?? '') === id).sort((a, b) => a.display_name.localeCompare(b.display_name) || a.key.localeCompare(b.key));
@@ -331,10 +433,17 @@ export function createScanLibrary(host: Host) {
       title.append(element('span', id ? 'Capture group' : 'Ungrouped results'), element('h3', name)); heading.append(title);
       if (id) {
         const groupActions = element('div'); groupActions.className = 'scan-result-tools';
-        const add = button('Add capture databases…', () => { void importer.open(id, name); });
-        add.dataset.importGroup = id;
-        add.title = `Add .db files to ${name}, or drop files onto this capture group`;
-        groupActions.append(add,
+        for (const [purpose, label] of [
+          ['preview', 'Create quick preview…'], ['photographic', 'Create detailed reconstruction…'],
+        ] as const) {
+          const add = button(label, () => {
+            importPurpose = purpose; void importer.open(id, name, [], undefined, purpose);
+          });
+          add.dataset.importGroup = id; add.dataset.importPurpose = purpose;
+          add.setAttribute('aria-haspopup', 'dialog');
+          groupActions.append(add);
+        }
+        groupActions.append(
           iconButton('pencil', `Rename capture group: ${name}`, () => editGroup(id)),
           iconButton('trash', `Delete capture group: ${name}`, () => confirmGroupRemoval(id, name)));
         heading.append(groupActions);
@@ -344,13 +453,13 @@ export function createScanLibrary(host: Host) {
       if (id) section.append(importer.activity(id, name));
       if (captures.length) {
         const databases = element('details'); databases.className = 'scan-group-captures';
-        databases.append(element('summary', `Imported databases (${captures.length})`));
+        databases.append(element('summary', `Imported captures (${captures.length})`));
         for (const capture of captures) {
           const row = element('div'); row.className = 'scan-capture-row'; draggable(row, 'capture', capture.id);
-          const label = element('span', `${capture.filename} · ${capture.frames} frames`);
+          const label = element('span', `${capture.filename} · ${captureDescription(capture)}`);
           row.tabIndex = 0;
           row.title = 'Drag to another capture group. Press Enter to choose a group with the keyboard.';
-          row.setAttribute('aria-label', `${capture.filename}, ${capture.frames} frames. Drag to another group, or press Enter to choose a group.`);
+          row.setAttribute('aria-label', `${label.textContent}. Drag to another group, or press Enter to choose a group.`);
           row.setAttribute('aria-keyshortcuts', 'Enter');
           row.onkeydown = event => {
             if (event.key === 'Enter' && !busy) {
@@ -399,7 +508,7 @@ export function createScanLibrary(host: Host) {
       }
       list.append(section);
     }
-    if (!filtered.length) list.prepend(element('p', 'No processed results match. Imported databases are listed within their capture groups.'));
+    if (!filtered.length) list.prepend(element('p', 'No processed results match. Imported captures are listed within their capture groups.'));
     if (focusAfterRender && dialog.open) {
       const row = [...list.querySelectorAll<HTMLElement>('article')].find(node => node.dataset.key === focusAfterRender);
       (row?.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? filter).focus(); focusAfterRender = undefined;
@@ -418,16 +527,18 @@ export function createScanLibrary(host: Host) {
   }
   return {
     open,
-    async addCaptures(resultKey: string) {
+    async addCaptures(resultKey: string, purpose: CapturePurpose) {
       try {
+        importPurpose = purpose;
         library = await readScanLibrary();
         const entry = library.entries[resultKey];
         const group = entry ? entry.group_id : host.results().find(result => result.key === resultKey)?.group_id;
         if (!group || !library.groups[group]) {
-          await open(); message('Choose or create a capture group, then select Add capture databases.'); return;
+          await open(); message('Choose or create a capture group, then choose quick preview or detailed reconstruction.'); return;
         }
         const result = host.results().find(item => item.key === resultKey);
-        await importer.open(group, library.groups[group], [], result?.tag_layout_id ?? undefined);
+        await importer.open(group, library.groups[group], [], result?.tag_layout_id ?? undefined, purpose,
+          result?.alignment?.definition);
       } catch (error) { await open(); message(error); }
     },
     refresh,

@@ -5,6 +5,7 @@ import hashlib
 import shutil
 import sqlite3
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, TypeVar
 from uuid import uuid4
 
@@ -40,8 +41,11 @@ def register_scan_processing(app: FastAPI, processing: ScanProcessing, layouts: 
     async def upload(request: Request, group_id: str, filename: str) -> dict[str, Any]:
         if group_id not in operation(processing.library.read).groups:
             raise HTTPException(422, "Unknown capture group.")
-        if not filename.lower().endswith(".db") or len(filename) > 200 or any(c in filename for c in "/\\;\x00"):
-            raise HTTPException(422, "Select an RTAB-Map .db file with a plain filename.")
+        kind = "database" if Path(filename).suffix.lower() == ".db" else "photo"
+        if Path(filename).suffix.lower() not in {".db", ".jpg", ".jpeg", ".png", ".heic"} or len(filename) > 200 or any(
+            c in filename for c in "/\\;\x00"
+        ):
+            raise HTTPException(422, "Select a .db, JPEG, PNG or HEIC file with a plain filename.")
         value = str(uuid4())
         directory = processing.captures / value
         directory.mkdir(parents=True)
@@ -52,9 +56,19 @@ def register_scan_processing(app: FastAPI, processing: ScanProcessing, layouts: 
                 async for chunk in request.stream():
                     stream.write(chunk)
                     digest.update(chunk)
-            info = await asyncio.to_thread(database_info, temporary)
-            if not info["node_ids"]:
-                raise ValueError("This database contains no capture frames.")
+            if kind == "database":
+                info = await asyncio.to_thread(database_info, temporary)
+                if not info["node_ids"]:
+                    raise ValueError("This database contains no capture frames.")
+                metadata = {"frames": len(info["node_ids"]), "database_version": info["version"]}
+            else:
+                from campervan.scan_photos import photo_info
+                try:
+                    metadata = {"frames": 1, **await asyncio.to_thread(photo_info, temporary)}
+                except ImportError as error:
+                    raise ValueError("Photo decoder is missing. Run uv sync --locked --extra scan --no-build.") from error
+                except OSError as error:
+                    raise ValueError(f"Cannot decode this photograph: {error}") from error
             fingerprint = digest.hexdigest()
             for previous in processing.list_captures():
                 if previous["group_id"] == group_id and previous.get("sha256") == fingerprint:
@@ -69,8 +83,8 @@ def register_scan_processing(app: FastAPI, processing: ScanProcessing, layouts: 
                     "group_id": group_id,
                     "filename": filename,
                     "bytes": (directory / filename).stat().st_size,
-                    "frames": len(info["node_ids"]),
-                    "database_version": info["version"],
+                    "kind": kind,
+                    **metadata,
                     "sha256": fingerprint,
                 }
                 write_json(directory / "capture.json", capture)

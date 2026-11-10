@@ -143,21 +143,21 @@ For unscaled photo tags, retain detection/triangulation evidence in the support 
 **Spec coverage:** C2, C3, C4; §4.2 and binary dependency decision.
 **Files:** `pyproject.toml`, `uv.lock`, `scan_processing.py`, `scan_processing_api.py`, `scans.py`, new `scan_photos.py`.
 
-- [ ] Add pinned `pycolmap==4.2.1` and `pillow-heif==1.8.1` to the existing `scan` extra. During implementation only,
+- [x] Add pinned `pycolmap==4.2.1` and `pillow-heif==1.8.1` to the existing `scan` extra. During implementation only,
   run `uv lock` then `uv sync --locked --extra scan --no-build`. Stop on missing compatible wheels; never retry with
   source builds, Homebrew or another Python. Keep the approved OpenMVS binaries unchanged.
-- [ ] Generalise the current upload route in place for `.db`, `.jpg`, `.jpeg`, `.png`, `.heic` (case-insensitive).
+- [x] Generalise the current upload route in place for `.db`, `.jpg`, `.jpeg`, `.png`, `.heic` (case-insensitive).
   Keep streaming/hash/temp-file cleanup, group checks and duplicate handling. Validate databases with `database_info`;
   validate photos using Pillow and registered pillow-heif. Retain the original bytes and actual dimensions.
-- [ ] Produce the capture responses described above. Extract only the upload-finalisation code needed to reuse
+- [x] Produce the capture responses described above. Extract only the upload-finalisation code needed to reuse
   validation/storage; do not redesign the upload service or change group ownership.
-- [ ] Implement `prepare_photo_inputs(inputs: list[dict], output: Path, log: Path) -> dict` in `scan_photos.py`.
+- [x] Implement `prepare_photo_inputs(inputs: list[dict], output: Path, log: Path) -> dict` in `scan_photos.py`.
   Give every working image a capture-ID-qualified name. Decode full-size working PNGs as needed for orientation/HEIC,
   retaining original file metadata and source coordinates in `image_sources.json`. No resize before the chosen tools.
-- [ ] For selected databases, factor/reuse the native image-export portion of `extract_frames` in `scans.py`, rather
+- [x] For selected databases, factor/reuse the native image-export portion of `extract_frames` in `scans.py`, rather
   than repeating merging/TSDF reconstruction. Read exported RGB/calibration as available; detailed reconstruction
   does not require fixed saved camera poses or depth. Do not copy database images from an already textured mesh.
-- [ ] Group calibration by original EXIF camera/lens/focal setting and oriented dimensions; absent metadata gets a
+- [x] Group calibration by original EXIF camera/lens/focal setting and oriented dimensions; absent metadata gets a
   separate per-image group, not a guessed shared lens. Prepare groups as subdirectories and use COLMAP's
   `CameraMode.PER_FOLDER`; retain original EXIF-derived calibration information in prepared image metadata.
 
@@ -169,19 +169,19 @@ Confirm only explicit inputs are prepared and existing database originals are no
 **Spec coverage:** C2, C3, C4, C6.
 **Files:** `scan_processing.py`, `scan_processing_api.py`, `cli.py`; direct imports/types only where needed.
 
-- [ ] Implement the discriminated request and immutable input snapshot above. Keep one-active-job handling and
+- [x] Implement the discriminated request and immutable input snapshot above. Keep one-active-job handling and
   current capture/group/tag-settings validation. Reject a preview request containing selected stills with a useful
   message; uploading them remains allowed. Photographic requests accept either input kind or a mixture.
-- [ ] Add `campervan scan reconstruct --request <request.json> --output <new-directory>` in `cli.py` for the photographic
+- [x] Add `campervan scan reconstruct --request <request.json> --output <new-directory>` in `cli.py` for the photographic
   worker. Keep existing `scan process` as the preview CLI and dispatch preview jobs to current `process_scan` with
   baked colour only. No photo-texture checkbox/setting is accepted from the revised preview UI.
-- [ ] In `ScanProcessing.start/_run`, snapshot inputs/settings as `job['request']` before launch, leaving it unchanged
+- [x] In `ScanProcessing.start/_run`, snapshot inputs/settings as `job['request']` before launch, leaving it unchanged
   during stage/status updates; pass that existing job JSON to the photographic CLI. Reuse `_run`
   for both commands, process groups and `cancel_requests`; no second runner or poller. Record purpose on the job.
-- [ ] Keep `[stage]` progress parsing and log storage. The photographic worker prints real stage names/counts and
+- [x] Keep `[stage]` progress parsing and log storage. The photographic worker prints real stage names/counts and
   `Scan processing failed: <operation>: <actual error>` on failure; `_run` carries this concrete message into job.error.
   Do not replace native diagnostics with only an exit code. Logs keep the complete tool output.
-- [ ] Preserve current manifest-before-nonzero-exit publication for texture-only failure: a completed geometry
+- [x] Preserve current manifest-before-nonzero-exit publication for texture-only failure: a completed geometry
   manifest can provide `result_key` while job state is failed and `photo_error` is visible. No result for an earlier
   failed dense/mesh stage. Cancel must not publish incomplete geometry or change selected old results.
 
@@ -194,23 +194,23 @@ Trace cancellation from shared UI to worker/native process group. Do not run fau
 **Files:** new `scan_photogrammetry.py`, `scan_photo_tags.py`; existing alignment owner reused unchanged unless its
 direct tag-pose input requires a small correction.
 
-- [ ] Implement `process_photos(request: dict, output: Path) -> Path` in `scan_photogrammetry.py` (returns run.json).
+- [x] Implement `process_photos(request: dict, output: Path) -> Path` in `scan_photogrammetry.py` (returns run.json).
   Consume T1's prepared images and source map. Use `extract_features`/`match_exhaustive` on CPU, four threads where
   supported, then `incremental_mapping` with standard local/global BA. No fixed RTAB poses or LiDAR mesh seed.
-- [ ] Select the component by registered-image count, sparse-point count, then component ID as specified. Write
+- [x] Select the component by registered-image count, sparse-point count, then component ID as specified. Write
   component/image-registration summaries; stop with an actual camera-reconstruction error if none exists.
   `undistort_images(..., output_type='COLMAP')` retains the standard camera/image/point/track interchange.
-- [ ] Implement `localise_photo_tags(model, image_sources: dict, tag_family: str, tag_size_mm: float,
+- [x] Implement `localise_photo_tags(model, image_sources: dict, tag_family: str, tag_size_mm: float,
   output: Path) -> dict` in `scan_photo_tags.py`. Detect ordered corners on registered undistorted images using
   existing `cv2.aruco.DICT_APRILTAG_36h11`. Unproject with those exact cameras, converting OpenCV pixel centres to
   COLMAP's convention, then use `pycolmap.triangulate_multi_view_point`.
-- [ ] Use the installed mapper's `filter_max_reproj_error`/`filter_min_tri_angle` defaults for track rejection;
+- [x] Use the installed mapper's `filter_max_reproj_error`/`filter_min_tri_angle` defaults for track rejection;
   record resolved thresholds, support image IDs and rejection reasons. Reject nonfinite/behind-camera tracks.
   Four supported corners are required for a tag to contribute side lengths to scale. No single-view PnP fallback.
-- [ ] Return `{tags, scale, support_asset}`. Estimate scale as the median of known-side/reconstructed-side ratios;
+- [x] Return `{tags, scale, support_asset}`. Estimate scale as the median of known-side/reconstructed-side ratios;
   use the existing corner ordering and right-handed tag pose convention so `TagAlignment` normals agree. Keep
   rejected/single-view detections as Detected but not located in `tag-support.json`. No tape-distance fitting.
-- [ ] Apply the one uniform scale to the COLMAP reconstruction's camera translations/rig-frame transforms, sparse
+- [x] Apply the one uniform scale to the COLMAP reconstruction's camera translations/rig-frame transforms, sparse
   points and tag translations using its similarity-transform API before MVS import. With no scale, retain arbitrary
   units and support evidence. Do not copy an older preview's solved transform. Apply an available alignment
   definition through `tag_alignment` only after metric tag support exists; otherwise record the unaligned reason.
@@ -223,20 +223,20 @@ Trace one scale application, matching image/camera coordinates and omission of u
 **Spec coverage:** C3, C5, C7; §4.3 steps 4–5, §4.5.
 **Files:** `scan_photogrammetry.py`, `scan_texturing.py`, `scans.py`.
 
-- [ ] Reuse `scan_texturing._tool` and `scans.native_command` for installed OpenMVS. Generalise only the native
+- [x] Reuse `scan_texturing._tool` and `scans.native_command` for installed OpenMVS. Generalise only the native
   texturing invocation that both publishers need: accept an explicit scene and mesh path instead of duplicating
   texture command flags. Keep the existing 2.4 seam-levelling workaround; do not upgrade native tools.
-- [ ] Run `InterfaceCOLMAP` on the real undistorted model with sparse points/tracks, then `DensifyPointCloud`,
+- [x] Run `InterfaceCOLMAP` on the real undistorted model with sparse points/tracks, then `DensifyPointCloud`,
   `ReconstructMesh`, `RefineMesh`, `TextureMesh`. Set CPU thread limits and dense `resolution-level=0`, with
   `max-resolution` at least the largest undistorted dimension. Set `decimate=1` through refinement/texturing; avoid
   automatic hole filling presented as observed detail. Log actual commands, stages, tool versions and dimensions.
-- [ ] Keep native dense/depth/model/refinement artifacts. Export refined geometry to `working/full-mesh.ply` before
+- [x] Keep native dense/depth/model/refinement artifacts. Export refined geometry to `working/full-mesh.ply` before
   any display simplification. Make `mesh.ply` as the separate current 500,000-triangle viewing copy; no additional
   parameter experiments. Publish cloud, simplified/full shaded surfaces and photographic OBJ/material/texture assets.
-- [ ] Write the existing manifest shape plus the fields above; include tags freshly reconstructed from these sources.
+- [x] Write the existing manifest shape plus the fields above; include tags freshly reconstructed from these sources.
   Keep geometry success inspectable if texturing alone fails, with `photo_error`, then propagate a failed job rather
   than claiming full completion. Failures earlier in the chain leave inputs/logs and previous results intact.
-- [ ] Extend `completed_scans` to expose purpose, units, scale, photo summary and support-asset URL to direct frontend
+- [x] Extend `completed_scans` to expose purpose, units, scale, photo summary and support-asset URL to direct frontend
   consumers. Keep `scan_asset`'s manifest allowlist/path checks. Do not expose arbitrary working paths or change
   artifact ownership. Reuse automatic full-mesh discovery for both new and already saved runs.
 
@@ -250,29 +250,29 @@ Trace geometry origin and stage ordering; do not equate triangle count with deta
 `scan-library-api.ts`, `scan.ts`, `scan-job-status.ts`, `style.css`; `scan_groups.py:move_item` only for its two
 database-only error labels. Existing move/delete mechanics already operate on capture directories and need no redesign.
 
-- [ ] Add `CapturePurpose = 'preview' | 'photographic'` and the capture/result fields above. Change
+- [x] Add `CapturePurpose = 'preview' | 'photographic'` and the capture/result fields above. Change
   `createScanImport.open` to `open(groupId, groupName, incoming=[], layoutId?, purpose?)`. With no purpose (file drop),
   show the two named actions before starting work; retain uploaded originals regardless of purpose.
-- [ ] Replace Review capture's single Add databases button and the group Add databases action with
+- [x] Replace Review capture's single Add databases button and the group Add databases action with
   `Create quick preview…` / `Create detailed reconstruction…`, both calling that importer. Change
   `createScanLibrary.addCaptures(resultKey, purpose)` and its `CaptureReviewHost` caller together. No duplicated forms.
-- [ ] Show all imported database/photo source rows with explicit selected checkboxes, source type and frame count
+- [x] Show all imported database/photo source rows with explicit selected checkboxes, source type and frame count
   or pixel dimensions. Preserve the checked source set when switching purposes; surface incompatible preview
   selections, not silent dropping. Existing `open` preselection remains visible/editable; do not impose photo-only
   selection, hidden filtering or automatically include later imports in an already running request.
-- [ ] Accept `.db,.jpg,.jpeg,.png,.heic` in the existing file/drop controls. Remove the texture checkbox and misleading
+- [x] Accept `.db,.jpg,.jpeg,.png,.heic` in the existing file/drop controls. Remove the texture checkbox and misleading
   Surface detail wording for photographic reconstruction; preview can retain its existing coarse resolution input.
   Labels/submit text describe the chosen action. Keep existing tag settings association without adding layout gates.
-- [ ] Reuse `createJobView` and `jobStatus`. On geometry-only publication from a failed texture job, show the error
+- [x] Reuse `createJobView` and `jobStatus`. On geometry-only publication from a failed texture job, show the error
   and explicit Show result action; do not auto-open it as a completed textured job. Keep successful completion's
   interaction-generation guard. Show retry as an explicit new run using the visible selected input/settings snapshot.
-- [ ] In result details, show purpose, exact source list, original/working dimensions, selected/registered counts,
+- [x] In result details, show purpose, exact source list, original/working dimensions, selected/registered counts,
   component omissions, tag-support summary and scale source. Unsupported detections are readable here/logs, not
   invented overlays. Keep only supported metric tags in the existing shared highlight/overlay owner.
-- [ ] Replace `scan.ts`'s unconditional 'metres' status with the manifest units; old RGB-D outputs remain metric by
+- [x] Replace `scan.ts`'s unconditional 'metres' status with the manifest units; old RGB-D outputs remain metric by
   their existing contract. For arbitrary units, keep visual inspection, mark scale unavailable and suppress metric
   readouts/actions. Keep lighting/layer switching and camera snapshots unchanged; do not add an axes editor.
-- [ ] Give the two named actions concise contextual capture help from §4.2. Reuse existing button hover/pressed/
+- [x] Give the two named actions concise contextual capture help from §4.2. Reuse existing button hover/pressed/
   focus styles and live status regions. Update imported-input group wording/drag labels to include photos; preserve
   actual group deletion/move semantics. Do not rebuild the scan manager or other shared UI.
   In `move_item`, replace 'imported database' with 'imported capture' in the two relevant messages, leaving its logic.
@@ -286,29 +286,29 @@ Check no old checkbox/duplicate importer remains. Interaction acceptance is Gert
 **Files:** update `docs/photogrammetry.md` and the scan setup subsection of `README.md`; evidence stays in this Flow
 folder at `reviews/05-capture-reconstruction-completeness.md`. Baseline inputs/outputs/logs stay under `.local/`.
 
-- [ ] Prepare one explicit connected floor/sill photo set from the existing database RGB exports. Select it by
+- [x] Prepare one explicit connected floor/sill photo set from the existing database RGB exports. Select it by
   inspecting the original photographs/known camera coverage, not an arbitrary top-N score or fixed four-view rule.
   Record the exact filenames/source node IDs and source run in `.local/experiments/photo-baseline/request.json`.
   Use the same `{"request": {...}}` envelope as the job runner, with resolved selected-photo records in `inputs`.
   This is capture-specific data, not tag IDs/van regions embedded in product code. Do not process all 1,068 frames
   blindly as a supposedly bounded experiment or perform another LiDAR reconstruction first.
-- [ ] Run the implemented worker once through the same command used by the job runner:
+- [x] Run the implemented worker once through the same command used by the job runner:
   `uv run --locked --no-sync campervan scan reconstruct --request .local/experiments/photo-baseline/request.json --output .local/scans/photo-baseline-20261111`.
   The local request uses the worker snapshot shape above, with exact selected existing image paths and their source
   identities; T1 preparation accepts these resolved photo records. Save stdout/stderr beside the request. Publish
   the finished result into the source group with existing `ScanLibraryStore.associate`, not a new capture group or
   publication framework. Normal UI jobs already use that same library owner in T2.
-- [ ] Record exit status, actual dependency/tool versions, input/registered counts, component omissions, scale/tag
+- [x] Record exit status, actual dependency/tool versions, input/registered counts, component omissions, scale/tag
   support, output asset paths, elapsed processing and available geometric result. Inspect the shaded geometry before
   its texture: did floor/sill relief improve over the preview? Ask Gert to inspect the result in their existing app.
   Do not claim metric accuracy without independent measurements or claim detail merely from a larger triangle count.
-- [ ] If this one run fails, diagnose its actual failed stage and fix only a demonstrated implementation/integration
+- [x] If this one run fails, diagnose its actual failed stage and fix only a demonstrated implementation/integration
   defect. Do not retry quality knobs, swap tools/models, build from source or turn inadequate captured data into an
   endless experiment. Record source-quality limitations honestly; a failed pipeline is not C3/C8 completion.
-- [ ] Review the accumulated scoped diff once against C1–C8 and the five Review Focus risks, including actual error
+- [x] Review the accumulated scoped diff once against C1–C8 and the five Review Focus risks, including actual error
   propagation, cancellation ownership and units. Run `git diff --check` once. No tests/build/lint, browser checks,
   extra review agents, release gates or repeated verification processes. Record unresolved visual checks explicitly.
-- [ ] Update practical documentation to distinguish preview depth fusion from real photogrammetry, the two actions,
+- [x] Update practical documentation to distinguish preview depth fusion from real photogrammetry, the two actions,
   supported formats, binary-only setup, same-group repetition, tag/scale limitations, progress/cancel and the CLI.
   Explain that photo correction/scene understanding remain later work. Commit the coherent implementation and
   factual evidence without pulling unrelated edits into this revision.
@@ -321,4 +321,7 @@ Existing tag settings association is retained, not redefined as per-capture solv
 per-task reviewers, new services, video, native upgrades or later-stage implementations are in the execution map.
 No installation, app changes or processing were performed while writing this plan.
 
-The plan is ready for the user-invoked implementation phase. Do not automatically invoke it or plan stage 2.
+Implemented on 11 November 2026. The single baseline completed with a documented native handoff correction;
+see [completion evidence](reviews/05-capture-reconstruction-completeness.md). Gert’s visual acceptance is pending.
+The accumulated Flow source review is recorded there under the approved no-tests/no-extra-review-loops overrides.
+Do not plan or implement stage 2 automatically.

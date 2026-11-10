@@ -1,15 +1,16 @@
 # Van scanning, measurement and CAD workflow
 
-Status: stage 1 of the replacement six-stage workflow is implemented for visual inspection. Import databases,
+Status: stage 1 of the replacement six-stage workflow implements preview and photographic reconstruction. Import databases/photos,
 reconstruct the scene and tags, then use **Review capture…** to inspect the result and add further captures. The old
 measurement/analysis workflow and its HTTP routes have been removed. Saved physical measurements, tag layouts and
 capture assets remain intact. Stages 2–6 are upcoming and are implemented individually after Gert's visual feedback.
-The CLI still extracts RTAB-Map RGB-D and uses Open3D for fusion, with optional OpenMVS photo texturing. Existing
+Quick previews extract RTAB-Map RGB-D and use Open3D fusion. Detailed reconstruction uses PyCOLMAP camera solving
+and OpenMVS image-derived depth, meshing, refinement and texturing; it does not reuse LiDAR geometry. Existing
 numerical/correction modules remain available for the later workflow stages; their presence is not a completed UX.
 
-The [repeatable reconstruction implementation plan](superpowers/plans/2026-11-08-scan-reconstruction.md) scopes the
-current unmeasured trial: saved poses, Open3D fusion and cleanup, texture comparison, and a scripting-first entry point
-that the browser's database import now reuses. It does not require measured tag distances before producing a preview.
+The [current capture plan](flow/2026-11-10-capture-workflow-redesign/plan.md) covers both processing paths and the
+shared UX. Earlier depth-fusion plans remain historical references. Neither reconstruction requires measured tape
+distances. Gert's visual acceptance of the new capture interactions and photographic result remains pending.
 
 ## Inspecting the current scan
 
@@ -96,9 +97,28 @@ four-stage workflow completely. Delivery is one stage at a time; the
 
 ### Review capture
 
-Start with a basic capture that shows the tags and relevant geometry. Import databases through **Scan → Manage
-scans… → Add capture databases…**, or drop files onto a capture group. Select the physical tag layout and explicitly
-choose **Process captures**. Reconstruction does not require tape measurements or complete interior coverage.
+**Create quick preview…** uses RTAB-Map database depth for a coarse mesh and tags. **Create detailed
+reconstruction…** uses original JPEG/PNG/HEIC photographs to estimate cameras, dense depth and surface geometry.
+Both actions are available in Review capture and Manage scans, using the same importer and capture group. Photos
+can also be the first input; neither action requires tape measurements or complete interior coverage.
+
+The detailed chain is PyCOLMAP CPU features/matching and bundle adjustment, then OpenMVS **InterfaceCOLMAP →
+DensifyPointCloud → ReconstructMesh → RefineMesh → TextureMesh**. It creates geometry from photographs, rather
+than texturing a LiDAR mesh. The full refined master is retained before creating a simplified viewing copy.
+
+Install the optional Python packages with `uv sync --locked --extra scan --no-build`. PyCOLMAP 4.2.1 and
+pillow-heif 1.8.1 use binary wheels; the existing OpenMVS 2.4 binaries are reused. No Homebrew/source build or
+implicit UI installation. Missing tools produce a real error. Native-resolution dense processing can take time
+and substantial disk space; the system does not silently lower quality or substitute depth fusion.
+
+The importer accepts databases and photos in the same group and shows selected inputs before explicit processing.
+Detailed reconstruction accepts a mixture, including original photographs extracted from selected databases.
+Source bytes/metadata remain intact; HEIC/oriented images use full-resolution working copies. Preview processing
+requires selected depth databases, although photos may be uploaded and retained separately for later processing.
+
+Capture guidance is in a disclosure: quick previews use RTAB-Map LiDAR with HD off initially to reduce memory.
+Detailed capture uses original overlapping still photos, stable lighting and translated overview/detail passes.
+Keep objects stationary across selected inputs. No video importer or automatic capture-quality classifier is added.
 
 After successful processing, the app shows the result and opens **Review capture** when it can do so without taking
 over a view you changed during processing. Otherwise it offers an explicit **Review capture** completion action.
@@ -117,8 +137,8 @@ The option is absent for point-cloud-only results. Its exact lighting balance aw
 
 When a run retains `working/full-mesh.ply`, **Shaded surface — full resolution** and **Coloured mesh — full resolution**
 are also available, including for existing runs. Switch between the shaded layers to compare at the same camera position
-and lighting. The full-resolution layer is the original fused surface before cleanup and simplification, so it can
-include disconnected fragments removed from the display mesh. It is larger and may be slower to load and navigate.
+and lighting. The full-resolution layer is the original fused preview surface or refined photographic master, before
+display simplification. Preview masters can contain fragments removed during cleanup. Full meshes load more slowly.
 No reconstruction, asset copying or saved-run migration is needed. The labels distinguish the alternatives within the
 existing labelled selector, following [WAI guidance on descriptive control labels](https://www.w3.org/WAI/tutorials/forms/labels/).
 
@@ -126,21 +146,34 @@ Scan buttons and shared side-panel actions have hover, pressed and keyboard-focu
 **Refreshing…** while pending, prevents repeated activation, and reports completion or failure beside the button without
 moving focus. Feedback uses a live status region, following [WAI status-message guidance](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html).
 
-If you want more detail, choose **Add capture databases…** in Review capture. This opens the same importer in the
-current result's capture group and selects that result's tag layout. Existing imported databases are listed alongside
-new files; review the cumulative selection, then explicitly choose **Process captures**. The new result stays in the
-same group, and previous results remain selectable for human inspection. There is no automatic coverage score,
-missing-area classifier, before/after assessment or recommended-viewpoint engine.
+To extend a result, use either capture action in the same group, review the explicit source selection and process
+again. Earlier captures never enter silently. Previous results remain selectable with the same camera/projection.
+There is no automatic coverage score, missing-area classifier or recommended-viewpoint engine.
 
-Capture groups do not establish physical compatibility. Include only databases made with the same tag arrangement
-and compatible object/door positions. If the selected result's layout is unavailable, the importer asks you to choose
-one explicitly rather than silently creating a different layout. For an ungrouped result, use Manage scans to choose
-or create a group before adding captures. Upload and reconstruction progress/cancellation reuse the existing job UI.
-Closing the import dialog does not cancel the job. Failures retain imported sources and the previous view.
+Configured tag settings/measurement associations remain separate from detected positions. Every reconstruction
+recomputes its own tags. No extra per-batch layout gate is added. Capture processing never rewrites physical distances
+or runs scene understanding automatically. Adding sources requires later source-specific interpretation to be reviewed.
 
-Once the tag-layout stage becomes available, the intended strategy is to settle tag placement from basic scans,
-then spend time on detailed captures with the tags fixed. Adding databases does not erase existing physical distances.
-Scene understanding is not run automatically on import, navigation or reload.
+Photographic scale is the median known-tag-side/reconstructed-side ratio across supported corners/tags. Standard
+COLMAP reprojection/parallax checks distinguish **Located** from **Detected but not located**; unsupported detections
+remain in result details and do not establish scale. With no supported scale, viewing remains available in arbitrary
+units, with no metric overlays. Scale is not a certificate of internal dimensional accuracy or a tape-network fit.
+Axes definitions are solved from the new supported tags through the existing alignment owner, not copied transforms.
+
+Result details include source IDs/dimensions, registration counts/components, actual settings, tag support and scale.
+Completed photographic geometry remains inspectable if texture generation alone fails; errors stay visible and a
+failed job is not labelled complete. Original photos, sparse model/tracks, cameras, image-derived depth maps and
+refined master remain in the run directory. Scene understanding and photo-mesh measurement correction remain later work.
+
+The offline photographic command is:
+
+```sh
+uv run --locked --no-sync campervan scan reconstruct --request PATH_TO_JOB_JSON --output NEW_RESULT_DIRECTORY
+```
+
+`PATH_TO_JOB_JSON` contains the immutable `request` object created by the shared job runner: purpose, selected input
+records, group/tag settings, settings and optional axis definition. Explicit retries use a new result directory.
+There is no automatic resume/checkpoint system.
 
 ### Saved input data
 
@@ -370,16 +403,15 @@ Before implementation, resolve the following from the sample and Gert's requirem
 
 ### Browser import
 
-In **Manage scans**, each named capture group has **Add capture databases…**. Choose multiple original `.db` files or
-drop them onto the group. The review dialog lists filenames/sizes, existing reusable imports and frame counts after
-validation. Choose a new tag layout for moved/new tags, enter its name and printed black-square size, and choose the
-result name, 5/10 mm fusion resolution and optional photo texture. Only AprilTag 36h11 is currently supported. Existing
-managed layouts can be reused explicitly while the tags remain fixed. No previous axis definition is applied to a new
-layout. **Process captures** uploads the sources and starts the same CLI pipeline used below.
+In **Manage scans**, each group has **Create quick preview…** and **Create detailed reconstruction…**. Choose/drop
+databases or JPEG/PNG/HEIC photos into the same importer. Review the visible checked source set, tag settings and
+result name. The preview uses database depth; detailed reconstruction uses photographs, including selected database
+RGB frames. Only AprilTag 36h11 is supported. Existing tag-settings/measurement associations remain separate from
+the tag positions computed for each result; no extra per-import layout declaration is required.
 
-Source imports live at `data/scan-captures/<capture-id>/<original-name>.db`, with a small capture metadata file. The
-server streams uploads to disk, validates the RTAB-Map schema/version/frame availability read-only, then publishes the
-import. Identical uploaded bytes within one group reuse the existing capture identity. Failed/incomplete uploads are
+Source imports live at `data/scan-captures/<capture-id>/<original-name>`, with a small capture metadata file. The
+server streams uploads to disk, validates databases read-only or decodes the photo to check its actual format and
+dimensions, then publishes the import. Identical bytes within one group reuse the existing identity. Incomplete uploads are
 removed. Sources are independent of generated runs and survive result deletion.
 New tag metadata lives at `data/scan-tag-layouts/<layout-id>/layout.json`, with a separate empty `measurements.json`.
 The library's optional `group_layouts` map remembers a group's preferred layout. Group membership does not establish
@@ -389,7 +421,7 @@ The app starts one reconstruction subprocess at a time using its own Python envi
 come from real pipeline output; full stdout/stderr is saved under `.local/scan-jobs/` and a bounded tail is visible in
 the dialog. The group has **Show processing progress…** after processing starts. Closing the dialog does not stop the
 job. **Show result in viewer** opens a published result; successful results are assigned to the chosen group without
-replacing other library preferences. Optional photo failure can still expose the published baked result. Failures show
+replacing other library preferences. Texture-only failure still exposes completed photographic geometry. Failures show
 diagnostics and retain sources for a manually requested rerun. Stopping/reloading the API interrupts processing;
 there is no automatic resume or retry. A hard process crash is not a managed recovery mechanism.
 
@@ -459,7 +491,7 @@ uses four partitions to keep processing practical on the local CPU. `--uv-partit
 potentially much greater processing time. Voxel size, truncation, depth range, component threshold, triangle budget,
 texture size and partition count are explicit command settings.
 
-### Baked colour and photographic texturing
+### Preview-only baked colour and historical photographic texturing
 
 The default **Baked colour** layer uses fused vertex colours baked into a UV texture. This makes a conventional
 textured asset but does not recover photographic detail beyond the mesh's colour sampling.
@@ -480,7 +512,8 @@ The official OpenMVS v2.4.0 release supplies macOS ARM64 binaries. For this Mac,
 mkdir -p .local/tools/openmvs-2.4.0
 curl -fL https://github.com/cdcseacave/openMVS/releases/download/v2.4.0/OpenMVS_macOS_arm64.zip \
   -o .local/OpenMVS_macOS_arm64.zip
-unzip -q .local/OpenMVS_macOS_arm64.zip TextureMesh InterfaceCOLMAP -d .local/tools/openmvs-2.4.0
+unzip -q .local/OpenMVS_macOS_arm64.zip InterfaceCOLMAP DensifyPointCloud ReconstructMesh RefineMesh TextureMesh \
+  -d .local/tools/openmvs-2.4.0
 ```
 
 The processor finds `InterfaceCOLMAP` and `TextureMesh` on PATH or in that directory. The COLMAP text scene is only

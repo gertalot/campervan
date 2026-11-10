@@ -57,6 +57,9 @@ def main() -> None:
     process.add_argument("--tag-family", choices=["36h11"])
     process.add_argument("--tag-size-mm", type=float)
     process.add_argument("--texture-mode", choices=["baked", "photo"], default="baked")
+    photographic = scan_commands.add_parser("reconstruct", help="Reconstruct photographic cameras, dense geometry and texture")
+    photographic.add_argument("--request", required=True, type=Path, help="JSON containing an immutable photographic request")
+    photographic.add_argument("--output", required=True, type=Path)
     align = scan_commands.add_parser("align", help="Set vehicle axes on completed runs without rebuilding geometry")
     align.add_argument("runs", nargs="+", type=Path)
     align.add_argument("--alignment", type=Path, required=True)
@@ -69,6 +72,11 @@ def main() -> None:
         from campervan.scans import ScanSettings, process_scan
 
         try:
+            if args.scan_command == "reconstruct":
+                from campervan.scan_photogrammetry import process_photos
+                from campervan.scans import read_json
+                process_photos(read_json(args.request)["request"], args.output)
+                return
             if args.scan_command == "align":
                 from campervan.scan_alignment import align_run
 

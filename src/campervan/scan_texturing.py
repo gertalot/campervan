@@ -24,7 +24,7 @@ def texture_photos(output: Path, settings: ScanSettings, log: Path) -> list[Path
 
     frames = read_json(output / "frames.json")["frames"]
     poses = read_json(output / "poses.json")["poses"]
-    interface, texturer = _tool("InterfaceCOLMAP"), _tool("TextureMesh")
+    interface = _tool("InterfaceCOLMAP")
     colmap = output / "working" / "colmap"
     sparse = colmap / "sparse"
     sparse.mkdir(parents=True, exist_ok=True)
@@ -52,7 +52,13 @@ def texture_photos(output: Path, settings: ScanSettings, log: Path) -> list[Path
     native_command(
         [interface, "-i", str(colmap), "-o", str(scene), "--image-folder", str(rgb_directory)], log, cwd=scene.parent
     )
-    photo = output / "photo"
+    return texture_scene(scene, output / "mesh.ply", output / "photo", settings.texture_size, log)
+
+
+def texture_scene(scene: Path, mesh: Path, photo: Path, texture_size: int, log: Path,
+                  num_threads: int = 4) -> list[Path]:
+    """Texture an explicit scene/mesh, preserving shared native flags and asset naming."""
+    texturer = _tool("TextureMesh")
     photo.mkdir(exist_ok=True)
     native_command(
         [
@@ -60,7 +66,7 @@ def texture_photos(output: Path, settings: ScanSettings, log: Path) -> list[Path
             "-i",
             str(scene),
             "-m",
-            str(output / "mesh.ply"),
+            str(mesh),
             "-o",
             str(photo / "mesh.mvs"),
             "--export-type",
@@ -76,7 +82,9 @@ def texture_photos(output: Path, settings: ScanSettings, log: Path) -> list[Path
             "--local-seam-leveling",
             "0",
             "--max-texture-size",
-            str(settings.texture_size),
+            str(texture_size),
+            "--max-threads",
+            str(num_threads),
         ],
         log,
         cwd=scene.parent,

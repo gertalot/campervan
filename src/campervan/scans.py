@@ -210,6 +210,33 @@ def _camera_poses(path: Path) -> dict[str, list[list[float]]]:
     return poses
 
 
+def export_images(
+    database: Path,
+    directory: Path,
+    log: Path,
+    tool: Path,
+    env: dict[str, str] | None,
+    *,
+    camera_poses: bool = False,
+) -> None:
+    """Export original RGB/calibration; only the preview also requests saved optical poses."""
+    directory.mkdir(parents=True)
+    native_command(
+        [
+            str(tool),
+            "--images_id",
+            *(["--poses_camera", "--poses_format", "11", "--opt", "2"] if camera_poses else []),
+            "--output",
+            "capture",
+            "--output_dir",
+            str(directory),
+            str(database),
+        ],
+        log,
+        env=env,
+    )
+
+
 def extract_frames(
     database: Path, output: Path, log: Path, poses: Path | None, tool: Path, env: dict[str, str] | None
 ) -> dict[str, Any]:
@@ -220,25 +247,7 @@ def extract_frames(
     if not info["saved_poses"]:
         raise ValueError("This database has no saved optimised poses. Merge/reprocess it explicitly first.")
     directory = output / "working" / "extracted"
-    directory.mkdir()
-    native_command(
-        [
-            str(tool),
-            "--images_id",
-            "--poses_camera",
-            "--poses_format",
-            "11",
-            "--opt",
-            "2",
-            "--output",
-            "capture",
-            "--output_dir",
-            str(directory),
-            str(database),
-        ],
-        log,
-        env=env,
-    )
+    export_images(database, directory, log, tool, env, camera_poses=True)
     pose_files = sorted(directory.glob("capture_camera_poses*.txt"))
     if len(pose_files) != 1:
         raise ValueError("Exactly one RGB-D optical camera is supported per frame.")
@@ -526,6 +535,12 @@ def completed_scans(directory: Path = SCAN_RUNS) -> list[dict[str, Any]]:
                     "name": data["name"],
                     "bytes": 0,
                     "geometry": data["geometry"],
+                    "purpose": data.get("purpose"),
+                    "units": data.get("units", "m"),
+                    "scale": data.get("scale"),
+                    "photo_reconstruction": data.get("photo_reconstruction"),
+                    "photo_error": data.get("photo_error"),
+                    "inputs": data.get("inputs", []),
                     "layers": data["layers"],
                     "measured": data["measured"],
                     "tags": data.get("tags", []),

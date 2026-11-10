@@ -34,9 +34,9 @@ def move_item(
             raise ValueError("Unknown destination capture group.")
         if kind == "capture":
             if group_id is None:
-                raise ValueError("Choose a capture group for an imported database.")
+                raise ValueError("Choose a capture group for an imported capture.")
             if any(not task.done() for task in list(processing.tasks.values())):
-                raise ValueError("Wait for scan processing to finish before moving an imported database.")
+                raise ValueError("Wait for scan processing to finish before moving an imported capture.")
             directory = processing.captures / identifier(key)
             if directory.is_symlink() or directory.resolve().parent != processing.captures.resolve():
                 raise ValueError("Invalid imported capture directory.")

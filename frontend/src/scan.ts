@@ -141,7 +141,7 @@ export function setupScan(panel: HTMLElement) {
   let renderedScan: Scan | undefined;
   const workflow = createScanWorkflowPanel({
     capture: () => renderedScan, loading: () => loading,
-    addCaptures: () => manager.addCaptures(renderedScan?.key ?? select.value),
+    addCaptures: purpose => manager.addCaptures(renderedScan?.key ?? select.value, purpose),
   });
   const workflowTools = document.createElement('div'); workflowTools.className = 'scan-workflow-tools';
   workflowTools.dataset.campervanControl = 'true';
@@ -213,7 +213,7 @@ export function setupScan(panel: HTMLElement) {
     layers.replaceChildren();
     if (!scan) { layers.disabled = true; return; }
     for (const layer of availableLayers(scan)) {
-      layers.add(new Option(layer.id === 'photo' ? 'Photo texture (experimental)' : layer.label, layer.id));
+      layers.add(new Option(layer.label, layer.id));
     }
     if (chosen) layers.value = chosen.id;
     layers.disabled = layers.options.length < 2;
@@ -310,7 +310,8 @@ export function setupScan(panel: HTMLElement) {
       }
       viewer!.update(true, false);
       const vertices = root instanceof Mesh || root instanceof Points ? root.geometry.getAttribute('position').count : null;
-      status.textContent = `${vertices?.toLocaleString() ?? ''} ${layer.label} · metres · `
+      const unitStatus = scan.units === 'arbitrary' ? 'arbitrary units · metric scale unavailable' : 'metres';
+      status.textContent = `${vertices?.toLocaleString() ?? ''} ${layer.label} · ${unitStatus} · `
         + (aligned ? `${scan.alignment!.target_frame} axes · origin tag ${scan.alignment!.definition!.origin_tag}`
           : scan.alignment?.reason ?? 'unaligned scan coordinates')
         + (scan.pose_source === 'gtsam_measured_distances' ? ' · distance-adjusted'

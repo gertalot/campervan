@@ -74,7 +74,7 @@ Set `CAMPERVAN_RTABMAP_BIN_DIR=/path/to/bin` to select another installation; bot
 On Linux, the default discovery uses PATH, but runtime compatibility has not yet been verified.
 
 ```sh
-uv sync --locked --extra scan
+uv sync --locked --extra scan --no-build
 uv run --locked --extra scan campervan scan process data/van-interior-merged-tags.db \
   --output .local/scans/van-next-5mm --voxel-mm 5
 ```
@@ -106,16 +106,19 @@ See [scan processing and native-tool setup](docs/photogrammetry.md) for installa
 
 ### Organise scan results
 
-To process new captures, open **Scan → Manage scans…** and click **Add capture databases…** beside the capture group
-(for example `interior-v1`), or drop `.db` files onto that group. Review the selected databases, choose **Create new
-tag layout…** for newly placed tags, and enter the layout name and actual printed tag size. Choose a result name,
-surface detail and optional photographic texture, then click **Process captures**. The dialog shows upload progress,
-processing stages and a processing log. **Review capture** opens the finished reconstruction and its measurement
-workflow; **Show result in viewer** remains available.
+Open **Scan → Manage scans…** and choose an action beside the capture group, or drop files onto the group:
 
-Previously imported databases remain selectable for another run without uploading again. Processing continues when
-the dialog closes; use **Show processing progress…** in the group to return. One reconstruction runs at a time.
-Stopping/reloading the API interrupts processing; imported databases remain available to process again.
+- **Create quick preview…** uses RTAB-Map database depth for a coarse mesh and tag preview.
+- **Create detailed reconstruction…** estimates cameras and dense geometry from JPEG, PNG or HEIC photographs.
+  Selected databases can also supply their saved photographs, including in an explicit mixed input set.
+
+The same importer shows selected sources, tag settings and result name before processing. Photos can be the first
+input; no preview is required. Uploading and processing are separate actions. Original files remain unchanged;
+HEIC is decoded into full-resolution working copies. Tags are detected and located afresh for each result.
+The dialog shows actual stages, Cancel, errors and the native log; closing it does not cancel the run.
+
+Previously imported captures remain selectable without uploading again. Use **Show processing progress…** to return
+to a job. One reconstruction runs at a time; stopping/reloading the API interrupts it and retains the sources.
 
 Imports are kept under `data/scan-captures/`; new tag layouts and separate measurement documents live under
 `data/scan-tag-layouts/`. Generated results remain in `.local/scans/`. A new layout never inherits the old tag roles,
@@ -154,47 +157,29 @@ describe fusion resolution, not an accuracy ranking.
 
 ### Review and improve a scan
 
-Open **Review and improve scan…** for a result with a tag layout. The four stages share the same saved physical
-measurements as the tape tool. Stage status is advice; incomplete measurements can still support a clearly labelled
-best-effort correction when the required source inputs exist.
+Open **Review capture…** in the viewer to inspect geometry and detected tags. The six-stage workflow currently
+implements capture/reconstruction only. Scene understanding, tag-layout advice, physical measuring/checking and
+reconstruction correction remain Upcoming; this delivery does not claim those stages are available.
 
-| Stage | Action |
-| --- | --- |
-| Review capture | Inspect detected tags and **Analyse tag placement**; optionally record tag changes and import a new capture. |
-| Measure | Set precision, **Generate checklist**, and enter physical centre-to-centre distances. |
-| Check accuracy | **Check measurements** assesses physical ranges; **Suggest more** offers pairs and rechecks. |
-| Update reconstruction | Inspect **Preview corrections**, then explicitly **Update mesh** for a new result. |
+Use a quick preview to assess the space and later settle tag placement, then add detailed overlapping still photos.
+Choose **Shaded surface — full resolution** to inspect actual geometry without photographic appearance masking it.
+The photographic pipeline is COLMAP camera alignment/bundle adjustment followed by OpenMVS dense stereo, meshing,
+refinement and texturing. Preview geometry instead comes from recorded depth; the two are explicitly labelled.
 
-The editable defaults have different meanings: **3 mm** measuring precision is one standard deviation of a range;
-**5 mm** positional target is the longest semi-axis of a tag's approximate 95% uncertainty ellipsoid; the separate
-**5 mm** meaningful-improvement threshold controls additional suggestions. These are assumptions and goals, not a
-woodworking accuracy guarantee. Scan coordinates initialise/orient the physical assessment; they do not constrain its
-fit or supply its information. The correction preview is a separate, scan-assisted calculation.
+A configured printed AprilTag size establishes scale when tag corners have sufficient multiview support. Detections
+without support remain **Detected but not located** in result details. No supported scale means **Arbitrary units**,
+not metres. Physical tape measurements are not fitted or modified during capture processing.
 
-The checklist and tape accept `mm`, `cm`, `m`, `in` and `ft`; bare values mean millimetres. **Enter** saves a row and
-advances after acknowledgement; leaving an edited nonempty row also saves. **Escape** restores its saved value. Save
-errors retain the draft for correction or retry. The scan estimate is labelled separately and is never saved merely
-by selecting a pair. Precision fields use millimetres; individual pairs can override the default.
+A completed mesh remains inspectable if only texturing fails; the failed job and result details show the error.
+Full-resolution masters, reconstructed cameras, source mapping and native depth artifacts stay in the result folder.
+Each new reconstruction derives its tags from its selected sources rather than copying an earlier result.
 
-The planner considers all useful pairs, rather than a fixed shortlist. Inspect overlapping benefits and access
-reasons: **Unknown** clearance is not evidence of a clear path. Record **Cannot measure this pair…** when needed.
-Suggestions and physical checks never rebuild geometry. Changed inputs mark affected reports as needing an update;
-review current reports before rebuilding. Originals and entered distances remain intact. A completed rebuild never
-switches the displayed result automatically. Use **Show original** or **Show corrected result** to compare results in
-their capture group without resetting the camera.
+For offline photographic processing, use the same worker command as the app:
 
-Reuse a saved tag layout across captures only while the physical tags remain fixed. If tags move, use **Revise tag
-layout…** and identify unchanged, moved, removed and added tags: only pairs whose two endpoints are confirmed unchanged
-are carried forward. Existing captures keep their layout; select the revised layout for replacement captures.
-A fresh layout starts with separate empty measurements and no inherited vehicle-axis roles.
-See [the scan workflow guide](docs/photogrammetry.md#workflow) for assumptions and revision details.
+```sh
+uv run --locked --no-sync campervan scan reconstruct --request PATH_TO_JOB_JSON --output NEW_RESULT_DIRECTORY
+```
 
-For a quick pair, enable the tape icon (**T**) and select two tags. Type the physical distance in the bottom field and
-press **Enter**. **Escape** restores an edit, then cancels the pair; at the first-tag prompt it exits the tool. Turning
-the tool off hides saved lines. The workflow panel remains usable without tape mode and leaves orbit/pan available.
-
-Workflow state is stored beside the project in `data/scan-workflows.json`; managed layouts and physical measurements
-live in `data/scan-tag-layouts/`. The original trial uses `data/scan-measurements.json`. Manual CLI captures select the
-intended document with `--measurements FILE` on `scan process` or `scan align`. Existing capture and measurement files
-are retained; obsolete analysis/history files are not read or automatically migrated by the replacement workflow.
-The four-stage workflow still needs Gert's visual and physical acceptance in the running app.
+The JSON contains a `request` member with selected source paths/identities, tag settings and photographic settings;
+the app creates it in `.local/scan-jobs/`. Use a new output directory. See the
+[scan workflow guide](docs/photogrammetry.md#workflow) for inputs, scale and processing details.
