@@ -17,6 +17,9 @@ environment. The local API restores saved project data after a reload; the front
 The model cache contains viewer geometry, measurement shapes, motion tracks and cut parts. Its fingerprint includes
 dimensions, CAD/publishing source and installed CAD/viewer versions. Live pose changes reuse the existing geometry.
 Failed construction retains the previous complete model and reports the error in the app.
+Viewer geometry is published before cutting-outline extraction. Cutting data stays stale until its matching
+revision finishes; extraction and layout optimisation do not delay CAD readiness. An extraction error leaves the
+new model visible and reports a separate cut-list error. Static exports wait for both geometry and cuts.
 Reconnecting after an API reload replays the last saved model, even if CAD source has changed. It does not restart
 an interrupted rebuild. Use Regenerate or apply dimensional/material changes to build the current design; an initial
 build still starts automatically when there is no saved model.

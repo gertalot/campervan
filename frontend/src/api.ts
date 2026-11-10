@@ -30,6 +30,7 @@ export interface ParameterResponse {
 export interface MutationResponse { session_id: string; requested_revision: number }
 export interface ModelStatus extends MutationResponse {
   cutting_revision: number;
+  cutting_error?: string | null;
   published_revision: number | null;
   state: 'idle' | 'regenerating' | 'ready' | 'failed';
   error: { message: string } | null;

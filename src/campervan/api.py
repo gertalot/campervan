@@ -31,7 +31,7 @@ from campervan.scan_processing_api import register_scan_processing
 from campervan.scans import completed_scans, scan_asset
 from campervan.settings import Settings, load_settings
 from campervan.snapshot import ParameterResponse, cutting_data, material_data, parameter_response
-from campervan.worker import regenerate_model
+from campervan.worker import model_updates
 
 
 class BuildOptions(BaseModel):
@@ -85,7 +85,7 @@ class Positions(BaseModel):
 
 
 def build_app(
-    settings: Settings, regenerator: Regenerate = regenerate_model, project_path: Path = PROJECT_PATH
+    settings: Settings, regenerator: Regenerate = model_updates, project_path: Path = PROJECT_PATH
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -173,7 +173,10 @@ def build_app(
     @app.get("/api/v1/parameters", response_model=ParameterResponse)
     async def get_parameters(coordinator: CurrentCoordinator) -> ParameterResponse:
         return parameter_response(
-            coordinator.session_id, coordinator.parameters, settings.viewer_url, coordinator.mannequins,
+            coordinator.session_id,
+            coordinator.parameters,
+            settings.viewer_url,
+            coordinator.mannequins,
         )
 
     @app.post("/api/v1/apriltags/layout")
@@ -185,7 +188,8 @@ def build_app(
         last_id = settings.start_id + settings.count - 1
         filename = f"apriltags-36h11-{settings.start_id}-{last_id}.pdf"
         return Response(
-            generate_pdf(settings), media_type="application/pdf",
+            generate_pdf(settings),
+            media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
@@ -209,31 +213,40 @@ def build_app(
     @app.get("/api/v1/materials")
     async def get_materials(coordinator: CurrentCoordinator) -> dict[str, object]:
         status = coordinator.status()
-        return material_data(coordinator.parameters, coordinator.materials, coordinator.cuts,
-                             coordinator.cuts_revision, status.requested_revision)
+        return material_data(
+            coordinator.parameters,
+            coordinator.materials,
+            coordinator.cuts,
+            coordinator.cuts_revision,
+            status.requested_revision,
+        )
 
     @app.patch("/api/v1/build-options", response_model=BuildOptions)
     async def set_build_options(options: BuildOptions, coordinator: CurrentCoordinator) -> BuildOptions:
         await coordinator.set_build_options(options.model_dump(exclude_unset=True))
         return BuildOptions.model_validate(coordinator.parameters.model_dump())
 
-    def current_cutting_data(coordinator: Coordinator) -> dict:
-        return cutting_data(coordinator.cuts, coordinator.materials, coordinator.cutting, coordinator.cutting_jobs,
-                            coordinator.cuts_revision == coordinator.status().requested_revision)
+    def current_cutting_data(coordinator: Coordinator) -> dict[str, Any]:
+        return cutting_data(
+            coordinator.cuts,
+            coordinator.materials,
+            coordinator.cutting,
+            coordinator.cutting_jobs,
+            coordinator.cuts_revision == coordinator.status().requested_revision,
+        )
 
     @app.get("/api/v1/cutting")
-    async def get_cutting(coordinator: CurrentCoordinator) -> dict:
+    async def get_cutting(coordinator: CurrentCoordinator) -> dict[str, Any]:
         return current_cutting_data(coordinator)
 
-    def cutting_group(key: str, coordinator: Coordinator) -> dict:
-        group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials)
-                      if g["key"] == key), None)
+    def cutting_group(key: str, coordinator: Coordinator) -> dict[str, Any]:
+        group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials) if g["key"] == key), None)
         if group is None:
             raise HTTPException(422, "This material is no longer in the cut list.")
         return group
 
     @app.put("/api/v1/cutting/settings")
-    async def put_cutting_settings(settings: CuttingSettings, coordinator: CurrentCoordinator) -> dict:
+    async def put_cutting_settings(settings: CuttingSettings, coordinator: CurrentCoordinator) -> dict[str, Any]:
         await coordinator.stop_cutting()
         coordinator.cutting.settings = settings
         coordinator.save_cutting()
@@ -242,7 +255,7 @@ def build_app(
         return current_cutting_data(coordinator)
 
     @app.put("/api/v1/cutting/options")
-    async def put_cutting_options(update: StockUpdate, coordinator: CurrentCoordinator) -> dict:
+    async def put_cutting_options(update: StockUpdate, coordinator: CurrentCoordinator) -> dict[str, Any]:
         cutting_group(update.group, coordinator)
         await coordinator.stop_cutting(update.group)
         coordinator.cutting.options[update.group] = update.options
@@ -252,7 +265,7 @@ def build_app(
         return current_cutting_data(coordinator)
 
     @app.post("/api/v1/cutting/layout", status_code=202)
-    async def generate_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
+    async def generate_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict[str, Any]:
         if coordinator.cuts_revision != coordinator.status().requested_revision:
             raise HTTPException(409, "The cut list is waiting for the current CAD model. Generate after it finishes.")
         group = cutting_group(update.group, coordinator)
@@ -260,7 +273,7 @@ def build_app(
         return current_cutting_data(coordinator)
 
     @app.post("/api/v1/cutting/stop")
-    async def stop_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict:
+    async def stop_cutting_layout(update: LayoutRequest, coordinator: CurrentCoordinator) -> dict[str, Any]:
         coordinator.pause_cutting(update.group)
         return current_cutting_data(coordinator)
 

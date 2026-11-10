@@ -444,6 +444,11 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     try {
       await pending;
       const fresh = await request<Data>('cutting');
+      if (data && !data.current && fresh.current) {
+        data = fresh;
+        render();
+        return;
+      }
       const changed = filteredGroups().filter(g => {
         const key = resultKey(g);
         return data!.state.results[key]?.created !== fresh.state.results[key]?.created
@@ -496,7 +501,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
         return;
       }
       statusKey = key;
-      if (data) data.current = status.state === 'ready';
+      if (data && status.state !== 'ready') data.current = false;
       if (!host.hidden || status.state === 'ready') void refresh();
     },
   };

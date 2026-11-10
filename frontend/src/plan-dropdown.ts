@@ -79,9 +79,9 @@ export function createPlanDropdown() {
       }
       if (next >= 0) { event.preventDefault(); buttons[next].focus(); }
     };
-    popup.onfocusout = () => queueMicrotask(() => {
+    popup.addEventListener('focusout', () => queueMicrotask(() => {
       if (popup && !popup.contains(document.activeElement) && document.activeElement !== active?.trigger) close();
-    });
+    }));
     document.body.append(popup);
     const rect = request.trigger?.getBoundingClientRect();
     const left = request.x ?? rect?.left ?? 8;

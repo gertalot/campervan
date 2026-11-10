@@ -20,24 +20,27 @@ def main() -> None:
                                   request["settings"], directory)
         artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
         write_json(directory / "artifact.json", artifact.model_dump())
-    elif kind in ("plan-measurements", "suggest-more", "review-placement"):
-        from campervan.scan_network import NETWORK_SETTINGS, analyse_network
+    elif kind == "review-placement":
         from campervan.scan_placement import review_placement
+        from campervan.scan_workflow_models import ArtifactEnvelope
+
+        payload = review_placement(source, request["run"], MeasurementDocument.model_validate(request["measurements"]),
+                                   request["planning"], request["context"], directory)
+        artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
+        write_json(directory / "artifact.json", artifact.model_dump())
+    elif kind in ("plan-measurements", "suggest-more"):
+        from campervan.scan_network import NETWORK_SETTINGS, analyse_network
         from campervan.scan_suggestions import plan_measurements, suggest_more
         from campervan.scan_workflow_models import ArtifactEnvelope
 
         measurements = MeasurementDocument.model_validate(request["measurements"])
         network = request["network"]
         if network is None:
-            network = analyse_network(request["run"], measurements, NETWORK_SETTINGS, directory)
+            network = analyse_network(request["run"], measurements, NETWORK_SETTINGS, directory, certify=False)
         else:
             write_json(directory / "network.json", network)
-        if kind == "review-placement":
-            payload = review_placement(source, request["run"], measurements, network, request["planning"],
-                                       request["context"], directory)
-        else:
-            planner = suggest_more if kind == "suggest-more" else plan_measurements
-            payload = planner(source, request["run"], measurements, network, request["planning"], directory)
+        planner = suggest_more if kind == "suggest-more" else plan_measurements
+        payload = planner(source, request["run"], measurements, network, request["planning"], directory)
         artifact = ArtifactEnvelope.model_validate(request["artifact"] | {"payload": payload})
         write_json(directory / "artifact.json", artifact.model_dump())
     elif kind == "preview-correction":

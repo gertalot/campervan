@@ -32,7 +32,8 @@ def _copy_viewer_assets(output: Path) -> None:
     shutil.copytree(assets, target)
     source = (assets / "js" / "three-cad-viewer.esm.js").read_text(encoding="utf-8")
     (target / "js" / "shared-renderer.js").write_text(
-        source + "\nexport { THREE as sharedThree };\n", encoding="utf-8",
+        source + "\nexport { THREE as sharedThree };\n",
+        encoding="utf-8",
     )
     # Keep the redistributed viewer packages' licence text with their assets.
     for name in ("ocp-viewer", "ocp-viewer-core"):
@@ -41,7 +42,7 @@ def _copy_viewer_assets(output: Path) -> None:
             if "/licenses/" in str(file):
                 destination = target / "licenses" / name / Path(file).name
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(installed.locate_file(file), destination)
+                shutil.copyfile(str(installed.locate_file(file)), destination)
 
 
 async def export_site() -> None:
@@ -54,7 +55,7 @@ async def export_site() -> None:
     project = load_project(project_path)
     fingerprint = model_fingerprint(project.parameters)
     bundle = read_bundle(root / MODEL_CACHE_PATH)
-    if bundle is None or bundle.fingerprint != fingerprint:
+    if bundle is None or bundle.fingerprint != fingerprint or bundle.cuts is None:
         print("Building the current CAD model for the static site…", flush=True)
         bundle = await regenerate_model(project.parameters)
         if bundle.fingerprint != fingerprint or model_fingerprint(project.parameters) != fingerprint:
@@ -70,6 +71,8 @@ async def export_site() -> None:
 
         planning = parse_document(seed_v1().model_dump())
 
+    if bundle.cuts is None:
+        raise ValueError("The model has no cutting outlines.")
     cuts = active_cuts(bundle.cuts, project.parameters)
     cutting = cutting_data(cuts, project.materials, project.cutting, {}, True)
     results = cutting["state"]["results"]
@@ -81,13 +84,18 @@ async def export_site() -> None:
     for group in cutting["groups"]:
         key = f"{group['key']}:{project.cutting.settings.algorithm}"
         if key not in results:
-            print(f"Warning: no current saved cutting layout for {group['name']}; its cut list is included.", flush=True)
+            print(
+                f"Warning: no current saved cutting layout for {group['name']}; its cut list is included.", flush=True
+            )
 
     purchases = purchase_view(planning, project.materials, cuts, parameters=project.parameters, cutting=cutting)
     snapshot = {
         "exported_at": datetime.now(UTC).isoformat(),
         "parameters": parameter_response(
-            f"static-{fingerprint[:16]}", project.parameters, "", project.mannequins,
+            f"static-{fingerprint[:16]}",
+            project.parameters,
+            "",
+            project.mannequins,
         ).model_dump(mode="json", by_alias=True),
         "materials": material_data(project.parameters, project.materials, cuts, 0, 0),
         "cutting": cutting,
@@ -98,9 +106,18 @@ async def export_site() -> None:
     with TemporaryDirectory(prefix=".campervan-site-", dir=root) as temporary:
         output = Path(temporary) / "site"
         subprocess.run(
-            [str(frontend / "node_modules" / ".bin" / "vite"), "build", "--mode", "static",
-             "--base", "./", "--outDir", str(output)],
-            cwd=frontend, check=True,
+            [
+                str(frontend / "node_modules" / ".bin" / "vite"),
+                "build",
+                "--mode",
+                "static",
+                "--base",
+                "./",
+                "--outDir",
+                str(output),
+            ],
+            cwd=frontend,
+            check=True,
         )
         _write_json(output / "snapshot.json", snapshot)
         _write_json(output / "viewer-frames.json", frames)

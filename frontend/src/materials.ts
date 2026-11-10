@@ -247,14 +247,19 @@ export function setupMaterials(client: PlanningClient) {
     },
     show: (role?: string) => showTab('bom', role),
     onStatus(status: ModelStatus) {
-      modelError = status.error ? `Model update failed: ${status.error.message}` : '';
-      const key = `${status.session_id}:${status.requested_revision}:${status.state}`;
+      modelError = status.error ? `Model update failed: ${status.error.message}`
+        : status.cutting_error ? `Cut-list update failed: ${status.cutting_error}` : '';
+      const key = `${status.session_id}:${status.requested_revision}:${status.state}:${status.cutting_error ?? ''}`;
       if (key !== statusKey) {
         statusKey = key; stale = true;
         client.refreshPurchases();
         if (!panel.hidden) void refresh();
       } else if (cuttingRevision !== status.cutting_revision) {
         client.refreshPurchases();
+        if (data && data.cuts_revision !== data.requested_revision) {
+          stale = true;
+          if (!panel.hidden) void refresh();
+        }
       }
       cuttingRevision = status.cutting_revision;
     },

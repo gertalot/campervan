@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Literal
@@ -18,9 +18,9 @@ from campervan.parameters import Parameters
 from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.settings import Settings
 from campervan.viewer import replay_model
-from campervan.worker import regenerate_model
+from campervan.worker import model_updates
 
-Regenerate = Callable[[Parameters], Awaitable[ModelBundle]]
+Regenerate = Callable[[Parameters], AsyncGenerator[ModelBundle]]
 logger = logging.getLogger(__name__)
 
 
@@ -37,11 +37,12 @@ class ModelStatus:
     state: Literal["idle", "regenerating", "ready", "failed"] = "idle"
     error: ModelError | None = None
     cutting_revision: int = 0
+    cutting_error: str | None = None
 
 
 class Coordinator:
     def __init__(
-        self, settings: Settings, regenerate: Regenerate = regenerate_model, project_path: Path = PROJECT_PATH
+        self, settings: Settings, regenerate: Regenerate = model_updates, project_path: Path = PROJECT_PATH
     ) -> None:
         self.session_id = str(uuid4())
         self._project_path = project_path
@@ -55,8 +56,8 @@ class Coordinator:
         self._cutting_tasks: dict[str, asyncio.Task[None]] = {}
         self._cutting_searches: dict[str, LayoutSearch] = {}
         self._bundle = read_bundle(self._cache_path)
-        self._cuts: list[CutPart] = self._bundle.cuts if self._bundle else []
-        self.cuts_revision: int | None = 0 if self._bundle else None
+        self._cuts: list[CutPart] = (self._bundle.cuts or []) if self._bundle else []
+        self.cuts_revision: int | None = 0 if self._bundle and self._bundle.cuts is not None else None
         matches = self._bundle is not None and self._bundle.fingerprint == model_fingerprint(self.parameters)
         self._status = ModelStatus(
             session_id=self.session_id,
@@ -71,7 +72,10 @@ class Coordinator:
 
     def project(self) -> Project:
         return Project(
-            parameters=self.parameters, materials=self.materials, cutting=self.cutting, mannequins=self.mannequins,
+            parameters=self.parameters,
+            materials=self.materials,
+            cutting=self.cutting,
+            mannequins=self.mannequins,
         )
 
     @property
@@ -118,7 +122,7 @@ class Coordinator:
                 continue  # Keep pauses and failures explicit; input changes permit a new automatic run.
             await self.start_cutting(group)
 
-    async def start_cutting(self, group: dict) -> None:
+    async def start_cutting(self, group: dict[str, Any]) -> None:
         mode = self.cutting.settings.algorithm
         key = f"{group['key']}:{mode}"
         options = effective_options(group, self.cutting.settings, self.cutting.options.get(group["key"]))
@@ -147,8 +151,7 @@ class Coordinator:
             self.cutting_changed()
 
         search = LayoutSearch(
-            {"group": group, "mode": mode, "options": options.model_dump(),
-             "incumbent": self.cutting.results.get(key)},
+            {"group": group, "mode": mode, "options": options.model_dump(), "incumbent": self.cutting.results.get(key)},
             paused,
         )
         self._cutting_searches[key] = search
@@ -186,8 +189,7 @@ class Coordinator:
                 search.pause()
 
     async def stop_cutting(self, group: str | None = None) -> None:
-        tasks = {key: task for key, task in self._cutting_tasks.items()
-                 if group is None or key.startswith(group + ":")}
+        tasks = {key: task for key, task in self._cutting_tasks.items() if group is None or key.startswith(group + ":")}
         for task in tasks.values():
             task.cancel()
         if tasks:
@@ -199,8 +201,11 @@ class Coordinator:
                 self.cutting_jobs[key]["state"] = "stopped"
 
     async def accept(
-        self, parameters: Parameters | None = None, materials: dict[str, Selection] | None = None,
-        *, force: bool = False,
+        self,
+        parameters: Parameters | None = None,
+        materials: dict[str, Selection] | None = None,
+        *,
+        force: bool = False,
     ) -> int:
         selected = self.materials if materials is None else materials
         resolved = resolve(parameters or self.parameters, selected)
@@ -214,13 +219,13 @@ class Coordinator:
         self.parameters, self.materials = resolved, selected
         if not force and key == previous_key and self._status.state == "regenerating":
             return self._status.requested_revision
-        if not force and self._bundle is not None and key == self._bundle.fingerprint:
+        if not force and self._bundle is not None and self._bundle.cuts is not None and key == self._bundle.fingerprint:
             # A return to cached dimensions also supersedes an in-flight build for different dimensions.
             replay = key != previous_key or self._status.state != "ready"
             revision = self._status.requested_revision + int(replay)
             self._cuts = self._bundle.cuts
             self.cuts_revision = revision
-            self._status = replace(self._status, requested_revision=revision, error=None)
+            self._status = replace(self._status, requested_revision=revision, error=None, cutting_error=None)
             await self.ensure_cutting()
             if replay:
                 try:
@@ -235,9 +240,17 @@ class Coordinator:
                 self._status = replace(self._status, published_revision=revision, state="ready", error=None)
             return revision
         revision = self._status.requested_revision + 1
-        self._status = replace(self._status, requested_revision=revision, state="regenerating", error=None)
-        if self._task is None or self._task.done():
-            self._task = asyncio.create_task(self._run())
+        self._status = replace(
+            self._status,
+            requested_revision=revision,
+            state="regenerating",
+            error=None,
+            cutting_error=None,
+        )
+        if self._task is not None and not self._task.done():
+            self._task.cancel()
+            await asyncio.gather(self._task, return_exceptions=True)
+        self._task = asyncio.create_task(self._run())
         return revision
 
     async def load(self) -> ModelStatus:
@@ -249,7 +262,7 @@ class Coordinator:
                 saved = await asyncio.to_thread(read_bundle, self._cache_path)
                 if saved is not None and saved.fingerprint == fingerprint:
                     self._bundle = saved
-                    self._cuts = saved.cuts
+                    self._cuts = saved.cuts or []
         revision = self._status.requested_revision
         try:
             async with self._publication:
@@ -265,9 +278,11 @@ class Coordinator:
         if self._status.state != "regenerating":
             if self._bundle is not None and self._bundle.fingerprint == model_fingerprint(self.parameters):
                 revision = self._status.requested_revision
-                self.cuts_revision = revision
+                self.cuts_revision = revision if self._bundle.cuts is not None else None
                 self._status = replace(self._status, published_revision=revision, state="ready", error=None)
                 await self.ensure_cutting()
+                if self._bundle.cuts is None and (self._task is None or self._task.done()):
+                    await self.accept(force=True)
             elif self._bundle is None:
                 await self.accept()
         return self._status
@@ -280,35 +295,50 @@ class Coordinator:
         self.parameters = Parameters.model_validate(self.parameters.model_dump() | positions)
 
     async def _run(self) -> None:
-        while True:
-            # An Apply returning to the cached model may have fulfilled the latest revision while we were building.
-            if self._status.state == "ready":
-                return
-            revision = self._status.requested_revision
-            try:
-                bundle = await self._regenerate(self.parameters)
+        revision = self._status.requested_revision
+        geometry_published = False
+        updates = self._regenerate(self.parameters)
+        try:
+            async for bundle in updates:
                 if revision != self._status.requested_revision:
-                    continue
+                    return
                 if bundle.fingerprint != model_fingerprint(self.parameters):
-                    # Source changed during construction: do not label old geometry with the new source fingerprint.
-                    continue
+                    # An edit during construction needs a fresh process and fingerprint.
+                    self._status = replace(self._status, state="regenerating", error=None, cutting_error=None)
+                    self._task = asyncio.create_task(self._run())
+                    return
                 async with self._publication:
                     if revision != self._status.requested_revision:
-                        continue
+                        return
                     save_bundle(self._cache_path, bundle)
                     self._bundle = bundle
+                    if not geometry_published:
+                        await asyncio.to_thread(replay_model, bundle, self._settings)
+                        geometry_published = True
+                        if revision != self._status.requested_revision:
+                            return
+                        self._status = replace(self._status, published_revision=revision, state="ready", error=None)
+                if bundle.cuts is not None:
                     self._cuts = bundle.cuts
                     self.cuts_revision = revision
+                    self.cutting_changed()
                     await self.ensure_cutting()
-                    await asyncio.to_thread(replay_model, bundle, self._settings)
-                    if revision == self._status.requested_revision:
-                        self._status = replace(self._status, published_revision=revision, state="ready", error=None)
-                        return
-            except Exception as failure:
-                logger.exception("CAD build or viewer delivery failed")
-                if revision == self._status.requested_revision:
+            if not geometry_published:
+                raise RuntimeError("CAD process did not return geometry")
+            if self.cuts_revision != revision:
+                raise RuntimeError("CAD process did not return cutting outlines")
+        except Exception as failure:
+            logger.exception(
+                "Cut-list extraction failed" if geometry_published else "CAD build or viewer delivery failed"
+            )
+            if revision == self._status.requested_revision:
+                if geometry_published:
+                    self._status = replace(self._status, cutting_error=str(failure))
+                    self.cutting_changed()
+                else:
                     self._status = replace(self._status, state="failed", error=ModelError(message=str(failure)))
-                    return
+        finally:
+            await updates.aclose()
 
     async def close(self) -> None:
         await self.stop_cutting()

@@ -71,7 +71,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             return
         # Each leaf retains its construction geometry. Remove its local placement;
         # ancestor transforms (bed motion, lid hinge, mirroring) do not change stock sizes.
-        size = part.located(Location()).bounding_box().size
+        size = Shape.cast(part.wrapped).located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
         profile: dict[str, Any] = {}

@@ -110,10 +110,21 @@ other saved reconstructions or surface/texture layers. A missing tag does not bl
 projection, pan and zoom are preserved across result/layer changes; use **Fit** when you deliberately want new framing.
 The panel overlays the viewer. Canvas clicks leave it open; **X** or **Escape** closes it, consistently with Manage scans.
 
-For results with a mesh, **Layer → Shaded surface** shows the same geometry in neutral grey without photo or vertex
+For results with a mesh, **Layer → Shaded surface — simplified** shows the display mesh in neutral grey without photo or vertex
 colour. A camera-following point light and gentle ambient light reveal surface shape; tag overlays remain available.
 This is a display option and requires no new reconstruction. Colour/photo layers keep their existing appearance.
 The option is absent for point-cloud-only results. Its exact lighting balance awaits Gert's visual feedback.
+
+When a run retains `working/full-mesh.ply`, **Shaded surface — full resolution** and **Coloured mesh — full resolution**
+are also available, including for existing runs. Switch between the shaded layers to compare at the same camera position
+and lighting. The full-resolution layer is the original fused surface before cleanup and simplification, so it can
+include disconnected fragments removed from the display mesh. It is larger and may be slower to load and navigate.
+No reconstruction, asset copying or saved-run migration is needed. The labels distinguish the alternatives within the
+existing labelled selector, following [WAI guidance on descriptive control labels](https://www.w3.org/WAI/tutorials/forms/labels/).
+
+Scan buttons and shared side-panel actions have hover, pressed and keyboard-focus states. **Refresh scans** changes to
+**Refreshing…** while pending, prevents repeated activation, and reports completion or failure beside the button without
+moving focus. Feedback uses a live status region, following [WAI status-message guidance](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html).
 
 If you want more detail, choose **Add capture databases…** in Review capture. This opens the same importer in the
 current result's capture group and selects that result's tag layout. Existing imported databases are listed alongside

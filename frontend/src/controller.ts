@@ -90,7 +90,8 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     view.setStatus(status);
     const previous = status.published_revision !== null && status.published_revision !== status.requested_revision;
     view.setError(inputError ?? (status.error
-      ? `Model update failed: ${status.error.message}${previous ? ' Showing the previous model.' : ''}` : null));
+      ? `Model update failed: ${status.error.message}${previous ? ' Showing the previous model.' : ''}`
+      : status.cutting_error ? `Cut-list update failed: ${status.cutting_error}` : null));
   }
   function schedule(delay = current?.state === 'regenerating' ? 500 : 2000) {
     clock.clearTimeout(timer);

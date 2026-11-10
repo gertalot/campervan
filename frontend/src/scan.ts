@@ -40,8 +40,11 @@ function disposeObject(root: Object3D) {
 function availableLayers(scan: Scan): Layer[] {
   const available = scan.layers?.length ? scan.layers
     : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }];
-  const surface = available.find(layer => layer.kind === 'mesh');
-  return surface ? [...available, { ...surface, id: 'shaded', label: 'Shaded surface' }] : available;
+  const surfaces = available.filter(layer => layer.kind === 'mesh');
+  return [...available, ...surfaces.map(surface => ({ ...surface,
+    id: surface.id === 'mesh-full' ? 'shaded-full' : 'shaded',
+    label: surface.id === 'mesh-full' ? 'Shaded surface — full resolution' : 'Shaded surface — simplified',
+  }))];
 }
 
 async function loadObject(url: string, kind: Layer['kind'], mode = ''): Promise<Object3D> {
@@ -50,7 +53,7 @@ async function loadObject(url: string, kind: Layer['kind'], mode = ''): Promise<
     if (!geometry.getAttribute('position')?.count) { geometry.dispose(); throw new Error('The scan has no geometry.'); }
     if (kind === 'cloud') return new Points(geometry, new PointsMaterial({ size: 2, sizeAttenuation: false,
       color: '#ffffff', vertexColors: !!geometry.getAttribute('color') }));
-    if (mode === 'shaded') {
+    if (mode === 'shaded' || mode === 'shaded-full') {
       if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
       return new Mesh(geometry, new MeshStandardMaterial({ color: '#b8b8b8', roughness: 1, metalness: 0 }));
     }
@@ -100,6 +103,7 @@ export function setupScan(panel: HTMLElement) {
       <label data-point-size>Point size <input type="range" min="1" max="6" step="0.5" value="2" />
         <output>2 px</output></label>
       <button type="button" data-refresh>Refresh scans</button>
+      <span data-refresh-status role="status" aria-live="polite"></span>
       <label title="Estimated tag locations, shown through surfaces"><input type="checkbox" data-tags checked />
         <span data-tag-count>AprilTags</span></label>
       <p role="status" aria-live="polite">Select Scan to load the processed result.</p>
@@ -111,6 +115,7 @@ export function setupScan(panel: HTMLElement) {
   const output = panel.querySelector('output')!;
   const pointSize = panel.querySelector<HTMLElement>('[data-point-size]')!;
   const refresh = panel.querySelector<HTMLButtonElement>('[data-refresh]')!;
+  const refreshStatus = panel.querySelector<HTMLElement>('[data-refresh-status]')!;
   const tags = panel.querySelector<HTMLInputElement>('[data-tags]')!;
   const tagCount = panel.querySelector<HTMLElement>('[data-tag-count]')!;
   const status = panel.querySelector('[role=status]')!;
@@ -276,7 +281,7 @@ export function setupScan(panel: HTMLElement) {
       const group = viewer!.rendered.nestedGroup.groups['/Scan/Cloud'];
       for (const child of [...group.children]) { disposeObject(child); group.remove(child); }
       group.add(root);
-      surfaceLighting(layer.id === 'shaded');
+      surfaceLighting(layer.id === 'shaded' || layer.id === 'shaded-full');
       renderedScan = scan;
       refreshWorkflow();
       if (token !== generation) { root = undefined; return; }
@@ -413,8 +418,16 @@ export function setupScan(panel: HTMLElement) {
   layers.onchange = () => { void loadLayer(); };
   refresh.onclick = () => {
     refresh.disabled = true;
-    void Promise.all([refreshScans(), manager.refresh()]).catch(error => { status.textContent = String(error); })
-      .finally(() => { refresh.disabled = false; refreshWorkflow(); });
+    refresh.textContent = 'Refreshing…';
+    refresh.setAttribute('aria-busy', 'true');
+    refreshStatus.textContent = 'Refreshing scans…';
+    void Promise.all([refreshScans(), manager.refresh()])
+      .then(() => { refreshStatus.textContent = 'Scans refreshed.'; })
+      .catch(error => { refreshStatus.textContent = `Refresh failed: ${String(error)}`; })
+      .finally(() => {
+        refresh.disabled = false; refresh.textContent = 'Refresh scans';
+        refresh.removeAttribute('aria-busy'); refreshWorkflow();
+      });
   };
   onTab(tab => {
     interactionGeneration++;

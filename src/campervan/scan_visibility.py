@@ -9,7 +9,7 @@ from campervan.scans import read_json
 
 
 def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int, Any], moved: dict[int, float],
-                    *, manifest: dict[str, Any]) -> None:
+                    *, manifest: dict[str, Any], mesh_only: bool = False, scene: Any = None) -> Any:
     """Annotate observed geometry separately from a pair's manual_exclusion reason."""
     voxel = float(manifest["settings"]["voxel_mm"]) / 1000
     tolerance = 2 * voxel
@@ -18,19 +18,21 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
                     tolerance_m=tolerance, hit=None, observed_fraction=None)
     if not (run / "mesh.ply").is_file():
         return
-    import cv2
     import open3d as o3d
 
-    mesh = o3d.io.read_triangle_mesh(str(run / "mesh.ply"))
-    if not len(mesh.triangles):
-        return
-    scene = o3d.t.geometry.RaycastingScene()
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(mesh))
+    if scene is None:
+        mesh = o3d.io.read_triangle_mesh(str(run / "mesh.ply"))
+        if not len(mesh.triangles):
+            return
+        scene = o3d.t.geometry.RaycastingScene()
+        scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(mesh))
     samples: list[Any] = []
     sample_count = 0
     spans = []
     eligible = []
-    for pair in pairs:
+    for count, pair in enumerate(pairs, 1):
+        if count % 50 == 0 or count == len(pairs):
+            print(f"[Checked {count} of {len(pairs)} tape paths]", flush=True)
         a, b = pair["tag_a"], pair["tag_b"]
         if a not in positions or b not in positions or a not in moved or b not in moved:
             pair["clearance_reason"] = "An endpoint has no source-associated position."
@@ -73,6 +75,9 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
         if blocked.any():
             pair["clearance_reason"] = "Nearby clearance rays disagree; the path is near a surface or mesh hole."
             continue
+        if mesh_only:
+            pair["clearance_reason"] = "No mesh hit; observed free space and physical tape access are not established."
+            continue
         points = np.linspace(start, finish, max(3, int(length / voxel)))
         lower = sample_count
         sample_count += len(points)
@@ -80,21 +85,24 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
         spans.append((lower, lower + len(points)))
         eligible.append(pair)
     if not samples:
-        return
+        return scene
     if not (run / "frames.json").is_file() or not (run / "poses.json").is_file():
         for pair in eligible:
             pair["clearance_reason"] = "No mesh hit; original depth or camera-pose evidence is missing."
-        return
+        return scene
+    import cv2
     world = np.concatenate(samples)
     covered = np.zeros(len(world), dtype=bool)
     frames = read_json(run / "frames.json")
     poses = read_json(run / "poses.json")["poses"]
     confidence_min = manifest["settings"]["depth_confidence_min"]
     print("[Check observed free space between tags]", flush=True)
-    for frame in frames["frames"]:
+    for frame_index, frame in enumerate(frames["frames"], 1):
         pending = np.flatnonzero(~covered)
         if not len(pending):
             break
+        if frame_index % 25 == 0:
+            print(f"[Checked depth coverage in {frame_index} of {len(frames['frames'])} frames]", flush=True)
         if str(frame["id"]) not in poses:
             continue
         pose = np.asarray(poses[str(frame["id"])])
@@ -132,3 +140,4 @@ def assess_segments(run: Path, pairs: list[dict[str, Any]], positions: dict[int,
             )
         else:
             pair["clearance_reason"] = "No mesh hit, but part of the segment lacks observed free-space coverage."
+    return scene

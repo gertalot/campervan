@@ -20,7 +20,7 @@ class ModelBundle(BaseModel):
     fingerprint: str
     libraries: dict[str, str]
     frames: list[tuple[Literal["B", "D", "S"], str]]
-    cuts: list[CutPart]
+    cuts: list[CutPart] | None = None
 
 
 def library_versions() -> dict[str, str]:
@@ -48,7 +48,9 @@ def model_fingerprint(parameters: Parameters) -> str:
     digest = hashlib.sha256(json.dumps(dimensions, sort_keys=True).encode())
     package = Path(__file__).resolve().parent
     sources = sorted((package / "cad").glob("*.py"))
-    sources += [package / name for name in ("parameters.py", "materials.py", "viewer.py", "worker.py", "model_cache.py")]
+    sources += [
+        package / name for name in ("parameters.py", "materials.py", "viewer.py", "worker.py", "model_cache.py")
+    ]
     for path in sources:
         digest.update(path.name.encode())
         digest.update(path.read_bytes())

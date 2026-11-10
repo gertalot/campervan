@@ -13,6 +13,10 @@ PyRigi 1.3.0 is the selected optional scan dependency for generic 3D graph rigid
 **Flow folder:** [measurement workflow](./). **Spec:** [spec.md](spec.md).
 **Shared contracts:** [C1–C5](shared-contracts.md). **Related scene contract:** [scene-review-design.md](scene-review-design.md).
 
+**Follow-up:** [responsive planning implementation](planning-performance-plan.md) replaces repeated symbolic
+certification and the mandatory baseline checklist before placement review; it adds shared job cancellation.
+Its source implementation is recorded there; runtime/visual acceptance remains pending Gert's normal app actions.
+
 ## Global constraints and current baseline
 
 Implementation status: Tasks 1–6 and the practical documentation are implemented and source-reviewed. Checked boxes

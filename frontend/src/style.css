@@ -624,3 +624,17 @@ aside input[readonly] { color: #aab3c0; border-style: dashed; cursor: pointer; }
 .scan-tags .scan-emphasis-line.is-pending .scan-line-stroke { stroke-dasharray: 7 4; }
 .scan-tags .scan-emphasis-dot { fill: var(--scan-highlight); stroke: var(--scan-highlight-back); stroke-width: 2; }
 .scan-tags .scan-highlight-face { fill: var(--scan-highlight); fill-opacity: .16; stroke: none; }
+
+/* Shared feedback for scan controls and panels, including icon-only actions. */
+:is(.scan-controls, .scan-workflow-tools, .side-panel, .scan-import-dialog) button:not(:disabled):hover {
+  background: #414e60; border-color: #8ba2bf; color: #fff;
+}
+:is(.scan-controls, .scan-workflow-tools, .side-panel, .scan-import-dialog) button:not(:disabled):active {
+  background: #233c57; border-color: #b9d9ff; box-shadow: inset 0 1px 3px #1118;
+}
+:is(.scan-controls, .scan-workflow-tools, .side-panel, .scan-import-dialog) button:focus-visible {
+  outline: 2px solid #8bb7e8; outline-offset: 2px;
+}
+.scan-controls button:disabled { opacity: .5; cursor: default; }
+.scan-controls button[aria-busy=true] { cursor: progress; }
+.scan-controls [data-refresh-status]:empty { display: none; }

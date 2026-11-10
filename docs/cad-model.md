@@ -56,9 +56,11 @@ shows errors beside the affected input and disables Apply for an invalid draft; 
 This covers the platform-height dependency chain, not every possible geometry constraint. Geometry checks remain
 necessary for other combinations. Geometry code does not call the API or viewer.
 
-The worker captures a complete OCP display payload, exact measurement geometry, motion tracks and cut list in one
-bundle. The coordinator saves it atomically to `.local/model-cache.json` after construction and replays it when the
-browser connects. Reuse depends on resolved geometry dimensions, CAD/publishing source and CAD/viewer library versions.
+The worker publishes the OCP display payload, exact measurement geometry and motion tracks before extracting cuts.
+The coordinator saves geometry atomically to `.local/model-cache.json` and publishes it immediately, then updates
+the bundle with cutting outlines when extraction finishes. Cutting failures do not fail the displayed CAD model.
+It replays the saved geometry when the browser connects. Reuse depends on resolved geometry dimensions,
+CAD/publishing source and CAD/viewer library versions.
 Pose controls are excluded from that fingerprint; recorded motion tracks retain the bundle's construction pose so
 the browser can apply current slider positions. Unchanged Apply reuses the bundle; explicit Regenerate forces a build.
 Failed construction retains the previous bundle, with status and cut-list revisions indicating that it is older.
@@ -147,9 +149,9 @@ Campervan
 │       └── Cross seat
 └── Cabinet
     ├── Lower module
-    │   ├── Frames → front frame, cleats, arch bridge, bearing/catch blocks, rear jamb
+    │   ├── Frames → front frame, cleats, arch bridge, catch blocks, rear jamb, cab-end bridge upright
     │   │   └── Module joint → four lower side rails and eight M5 × 90mm bolt sets
-    │   ├── Skin → 9mm centre/cab-end panels and rear loading jamb panel
+    │   ├── Skin → 9mm centre/cab-end panels
     │   ├── Shelves → lower forward and both middle shelves
     │   └── Doors → lower flaps, storage pair and fixed hardware
     └── Upper module
@@ -383,14 +385,14 @@ existing Bunnings product. It is not 3mm cladding over a separate timber skeleto
 joining rails and hardware blocks use the existing 40 × 18mm pine. The arch bridge remains 90 × 18mm pine.
 
 Middle and cab-end panels have full-depth, jigsaw-scribed profiles against the actual side, pillars and finished
-ceiling. The rear upper panel follows the same contour and extends down to Z730. A lower rear jamb panel and
-reinforcing timber leave at least 230 × 730mm chair-loading clearance, without a bottom sill. There are no rear
+ceiling. The rear upper panel follows the same contour and extends down to Z730. The lower rear timber jamb has
+no plywood facing and leaves at least 230 × 730mm chair-loading clearance, without a bottom sill. There are no rear
 ladders, raked rear posts, return frames or uprights inside shelf bays. No full wall-facing back or top is added.
 The van closes the wall-facing back. Front edges of supporting panels butt behind the front frame; no skin
 landing grooves are needed. Fix panel faces into the adjoining timber, not screws into thin plywood edges.
 
 `cabinet_layout.py` supplies the real fitting volumes and shelf/door datums. Its lower-back datum locates only the
-rear jamb and arch bridge; it does not truncate the plywood or prescribe another back frame. `scribed_sheet`
+end uprights and arch bridge; it does not truncate the plywood or prescribe another back frame. `scribed_sheet`
 intersects face/mid-plane templates and extrudes one constant-thickness outline. Each square-cut shelf cleat is
 fitted across its whole height and the combined thickness of the receiving panel and timber, leaving 1mm wall
 clearance. This keeps its full mating face on the supporting panel rather than sticking past the panel contour.
@@ -402,10 +404,12 @@ have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edge
 There are no internal post cutouts. The front frame ties the panels together and stiffens the front shelf edge.
 
 The middle panel has an open-bottom wheel-arch clearance extending to the bridge top, avoiding dangling panel
-feet or a closed slot around the bridge. Two face-mounted blocks transfer its rear portion onto the bridge.
-The bridge meets the floor-supported rear timber jamb at one end and rests on a cab-end panel bearing block at
-the other. Its end block and divider blocks attach through the 9mm panel faces into the timber. This establishes
-an explicit support arrangement, not a verified complete cabinet load rating.
+feet or a closed slot around the bridge. The bridge sits directly beneath the lowest forward shelf cleats,
+supporting them and the rear portion of the divider without separate bearing blocks. Its height follows the
+shelf and cleat dimensions while retaining at least 3mm wheel-arch clearance. The bridge butts between the rear
+timber jamb and a floor-standing 40 × 18mm cab-end upright. The new upright sits against the cab-end panel's inner
+face and ends beneath its lower shelf cleat, providing a timber attachment for the beam and bearing for the cleat.
+This establishes an explicit support arrangement, not a verified complete cabinet load rating.
 
 Four pairs of straight transverse side joining rails retain the detachable joint. Lower rails have shallow
 shelf seats with solid lands around their two bolts; upper rails bear directly on those lands. Eight M5 × 90mm
@@ -701,11 +705,13 @@ quantities and mannequin settings. It is versioned with the source. API reloads 
 Browser storage retains camera, category visibility and live-control preferences. Shelf ledge width and height are separate dimensions; shelf
 bottoms remain on top of the ledges, whose bottoms stay aligned with the support-frame cross-beams.
 
-The CAD worker builds the assembly once, then `cad/bom.py` collects local leaf cutting envelopes before publication.
+The CAD worker builds the assembly once and returns viewer geometry before `cad/bom.py` collects cutting envelopes.
 Its explicit material mapping uses assembly paths and labels; update this mapping when changing the component tree.
 Local leaf envelopes ignore parent motion, so opening the lid, sliding the bed or hiding parts does not alter quantities.
-The worker returns cuts to the coordinator alongside successful regeneration. The BOM marks previous cuts as stale
-while a new revision is pending or failed, and displays regeneration errors.
+The worker returns cuts separately, tagged by the same model fingerprint. The coordinator accepts them only for
+the current revision and then starts layout optimisation. The BOM marks previous cuts as stale until extraction
+finishes, independently of CAD readiness, and reports cutting failures separately. Local geometry wrappers are
+detached before copying so extracting one piece does not copy its parent assembly.
 
 Plywood frames, skins, shelves and drawer panels, plus shelf ledges, guide ledges and slats,
 have material assignments. Hardware includes angle brackets, stop plates and complete drawer slides. Only the

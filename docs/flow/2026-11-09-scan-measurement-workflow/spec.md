@@ -134,6 +134,12 @@ change. Show both predicted uncertainty at a common measurement budget and measu
 precision target. Preserve coverage of retained reference regions in the comparison: removing a weak target and
 its coverage is not an accuracy improvement. State additions' assumed measuring precision and connections. Do not
 rank by visual even spacing alone.
+
+Placement review runs directly in captured coordinates, without requiring a physical fit, complete checklist or
+global certificate. A quick mesh assessment leaves unobserved clearance Unknown. The all-available-connections
+numerical prediction is an optimistic local bound. Supplied reviewed alternatives reuse numerical scoring for
+common-budget/common-target comparisons; their uniqueness remains unverified. See the approved
+[performance follow-up](planning-performance-plan.md) for the revised execution policy.
 All material recommendations remain inspectable. Main actions are **Continue to measurements** and
 **Add replacement captures…**. Explain why recapture is recommended without making it mandatory.
 
@@ -194,10 +200,15 @@ a modelling target, not physical calibration. Show the worst tag and direction; 
 The additional-pair meaningful-improvement threshold remains a separate editable value, initially 5 mm.
 
 Use a greedy information-based planner with a reverse-deletion pass, preserving existing valid measurements. First
-connect missing tags/eliminate non-rigid modes and establish generic global rigidity; then reduce the worst positional
-uncertainty until the target is met or feasible candidates are exhausted. For equal information/benefit, prefer known
+connect missing tags/eliminate non-rigid modes, meet necessary topology conditions and reduce positional
+uncertainty until the local target is met or feasible candidates are exhausted. Check generic global rigidity only
+on the final selected graph. For equal information/benefit, prefer known
 clear paths, then shorter tape spans, then canonical tag IDs. Record the ordered selected set and algorithm/settings.
-Reverse deletion removes only proposed, unmeasured pairs if all stated sufficiency/precision goals still hold.
+Reverse deletion removes only proposed, unmeasured pairs while preserving local rank, the precision target and
+necessary topology conditions. These necessary conditions do not prove uniqueness. Final certification has a
+five-second computation budget; an expired or inconclusive check yields an explicitly provisional checklist with
+Unknown uniqueness, without another automatic selection loop. Full target attainment still requires uniqueness
+evidence. Local target attainment is a separate field. Captured planning coordinates are not physical priors.
 Report the result as a recommended efficient set, without claiming a globally optimal combinatorial search.
 
 Generic graph rigidity and actual geometric conditioning are checked separately. The graph check may reject

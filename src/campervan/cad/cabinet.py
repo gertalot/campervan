@@ -26,9 +26,9 @@ def build_cabinet(p: Parameters) -> Compound:
     timber: list[tuple[str, Part]] = []
     posts: list[Part] = []
     joint_rails: list[tuple[str, Part]] = []
-    bridge_top = p.arch_height_mm + 3 + p.cabinet_bridge_height_mm
-    if bridge_top >= layout.first - w:
-        raise ValueError("The wheel-arch bridge must fit below the first cabinet shelf rail.")
+    bridge_top = layout.first - shelf - w
+    if bridge_top - p.cabinet_bridge_height_mm < p.arch_height_mm + 3:
+        raise ValueError("The wheel-arch bridge beneath the lower shelf cleats must clear the wheel arch.")
 
     def fit(part: Part) -> Part:
         pose = part.location
@@ -135,8 +135,8 @@ def build_cabinet(p: Parameters) -> Compound:
                 if part is not None:
                     timber.append((module, part))
 
-    # Only the open rear entrance needs a timber wall-side jamb. It stops below
-    # the shelf and belongs to the end panel, never to the interior of a shelf bay.
+    # Wall-side end uprights give the bridge timber attachments at both ends.
+    # The rear jamb preserves the loading opening; the cab-end upright stops under its shelf cleat.
     bridge_inner = layout.lower_back - p.cabinet_bridge_thickness_mm
     jamb_inner = layout.lower_back - w
     if jamb_inner - (layout.front + t) < 230:
@@ -145,19 +145,14 @@ def build_cabinet(p: Parameters) -> Compound:
     jamb.label, jamb.color = "Rear loading jamb", WOOD
     jamb.location = Location((jamb_inner, skin, 0))
     add(jamb, "Lower module", "Frames")
-    bridge = panel(length - skin - (skin + t), p.cabinet_bridge_thickness_mm, p.cabinet_bridge_height_mm)
+    cab_end_upright = panel(w, t, bridge_top)
+    cab_end_upright.label, cab_end_upright.color = "Cab-end bridge upright", WOOD
+    cab_end_upright.location = Location((jamb_inner, length - skin - t, 0))
+    add(cab_end_upright, "Lower module", "Frames")
+    bridge = panel(length - skin - t - (skin + t), p.cabinet_bridge_thickness_mm, p.cabinet_bridge_height_mm)
     bridge.label, bridge.color = "Wheel-arch bridge", WOOD
     bridge.location = Location((layout.lower_back, skin + t, bridge_top - p.cabinet_bridge_height_mm), (0, 0, 90))
     add(bridge, "Lower module", "Frames")
-    for label, y, bottom in (
-        ("Cab-end bridge bearing", length - skin - t, bridge_top - p.cabinet_bridge_height_mm - w),
-        ("Middle rear bridge bearing", middle - t, bridge_top),
-        ("Middle cab-end bridge bearing", middle + skin, bridge_top),
-    ):
-        block = panel(w, t, w)
-        block.label, block.color = label, WOOD
-        block.location = Location((jamb_inner, y, bottom))
-        add(block, "Lower module", "Frames")
 
     sides = (
         ("Rear", skin, 0.0),
@@ -210,10 +205,6 @@ def build_cabinet(p: Parameters) -> Compound:
                 )
                 part = cut(part, clearance)
             add(part, module, "Skin")
-    rear_jamb = panel(p.cargo_width_mm - jamb_inner, skin, p.cabinet_rear_storage_height_mm)
-    rear_jamb.label, rear_jamb.color = "Rear loading jamb panel", SKIN
-    rear_jamb.location = Location((jamb_inner, 0, 0))
-    add(rear_jamb, "Lower module", "Skin")
     rear = panel(p.cargo_width_mm - layout.front, skin, p.body_height_mm - p.cabinet_rear_storage_height_mm + 10)
     rear.label, rear.color = "Rear supporting panel", SKIN
     rear.location = Location((layout.front + t, 0, p.cabinet_rear_storage_height_mm))

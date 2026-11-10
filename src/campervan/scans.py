@@ -517,7 +517,7 @@ def completed_scans(directory: Path = SCAN_RUNS) -> list[dict[str, Any]]:
         if path.parent.resolve().parent != directory.resolve():
             continue
         try:
-            data = read_json(path)
+            data = scan_manifest(path.parent.name, directory)
             if data["schema_version"] != 1:
                 continue
             runs.append(
@@ -555,6 +555,17 @@ def scan_manifest(run_id: str, directory: Path = SCAN_RUNS) -> dict[str, Any]:
     if run.parent != directory.resolve():
         raise ValueError("Unknown scan run.")
     manifest: dict[str, Any] = read_json(run / "run.json")
+    # The original fusion mesh is retained for inspection, before cleanup and simplification.
+    # Discover it here so saved runs and new reconstructions expose the same layers.
+    full_mesh = "working/full-mesh.ply"
+    full_path = (run / full_mesh).resolve()
+    if full_path.is_relative_to(run) and full_path.is_file():
+        if not any(layer["id"] == "mesh-full" for layer in manifest["layers"]):
+            manifest["layers"].append(
+                {"id": "mesh-full", "label": "Coloured mesh — full resolution", "asset": full_mesh, "kind": "mesh"}
+            )
+        if full_mesh not in manifest["assets"]:
+            manifest["assets"].append(full_mesh)
     return manifest
 
 
