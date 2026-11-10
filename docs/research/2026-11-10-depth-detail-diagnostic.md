@@ -1,5 +1,9 @@
 # Where surface detail is lost
 
+Follow-up: [whole-capture depth preservation, grid-size and colour-resolution investigation](2026-11-11-depth-quality-cause.md)
+compares all four original databases and eight views across the van. It establishes additional losses in our own
+10 mm preview reconstruction and colour-downsampling path; the observations below concern an older 5 mm result.
+
 Read-only diagnostic of `.local/scans/capture-fdfb86a1-db42-4087-8863-8f26568da3c5`, prompted by rounded floor and
 sliding-door features in both 5 mm and 2.5 mm full-resolution meshes. No reconstruction or capture data was modified.
 

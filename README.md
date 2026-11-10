@@ -51,6 +51,7 @@ Camera, category visibility and moving-part pose preferences stay in browser sto
 
 - [Using the application](docs/using-the-app.md)
 - [CAD model and construction details](docs/cad-model.md)
+- [Scan architecture and standalone application handoff](docs/scan-architecture.md)
 - [Conversion planner and purchases](docs/planner.md)
 - [Cushion-making guide](docs/squabs-guide.md)
 - [Development and troubleshooting](docs/development.md)
