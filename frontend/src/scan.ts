@@ -41,10 +41,15 @@ function availableLayers(scan: Scan): Layer[] {
   const available = scan.layers?.length ? scan.layers
     : [{ id: 'cloud', label: 'Cloud', asset: scan.name, kind: 'cloud' as const }];
   const surfaces = available.filter(layer => layer.kind === 'mesh');
-  return [...available, ...surfaces.map(surface => ({ ...surface,
-    id: surface.id === 'mesh-full' ? 'shaded-full' : 'shaded',
-    label: surface.id === 'mesh-full' ? 'Shaded surface — full resolution' : 'Shaded surface — simplified',
-  }))];
+  // OpenMVS surfaces have geometry only; colour lives in the separate photographic texture.
+  const colourLayers = scan.purpose === 'photographic' ? available.filter(layer => layer.kind !== 'mesh') : available;
+  return [...colourLayers, ...surfaces.map(surface => {
+    const full = surface.id === 'mesh-full';
+    const triangles = full ? scan.geometry?.full_triangles : scan.geometry?.triangles;
+    const count = typeof triangles === 'number' ? ` (${triangles.toLocaleString()} triangles)` : '';
+    return { ...surface, id: full ? 'shaded-full' : 'shaded',
+      label: `${full ? 'Shaded surface — full resolution' : 'Shaded surface — simplified'}${count}` };
+  })];
 }
 
 async function loadObject(url: string, kind: Layer['kind'], mode = ''): Promise<Object3D> {
@@ -309,9 +314,9 @@ export function setupScan(panel: HTMLElement) {
         viewer!.setCameraLocationSettings(saved.position, saved.quaternion, saved.target, zoom, false);
       }
       viewer!.update(true, false);
-      const vertices = root instanceof Mesh || root instanceof Points ? root.geometry.getAttribute('position').count : null;
+      const pointCount = root instanceof Points ? `${root.geometry.getAttribute('position').count.toLocaleString()} points · ` : '';
       const unitStatus = scan.units === 'arbitrary' ? 'arbitrary units · metric scale unavailable' : 'metres';
-      status.textContent = `${vertices?.toLocaleString() ?? ''} ${layer.label} · ${unitStatus} · `
+      status.textContent = `${pointCount}${layer.label} · ${unitStatus} · `
         + (aligned ? `${scan.alignment!.target_frame} axes · origin tag ${scan.alignment!.definition!.origin_tag}`
           : scan.alignment?.reason ?? 'unaligned scan coordinates')
         + (scan.pose_source === 'gtsam_measured_distances' ? ' · distance-adjusted'

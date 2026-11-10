@@ -576,8 +576,10 @@ def scan_manifest(run_id: str, directory: Path = SCAN_RUNS) -> dict[str, Any]:
     full_path = (run / full_mesh).resolve()
     if full_path.is_relative_to(run) and full_path.is_file():
         if not any(layer["id"] == "mesh-full" for layer in manifest["layers"]):
+            label = ("Photographic surface — full resolution" if manifest.get("purpose") == "photographic"
+                     else "Coloured mesh — full resolution")
             manifest["layers"].append(
-                {"id": "mesh-full", "label": "Coloured mesh — full resolution", "asset": full_mesh, "kind": "mesh"}
+                {"id": "mesh-full", "label": label, "asset": full_mesh, "kind": "mesh"}
             )
         if full_mesh not in manifest["assets"]:
             manifest["assets"].append(full_mesh)

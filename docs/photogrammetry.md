@@ -135,6 +135,11 @@ colour. A camera-following point light and gentle ambient light reveal surface s
 This is a display option and requires no new reconstruction. Colour/photo layers keep their existing appearance.
 The option is absent for point-cloud-only results. Its exact lighting balance awaits Gert's visual feedback.
 
+Photographic reconstructions expose their uncoloured mesh geometry only through the shaded surface options;
+**Photo texture** supplies photographic colour and **Photographic cloud** has point colours. The redundant unlit mesh
+entries are omitted because those mesh files contain no vertex colours. Shaded options show triangle counts: the
+simplified and full meshes can look very similar because simplification aims to retain shape while reducing cost.
+
 When a run retains `working/full-mesh.ply`, **Shaded surface — full resolution** and **Coloured mesh — full resolution**
 are also available, including for existing runs. Switch between the shaded layers to compare at the same camera position
 and lighting. The full-resolution layer is the original fused preview surface or refined photographic master, before
