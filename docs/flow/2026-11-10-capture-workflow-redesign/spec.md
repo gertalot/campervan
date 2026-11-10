@@ -1,7 +1,11 @@
 # Capture-to-measurement workflow redesign
 
-Status: draft for Gert's review. Design discussed and agreed on 10 November 2026; written specification not yet
-approved. [Flow folder](./). Supersedes the previous four-stage workflow, not the original capture data.
+Status: approved by Gert on 10 November 2026. [Flow folder](./). Supersedes the previous four-stage workflow,
+not the original capture data.
+
+Delivery decision: plan and implement one stage at a time, starting with stage 1. All stage-specific plans live in
+this folder. Gert visually reviews each stage before the next stage is planned; do not automatically implement later
+stages. [Stage 1 implementation plan](stage-1-plan.md).
 
 ## 1. Outcome and hard boundary
 

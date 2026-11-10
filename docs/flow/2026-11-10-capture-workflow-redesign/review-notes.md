@@ -41,4 +41,5 @@ Primary references:
 - [Accurate 3D reconstruction with RGB-D cameras](https://cg.cs.tsinghua.edu.cn/papers/TOG-2018-reconstruction.pdf).
 
 No application changes, tests, builds, services, processing jobs, downloads or recognition runs were performed.
-The specification still requires Gert's final written-spec approval before implementation planning.
+Gert approved the written specification on 10 November 2026 and requested separate implementation plans/execution
+for each stage, with visual feedback before moving to the next. Stage 1 is planned in [stage-1-plan.md](stage-1-plan.md).
