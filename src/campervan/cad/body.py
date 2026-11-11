@@ -28,6 +28,7 @@ from build123d import (
 )
 
 from campervan.parameters import Parameters
+from campervan.cad.rear_floor import REAR_FLOOR_FRONT_Y, rear_floor_sections
 
 WALL = Color(0.55, 0.62, 0.66, 0.32)
 
@@ -463,30 +464,45 @@ def sliding_door(p: Parameters, front: float, right: bool) -> Compound:
 
 
 def floor_outline_wire(p: Parameters, *, front_y: float | None = None) -> Wire:
-    """Straight rear sheet edge and notches around the wheel-house footprints."""
+    """Dimensioned symmetric footprint; arch cutouts and side-step edges are parallel to Y.
+
+    This is the remaining baseline and plywood outline. The rear metal region is
+    modelled independently from scan sections in rear_floor.py; arch shoulders remain unfitted.
+    """
     front = p.body_length_mm if front_y is None else front_y
-    left = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
-    arch_inner = (p.cargo_width_mm - p.arch_gap_mm) / 2
+    rear = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
+    arch = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.floor_arch_foot_flare_mm
     arch_rear, arch_front = p.arch_rear_offset_mm, p.arch_rear_offset_mm + p.arch_length_mm
-    pts = [
-        (left, 0, 0),
-        (p.cargo_width_mm - left, 0, 0),
-        (p.cargo_width_mm - left, p.rear_corner_straight_mm, 0),
-        (p.cargo_width_mm, p.rear_corner_radius_mm, 0),
-        (p.cargo_width_mm, arch_rear, 0),
-        (p.cargo_width_mm - arch_inner, arch_rear, 0),
-        (p.cargo_width_mm - arch_inner, arch_front, 0),
-        (p.cargo_width_mm, arch_front, 0),
-        (p.cargo_width_mm, front, 0),
-        (0, front, 0),
-        (0, arch_front, 0),
-        (arch_inner, arch_front, 0),
-        (arch_inner, arch_rear, 0),
-        (0, arch_rear, 0),
-        (0, p.rear_corner_radius_mm, 0),
-        (left, p.rear_corner_straight_mm, 0),
+    door_front = p.body_length_mm - (p.left_door_front_offset_mm + p.right_door_front_offset_mm) / 2
+    front_inset = (p.cargo_width_mm - p.arch_gap_mm) / 2
+    left = [
+        (rear, 0),
+        (rear, p.rear_corner_straight_mm),
+        (0, p.rear_corner_radius_mm),
+        (0, arch_rear),
+        (arch, arch_rear),
+        (arch, arch_front),
+        (p.floor_step_inset_mm, arch_front),
+        (p.floor_step_inset_mm, door_front),
+        (front_inset, door_front),
+        (front_inset, front),
     ]
-    return Wire.make_polygon(pts)
+    right = [(p.cargo_width_mm - x, yy) for x, yy in reversed(left)]
+    return Wire.make_polygon([(x, yy, 0) for x, yy in [*left, *right]])
+
+
+def floor_steps(p: Parameters) -> Compound:
+    """Reference tread and riser surfaces; sheet-metal gauge and pressing detail are not inferred."""
+    door_front = p.body_length_mm - (p.left_door_front_offset_mm + p.right_door_front_offset_mm) / 2
+    start, end = door_front - p.side_opening_width_mm + 40, door_front - 140
+    x, top = p.floor_step_inset_mm, -p.floor_build_up_mm
+    bottom = top - p.floor_step_drop_mm
+    tread = Face(Wire.make_polygon([(0, start, bottom), (x, start, bottom), (x, end, bottom), (0, end, bottom)]))
+    riser = Face(Wire.make_polygon([(x, start, bottom), (x, start, top), (x, end, top), (x, end, bottom)]))
+    left = Compound(label="Left sliding-door step", children=[tread, riser], color=WALL)
+    right = left.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+    right.label = "Right sliding-door step"
+    return Compound(label="Sliding-door steps", children=[left, right])
 
 
 def rear_hatch_angle(percent: float) -> float:
@@ -658,7 +674,13 @@ def build_body(p: Parameters) -> list[Compound]:
     surround = Shell.make_loft([aperture, rear_aperture(p, 20)], ruled=True)
     hatch = rear_hatch(p)
     floor = Face(floor_outline_wire(p))
-    metal = floor.moved(Location((0, 0, -p.floor_build_up_mm)))
+    # Closed solid for reliable inside/outside rendering; 1mm is modelling thickness, not measured steel gauge.
+    metal = Solid.extrude(floor, (0, 0, -1)).moved(Location((0, 0, -p.floor_build_up_mm)))
+    # The unsupported rear outline is removed from this baseline, not hidden underneath the new sections.
+    front_region = Box(p.cargo_width_mm + 2, max(p.body_length_mm, p.furniture_rear_gap_mm + p.cargo_length_mm),
+                       p.floor_build_up_mm + 2, align=(Align.MIN, Align.MIN, Align.MIN)).moved(
+                           Location((-1, REAR_FLOOR_FRONT_Y, -p.floor_build_up_mm - 1)))
+    metal = metal & front_region
     metal.label, metal.color = "Vehicle floor", WALL
     return [
         corners,
@@ -672,6 +694,6 @@ def build_body(p: Parameters) -> list[Compound]:
                 hatch,
             ],
         ),
-        Compound(label="Body floor", children=[metal]),
+        Compound(label="Body floor", children=[metal, rear_floor_sections(p), floor_steps(p)]),
         Compound(label="Sliding doors", children=doors),
     ]

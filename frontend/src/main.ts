@@ -10,6 +10,7 @@ import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
 import { setupAprilTags } from './apriltags';
 import { setupScan } from './scan';
+import { setupCadScanReference } from './cad-scan-reference';
 import { isStaticSite, readSnapshotPart } from './site-runtime';
 import './style.css';
 
@@ -51,6 +52,7 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
   for (const mode of ['seated', 'lying', 'lying-second']) element(`mannequin-${mode}-status`).textContent = message;
 }, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
+setupCadScanReference(element('scan-reference'), viewer);
 const seeInside = element<HTMLInputElement>('see-inside');
 seeInside.checked = localStorage.getItem('campervan.see-inside') !== 'false';
 viewer.setSeeInside(seeInside.checked);

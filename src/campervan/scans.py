@@ -546,6 +546,7 @@ def completed_scans(directory: Path = SCAN_RUNS) -> list[dict[str, Any]]:
                     "tags": data.get("tags", []),
                     "tag_note": data.get("tag_note", "This run has no exported tag poses."),
                     "alignment": data.get("alignment"),
+                    "cad_reference": data.get("cad_reference"),
                     "tag_layout_id": data.get("tag_layout_id"),
                     "created_at": data.get("created_at"),
                     "input_filenames": [Path(item["path"]).name for item in data.get("inputs", [])],

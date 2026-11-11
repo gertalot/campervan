@@ -36,6 +36,18 @@ p { margin: 0; }
 #visibility label { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; cursor: pointer; }
 #visibility input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
 #visibility .see-inside { display: flex; margin-top: 6px; }
+#scan-reference { margin: 0 0 16px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #34373e; }
+#scan-reference legend { padding: 0; margin-bottom: 8px; color: #aab3c0; }
+#scan-reference .reference-toggle { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
+#scan-reference .reference-toggle input { width: auto; }
+#scan-reference .reference-result, #scan-reference .reference-opacity { display: block; margin: 10px 0; }
+#scan-reference select, #scan-reference input[type="range"] { display: block; width: 100%; margin-top: 5px; }
+#scan-reference output { float: right; }
+#scan-reference .reference-offsets { display: flex; gap: 8px; margin: 8px 0; }
+#scan-reference .reference-offsets label { flex: 1; min-width: 0; }
+#scan-reference .reference-offsets input { width: 100%; box-sizing: border-box; }
+#scan-reference details { margin-top: 10px; }
+#scan-reference p { font-size: 11px; color: #aab3c0; white-space: normal; margin: 8px 0 0; }
 #build-components { margin: 0 0 16px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #34373e; }
 #build-components legend { padding: 0; margin-bottom: 6px; font-size: 11px; color: #929aa6; }
 #build-component-fields { display: flex; flex-wrap: wrap; gap: 6px 14px; }

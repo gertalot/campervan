@@ -1,4 +1,5 @@
 import { Quaternion, Vector3, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
+import { isVehiclePartModelled } from './vehicle-modelling';
 
 type Direction = [number, number, number];
 interface CadGroup extends Object3D {
@@ -45,10 +46,11 @@ function directions(path: string): Direction[] {
 export function createVehicleFade() {
   type Entry = {
     group: CadGroup; directionFrame?: Object3D; skipPick: boolean; directions: Direction[];
-    maxOpacity: number; fadeAmount: number; materials: { material: Material; edge: boolean }[];
+    maxOpacity: number; fadeAmount: number; modelled: boolean; materials: { material: Material; edge: boolean }[];
   };
   let entries: Entry[] = [];
   let pickingVersion = 0;
+  let modellingProgress = false;
   const towardCamera = new Vector3();
   const panelNormal = new Vector3();
   const camera = new Vector3(), fromPanel = new Vector3();
@@ -60,9 +62,10 @@ export function createVehicleFade() {
   function setExteriorOpacity() {
     for (const entry of entries) {
       const { materials, maxOpacity } = entry;
-      skipPicking(entry, maxOpacity === 0);
+      const wireframe = modellingProgress && !entry.modelled;
+      skipPicking(entry, wireframe || maxOpacity === 0);
       for (const { material, edge } of materials) {
-        setOpacity(material, edge ? 1 : maxOpacity, edge);
+        setOpacity(material, edge ? modellingProgress ? 0 : 1 : wireframe ? 0 : maxOpacity, edge);
       }
     }
   }
@@ -83,22 +86,18 @@ export function createVehicleFade() {
           const { material } = mesh;
           materials.push({ material, edge });
         }
-        if (opaque) {
-          for (const { material, edge } of materials) {
-            setOpacity(material, 1, edge);
-          }
-          continue;
-        }
         const glass = path.endsWith('/Window glass');
         const rearGlass = glass && path.startsWith('/Campervan/Vehicle references/Rear opening/');
         if (materials.length) entries.push({ group,
+          modelled: isVehiclePartModelled(path),
           directionFrame: path === hatchPath || path.startsWith(`${hatchPath}/`) ? hatch : undefined,
           skipPick: false, directions: normals, materials,
-          fadeAmount: path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
+          fadeAmount: opaque ? 0 : path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
           maxOpacity: rearGlass ? 0 : glass ? 0.3 : 1 });
       }
     },
     clear() { entries = []; pickingVersion++; },
+    setModellingProgress(enabled: boolean) { modellingProgress = enabled; },
     get pickingVersion() { return pickingVersion; },
     withPicking<T>(pick: () => T): T {
       const hidden = entries.filter(entry => entry.skipPick && entry.group.visible);
@@ -122,18 +121,21 @@ export function createVehicleFade() {
           fromPanel.subVectors(camera, fromPanel).normalize();
           direction = fromPanel;
         }
-        const facing = Math.max(...entry.directions.map(([x, y, z]) => {
+        const facing = entry.directions.length ? Math.max(...entry.directions.map(([x, y, z]) => {
           panelNormal.set(x, y, z);
           // The rear hatch's outward face turns upward with its hinge.
           if (entry.directionFrame) panelNormal.transformDirection(entry.directionFrame.matrixWorld);
           return panelNormal.dot(direction);
-        }));
+        })) : 0;
         // Keep far-facing and edge-on panels solid; fade only as their side turns toward us.
         const t = Math.max(0, Math.min(1, facing / 0.35));
         const near = t * t * (3 - 2 * t);
-        skipPicking(entry, near > 0.5 || entry.maxOpacity === 0);
+        const wireframe = modellingProgress && !entry.modelled;
+        skipPicking(entry, wireframe || near > 0.5 || entry.maxOpacity === 0);
         for (const { material, edge } of entry.materials) {
-          setOpacity(material, edge ? 0.5 - 0.48 * near : entry.maxOpacity * (1 - near * entry.fadeAmount), edge);
+          // The progress overlay owns edge presentation; suppress the duplicate native pass.
+          setOpacity(material, edge ? modellingProgress ? 0 : 0.5 - 0.48 * near
+            : wireframe ? 0 : entry.maxOpacity * (1 - near * entry.fadeAmount), edge);
         }
       }
     },

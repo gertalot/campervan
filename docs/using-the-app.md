@@ -19,6 +19,43 @@ The cabinet filters reuse native labelled checkboxes, Space-key activation and t
 modules differ, following the relevant [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 This is a focused interaction choice, not a claim of full accessibility conformance.
 
+### Scan reference overlay
+
+**Scan reference** on the CAD page displays a registered reconstruction alongside the editable CAD model.
+Use **Show scan reference** independently of the CAD Visibility switches. **Scan opacity** blends the reference;
+**Show modelling progress** shows unfinished vehicle parts as cyan wireframes and modelled parts with green outlines.
+The rear-door edge is retained as a completed increment and is highlighted alongside the current floor outline. Completed parts retain
+their surfaces and the normal See inside behavior; unfinished surfaces are hidden and do not intercept CAD picking.
+The accompanying legend names the modelled parts. Hide furniture using the existing
+Visibility controls. The scan does not participate in CAD selection, dragging, furniture mirroring or manufacturing.
+Existing vehicle lines are dimmed to 12% in this comparison; only the active modelling reference has full-brightness
+outlines. The rear edge and the current brace/pillar/sidewall outline share the thick, full-brightness magenta
+highlight. The flat review section and all other vehicle parts are dimmed.
+Other vehicle outlines, including plywood and the separate side steps, stay dimmed.
+
+**Reference position** exposes X/Y/Z translation in CAD millimetres. Changes, opacity and the selected reference
+are remembered in this browser. **Reset position** restores that result's initial registration. **Refresh references**
+reloads available registered results. Neither operation changes the scan's source geometry or CAD dimensions.
+
+The corrected interior registration uses the cargo-floor plane, body centreline and measured closed-hatch inner
+panel. Its fore–aft accuracy is limited by the original approximate tape readings. Camera position is retained
+while showing, hiding or adjusting the reference.
+
+The rejected rear-position/radius/transition controls have been removed. The rear edge has collinear straight main
+runs, a long straight lock-housing front and short rounded shoulders traced from the detailed photograph. The scan
+positions this contour on the flat floor. The magenta highlight includes the rear-door edge, separate brace leading
+edge and return, straight rear pillar face, diagonal face and straight sidewall. The flat flange seam is excluded.
+The outline stops before the wheel arches. **Side-step inset**, **Side-step drop** and **Arch foot flare** still control
+the remaining provisional baseline. **Wooden floor** shows plywood separately. None of this is a fabrication template.
+
+Controls use explicit native labels and a native opacity range, following
+[WAI labelling guidance](https://www.w3.org/WAI/tutorials/forms/labels/) and
+[native range-input guidance](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/range).
+Visibility continues to use the existing controls; no preset silently changes several saved choices.
+The progress legend uses text alongside colour, following
+[WAI guidance on use of colour](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
+Green records modelling progress, not fabrication approval or a new accuracy guarantee.
+
 ### Included in build
 
 The separate **Included in build** section below Visibility controls the **Rear drawer** and **Lagun table**.

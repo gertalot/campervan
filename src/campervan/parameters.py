@@ -578,6 +578,22 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
     )
 
+    floor_step_inset_mm: float = Field(
+        default=85, gt=0, le=200, title="Side-step inset",
+        description="Provisional inset for the unfinished main floor beside each sliding-door step.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+    )
+    floor_step_drop_mm: float = Field(
+        default=25, gt=0, le=100, title="Side-step drop",
+        description="Approximate tread level below the metal cargo floor, fitted to the corrected capture.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+    )
+    floor_arch_foot_flare_mm: float = Field(
+        default=35, ge=0, le=100, title="Arch foot flare",
+        description="Provisional arch cutout allowance; the arch-foot contour has not been reconstructed yet.",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
+    )
+
     floor_ply_thickness_mm: float = Field(
         default=12.0,
         ge=0,

@@ -13,6 +13,7 @@ export interface ScanResult {
   layers?: ScanLayer[]; measured?: boolean; tag_layout_id?: string | null; tags?: ScanTag[]; tag_note?: string;
   alignment?: { status: string; matrix?: number[][]; target_frame?: string;
     definition?: TagAlignmentDefinition; reason?: string };
+  cad_reference?: { translation_mm: [number, number, number]; rotation?: number[][]; description: string };
   created_at?: string | null; input_filenames?: string[]; pose_source?: string | null;
   settings?: { voxel_mm?: number; [key: string]: unknown }; frame_count?: number | null;
   geometry?: { triangles?: number; [key: string]: unknown };
