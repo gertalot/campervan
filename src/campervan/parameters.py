@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 RETIRED_PARAMETERS = frozenset(
     {
+        "floor_step_inset_mm",
+        "floor_step_drop_mm",
+        "floor_arch_foot_flare_mm",
         "cross_toilet_bay_depth_mm",
         "cross_deck_thickness_mm",
         "cross_bearer_height_mm",
@@ -207,10 +210,10 @@ class Parameters(BaseModel):
     )
 
     arch_rear_offset_mm: float = Field(
-        default=310.0,
+        default=275.0,
         ge=0,
         title="Rear offset",
-        description="Approx. 310mm from closed rear door beside pillar, along wall; aligned to measured door opening.",
+        description="CAD Y position: 275mm from the rear-opening datum; scan comparison shifted both arches 35mm aft.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
@@ -253,7 +256,7 @@ class Parameters(BaseModel):
     )
 
     rear_corner_radius_mm: float = Field(
-        default=200.0,
+        default=205.0,
         gt=0,
         title="Corner transition depth",
         description="Rear pillar-to-side-panel depth from the pillar datum; also sets furniture clearance.",
@@ -575,22 +578,6 @@ class Parameters(BaseModel):
         ge=0,
         title="Floor build-up",
         description="Finished floor above vehicle floor; owner estimate.",
-        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
-    )
-
-    floor_step_inset_mm: float = Field(
-        default=85, gt=0, le=200, title="Side-step inset",
-        description="Provisional inset for the unfinished main floor beside each sliding-door step.",
-        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
-    )
-    floor_step_drop_mm: float = Field(
-        default=25, gt=0, le=100, title="Side-step drop",
-        description="Approximate tread level below the metal cargo floor, fitted to the corrected capture.",
-        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
-    )
-    floor_arch_foot_flare_mm: float = Field(
-        default=35, ge=0, le=100, title="Arch foot flare",
-        description="Provisional arch cutout allowance; the arch-foot contour has not been reconstructed yet.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
     )
 

@@ -5,11 +5,10 @@ import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPo
 import { createPillows } from './pillows';
 import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
-import { isVehiclePartActive, isVehiclePartModelled, vehicleOutlineOpacity } from './vehicle-modelling';
 import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
 import { createLayoutMirror } from './layout-mirror';
-import { Box3, type Color, type Material, type Object3D, type Scene } from 'three';
+import { Box3, DoubleSide, FrontSide, Mesh, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
 import { assetUrl, isStaticSite } from './site-runtime';
 
@@ -66,36 +65,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const vehicleFade = createVehicleFade();
   const layoutMirror = createLayoutMirror();
   let scanReference: Object3D | undefined;
-  let referenceOutlines = false;
-  type ReferenceEdges = Object3D & { material: Material & { color: Color; linewidth?: number } };
-  const scanOutlines: ReferenceEdges[] = [];
-  function clearReferenceOutlines() {
-    for (const line of scanOutlines) { line.removeFromParent(); line.material.dispose(); }
-    scanOutlines.length = 0;
-  }
-  function attachReferenceOutlines() {
-    clearReferenceOutlines();
-    if (!viewer?.ready || !referenceOutlines) return;
-    for (const [path, group] of Object.entries(viewer.rendered.nestedGroup.groups)) {
-      if (!path.startsWith('/Campervan/Vehicle references/') && path !== '/Campervan/Finished floor plywood') continue;
-      const edges = (group as unknown as { edges?: ReferenceEdges }).edges;
-      if (!edges?.material) continue;
-      // Retain OCP's native wide-line geometry and shader, including resize handling.
-      const line = edges.clone(false) as ReferenceEdges;
-      line.material = edges.material.clone();
-      const active = isVehiclePartActive(path);
-      line.material.color.set(active ? '#ff35d3' : isVehiclePartModelled(path) ? '#45e67b' : '#26e5ff');
-      if (active) { line.material.linewidth = 4; line.material.visible = true; }
-      Object.assign(line.material, { transparent: true, opacity: vehicleOutlineOpacity(path),
-        depthTest: false, depthWrite: false });
-      line.position.set(0, 0, 0); line.quaternion.identity(); line.scale.set(1, 1, 1);
-      line.userData.campervanOverlay = true;
-      line.raycast = () => {};
-      line.renderOrder = 10000;
-      edges.add(line);
-      scanOutlines.push(line);
-    }
-  }
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
     cancelCameraAnimation, saveCamera);
   const drag = createViewerDrag(container, {
@@ -133,6 +102,20 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     viewer.update(true, true);
   });
   let seeInside = false;
+
+  function updateScanSides() {
+    // The reconstructed interior mesh is wound towards the cabin. Culling its backs
+    // opens the near-side shell while keeping inward-facing floor and far-side faces.
+    const side = seeInside ? FrontSide : DoubleSide;
+    scanReference?.traverse(object => {
+      if (!(object instanceof Mesh)) return;
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        if (material.side === side) continue;
+        material.side = side;
+        material.needsUpdate = true;
+      }
+    });
+  }
 
   function showMannequin(render = true) {
     if (!viewer?.ready) return;
@@ -366,7 +349,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           // OCP disposes its old scene when replacing geometry; keep the independent human rig.
           if (message.type === 'data') {
             scanReference?.removeFromParent();
-            clearReferenceOutlines();
             drag.cancel();
             pieces.clear();
             vehicleFade.clear();
@@ -395,7 +377,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             pillows.pose(positions.bed_extension_percent ?? 0);
             layoutMirror.attach(viewer!.rendered.nestedGroup.groups);
             if (scanReference) viewer!.rendered.scene.add(scanReference);
-            attachReferenceOutlines();
             motions = {};
             bases.clear();
             trimToolbar();
@@ -454,14 +435,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     setScanReference(root: Object3D | undefined) {
       scanReference?.removeFromParent();
       scanReference = root;
+      updateScanSides();
       if (root && viewer?.ready) viewer.rendered.scene.add(root);
       viewer?.update(true, false);
     },
-    setReferenceOutlines(enabled: boolean) {
-      if (referenceOutlines === enabled) return;
-      referenceOutlines = enabled;
-      vehicleFade.setModellingProgress(enabled);
-      attachReferenceOutlines();
+    setVehicleComparisonOpacity(opacity: number | null) {
+      vehicleFade.setComparisonOpacity(opacity);
       viewer?.update(true, false);
     },
     setLayoutWidth(width: number) { layoutMirror.setWidth(width); },
@@ -478,6 +457,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     focusPiece: pieces.focus,
     setSeeInside(enabled: boolean) {
       seeInside = enabled;
+      updateScanSides();
       viewer?.update(true, false);
     },
     setMannequinPose(pose: MannequinPose) {

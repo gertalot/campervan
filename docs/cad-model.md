@@ -4,25 +4,37 @@ Use millimetres, with X running from the vehicle's left/passenger side to its ri
 toward the cab, and Z upwards. The rear opening at its side pillars is Y = 0; its centre bows rearward to Y = −120 at bed height.
 Z = 0 is the finished plywood floor, with the vehicle floor approximately 18mm below. Vehicle coordinates and the right-hand-drive cab stay fixed.
 
-The CAD page can overlay a scan with a saved `alignment` and `cad_reference` in its local run manifest.
-`cad_reference.translation_mm` places the already-aligned metric scan in CAD coordinates:
-`CAD_mm = 1000 * rotation * aligned_scan_m + translation_mm`, where an omitted `rotation` is identity.
-The corrected interior uses a fitted cargo-floor normal and bilateral rear-panel centreline, with translation
-`[743.3, 31, -12.0]`. The floor fit has about 2mm local scatter, not a statement of absolute scan accuracy.
-The rear hatch was closed in the capture. Its inner centre panel at finished-floor Z=390 is the fore–aft anchor:
-the approximately 100mm bed setback minus 130mm hatch clearance puts it at CAD Y=-30. The corresponding scanned
-surface is at rotated-scan Y=-61, giving +31mm translation. This working datum has approximately centimetre-scale
-uncertainty from the original readings; a hidden seal edge has not been inferred from the mesh.
-Browser overrides change translation only, without rescaling or warping.
-`scan-assets.ts` shares loading/disposal with the Scan page. The viewer detaches the reference before OCP replaces
-CAD geometry and reattaches it afterwards; it remains outside furniture mirroring and CAD picking. Reference mesh
-opacity and native CAD edge emphasis are display settings, independent of CAD geometry and build inclusion.
-`frontend/src/vehicle-modelling.ts` lists the vehicle subtrees modelled in the scan-fitting increments. The reference
-progress display reuses this list for green completed outlines and for suppressing unfinished surface opacity and
-picking through `vehicle-fade.ts`; it does not alter native visibility choices. Disabling progress restores the
-normal CAD surface/fade presentation. Update the small modelled-subtree list as subsequent vehicle parts are fitted.
+The CAD page can display a registered scan through `cad-scan-reference.ts`, using the shared scan asset loader.
+The source scan is aligned in metres, rotated by `cad_reference.rotation`, scaled to millimetres and translated by
+`cad_reference.translation_mm`, with optional per-result browser translation overrides. The reference is detached
+before OCP replaces geometry and reattached afterwards, outside CAD selection and furniture mirroring.
+
+During comparison, `vehicle-fade.ts` applies a light-pink display tint and a base vehicle opacity, including the
+wheel arches. See inside fading and click-through picking still apply to nearby panels and edges. Hiding the
+reference restores original material colours and opacity while retaining the See inside setting.
+The same checkbox switches reference meshes between `FrontSide` and `DoubleSide` rendering in `viewer.ts`.
+The corrected interior scan's triangle winding points into the cabin (checked on floor, wall and roof patches), so
+front-face rendering hides the near-side shell's backs while preserving interior-facing surfaces. This is face culling,
+not named-panel fading: differently oriented or mixed-winding scans may hide wanted faces. Opacity changes and model
+reloads preserve the mode; scan geometry is unchanged.
+The existing native checkbox remains the single control, retaining its label and keyboard behaviour
+([WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)); the comparison help text describes its
+effect on both models. Face visibility uses [Three.js Material.side](https://threejs.org/docs/pages/Material.html#side).
+The vehicle uses its pre-experiment baseline geometry; no scan-fitted rear-floor increment or progress lines are active.
 
 ## Current vehicle-modelling constraints
+
+Both wheel arches are set to span CAD Y=275–1035mm (760mm long), shifted together 35mm rearward from Y=310–1070.
+This is a rounded positional correction from the corrected scan comparison, not a new precise tape measurement:
+the near-wall cap estimates centred around Y=648–654mm, and the lower rear-door reference was about Y=−33mm.
+The original 310/1070mm tape distances were from the closed door, not CAD Y=0. Arch size, height and shape are unchanged.
+The shared `arch_rear_offset_mm` drives both arches, floor cutouts and adjoining furniture clearances.
+Vehicle geometry takes priority over furniture fit. Furniture dimensions remain unchanged; the existing bench-frame
+clearance conflict is deliberately unresolved. Furniture-fit gating and automatic furniture adjustments are disabled
+with `FURNITURE_FIT_ENABLED = False` in `parameter_fit.py`; they do not block vehicle regeneration or constrain the form.
+While disabled, model generation publishes the vehicle and floor plywood only, with vehicle-door motions. Furniture
+and stored-gear construction is paused so its constructor guards cannot block this car-first pass. Saved furniture
+dimensions are retained. The cache fingerprint includes this switch's module.
 
 The vehicle is an interior-design reference, not a reproduction of scan irregularities. Treat the metal floor as
 flat and horizontal; plywood rests on its high points. Impose left/right symmetry on the fixed body, matching
@@ -36,56 +48,6 @@ Work one step at a time: rear edge, rear pillar bases, wheel-arch base footprint
 projections, front pillars, then a straight front plywood edge at the carpet boundary. The metal continues beneath
 the carpet and seats; the plywood working boundary is distinct. Pillar bases are predominantly angled/wedge-like,
 with slight blending. Arch bases can differ from crowns and wall-side spans from inner spans.
-
-The rear-door edge in `cad/rear_floor.py` was accepted before beginning the pillar bases. The supplied rear-door close-ups identify
-separate main lower-panel runs and a local inward lock-housing protrusion. The rejected global spline mixed
-samples from different heights along the rolled lip and spread that protrusion into a broad bow.
-
-The down-looking close-up (20261111-162557) establishes the actual silver-metal contour, distinguished from
-the adjacent black latch recess. Its detected 80mm tag provides an along-edge calibration. Selected points
-establish an approximately 197mm straight housing front and 84mm rounded shoulder on each side, approximately
-365mm overall. The former mesh-optimized 87mm front and 475mm overall width erased visible straight geometry
-and are discarded. The main door runs remain exactly collinear and both sides are mirrored.
-
-Only the two local rounded shoulders use curves: quadratic edges fitted to the selected photographic silver
-silhouette, with tangency at the observed straight housing front. There is no global curve, fairness penalty,
-forced tangent at the partly obscured outer junction or invented circular radius. Fit observations and control
-provenance are retained in `.local/experiments/rear-door-edge/photo-contour/` (photo-outline-fit.json and
-local-shoulder-fit.json). Photo depth residuals are within approximately 2.3mm; perspective and the difference
-between door and tag height limit dimensional certainty.
-
-The registered scan supplies main Y=-33.85 and housing-front Y=-21.83, a local 12.02mm intrusion, from the
-lower-door envelope at CAD Z10,20,30,40,50mm. Original frame 378 independently locates the forward housing
-surface at approximately Y=-22. Source photographs determine feature shape and breaks; the mesh does not
-optimize shoulder lengths or spread its smoothing across the straight front.
-
-The accepted rear-door edge remains unchanged and shares the full-brightness magenta highlight with the current
-floor outline. That outline preserves a stepped
-sequence of separate manufactured features: rear edge, short brace leading edge, brace return, rear pillar
-face, diagonal pillar face, then the straight longitudinal sidewall. The brace is a local attachment with
-an offset leading edge. The rejected continuous loft, flange-perimeter detour and single Z0-skin contour
-all erased or misidentified that arrangement and are removed.
-
-The unmarked photo 20261111-181155 and corrected mesh supply independent lower-boundary samples for each
-feature. The annotated sketch establishes the intended feature sequence, rather than copied corner pixels.
-Tag 6 and the floor fastener estimate the reference camera. The calibrated ray hits and separate line fits
-are retained in `.local/experiments/rear-floor-user-trace/unmarked-feature-positions.json` and
-`identified-face-lines.json`. The fitted camera's selected reference residuals reach approximately 4.5 pixels;
-image picking, depth detail and camera estimation limit dimensional accuracy.
-
-The brace leading run is X189 and its return joins the rear pillar at X146. Both leading and rear pillar
-runs are longitudinal. Independent return and diagonal fits intersect those longitudinal references to set
-corners: brace-leading end Y≈-4.38, rear-pillar start Y≈9.81, rear/diagonal corner Y≈64.30 and diagonal/sidewall
-corner X41,Y≈139.05. The sidewall remains exactly X41 through the Y250 review cut, before the wheel arch.
-All these runs are straight and their angles remain explicit. Unmeasured small corner radii are not invented.
-The right side mirrors the left. The marked ray at the wheel arch hit its upper surface, so it is not used
-to set either the wall direction or the floor-level arch boundary.
-
-The selected lower-face boundaries have different physical heights. Their plan positions are projected onto
-the nominal flat metal-floor plane Z=-floor_build_up_mm. This is a regularized vehicle reference, not a claim
-that each point lies on the actual irregular floor or a certified plywood-clearance envelope. The floor remains
-a closed 1mm solid without an automatic clearance offset. Wheel-arch geometry and the remaining perimeter
-are unchanged. The current outline remains subject to visual review.
 
 `src/campervan/cad/model.py` assembles the campervan. Component generators retain the original FeatureScript-oriented
 construction coordinates. At the assembly boundary, `mirror.py` reflects every furniture leaf and local placement,
@@ -127,7 +89,8 @@ face. Floor-only drawings stay unchanged. Cut-list drawings and saved SVGs ident
 Native CAD/STEP exports and Python geometry retain their saved orientation; changing the cabinet side does not
 regenerate or modify the model or cutting results.
 `src/campervan/parameters.py` owns dimensions, basic validation and sidebar metadata.
-`parameter_fit.py` checks the bed-height dependency chain before saving or regenerating: wheel-arch/top-rail clearance,
+`parameter_fit.py` currently bypasses the following furniture-fit checks and adjustments while vehicle modelling is
+in progress. Its retained logic checks the bed-height dependency chain: wheel-arch/top-rail clearance,
 rounded frame openings, slide mounting bands and the mattress-following cabinet divider.
 The lower shelf height follows platform + uncompressed foam + shelf clearance. Mattress thickness and shelf-clearance
 inputs have bounds that preserve the opening above the divider; platform maximum follows the same relationship. It supplies current input bounds and
@@ -286,7 +249,19 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   no raised band projects into the cabin. Its outer surface shares the rest of the side panel's exterior profile.
   Width, height and recess depth are adjustable under Side walls. Both window types share `window_recess`,
   rounded-corner cutters and the surround-width setting. Furniture fitting continues to use the measured inner wall.
-- Rear corners retain a 60mm straight interior section followed by an angled interior transition ending at Y = 200.
+- Rear corners remain a provisional reference for fitting the plywood floor and later furniture. Each horizontal
+  diagonal is straight and both sides share the same geometry. The base stations are Y40 and Y170; the latest
+  small adjustment brings the base 5mm forward without changing the upper controls. The saved project currently
+  has a Y225 upper carrier from the preceding experiment. Its lower/middle stations remain independent of it.
+  `rear_corner_base` supplies the Y40/Y170 stations to the pillar and floor outlines. The plywood has its own
+  clean fitting cutout: left X/Y points (150,0), (140,40), (45,170), (45,275), mirrored on the right. Those few
+  straight edges clear the matched Z0 corner section and retain the existing wheel-arch notches. The metal floor
+  and pillar geometry do not acquire this plywood allowance. The cutout is a fitting-template candidate: lower
+  slice intersections mix the rising floor, brace and reconstruction blending, so full-thickness physical clearance
+  has not been certified. Use the intended floor fit, not the scan's tiny teeth, to assess it.
+  The camera is left in the owner's view. The discrete brace, lower return and any cutting clearance still need
+  to be reconciled with the physical obstructions before calling this a verified cutting boundary. Surface-noise
+  agreement and disappearance of the pink overlay are not the acceptance criterion for a plywood fit.
   Their separate exterior is a smooth cubic surface, tangent to the rear face and straight side wall. The closed
   solid joins that rounded skin to the angular inner faces and keeps the rear seal and cabinet-fitting volume.
   The original

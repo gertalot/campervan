@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from campervan.model_cache import ModelBundle
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 from campervan.settings import Settings
 
 if TYPE_CHECKING:
@@ -95,6 +96,10 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
         "kind": "rotation",
         "keyframes": [(percent, rear_hatch_angle(percent)) for percent in (0, 100)],
     })
+    if not FURNITURE_FIT_ENABLED:
+        return {"type": "campervan_motion", "motions": {
+            "doors_close_percent": {"position": parameters.doors_close_percent, "tracks": door_tracks},
+        }}
     # The host applies independent translations and hinge rotations relative to the published CAD pose.
     return {
         "type": "campervan_motion",

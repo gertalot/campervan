@@ -1,7 +1,7 @@
 import { isStaticSite } from './site-runtime';
 
 export type Tab = 'cad' | 'scan' | 'bom' | 'plan' | 'cuts' | 'apriltags';
-const tabs: readonly Tab[] = isStaticSite ? ['cad', 'bom', 'cuts'] : ['cad', 'scan', 'bom', 'plan', 'cuts', 'apriltags'];
+const tabs: readonly Tab[] = isStaticSite ? ['cad', 'bom', 'cuts'] : ['cad', 'bom', 'plan', 'cuts', 'apriltags'];
 type Listener = (tab: Tab, role?: string) => void;
 let current: Tab = 'cad';
 let currentRole: string | undefined;
@@ -56,7 +56,9 @@ export function setupTabs() {
     const requested = (match?.[1] as Tab) ?? 'cad';
     showTab(requested, match?.[2] ? decodeURIComponent(match[2]) : undefined, false);
     if (isStaticSite && (!location.hash || !tabs.includes(requested))) history.replaceState(null, '', '#/cad');
-    else if (!isStaticSite && location.pathname === '/') history.replaceState(null, '', '/cad');
+    else if (!isStaticSite && (location.pathname === '/' || !tabs.includes(requested))) {
+      history.replaceState(null, '', '/cad');
+    }
   };
   window.addEventListener('popstate', restore);
   if (isStaticSite) window.addEventListener('hashchange', restore);

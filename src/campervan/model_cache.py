@@ -49,7 +49,9 @@ def model_fingerprint(parameters: Parameters) -> str:
     package = Path(__file__).resolve().parent
     sources = sorted((package / "cad").glob("*.py"))
     sources += [
-        package / name for name in ("parameters.py", "materials.py", "viewer.py", "worker.py", "model_cache.py")
+        package / name for name in (
+            "parameters.py", "parameter_fit.py", "materials.py", "viewer.py", "worker.py", "model_cache.py"
+        )
     ]
     for path in sources:
         digest.update(path.name.encode())

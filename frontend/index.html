@@ -9,7 +9,6 @@
   <body>
     <header><h1>Campervan CAD</h1><nav aria-label="Project views">
       <button id="cad-tab" aria-controls="cad-panel" aria-pressed="true">CAD</button>
-      <button id="scan-tab" aria-controls="scan-panel" aria-pressed="false">Scan</button>
       <button id="bom-tab" aria-controls="bom-panel" aria-pressed="false">Bill of materials</button>
       <button id="plan-tab" aria-controls="plan-panel" aria-pressed="false">Plan</button>
       <button id="cuts-tab" aria-controls="cuts-panel" aria-pressed="false">Cut list</button>
@@ -47,7 +46,7 @@
           <label class="see-inside"><input type="checkbox" id="see-inside" /> See inside</label>
         </fieldset>
         <fieldset id="scan-reference" hidden>
-          <legend>Scan reference</legend>
+          <legend>Scan comparison</legend>
         </fieldset>
         <fieldset id="build-components" aria-describedby="build-components-hint">
             <legend>Included in build</legend>
@@ -73,7 +72,6 @@
       <div id="viewer" aria-label="Interactive CAD viewer"></div>
     </section>
     <section id="plan-panel" aria-label="Conversion plan" hidden></section>
-    <section id="scan-panel" aria-label="Scan reconstruction" hidden></section>
     <section id="bom-panel" aria-label="Bill of materials" hidden></section>
     <section id="cuts-panel" aria-label="Cut list and layouts" hidden></section>
     <section id="apriltags-panel" aria-label="AprilTag PDF generator" hidden></section>

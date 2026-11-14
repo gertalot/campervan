@@ -11,9 +11,15 @@ from campervan.cad.mirror import mirror_assembly
 from campervan.cad.table import build_laptop_table
 from campervan.cad.vehicle import build_vehicle_references
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 
 def build_campervan(parameters: Parameters) -> Compound:
+    if not FURNITURE_FIT_ENABLED:
+        # Car-first pass: don't run furniture constructors with unresolved fits.
+        return Compound(label="Campervan", children=[
+            build_vehicle_references(parameters), build_floor_plywood(parameters),
+        ])
     placement = Location((parameters.cargo_width_mm, parameters.furniture_rear_gap_mm, 0))
     furniture = [build_long_bench(parameters), build_cross_bench(parameters), build_cabinet(parameters),
                  build_laptop_table(parameters)]

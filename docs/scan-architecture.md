@@ -1,5 +1,9 @@
 # Scan subsystem architecture and standalone application handoff
 
+UI status (2026-11-12): the Scan tab remains removed. The CAD page has a scan-reference comparison overlay with
+independent scan/vehicle opacity and a light-pink CAD tint. The scan backend, CLI, saved data and workflow
+specifications below are retained; they do not imply that the Scan tab is available.
+
 This document describes the scan subsystem at commit `91e7945` on `develop`, its approved unfinished workflow,
 and the boundaries a separate application must reconsider. It includes the subsequent quality investigation in
 the working tree. It documents the existing implementation; it does not select a language, UI toolkit, hardware

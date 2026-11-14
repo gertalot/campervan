@@ -1,7 +1,7 @@
 # Rear pillar/floor surface-fitting trial — 2026-11-11
 
-Historical trial, superseded by the feature-by-feature floor modelling recorded in
-[CAD model conventions](../cad-model.md). Its proposed follow-up below is not the current implementation plan.
+Historical trial. The subsequent experimental floor modelling and CAD scan overlay were rolled back on 2026-11-12.
+See [CAD model conventions](../cad-model.md) for the current baseline. The follow-up below is not an active plan.
 
 ## Outcome
 

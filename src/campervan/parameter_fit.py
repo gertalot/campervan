@@ -5,6 +5,10 @@ from typing import TypedDict
 
 from campervan.parameters import Parameters
 
+# Vehicle modelling comes first. Furniture conflicts remain unresolved, and this
+# layer must neither block regeneration nor silently resize the furniture.
+FURNITURE_FIT_ENABLED = False
+
 
 class Constraint(TypedDict, total=False):
     minimum: float
@@ -19,6 +23,8 @@ class FitError(ValueError):
 
 
 def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
+    if not FURNITURE_FIT_ENABLED:
+        return {}
     slat, member, radius = p.slat_thickness_mm, p.member_width_mm, p.inside_radius_mm
     # Match the rounded wall-frame opening at the rear of the wheel arch.
     setback = max(0, p.rear_corner_radius_mm + p.rear_corner_allowance_mm - p.furniture_rear_gap_mm)
@@ -118,6 +124,8 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
 
 
 def fit_parameters(p: Parameters) -> tuple[Parameters, dict[str, str]]:
+    if not FURNITURE_FIT_ENABLED:
+        return p, {}
     constraints = parameter_constraints(p)
     member = constraints["member_width_mm"]
     if not member["minimum"] <= p.member_width_mm <= member["maximum"]:

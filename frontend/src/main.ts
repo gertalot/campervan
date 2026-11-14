@@ -9,7 +9,6 @@ import { PlanningClient } from './planning-api';
 import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
 import { setupAprilTags } from './apriltags';
-import { setupScan } from './scan';
 import { setupCadScanReference } from './cad-scan-reference';
 import { isStaticSite, readSnapshotPart } from './site-runtime';
 import './style.css';
@@ -79,7 +78,6 @@ let dirty = false;
 const planning = new PlanningClient();
 setupTabs();
 if (!isStaticSite) {
-  setupScan(element('scan-panel'));
   setupAprilTags(element('apriltags-panel'));
   const { setupPlanner } = await import('./planner');
   setupPlanner(element('plan-panel'), planning);

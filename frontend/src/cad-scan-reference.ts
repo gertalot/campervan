@@ -1,13 +1,12 @@
 /** A scan is a display reference, independent of CAD geometry, selection and furniture mirroring. */
-import { DoubleSide, Matrix4, Mesh, Points, type Object3D } from 'three';
+import { Matrix4, Mesh, Points, type Object3D } from 'three';
 import { disposeObject, layerUrl, loadObject } from './scan-assets';
 import { readScanResults, type ScanResult } from './scan-library-api';
 import { isStaticSite } from './site-runtime';
-import { vehicleModellingLegend } from './vehicle-modelling';
 
 interface ReferenceViewer {
   setScanReference(root: Object3D | undefined): void;
-  setReferenceOutlines(enabled: boolean): void;
+  setVehicleComparisonOpacity(opacity: number | null): void;
 }
 
 export function setupCadScanReference(container: HTMLElement, viewer: ReferenceViewer) {
@@ -20,8 +19,11 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     <label class="reference-opacity">Scan opacity <output data-opacity-value></output>
       <input type="range" min="0" max="100" step="5" data-opacity />
     </label>
-    <label class="reference-toggle"><input type="checkbox" data-outlines /> Show modelling progress</label>
-    <p data-progress-legend></p>
+    <label class="reference-opacity">Vehicle opacity <output data-vehicle-opacity-value></output>
+      <input type="range" min="0" max="100" step="5" data-vehicle-opacity />
+    </label>
+    <p>Light pink is vehicle CAD. See inside fades nearby vehicle surfaces and hides the outside-facing backs
+      of scan surfaces. Both opacity sliders still apply. Furniture and visibility switches keep their usual behaviour.</p>
     <details><summary>Reference position</summary>
       <p>Offsets in CAD millimetres. X across, Y forwards, Z up. Reset restores the saved registration.</p>
       <div class="reference-offsets">
@@ -37,26 +39,24 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   const select = find<HTMLSelectElement>('[data-result]');
   const opacity = find<HTMLInputElement>('[data-opacity]');
   const output = find<HTMLOutputElement>('[data-opacity-value]');
-  const outlines = find<HTMLInputElement>('[data-outlines]');
-  const legend = find<HTMLParagraphElement>('[data-progress-legend]');
-  legend.textContent = vehicleModellingLegend;
+  const vehicleOpacity = find<HTMLInputElement>('[data-vehicle-opacity]');
+  const vehicleOutput = find<HTMLOutputElement>('[data-vehicle-opacity-value]');
   const status = find<HTMLParagraphElement>('[data-status]');
   const offsets = [...container.querySelectorAll<HTMLInputElement>('[data-offset]')];
   const key = 'campervan.cad.scan-reference';
   const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
   visible.checked = saved.visible ?? true;
   opacity.value = String(saved.opacity ?? 45);
-  outlines.checked = saved.outlines ?? true;
+  vehicleOpacity.value = String(saved.vehicleOpacity ?? 35);
   const translations: Record<string, number[]> = saved.translations ?? {};
   let scans: ScanResult[] = [], root: Object3D | undefined, generation = 0;
   const selected = () => scans.find(scan => scan.key === select.value);
 
   function save() {
     localStorage.setItem(key, JSON.stringify({ result: select.value, visible: visible.checked,
-      opacity: Number(opacity.value), outlines: outlines.checked, translations }));
+      opacity: Number(opacity.value), vehicleOpacity: Number(vehicleOpacity.value), translations }));
   }
   function display() {
-    legend.hidden = !visible.checked || !outlines.checked;
     output.value = `${opacity.value}%`;
     opacity.setAttribute('aria-valuetext', `${opacity.value} percent`);
     if (root) {
@@ -67,13 +67,14 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
           material.opacity = Number(opacity.value) / 100;
           material.transparent = material.opacity < 1;
           material.depthWrite = !material.transparent;
-          material.side = DoubleSide;
           material.needsUpdate = true;
         }
       });
     }
     viewer.setScanReference(root);
-    viewer.setReferenceOutlines(visible.checked && outlines.checked && !!root);
+    vehicleOutput.value = `${vehicleOpacity.value}%`;
+    vehicleOpacity.setAttribute('aria-valuetext', `${vehicleOpacity.value} percent`);
+    viewer.setVehicleComparisonOpacity(visible.checked && root ? Number(vehicleOpacity.value) / 100 : null);
   }
   function position() {
     const scan = selected();
@@ -94,7 +95,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   async function load() {
     const token = ++generation;
     viewer.setScanReference(undefined);
-    viewer.setReferenceOutlines(false);
+    viewer.setVehicleComparisonOpacity(null);
     if (root) { disposeObject(root); root = undefined; }
     const scan = selected();
     if (!scan) return;
@@ -118,7 +119,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   }
   visible.onchange = () => { display(); save(); };
   opacity.oninput = () => { display(); save(); };
-  outlines.onchange = () => { display(); save(); };
+  vehicleOpacity.oninput = () => { display(); save(); };
   select.onchange = () => { save(); void load(); };
   for (const input of offsets) input.onchange = () => {
     if (offsets.some(field => field.value.trim() === '' || !field.validity.valid || !Number.isFinite(field.valueAsNumber))) {
@@ -147,7 +148,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       select.replaceChildren(...scans.map(scan => new Option(scan.display_name, scan.key)));
       if (scans.some(scan => scan.key === previous)) select.value = previous;
       if (!scans.length) {
-        generation++; viewer.setScanReference(undefined); viewer.setReferenceOutlines(false);
+        generation++; viewer.setScanReference(undefined); viewer.setVehicleComparisonOpacity(null);
         if (root) { disposeObject(root); root = undefined; }
         status.textContent = 'No CAD-registered scan available.'; return;
       }

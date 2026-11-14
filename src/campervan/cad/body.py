@@ -28,7 +28,6 @@ from build123d import (
 )
 
 from campervan.parameters import Parameters
-from campervan.cad.rear_floor import REAR_FLOOR_FRONT_Y, rear_floor_sections
 
 WALL = Color(0.55, 0.62, 0.66, 0.32)
 
@@ -135,11 +134,51 @@ def rear_aperture(p: Parameters, margin: float = 0, closed: bool = False) -> Wir
     return Wire([edge for section in rear_aperture_sections(p, margin, closed) for edge in section.edges()])
 
 
+def rear_corner_base(p: Parameters) -> tuple[float, float]:
+    """Fore-aft ends of the straight, symmetric diagonal at floor height."""
+    return p.rear_corner_straight_mm - 20, 170.0
+
+
 def rear_sections(p: Parameters) -> list[list[Wire]]:
+    base_start, base_end = rear_corner_base(p)
     opening = rear_aperture_sections(p)
     straight = [section.moved(Location((0, p.rear_corner_straight_mm, 0))) for section in opening]
     main = [Wire([edge]) for edge in body_section(p, p.rear_corner_radius_mm)]
-    return [opening, straight, main]
+    diagonal_end = list(main)
+    # Matched bilateral scan sections and fixed-camera increments set the lower
+    # diagonal's start and end separately from the upper transition. Keep straight plan faces;
+    # only their boundaries vary with height. A 15mm middle-height correction
+    # follows the Z390/490 sections and tapers out above them. The main wall stays put.
+    for i in (0, 1, 4, 5):
+        curve = straight[i].edges()[0].geom_adaptor().Bezier()
+        poles = [Vector(curve.Pole(j)) for j in range(1, 5)]
+        straight[i] = Wire([Bezier(*(
+            Vector(v.X, v.Y - (
+                p.rear_corner_straight_mm - base_start if v.Z <= 150
+                else 15 if v.Z <= 390 else 5 if v.Z <= 750 else 0
+            ), v.Z) for v in poles
+        )).edge()])
+        curve = main[i].edges()[0].geom_adaptor().Bezier()
+        poles = [Vector(curve.Pole(j)) for j in range(1, 5)]
+        diagonal_end[i] = Wire([Bezier(*(
+            Vector(v.X, (
+                base_end if v.Z <= p.wall_taper_start_mm * 0.4
+                else 185 if v.Z <= p.wall_taper_start_mm
+                else min(v.Y, 220) if v.Z <= 1000 else v.Y
+            ), v.Z) for v in poles
+        )).edge()])
+    straight[6] = opening[6].moved(Location((0, base_start, 0)))
+    diagonal_end[6] = main[6].moved(Location((0, base_end - p.rear_corner_radius_mm, 0)))
+    return [opening, straight, diagonal_end, main]
+
+
+def rear_shells(sections: list[list[Wire]]) -> list[Shell]:
+    """Shared interior faces; the lower-only station coincides with the upper wall."""
+    return [Shell([
+        face
+        for a, b in zip(sections, sections[1:]) if a[i] is not b[i]
+        for face in Shell.make_loft([a[i], b[i]], ruled=True).faces()
+    ]) for i in range(7)]
 
 
 def ceiling_height(p: Parameters, x: float, offset: float = 0) -> float:
@@ -173,7 +212,7 @@ def body_space(p: Parameters) -> Part:
     wires = [Wire([edge for section in station for edge in section.edges()]) for station in sections]
     # The measured rear perimeter is non-planar. Sew an explicit curved cap instead
     # of asking a solid loft to close it with a planar end face.
-    faces = [face for i in range(7) for face in Shell.make_loft([s[i] for s in sections], ruled=True).faces()]
+    faces = [face for shell in rear_shells(sections) for face in shell.faces()]
     rear = Solid(Shell([*faces, Face.make_surface(wires[0]), Face(wires[-1])]))
     main = Solid.extrude(Face(wires[-1]), (0, p.body_length_mm - p.rear_corner_radius_mm, 0))
     return Part(rear.fuse(main).solids())
@@ -463,46 +502,38 @@ def sliding_door(p: Parameters, front: float, right: bool) -> Compound:
     return door
 
 
-def floor_outline_wire(p: Parameters, *, front_y: float | None = None) -> Wire:
-    """Dimensioned symmetric footprint; arch cutouts and side-step edges are parallel to Y.
-
-    This is the remaining baseline and plywood outline. The rear metal region is
-    modelled independently from scan sections in rear_floor.py; arch shoulders remain unfitted.
-    """
+def floor_outline_wire(p: Parameters, *, front_y: float | None = None, plywood: bool = False) -> Wire:
+    """Straight rear sheet edge and notches around the wheel-house footprints."""
     front = p.body_length_mm if front_y is None else front_y
-    rear = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
-    arch = (p.cargo_width_mm - p.arch_gap_mm) / 2 + p.floor_arch_foot_flare_mm
+    left = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
+    pillar_start, pillar_end = rear_corner_base(p)
+    rear_inset, pillar_inset, side_inset = left, left, 0.0
+    if plywood:
+        # Clean cutout around the matched floor-level corner return and brace:
+        # scan Z0 is ~145mm in at Y0 and ~39–41mm in at Y180–220.
+        # These straight segments clear that section without tracing its teeth.
+        rear_inset, pillar_inset, side_inset = 150.0, 140.0, 45.0
+    arch_inner = (p.cargo_width_mm - p.arch_gap_mm) / 2
     arch_rear, arch_front = p.arch_rear_offset_mm, p.arch_rear_offset_mm + p.arch_length_mm
-    door_front = p.body_length_mm - (p.left_door_front_offset_mm + p.right_door_front_offset_mm) / 2
-    front_inset = (p.cargo_width_mm - p.arch_gap_mm) / 2
-    left = [
-        (rear, 0),
-        (rear, p.rear_corner_straight_mm),
-        (0, p.rear_corner_radius_mm),
-        (0, arch_rear),
-        (arch, arch_rear),
-        (arch, arch_front),
-        (p.floor_step_inset_mm, arch_front),
-        (p.floor_step_inset_mm, door_front),
-        (front_inset, door_front),
-        (front_inset, front),
+    pts = [
+        (rear_inset, 0, 0),
+        (p.cargo_width_mm - rear_inset, 0, 0),
+        (p.cargo_width_mm - pillar_inset, pillar_start, 0),
+        (p.cargo_width_mm - side_inset, pillar_end, 0),
+        (p.cargo_width_mm - side_inset, arch_rear, 0),
+        (p.cargo_width_mm - arch_inner, arch_rear, 0),
+        (p.cargo_width_mm - arch_inner, arch_front, 0),
+        (p.cargo_width_mm, arch_front, 0),
+        (p.cargo_width_mm, front, 0),
+        (0, front, 0),
+        (0, arch_front, 0),
+        (arch_inner, arch_front, 0),
+        (arch_inner, arch_rear, 0),
+        (side_inset, arch_rear, 0),
+        (side_inset, pillar_end, 0),
+        (pillar_inset, pillar_start, 0),
     ]
-    right = [(p.cargo_width_mm - x, yy) for x, yy in reversed(left)]
-    return Wire.make_polygon([(x, yy, 0) for x, yy in [*left, *right]])
-
-
-def floor_steps(p: Parameters) -> Compound:
-    """Reference tread and riser surfaces; sheet-metal gauge and pressing detail are not inferred."""
-    door_front = p.body_length_mm - (p.left_door_front_offset_mm + p.right_door_front_offset_mm) / 2
-    start, end = door_front - p.side_opening_width_mm + 40, door_front - 140
-    x, top = p.floor_step_inset_mm, -p.floor_build_up_mm
-    bottom = top - p.floor_step_drop_mm
-    tread = Face(Wire.make_polygon([(0, start, bottom), (x, start, bottom), (x, end, bottom), (0, end, bottom)]))
-    riser = Face(Wire.make_polygon([(x, start, bottom), (x, start, top), (x, end, top), (x, end, bottom)]))
-    left = Compound(label="Left sliding-door step", children=[tread, riser], color=WALL)
-    right = left.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
-    right.label = "Right sliding-door step"
-    return Compound(label="Sliding-door steps", children=[left, right])
+    return Wire.make_polygon(pts)
 
 
 def rear_hatch_angle(percent: float) -> float:
@@ -586,11 +617,12 @@ def rounded_rear_corner(p: Parameters, sections: list[list[Wire]], rear: list[Sh
         ends = [Face.extrude(station[i].edges()[0], (-depth, 0, 0)) for station in (sections[0], sections[-1])]
         caps = []
         for j, row in ((1, poles[0]), (4, poles[-1])):
-            a, corner, b = (Vector(curve.Pole(j)) for curve in curves)
+            inner = [Vector(curve.Pole(j)) for curve in curves]
+            a, b = inner[0], inner[-1]
             boundary = Wire(
                 [
-                    Edge.make_line(a, corner),
-                    Edge.make_line(corner, b),
+                    *(Edge.make_line(start, end) for start, end in zip(inner, inner[1:])
+                      if (end - start).length > 1e-7),
                     Edge.make_line(b, row[-1]),
                     Bezier(*row).edge().reversed(),
                     Edge.make_line(row[0], a),
@@ -605,7 +637,7 @@ def build_floor_plywood(p: Parameters) -> Solid:
     # Furniture is set forward from the rear opening; support the cross-bench feet
     # even when their front edge extends beyond the nominal cargo-body boundary.
     front = max(p.body_length_mm, p.furniture_rear_gap_mm + p.cargo_length_mm)
-    plywood = Solid.extrude(Face(floor_outline_wire(p, front_y=front)), (0, 0, -p.floor_ply_thickness_mm))
+    plywood = Solid.extrude(Face(floor_outline_wire(p, front_y=front, plywood=True)), (0, 0, -p.floor_ply_thickness_mm))
     plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
     return plywood
 
@@ -614,7 +646,7 @@ def build_body(p: Parameters) -> list[Compound]:
     sections = rear_sections(p)
     # Loft normals oppose extrusion normals for this section order. Keep all
     # interior reference surfaces facing into the van, including the rear roof.
-    rear = [-Shell.make_loft([section[i] for section in sections], ruled=True) for i in range(7)]
+    rear = [-shell for shell in rear_shells(sections)]
     main = [
         Face.extrude(section.edges()[0], (0, p.body_length_mm - p.rear_corner_radius_mm, 0)) for section in sections[-1]
     ]
@@ -674,13 +706,8 @@ def build_body(p: Parameters) -> list[Compound]:
     surround = Shell.make_loft([aperture, rear_aperture(p, 20)], ruled=True)
     hatch = rear_hatch(p)
     floor = Face(floor_outline_wire(p))
-    # Closed solid for reliable inside/outside rendering; 1mm is modelling thickness, not measured steel gauge.
+    # Keep the baseline floor closed; 1mm is display thickness, not measured steel gauge.
     metal = Solid.extrude(floor, (0, 0, -1)).moved(Location((0, 0, -p.floor_build_up_mm)))
-    # The unsupported rear outline is removed from this baseline, not hidden underneath the new sections.
-    front_region = Box(p.cargo_width_mm + 2, max(p.body_length_mm, p.furniture_rear_gap_mm + p.cargo_length_mm),
-                       p.floor_build_up_mm + 2, align=(Align.MIN, Align.MIN, Align.MIN)).moved(
-                           Location((-1, REAR_FLOOR_FRONT_Y, -p.floor_build_up_mm - 1)))
-    metal = metal & front_region
     metal.label, metal.color = "Vehicle floor", WALL
     return [
         corners,
@@ -694,6 +721,6 @@ def build_body(p: Parameters) -> list[Compound]:
                 hatch,
             ],
         ),
-        Compound(label="Body floor", children=[metal, rear_floor_sections(p), floor_steps(p)]),
+        Compound(label="Body floor", children=[metal]),
         Compound(label="Sliding doors", children=doors),
     ]

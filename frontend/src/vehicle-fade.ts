@@ -1,5 +1,6 @@
-import { Quaternion, Vector3, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
-import { isVehiclePartModelled } from './vehicle-modelling';
+import { Quaternion, Vector3, type BufferGeometry, type Color, type Material, type Mesh, type Object3D } from 'three';
+
+type ColouredMaterial = Material & { color?: Color };
 
 type Direction = [number, number, number];
 interface CadGroup extends Object3D {
@@ -46,11 +47,12 @@ function directions(path: string): Direction[] {
 export function createVehicleFade() {
   type Entry = {
     group: CadGroup; directionFrame?: Object3D; skipPick: boolean; directions: Direction[];
-    maxOpacity: number; fadeAmount: number; modelled: boolean; materials: { material: Material; edge: boolean }[];
+    vehicle: boolean; maxOpacity: number; fadeAmount: number;
+    materials: { material: ColouredMaterial; edge: boolean; originalColor?: Color }[];
   };
   let entries: Entry[] = [];
   let pickingVersion = 0;
-  let modellingProgress = false;
+  let comparisonOpacity: number | null = null;
   const towardCamera = new Vector3();
   const panelNormal = new Vector3();
   const camera = new Vector3(), fromPanel = new Vector3();
@@ -59,13 +61,34 @@ export function createVehicleFade() {
     if (entry.skipPick !== skip) { entry.skipPick = skip; pickingVersion++; }
   }
 
+  function comparisonStyle(entry: Entry, near = 0): boolean {
+    if (!entry.vehicle || comparisonOpacity === null) return false;
+    skipPicking(entry, near > 0.5 || comparisonOpacity === 0 || entry.maxOpacity === 0);
+    for (const { material, edge } of entry.materials) {
+      setOpacity(material, edge ? Math.min(1, comparisonOpacity * 2) * (1 - 0.96 * near)
+        : Math.min(entry.maxOpacity, comparisonOpacity) * (1 - near * entry.fadeAmount), edge);
+    }
+    return true;
+  }
+
+  function comparisonColors() {
+    for (const entry of entries) {
+      if (!entry.vehicle) continue;
+      for (const { material, edge, originalColor } of entry.materials) {
+        if (!material.color || !originalColor) continue;
+        if (comparisonOpacity === null) material.color.copy(originalColor);
+        else material.color.set(edge ? '#d980a4' : '#f4b9ce');
+      }
+    }
+  }
+
   function setExteriorOpacity() {
     for (const entry of entries) {
+      if (comparisonStyle(entry)) continue;
       const { materials, maxOpacity } = entry;
-      const wireframe = modellingProgress && !entry.modelled;
-      skipPicking(entry, wireframe || maxOpacity === 0);
+      skipPicking(entry, maxOpacity === 0);
       for (const { material, edge } of materials) {
-        setOpacity(material, edge ? modellingProgress ? 0 : 1 : wireframe ? 0 : maxOpacity, edge);
+        setOpacity(material, edge ? 1 : maxOpacity, edge);
       }
     }
   }
@@ -76,28 +99,33 @@ export function createVehicleFade() {
       const hatchPath = '/Campervan/Vehicle references/Rear opening/Rear hatch';
       const hatch = groups[hatchPath] as Object3D | undefined;
       for (const [path, object] of Object.entries(groups)) {
+        const vehicle = path.startsWith('/Campervan/Vehicle references/');
         const opaque = path.startsWith('/Campervan/Vehicle references/Wheel arches/');
         const normals = directions(path);
-        if (!normals.length && !opaque) continue;
+        if (!normals.length && !vehicle) continue;
         const group = object as CadGroup;
         const materials: Entry['materials'] = [];
         for (const [mesh, edge] of [[group.front, false], [group.back, false], [group.edges, true]] as const) {
           if (!mesh) continue;
-          const { material } = mesh;
-          materials.push({ material, edge });
+          const material = mesh.material as ColouredMaterial;
+          materials.push({ material, edge, originalColor: material.color?.clone() });
         }
         const glass = path.endsWith('/Window glass');
         const rearGlass = glass && path.startsWith('/Campervan/Vehicle references/Rear opening/');
-        if (materials.length) entries.push({ group,
-          modelled: isVehiclePartModelled(path),
+        if (materials.length) entries.push({ group, vehicle,
           directionFrame: path === hatchPath || path.startsWith(`${hatchPath}/`) ? hatch : undefined,
           skipPick: false, directions: normals, materials,
           fadeAmount: opaque ? 0 : path.startsWith('/Campervan/Vehicle references/Cab/Seats/') ? 0.75 : 0.95,
           maxOpacity: rearGlass ? 0 : glass ? 0.3 : 1 });
       }
+      comparisonColors();
     },
     clear() { entries = []; pickingVersion++; },
-    setModellingProgress(enabled: boolean) { modellingProgress = enabled; },
+    setComparisonOpacity(opacity: number | null) {
+      const changed = (comparisonOpacity === null) !== (opacity === null);
+      comparisonOpacity = opacity;
+      if (changed) comparisonColors();
+    },
     get pickingVersion() { return pickingVersion; },
     withPicking<T>(pick: () => T): T {
       const hidden = entries.filter(entry => entry.skipPick && entry.group.visible);
@@ -130,12 +158,10 @@ export function createVehicleFade() {
         // Keep far-facing and edge-on panels solid; fade only as their side turns toward us.
         const t = Math.max(0, Math.min(1, facing / 0.35));
         const near = t * t * (3 - 2 * t);
-        const wireframe = modellingProgress && !entry.modelled;
-        skipPicking(entry, wireframe || near > 0.5 || entry.maxOpacity === 0);
+        if (comparisonStyle(entry, near)) continue;
+        skipPicking(entry, near > 0.5 || entry.maxOpacity === 0);
         for (const { material, edge } of entry.materials) {
-          // The progress overlay owns edge presentation; suppress the duplicate native pass.
-          setOpacity(material, edge ? modellingProgress ? 0 : 0.5 - 0.48 * near
-            : wireframe ? 0 : entry.maxOpacity * (1 - near * entry.fadeAmount), edge);
+          setOpacity(material, edge ? 0.5 - 0.48 * near : entry.maxOpacity * (1 - near * entry.fadeAmount), edge);
         }
       }
     },

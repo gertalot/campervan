@@ -65,7 +65,9 @@ See [static export and GitHub Pages](docs/static-site.md) for publishing instruc
 
 ## Process an interior scan
 
-The **Scan** tab displays exported point clouds and completed reconstruction runs using the same navigation as CAD.
+The **Scan** tab is currently removed. The CAD sidebar offers **Scan comparison** with separate scan/vehicle opacity
+and light-pink vehicle geometry. Saved scans and the processing backend remain intact.
+The UI instructions below describe the paused scan workflow; the CLI processing commands remain available.
 Processing runs offline, without starting the application or viewer services:
 
 For scan processing on macOS, download the [official RTAB-Map 0.24.2 release](https://github.com/introlab/rtabmap/releases/tag/0.24.2),
