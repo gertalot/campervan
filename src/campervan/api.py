@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from campervan.apriltags import AprilTagSettings, generate_pdf
 from campervan.coordinator import Coordinator, ModelStatus, Regenerate
+from campervan.cross_sections import register_cross_sections
 from campervan.cutting import stock_groups
 from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
 from campervan.mannequins import MannequinSettings
@@ -121,6 +122,7 @@ def build_app(
     read_scan_library = register_scan_library(app, scan_library, scan_processing)
     register_scan_processing(app, scan_processing, scan_layouts)
     register_planning(app, project_path)
+    register_cross_sections(app, project_path)
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None
     assets = Path(package.origin).parent / "server" / "static"

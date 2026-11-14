@@ -22,6 +22,57 @@ The existing native checkbox remains the single control, retaining its label and
 effect on both models. Face visibility uses [Three.js Material.side](https://threejs.org/docs/pages/Material.html#side).
 The vehicle uses its pre-experiment baseline geometry; no scan-fitted rear-floor increment or progress lines are active.
 
+## Cross sections
+
+**Scan comparison → Cross sections** provides two independent families: XZ intersections move along CAD Y
+(rear to front), and YZ intersections move along CAD X (left to right). Each has its own position slider, number
+field and green/blue opacity sliders. Negative rear stations remain selected while a scan loads. Green is the raw section,
+including disconnected fragments and gaps. It uses the full-resolution mesh when the result exposes one, otherwise
+the displayed reference mesh. The same saved registration and browser translation offsets apply. Two 50mm triangle
+indexes share the transformed vertex buffers, making both sections independent of CAD regeneration. Coplanar triangles do not acquire invented
+internal cut edges.
+
+Blue outlines are authored through conversation. There is no automatic cleaning, point averaging, symmetry fitting
+or initial shape generation. Gert chooses the station; the assistant uses scan evidence, recorded dimensions, vehicle
+construction and Gert's estimates to propose separate straight and curved segments. Refinement continues before
+Gert explicitly chooses **Record this section**. Window panes are flat; formed panels, hollow pillars and beams retain
+their supported straight faces, sharp junctions, local blends and returns. Curves are not forced into one global spline.
+
+`cross_sections.py` stores `data/cross-sections.json`, separate from generated geometry and scan assets. It is local
+project data and needs backing up with the rest of `data/`. GET `/api/v1/cross-sections` reads the document, initially
+`{version: 1, revision: 0, sections: []}` without creating a file. PUT `/api/v1/cross-sections/{id}` accepts
+`{revision, section}` for an authored draft. POST `/api/v1/cross-sections/{id}/record` accepts `{revision}` to record it.
+Writes reject stale revisions. A recorded section is immutable; a later revision uses a new draft ID and preserves
+the approved original. The UI picks up authored changes without a viewer reload.
+
+Each section records `id`, `label`, `plane`, its position, `scan_key`, `centre_x_mm`, `segments`, `state` and `notes`.
+A segment is `line` with `end`, or `cubic` with `control1`, `control2` and `end`. XZ sections have `y_mm`,
+`floor_z_mm` and `ceiling_z_mm`. Their points are
+`[distance from centreline, Z]` in millimetres, with nonnegative distances. The half-outline starts at
+`[0, floor_z_mm]`; its first segment is horizontal. Its last segment returns horizontally to `[0, ceiling_z_mm]`.
+The authored half is the left/passenger side. It is mirrored onto the right by default; an explicit `opposite_segments`
+outline can capture a real right/driver-side difference while retaining horizontal floor/ceiling constraints.
+
+YZ sections have `x_mm` and an explicit `start`. Their points are signed `[Y, Z]` values, including negative Y for
+the rear door. These paths may be open and are never reflected front-to-back. By default `mirror_x: true` displays
+the same authored profile at `x_mm` and `2 * centre_x_mm - x_mm`, matching opposite-side rear profiles. Only the
+profile at the inspection station is prominent; its counterpart stays faint. `mirror_x: false` authors one station.
+An explicit `opposite_segments` and optional `opposite_start` can capture local trim differences on the other side;
+otherwise it uses the primary profile. An authored departure from symmetry requires explanatory `notes`. Seats and
+seatbelt trim are not forced to match. **Record this YZ pair** explicitly records a shared pair, including its overrides.
+
+Legacy records default to XZ, preserving their coordinates and shape. There is no point averaging or fitting in
+either plane. Cubic segments are subdivided for display to 0.25mm chord tolerance, not fitted to the scan.
+
+The active blue section is 3px wide; inactive outlines are faint. Green is 1.5px wide. Each has its own opacity slider,
+independent of scan opacity/visibility and vehicle visibility. Moving green does not change recorded geometry.
+Selecting an authored section returns to its station. Lines are non-pickable overlays and survive CAD replacement.
+Controls use native range/number inputs with visible units, following the relevant
+[WAI slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/). Thickness uses the existing Three.js
+[LineMaterial](https://threejs.org/docs/pages/LineMaterial.html) and
+[LineSegments2](https://threejs.org/docs/pages/LineSegments2.html) addons; these references do not establish a complete
+accessibility audit.
+
 ## Current vehicle-modelling constraints
 
 Both wheel arches are set to span CAD Y=275–1035mm (760mm long), shifted together 35mm rearward from Y=310–1070.
@@ -29,6 +80,14 @@ This is a rounded positional correction from the corrected scan comparison, not 
 the near-wall cap estimates centred around Y=648–654mm, and the lower rear-door reference was about Y=−33mm.
 The original 310/1070mm tape distances were from the closed door, not CAD Y=0. Arch size, height and shape are unchanged.
 The shared `arch_rear_offset_mm` drives both arches, floor cutouts and adjoining furniture clearances.
+The wall-side span remains 760mm. `arch_inner_length_mm` uses 720mm, the upper end of the owner's approximate
+700–720mm measurement including insulation. `wheel_arch_footprint` supplies one straight-sided base to the arch
+solids and both mirrored floor notches. Its inner edge spans Y295–1015; the wall edge spans Y275–1035.
+Equal 20mm end setbacks are a modelling estimate, not separately measured endpoints. The clear gap is 1205mm,
+using the recorded inside-face AprilTag 2–3 measurement instead of the 1220mm catalogue reference. At 1500mm body
+width, each arch projects inward 147.5mm. Plywood cutouts offset all three exposed footprint edges outward by
+5mm, including perpendicular offsets at the diagonal ends. This leaves 1195mm of plywood between the cutouts.
+The vehicle arches and metal floor use the original footprint without that plywood allowance.
 Vehicle geometry takes priority over furniture fit. Furniture dimensions remain unchanged; the existing bench-frame
 clearance conflict is deliberately unresolved. Furniture-fit gating and automatic furniture adjustments are disabled
 with `FURNITURE_FIT_ENABLED = False` in `parameter_fit.py`; they do not block vehicle regeneration or constrain the form.
@@ -254,8 +313,8 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
   small adjustment brings the base 5mm forward without changing the upper controls. The saved project currently
   has a Y225 upper carrier from the preceding experiment. Its lower/middle stations remain independent of it.
   `rear_corner_base` supplies the Y40/Y170 stations to the pillar and floor outlines. The plywood has its own
-  clean fitting cutout: left X/Y points (150,0), (140,40), (45,170), (45,275), mirrored on the right. Those few
-  straight edges clear the matched Z0 corner section and retain the existing wheel-arch notches. The metal floor
+  clean fitting cutout: left X/Y points (150,0), (140,40), (45,170), then the shared arch footprint at X45,
+  mirrored on the right. Those few straight edges clear the matched Z0 corner section. The metal floor
   and pillar geometry do not acquire this plywood allowance. The cutout is a fitting-template candidate: lower
   slice intersections mix the rising floor, brace and reconstruction blending, so full-thickness physical clearance
   has not been certified. Use the intended floor fit, not the scan's tiny teeth, to assess it.
@@ -314,9 +373,10 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
 - The 12mm fitted plywood floor occupies Z = −12 to 0; the vehicle floor reference is at −18. The remaining build-up
   is not assigned an invented material. The plywood has a straight rear edge at Y = 0. The metal floor follows the
   current flat local rear-edge reference, separately from the plywood cut line. The remaining floor uses
-  unfinished baseline boundaries,
-  parallel arch-foot cutouts and side-step recesses. The cutouts include the adjustable base flare beyond the earlier
-  approximate arch solids; those solids await their separate scan-fitting step.
+  unfinished baseline boundaries beyond the wheel arches. The arch cutouts use the same straight-sided footprint
+  as the wheel-house reference solids, including the shorter measured inner-side span. They are exact left/right
+  mirrors, with 5mm clearance from the CAD footprint. Scan irregularities are not copied into the cutting outline;
+  physical base flare remains unmeasured.
   The rear-door opening's centre bow does not change the plywood outline.
   Its front edge reaches the greater of the nominal body length and the cross-bench front including the furniture
   setback (`cargo_length_mm + furniture_rear_gap_mm`): Y = 1960 at current dimensions. This supports the cab-end
@@ -324,12 +384,12 @@ are identified in sidebar tooltips. In particular, rear seal elevation and upper
 - The 3mm ceiling sheet spans Y = 240–1660. Its underside is 1290 at centre and 1270 at its wall-side edges.
   Exposed side rails, rear header and three approximate bows are separate parts. The ceiling still uses concentric
   circular profiles for real sheet thickness. The bare roof estimate is 1347 above finished floor, with 55 crown.
-- Wheel arches have an approximate 760 × 140 footprint and reach 280mm above the fitted floor. Their base reaches
+- Wheel arches have a 760 × 147.5mm overall footprint and reach 280mm above the fitted floor. Their base reaches
   the vehicle floor at Z = −`floor_build_up_mm`, currently −18mm, giving a total height of 298mm. Extending the base
-  preserves the crown profile and the furniture clearances above Z = 0. Wall-side endpoints are at Y = 310–1070,
-  from direct measurements parallel to the centreline from the closed rear door beside the pillar. With the lower
-  sliding opening at 1210, this leaves approximately 140mm ahead of the arch. The shorter 700–720 inner-side length
-  is recorded but not separately shaped; the full footprint is a conservative clearance envelope. The exact
+  preserves the crown height and the furniture clearances above Z = 0. The original wall-side endpoints were
+  measured at 310–1070 from the closed rear door beside the pillar; current CAD endpoints are Y275–1035 after
+  the documented datum correction. The shorter inner span is represented by straight diagonal ends, shared with
+  the floor notches. Furniture retains its conservative rectangular clearance envelopes. The exact
   profile and insulated height remain unmeasured. Floor and furniture cutouts follow the shared arch parameters.
 
 The direct arch and rubber-seal measurements confirm the 140mm front arch gap. Relative to the lower opening,

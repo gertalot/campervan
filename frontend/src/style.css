@@ -48,6 +48,18 @@ p { margin: 0; }
 #scan-reference .reference-offsets input { width: 100%; box-sizing: border-box; }
 #scan-reference details { margin-top: 10px; }
 #scan-reference p { font-size: 11px; color: #aab3c0; white-space: normal; margin: 8px 0 0; }
+#scan-reference .cross-sections { margin-top: 16px; padding-top: 12px; border-top: 1px solid #34373e; }
+#scan-reference .cross-sections h3 { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: #c6ced9; }
+#scan-reference .section-family { margin-top: 12px; padding-top: 10px; border-top: 1px solid #34373e; }
+#scan-reference .section-family h4 { margin: 0 0 8px; color: #c6ced9; font-size: 11px; font-weight: 500; }
+#scan-reference .section-station { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 10px; color: #aab3c0; }
+#scan-reference .section-station label { white-space: nowrap; }
+#scan-reference .section-station input { width: 65px; margin: 0 3px; }
+#scan-reference .section-raw { color: #59e68b; }
+#scan-reference .section-raw input { accent-color: #36ed76; }
+#scan-reference .section-blue { color: #79b1ff; }
+#scan-reference .section-blue input { accent-color: #368cff; }
 #build-components { margin: 0 0 16px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #34373e; }
 #build-components legend { padding: 0; margin-bottom: 6px; font-size: 11px; color: #929aa6; }
 #build-component-fields { display: flex; flex-wrap: wrap; gap: 6px 14px; }

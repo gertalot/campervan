@@ -43,6 +43,7 @@ and dragging move the existing model in the browser. The development services re
 
 - `data/project.json`: dimensions, material selections, cutting layouts and mannequin configurations.
 - `data/planning.json`: the conversion plan and purchase records.
+- `data/cross-sections.json`: authored blue section drafts and recorded outlines, created when the first draft is saved.
 
 Commit these files with the source. Generated caches and recovery files stay in the ignored `.local/` directory.
 Camera, category visibility and moving-part pose preferences stay in browser storage.

@@ -65,6 +65,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const vehicleFade = createVehicleFade();
   const layoutMirror = createLayoutMirror();
   let scanReference: Object3D | undefined;
+  let crossSections: Object3D | undefined;
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
     cancelCameraAnimation, saveCamera);
   const drag = createViewerDrag(container, {
@@ -349,6 +350,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           // OCP disposes its old scene when replacing geometry; keep the independent human rig.
           if (message.type === 'data') {
             scanReference?.removeFromParent();
+            crossSections?.removeFromParent();
             drag.cancel();
             pieces.clear();
             vehicleFade.clear();
@@ -377,6 +379,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             pillows.pose(positions.bed_extension_percent ?? 0);
             layoutMirror.attach(viewer!.rendered.nestedGroup.groups);
             if (scanReference) viewer!.rendered.scene.add(scanReference);
+            if (crossSections) viewer!.rendered.scene.add(crossSections);
             motions = {};
             bases.clear();
             trimToolbar();
@@ -441,6 +444,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     setVehicleComparisonOpacity(opacity: number | null) {
       vehicleFade.setComparisonOpacity(opacity);
+      viewer?.update(true, false);
+    },
+    setCrossSections(root: Object3D) {
+      if (crossSections !== root) crossSections?.removeFromParent();
+      crossSections = root;
+      if (viewer?.ready && root.parent !== viewer.rendered.scene) viewer.rendered.scene.add(root);
       viewer?.update(true, false);
     },
     setLayoutWidth(width: number) { layoutMirror.setWidth(width); },

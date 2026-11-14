@@ -46,9 +46,9 @@ seats and breaking the bed-to-seat measurement.
 | Reference | Owner measurement (mm) | Generated model / status |
 | --- | ---: | --- |
 | Wheelbase | 2700 | Not represented: no front axle or wheels in the interior model. Catalogue 2725 is recorded separately. |
-| Wheel-arch inner-side length | 700–720 | Uniform 760mm base footprint remains a clearance approximation; shorter inner side has not been represented. |
-| Wheel-arch wall-side length | About 760, derived from 310–1070 endpoints | 760; both arches placed at Y = 310–1070. |
-| Wheel-arch height / intrusion | Unmeasured | 280 high × 140 intrusion, estimates. Clear separation 1220 is a catalogue reference. |
+| Wheel-arch inner-side length | 700–720 including insulation | 720, with estimated equal 20mm end setbacks; shared straight footprint drives arches and floor notches. |
+| Wheel-arch wall-side length | About 760, derived from 310–1070 endpoints | 760; current CAD Y275–1035 follows the later datum correction documented in CAD conventions. |
+| Wheel-arch height / intrusion | Height unmeasured; inside-face tags 2–3 measured 1205 apart | 280 high (estimate); 147.5 intrusion per side gives the requested 1205 clear gap. Floor cutouts add 5mm clearance. |
 | Bed rear to seat back at mattress height | 1890 | 1892.6, both seats. |
 | Front opening edge to seat back at mattress height | 150 | About 102.6 after revised opening position; reference conflict above. |
 | Front opening edge to seat back at headrest-base height | 80 | About 37.6 after revised opening position; reference conflict above. |

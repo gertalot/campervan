@@ -3,8 +3,9 @@ import { Matrix4, Mesh, Points, type Object3D } from 'three';
 import { disposeObject, layerUrl, loadObject } from './scan-assets';
 import { readScanResults, type ScanResult } from './scan-library-api';
 import { isStaticSite } from './site-runtime';
+import { setupCrossSections, type CrossSectionViewer } from './cad-cross-sections';
 
-interface ReferenceViewer {
+interface ReferenceViewer extends CrossSectionViewer {
   setScanReference(root: Object3D | undefined): void;
   setVehicleComparisonOpacity(opacity: number | null): void;
 }
@@ -43,6 +44,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   const vehicleOutput = find<HTMLOutputElement>('[data-vehicle-opacity-value]');
   const status = find<HTMLParagraphElement>('[data-status]');
   const offsets = [...container.querySelectorAll<HTMLInputElement>('[data-offset]')];
+  const sections = setupCrossSections(container, viewer);
   const key = 'campervan.cad.scan-reference';
   const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
   visible.checked = saved.visible ?? true;
@@ -91,11 +93,13 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     root.matrix.copy(transform).decompose(root.position, root.quaternion, root.scale);
     root.updateMatrixWorld(true);
     display();
+    void sections.setReference(scan, root);
   }
   async function load() {
     const token = ++generation;
     viewer.setScanReference(undefined);
     viewer.setVehicleComparisonOpacity(null);
+    void sections.setReference(undefined, undefined);
     if (root) { disposeObject(root); root = undefined; }
     const scan = selected();
     if (!scan) return;
@@ -149,6 +153,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       if (scans.some(scan => scan.key === previous)) select.value = previous;
       if (!scans.length) {
         generation++; viewer.setScanReference(undefined); viewer.setVehicleComparisonOpacity(null);
+        void sections.setReference(undefined, undefined);
         if (root) { disposeObject(root); root = undefined; }
         status.textContent = 'No CAD-registered scan available.'; return;
       }

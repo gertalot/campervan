@@ -32,6 +32,30 @@ from campervan.parameters import Parameters
 WALL = Color(0.55, 0.62, 0.66, 0.32)
 
 
+def wheel_arch_footprint(
+    p: Parameters, *, side_inset: float = 0, clearance: float = 0
+) -> list[tuple[float, float, float]]:
+    """Left arch's straight base, shared by the vehicle and floor cutouts.
+
+    The measured inner span is shorter than the wall span. Equal end setbacks
+    are an estimate; the recorded measurements do not locate its individual ends.
+    """
+    depth = (p.cargo_width_mm - p.arch_gap_mm) / 2
+    setback = (p.arch_length_mm - p.arch_inner_length_mm) / 2
+    slope = setback / depth
+    # Parallel offsets preserve the requested perpendicular gap at diagonal ends.
+    end_offset = clearance * sqrt(1 + slope**2)
+    inner = depth + clearance
+    rear = p.arch_rear_offset_mm
+    front = rear + p.arch_length_mm
+    return [
+        (side_inset, rear + slope * side_inset - end_offset, 0),
+        (inner, rear + slope * inner - end_offset, 0),
+        (inner, front - slope * inner + end_offset, 0),
+        (0, front + end_offset, 0),
+    ]
+
+
 def wheel_arch(p: Parameters, right: bool) -> Part:
     """Shared positioned wheel-house envelope for display and adjoining pillar trim."""
     depth = (p.cargo_width_mm - p.arch_gap_mm) / 2
@@ -47,9 +71,16 @@ def wheel_arch(p: Parameters, right: bool) -> Part:
     arch = fillet(crown_edges, p.arch_crown_radius_mm)
     arch.color = Color(0.45, 0.49, 0.52, 0.32)
     arch.label = "Right wheel arch" if right else "Left wheel arch"
-    arch.location = Location(
-        (p.cargo_width_mm - depth if right else 0, p.arch_rear_offset_mm, -p.floor_build_up_mm)
+    arch.location = Location((0, p.arch_rear_offset_mm, -p.floor_build_up_mm))
+    footprint = Face(Wire.make_polygon(wheel_arch_footprint(p))).moved(Location((0, 0, -p.floor_build_up_mm)))
+    envelope = Solid.extrude(footprint, (0, 0, p.arch_height_mm + p.floor_build_up_mm))
+    arch = Part(
+        (arch & envelope).solids(),
+        label=arch.label,
+        color=arch.color,
     )
+    if right:
+        arch = arch.mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
     return arch
 
 
@@ -513,23 +544,16 @@ def floor_outline_wire(p: Parameters, *, front_y: float | None = None, plywood: 
         # scan Z0 is ~145mm in at Y0 and ~39–41mm in at Y180–220.
         # These straight segments clear that section without tracing its teeth.
         rear_inset, pillar_inset, side_inset = 150.0, 140.0, 45.0
-    arch_inner = (p.cargo_width_mm - p.arch_gap_mm) / 2
-    arch_rear, arch_front = p.arch_rear_offset_mm, p.arch_rear_offset_mm + p.arch_length_mm
+    arch = wheel_arch_footprint(p, side_inset=side_inset, clearance=5.0 if plywood else 0.0)
     pts = [
         (rear_inset, 0, 0),
         (p.cargo_width_mm - rear_inset, 0, 0),
         (p.cargo_width_mm - pillar_inset, pillar_start, 0),
         (p.cargo_width_mm - side_inset, pillar_end, 0),
-        (p.cargo_width_mm - side_inset, arch_rear, 0),
-        (p.cargo_width_mm - arch_inner, arch_rear, 0),
-        (p.cargo_width_mm - arch_inner, arch_front, 0),
-        (p.cargo_width_mm, arch_front, 0),
+        *((p.cargo_width_mm - x, y, z) for x, y, z in arch),
         (p.cargo_width_mm, front, 0),
         (0, front, 0),
-        (0, arch_front, 0),
-        (arch_inner, arch_front, 0),
-        (arch_inner, arch_rear, 0),
-        (side_inset, arch_rear, 0),
+        *reversed(arch),
         (side_inset, pillar_end, 0),
         (pillar_inset, pillar_start, 0),
     ]

@@ -44,6 +44,28 @@ The legend identifies the pink surfaces as vehicle CAD and the visibility toggle
 following [WAI guidance on use of colour](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
 These are focused design decisions, not a claim of full accessibility compliance.
 
+### Cross sections
+
+Under **Scan comparison → Cross sections**, **XZ · transverse** moves along Y from rear to front;
+**YZ · longitudinal** moves along X from left to right. Both can be visible together. Each number field sets an
+exact position in millimetres; each slider's arrow keys move it by 1mm. The green line
+is the raw mesh intersection, with scan gaps and fragments retained. It remains available when the scan mesh is hidden.
+
+Ask the assistant to create a blue draft at the chosen position. Blue is an authored interpretation based on the scan,
+vehicle construction, measurements and your estimates. There is no point averaging or automatic blue generation.
+Refine it through conversation, then press the section's **Record** button when satisfied. Choose the next position yourself;
+moving the green section does not change any blue geometry.
+
+**Blue sections** returns to an authored station. The active outline is thicker and prominent; other outlines remain
+faint. Green and blue have independent visibility sliders: 0% hides a line. Position and opacity choices survive a
+reload. Authored outlines and recorded sections are retained in `data/cross-sections.json`; back it up with your
+project data. Revising a recorded outline creates a new draft and keeps the original.
+
+Opposite-side YZ profiles normally share the same rear-door shape. An authored YZ pair appears at matching distances
+from the centreline; choosing either station makes that side prominent. Explicitly authored differences can retain
+larger driver-side seatbelt trim or other local asymmetry. The status names the paired X stations, and
+**Record this YZ pair** records both. Longitudinal profiles are never mirrored front-to-back.
+
 ### Included in build
 
 The separate **Included in build** section below Visibility controls the **Rear drawer** and **Lagun table**.

@@ -225,6 +225,14 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
+    arch_inner_length_mm: float = Field(
+        default=720.0,
+        gt=0,
+        title="Inner-side length",
+        description="Owner measured about 700–720mm including insulation. Centred within the wall-side span (estimate).",
+        json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
+    )
+
     arch_height_mm: float = Field(
         default=280.0,
         gt=0,
@@ -240,10 +248,10 @@ class Parameters(BaseModel):
     )
 
     arch_gap_mm: float = Field(
-        default=1220.0,
+        default=1205.0,
         gt=0,
         title="Clear gap",
-        description="Clear width between the arches; intrusion is derived from cargo width.",
+        description="1205mm measured between inside-face AprilTags 2 and 3; intrusion is derived from cargo width.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Wheel arches"]},
     )
 
@@ -1591,6 +1599,8 @@ class Parameters(BaseModel):
             raise ValueError("Body length must extend beyond the rear corners.")
         if self.arch_rear_offset_mm + self.arch_length_mm > self.body_length_mm:
             raise ValueError("Wheel arches must fit within the body length.")
+        if self.arch_inner_length_mm > self.arch_length_mm:
+            raise ValueError("Wheel-arch inner-side length must not exceed the wall-side length.")
         if self.wall_taper_start_mm >= self.body_height_mm - self.roof_crown_mm * 1.35:
             raise ValueError("Wall taper must start below the roof shoulders and their control points.")
         if self.roof_bow_crown_mm >= self.roof_crown_mm:
