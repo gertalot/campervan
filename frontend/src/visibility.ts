@@ -12,8 +12,8 @@ const categories: Record<string, string[]> = {
   crossBench: ['/Campervan/Cross bench'],
   cushions: ['/Campervan/Long bench/Cushions', '/Campervan/Cross bench/Cushions'],
   slats: [
-    '/Campervan/Long bench/Fixed frame/Fixed slats',
-    '/Campervan/Long bench/Sliding bed/Sliding assembly/Moving slats',
+    '/Campervan/Long bench/Hinged lid/Fixed slats',
+    '/Campervan/Long bench/Hinged lid/Sliding bed/Sliding assembly/Moving slats',
     '/Campervan/Cross bench/Fixed frame/Fixed slats',
   ],
 };
@@ -124,9 +124,8 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   }
 
   return {
-    setBuildInclusion(included: { drawer: boolean; table: boolean }) {
+    setBuildInclusion(included: { table: boolean }) {
       excludedRoots = [
-        ...(!included.drawer ? ['/Campervan/Long bench/Rear drawer'] : []),
         ...(!included.table ? ['/Campervan/Laptop table'] : []),
       ];
       viewer.setExcludedComponents(excludedRoots);

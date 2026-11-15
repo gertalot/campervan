@@ -51,6 +51,18 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
   for (const mode of ['seated', 'lying', 'lying-second']) element(`mannequin-${mode}-status`).textContent = message;
 }, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
+const fieldOfView = element<HTMLInputElement>('camera-fov');
+const fieldOfViewValue = element<HTMLOutputElement>('camera-fov-value');
+fieldOfView.value = String(viewer.getFieldOfView());
+function showFieldOfView() {
+  fieldOfViewValue.value = `${fieldOfView.value}°`;
+  fieldOfView.setAttribute('aria-valuetext', `${fieldOfView.value} degrees vertical`);
+}
+showFieldOfView();
+fieldOfView.addEventListener('input', () => {
+  showFieldOfView();
+  viewer.setFieldOfView(fieldOfView.valueAsNumber);
+});
 const scanComparison = setupCadScanReference(element('scan-reference'), viewer);
 const seeInside = element<HTMLInputElement>('see-inside');
 seeInside.checked = localStorage.getItem('campervan.see-inside') !== 'false';
@@ -333,7 +345,6 @@ const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => 
 
 function refreshBuildVisibility() {
   visibility.setBuildInclusion({
-    drawer: (inputs.get('drawer_included') as HTMLInputElement | undefined)?.checked ?? true,
     table: (inputs.get('table_included') as HTMLInputElement | undefined)?.checked ?? true,
   });
   refreshTableEyes();

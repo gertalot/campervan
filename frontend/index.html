@@ -27,6 +27,13 @@
             </div>
           </div>
         </div>
+        <fieldset id="camera-controls">
+          <legend>Camera</legend>
+          <label for="camera-fov">Field of view <output id="camera-fov-value" for="camera-fov">22°</output></label>
+          <input id="camera-fov" type="range" min="20" max="100" step="1" value="22"
+            aria-describedby="camera-fov-hint" />
+          <small id="camera-fov-hint">Perspective only · try 60° for interior views.</small>
+        </fieldset>
         <fieldset id="visibility">
           <legend>Visibility</legend>
           <label><input type="checkbox" name="vehicle" checked /> Vehicle</label>

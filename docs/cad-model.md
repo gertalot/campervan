@@ -176,18 +176,9 @@ face. Floor-only drawings stay unchanged. Cut-list drawings and saved SVGs ident
 Native CAD/STEP exports and Python geometry retain their saved orientation; changing the cabinet side does not
 regenerate or modify the model or cutting results.
 `src/campervan/parameters.py` owns dimensions, basic validation and sidebar metadata.
-`parameter_fit.py` currently bypasses the following furniture-fit checks and adjustments while vehicle modelling is
-in progress. Its retained logic checks the bed-height dependency chain: wheel-arch/top-rail clearance,
-rounded frame openings, slide mounting bands and the mattress-following cabinet divider.
-The lower shelf height follows platform + uncompressed foam + shelf clearance. Mattress thickness and shelf-clearance
-inputs have bounds that preserve the opening above the divider; platform maximum follows the same relationship. It supplies current input bounds and
-plain-language reasons. The tray and drawer-support frame reduce in height when necessary, retaining 1mm clearance;
-these adjustments are shown in the sidebar and saved on Apply. Raising the bed does not enlarge them again.
-Stock thicknesses, member widths, opening radii and vehicle measurements never change automatically.
-The draft preview endpoint performs these checks without saving or running CAD. The UI updates numeric limits,
-shows errors beside the affected input and disables Apply for an invalid draft; the API also checks before saving.
-This covers the platform-height dependency chain, not every possible geometry constraint. Geometry checks remain
-necessary for other combinations. Geometry code does not call the API or viewer.
+`parameter_fit.py` keeps furniture clearance checks disabled while vehicle modelling continues.
+The retained constraints concern the cross-bench and cabinet shelf relationship; the superseded drawer and
+bracket fit chain has been removed. Shape-validity checks still reject dimensions that cannot construct geometry.
 
 The worker publishes the OCP display payload, exact measurement geometry and motion tracks before extracting cuts.
 The coordinator saves geometry atomically to `.local/model-cache.json` and publishes it immediately, then updates
@@ -249,26 +240,20 @@ Campervan
 │       └── Headliner
 ├── Finished floor plywood
 ├── Long bench
-│   ├── Fixed frame
-│   │   ├── Wall-side frame
-│   │   ├── Aisle frame
-│   │   ├── Cab-end frame
-│   │   ├── Internal drawer-support frame
-│   │   ├── Rear header
+│   ├── Storage box
+│   │   ├── Wall-side hinge panel
+│   │   ├── Aisle-side panel
+│   │   ├── Rear end panel
+│   │   ├── Centre support divider
+│   │   └── Cab-end panel
+│   ├── Lid hinges (provisional)
+│   ├── Hinged lid
 │   │   ├── Fixed slats
-│   │   └── Guide ledges
-│   ├── Sliding bed
-│   │   └── Sliding assembly
-│   │       ├── Moving slats
-│   │       ├── Moving aisle frame
-│   │       ├── Tie strip (extension stop)
-│   │       └── Angle brackets
-│   ├── Rear drawer
-│   │   ├── Tray (five plywood panels)
-│   │   └── Drawer sliders
-│   │       ├── Fixed (left and right)
-│   │       ├── Intermediate (left and right)
-│   │       └── Moving (left and right)
+│   │   └── Sliding bed
+│   │       └── Sliding assembly
+│   │           ├── Moving slats
+│   │           ├── Moving front slat support (flat)
+│   │           └── Provisional metal legs
 │   └── Cushions
 │       ├── Long seat
 │       ├── Wall backrest
@@ -276,7 +261,7 @@ Campervan
 │   ├── Fixed frame
 │   │   ├── Wall-side frame
 │   │   ├── Aisle frame
-│   │   ├── Rear skin
+│   │   ├── Rear mounting frame
 │   │   └── Fixed slats
 │   └── Cushions
 │       └── Cross seat
@@ -429,75 +414,47 @@ Walls, pillars, roof and floors remain translucent, with named assembly groups a
 Measurements describe the existing bed at 390 slat-top height; the design's platform height remains independently
 editable and is not automatically changed to match it.
 
-`bench.py` ports the long-bench branch of `benchCarcass`, `wheelArchFrame`, `slideMountFrame` and `drawerRearFrame`.
-The internal mounting frame and its raised rear post belong to the bed's Fixed frame. `panels.py` builds local panels and
-rounded opening cutters; X runs along each panel, Y through its thickness and Z upwards. Assembly placement uses
-`Location`, keeping each cut plywood piece a separate solid.
+`bench.py` builds one bottomless long-bench plywood storage box. Its two longitudinal walls, two end panels
+and transverse centre support divider stand directly on the finished van floor. The divider is centred on the
+bench length, making its two clear storage bays equal. Before its independent inward offset, the wall-side panel's outer face is flush with the rear
+ends of the slats. All five panels reach the slat undersides, supporting both slat sets directly. The floor closes
+the bottom; there is no separate plywood bottom and no fixed horizontal slat supports. Panels remain solid for now.
+The old drawer, guide ledges, moving plywood aisle frame and angle brackets are removed. The separate cross bench
+retains its existing geometry and wall-side arch-relative support datum.
 
-The long bench has a 600 × 1280 footprint. Its frame top is `platform height - slat thickness`, or 382 at the defaults.
-The aisle frame retains its 100-high slide mounting band. Wall-side openings reach the floor and clear the wheel arch;
-the rear support starts at bed-local Y = 35 (vehicle Y = 120), with a 36 rear arch gap. The cab end has an 18mm frame
-and no skin. The retained 4mm `long_bench_inset_mm` construction allowance preserves the wall-frame, guide and slat
-positions independently of the cross-bench skin thickness. Saved `wall_thickness_mm` values migrate to this inset.
-The internal support sits at X = 150–168 and reaches the rear header with an integral raised post. Its lower profile
-retains the independent 300mm frame height and now spans the full 1280mm bench length, matching the other supports'
-fore/aft endpoints. The guide ledges and tie strip retain their positions and need no additional cutouts. The header spans
-X = 168–582, bed-local Y = 0–18, Z = 322–382, leaving the drawer exit open.
-The long bench's cab-end frame fits between the inner and aisle support frames, X = 168–582, and occupies local
-Y = 1262–1280. Its front face and the support endpoints sit flush against the cross-bench rear skin at Y = 1280.
-This moves the transverse frame 4mm forward and narrows it by 18mm to avoid overlapping the extended inner support.
-`drawer.drawer_support_x` shares the inner support alignment with the drawer placement; it follows wheel-arch width
-and drawer clearance. The fixed cross bench has separate recessed frames.
+`sliding_bed.py` builds one full-length slat lid. Only the moving slats have a horizontal cross support: one flat
+80 × 18mm front rail, carried by two provisional metal legs. The moving rear rail and both fixed rails are absent.
+With the saved 600mm couch width, 1070mm bed width and 18 × 80mm stock, furniture-local slats span X22–618.
+The moving front rail spans X538–618 when retracted. The box occupies X22–533; its wall-side panel spans X22–40
+and its aisle-side panel spans X515–533. These are the box positions before its independent inward offset. The moving assembly travels 452mm, so its extended slats span X474–1070
+and retain the full 18mm bearing on the box's aisle wall. The 5mm gap separates that wall from the moving rail before applying the box offset.
 
-`sliding_bed.py` ports `longSlatDimensions`, the long-bench branch of `slidingSlatAssembly`, `slidingBracketDimensions`,
-`slideAngleBracket` and `slidingBenchBrackets`. Eight fixed and seven moving slats alternate on an 85 pitch. Ordinary
-slats are 611 long; the rear fixed slat is 468 long to clear the rear corner and bear on the internal drawer support.
-The slat top is 400. The 40 × 18 tie strip sits at X = 90–130, bed-local Y = 62–1253, Z = 364–382 when retracted, supported on
-two fixed 25-wide ledges. The rear ledge clears both the body corner and the raised drawer-support post.
-Both ledges extend down to the adjoining frame top rails' underside:
-`frame top - member width`, or Z = 322. Their tops stay at Z = 364, giving a 42 vertical depth at the defaults.
-These deepened ledges supersede the original flat 18-thick Onshape strips.
-Fixed slats and guide ledges belong to Fixed frame, so its visibility toggle includes both.
-The moving aisle frame has a continuous bottom rail matching the fixed aisle frame's slide mounting band
-(100mm at defaults), with the same rounded openings. Its fore/aft ends align with the first and last moving slats:
-Y = 90–1190, giving a 1100mm-long frame with the current 1280mm bench and 80mm slats. These bounds derive from
-the slat layout; both 60mm end posts remain beneath the outer angle brackets. The fixed aisle frame remains full length.
-Slat thickness and stock width are shared by both benches and sit at the Long bench parameter level.
-The slats are reused 80mm stock: preserve their width instead of narrowing them to fit. The slat-gap parameter controls
-the long bench; cross-bench spacing is derived from its depth and the full stock width.
-Three provisional 50 × 50 × 40 × 2 steel angles have a 3 inside bend radius and sit at
-Y = 130, 640 and 1150. The fixed aisle frame has 42-wide reliefs: a 6-deep top notch and a face pocket 6 deep and 51 high.
-Screw holes and actual installed hardware dimensions are not modelled.
+`bed_inward_offset_mm` is a shared assembly placement for both benches. The accepted 24mm aisleward offset
+moves the box, fixed and moving slats, moving front rail, legs, hinge preview and both benches' cushions together.
+The table's mounting bracket and working pose follow the same offset; its independent stowed pose is unchanged.
+The box's wall-side outer face is local X46 (world X1454 at the 1500mm vehicle datum). The former box-only setting
+migrates to this shared bed setting without changing its value. Slat lengths and 452mm extension travel are unchanged,
+so the complete sleeping platform retains its 1070mm width, translated towards the aisle rather than narrowed.
+The box-to-moving-rail gap returns to 5mm. The cabinet front follows the bed offset to retain its former nominal face gap. The rear corner, front edge and wheel arch remain
+separate fitting work; the accepted middle-pillar placement does not certify those clearances.
 
-`BedLayout` holds the derived spacing and travel shared by construction and relief cuts. `bed_extension_percent` moves
-the entire `Sliding assembly` with one parent `Location`: 0 is retracted and 40 extends by
-`bed width - long bench width - frame thickness` (452 at defaults). Full extension reaches X = 1070, retains 159 slat
-overlap, and brings the tie strip against the fixed aisle frame at X = 582. Child locations stay relative to the moving
-group; use `global_location` when checking individual children in world coordinates.
-`bed_motion.py` supplies the shared stages and frame offsets for CAD and viewer keyframes: the frames extend over
-0–40%, cushions reposition over 40–80%, and backrests lower over 80–100%. Frames stay extended through both cushion stages.
+At the saved 390mm slat-top height, slat undersides and every box panel top are Z372. The moving front rail lies
+at Z354–372, with legs reaching its underside. The shared lid-opening preview rotates about the wall-side axis, translated with the rest of the bed. Hinges and slat connections require redesign now that the fixed rear rail has been removed;
+the schematic hinge barrels and motion preview do not establish a buildable lid assembly. Vehicle-wall clearance,
+fore–aft bed placement, hinge setback, hardware strength, alignment, retention and stops remain to refine.
 
-`drawer.py` adds the five-part 12mm plywood tray: 376 × 1224 × 290mm, X = 187–563, Y = 0–1224, Z = 10–300.
-Both 1200 × 290mm sides run Y=12–1212. The 376 × 290mm end panels cap their ends at Y=0–12 and Y=1212–1224;
-the 1200 × 352mm bottom fits between the panels, flush underneath. Internal length is 1200mm, 26mm shorter than
-the previous drawer. The open sides retain a 90mm lower band and 60mm end uprights.
-The rear face is flush with Y = 0. The tray travels 1215mm toward negative Y. Each 19mm mounting gap contains three
-simplified 1200 × 53mm drawer-slider envelopes aligned at Y=12–1212; intermediate stages move half the tray distance.
-The selected Instant Panel SKU 10632 drawer sliders lock fully closed and fully open. Their 45mm levers project
-toward the rear doors; reserve 50mm operating clearance from the slider front. Lever geometry remains outside the
-simplified envelopes. The former `drawer_rear_setback_mm` parameter is retired when loading saved projects.
-Rear drawer contains the tray and the `Drawer sliders` assembly. Its stationary internal support belongs to the
-bed's Fixed frame alongside the aisle frame and rear header,
-so hiding or omitting the drawer leaves the bed supports in place.
+`Hinged lid` owns both combs; its `Sliding bed / Sliding assembly` child translates independently. Lid opening
+rotates about local Y from 0 to 75 degrees. The existing conversion slider retains its 0–40 extension, 40–80 cushion
+repositioning and 80–100 backrest-lowering stages. Opening storage retracts the bed; extending the bed closes the lid.
+Extending the bed stows the table; opening storage leaves its selected pose unchanged unless retracting an extended
+bed restores a table that conversion previously stowed. Cushions retain their separate conversion: remove/reposition
+them before lifting.
+The Lagun bracket now attaches to the cross bench's rear mounting frame, clear of the retracted long bed.
 
-`drawer_included` and `table_included` are saved 0/1 purchasing choices, separate from visibility and live poses.
-They default to included for existing saved designs. Both assemblies always remain in the CAD model and hierarchy.
-The cached bundle retains all cuts; `active_cuts` filters the manufacturing list and `active_roles` filters dedicated
-stock/hardware requirements. `Coordinator.cuts` supplies the current filtered list to all local consumers; static
-exports apply the same filter. Changing inclusion saves via `/api/v1/build-options` without rebuilding or republishing
-geometry. Inclusion does not enter the geometry fingerprint. Existing cutting searches stop when inclusion changes,
-and saved layout fingerprints determine which results still apply. All dimensions and selections remain saved;
-purchases with recorded ownership or spending remain as unused stock with no future requirement.
+Box panels share frame plywood; the moving front support shares slat stock. Legs and lid hinges appear as explicitly provisional
+hardware requirements. Superseded drawer, guide and bracket roles are retired when loading saved projects; purchase
+records with ownership or spending remain available as unused stock. Obsolete controls are dropped on load.
+`table_included` remains a saved purchasing choice independent of CAD visibility and live pose.
 The coordinator automatically starts missing/stale cutting layouts for all sourced or confirmed stock when the current
 cuts or their inputs change, and on application startup. Search ownership is independent of the selected frontend tab.
 Model status includes `cutting_revision`; BOM purchase tables refresh when layouts publish new results, using the existing
@@ -506,17 +463,19 @@ The frontend masks excluded assembly roots in the viewer without changing the sa
 Re-including removes that mask, restoring the previous eye settings; disabled eyes retain their state while excluded.
 
 `cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
-18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. At the default 400mm platform height,
+18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. A third 18mm rear-facing frame fits
+between their inner faces and carries the Lagun bracket on a solid 92mm-wide aisle-side post.
+At the default 400mm platform height,
 the frame tops are Z = 382; the 18mm slats bear directly on them. There is no divider, deck, sliding assembly,
 cab-end skin, hinged lid, brackets or stop plates.
 
-`cross_bench_overhang_mm` defaults to 200mm at the aisle slat ends. The wall-side frame aligns with the internal
-drawer-support frame at X = 150–168, following the shared `Parameters.drawer_support_x_mm` datum;
-the aisle frame occupies X = 852–870. Both run Y = 1289–1860. The aft 9mm skin bridges between the two rear legs,
-covering X = 150–870, Y = 1280–1289 from floor to rail top. Its thickness uses the independent
-`cross_bench_skin_thickness_mm` parameter. The space between frames is unobstructed;
-toilet/tray hardware and slat/frame fixing details remain unmodelled. The skin is intended to brace the two rear legs
-when properly attached; the CAD geometry does not establish load capacity.
+`cross_bench_overhang_mm` defaults to 200mm at the aisle slat ends. The wall-side frame retains its former
+arch-relative support position, following the shared `Parameters.cross_bench_support_x_mm` datum;
+the aisle frame occupies X = 852–870. Both run Y = 1280–1860. At the saved 1500mm cargo width and 1205mm arch gap,
+the rear mounting frame occupies X = 175.5–852, Y = 1280–1298 from floor to rail top, with an open-bottom rounded
+cutout and a 60mm wall-side leg. These are bench-local coordinates before the shared 24mm inward offset.
+`cross_bench_layout.py` supplies the frame and table mounting datums. The removed rear skin's thickness parameter
+and material role are retired. Toilet/tray hardware and frame joints remain unmodelled; CAD does not establish load capacity.
 
 Four 1070mm-long 80 × 18mm stock slats run across the van, directly over both support rails, matching the previous
 extended cross bench's four moving rows. The first starts at Y = 1280; the last finishes at Y = 1860. Three equal
@@ -524,8 +483,8 @@ extended cross bench's four moving rows. The first starts at Y = 1280; the last 
 90mm, with no added empty margin at either end of the cross bench. Slat count stays four; their gaps follow the shared
 stock width and cross-bench depth.
 The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
-Its conversion slider is removed. The green backrests sit along the cross bench’s right side and front,
-then move with the long-bench control into the outer bed strip.
+Its conversion slider is removed. The former green backrests are removed; the long bench's taller orange backrest
+and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 `cabinet.py` builds a panel-and-cleat cabinet in two modules. Both retain Frames, Skin, Shelves and Doors
@@ -535,7 +494,8 @@ joining rails and hardware blocks use the existing 40 × 18mm pine. The arch bri
 
 Middle and cab-end panels have full-depth, jigsaw-scribed profiles against the actual side, pillars and finished
 ceiling. The rear upper panel follows the same contour and extends down to Z730. The lower rear timber jamb has
-no plywood facing and leaves at least 230 × 730mm chair-loading clearance, without a bottom sill. There are no rear
+no plywood facing or bottom sill. Its original chair-loading target was 230 × 730mm; narrowing the cabinet
+reduces the clear width, and this target is not enforced while furniture-clearance checking is disabled. There are no rear
 ladders, raked rear posts, return frames or uprights inside shelf bays. No full wall-facing back or top is added.
 The van closes the wall-facing back. Front edges of supporting panels butt behind the front frame; no skin
 landing grooves are needed. Fix panel faces into the adjoining timber, not screws into thin plywood edges.
@@ -566,6 +526,13 @@ countersunk screw envelopes remain side-only. There are no front/rear longitudin
 20mm lower panel guides and 0.5mm seam clearance remain at the middle/cab-end sides. The upper rear panel extends
 below the joint beside the lower rear header; this is an unglued locating overlap. Keep every detachable mating
 surface unglued. Module rails and fasteners remain in the Module joint subgroup under Frames.
+
+The cabinet front face follows `bed_width_mm + bed_inward_offset_mm + 6mm` in both its frame layout and door
+construction. With the accepted 24mm bed offset, its front moves 24mm towards the wall, reducing cabinet depth
+while keeping the wall-side scribed profile. Panels, shelves, front framing, doors and their hardware follow the
+same face position. This restores the previous 6mm nominal wood-face gap; hinge barrels consume approximately
+5.7mm of it where their heights and fore–aft positions overlap the bed. The rear jamb continues to use the fitted
+wall limit rather than moving outwards to preserve the former 230mm opening.
 
 `cabinet_doors.py` retains nine 6mm inset doors, two face-mounted hinge envelopes per door, finger holes and roller
 catches. Six doors are drop-down flaps; the lowest rear pair and lowest forward door have vertical hinges. Fixed
@@ -620,16 +587,16 @@ The cabinet and bed are unchanged. The owner confirms the real bag fits behind t
 spare clearance; the current estimated hatch shape conflicts with that reference above about Z=550 and remains
 to be reconciled. This discrepancy is not evidence that the real bag needs more space.
 
-`cushions.py` builds five foam blocks using the shared 100mm thickness.
+`cushions.py` builds three foam blocks using the shared 100mm thickness.
 The long seat is 600 × 1280; the fixed cross seat is 1070 × 580.
-The orange backrest is 235 × 1280. Green is split into 235 × 580 along the cross-bench right side
-and 235 × 700 along its front, upright in day mode. The split follows cross-bench depth as dimensions change.
-At full conversion, orange fills X = 0–235, the long seat X = 235–835, and green X = 835–1070.
+The orange backrest is 470 × 1280, retaining its seated bottom elevation and 100mm thickness. Its height follows
+the difference between sleeping width and long-seat width. The former two green backrests are removed.
+At full conversion, orange fills X = 0–470 and the long seat X = 470–1070, meeting without overlap or a gap.
 Both Cushions groups retain their existing +7mm X offset.
-The long-bench slider moves the long seat and both backrests; the cross seat remains flat and stationary.
+The long-bench slider moves the long seat and orange backrest; the cross seat remains flat and stationary.
 Each cushion is a centred native box in its own located Compound.
-Cushions hold until 40%; by 80% the seat has shifted and the backrests have turned above the seats;
-the final stage lowers the backrests. CAD and live tracks use the same sampled poses.
+Cushions hold until 40%; by 80% the seat has shifted and the backrest has turned above the seats;
+the final stage lowers the backrest. CAD and live tracks use the same sampled poses.
 This previews manual repositioning; real cushion fit and intermediate handling remain visual checks.
 
 `frontend/src/viewer.ts` owns the viewer host. It embeds the installed OCP renderer through `createPage`, using the
@@ -655,7 +622,7 @@ camera. Notifications during rendering do not overwrite the saved view with inte
 
 Dimensions rebuild geometry. After `show`, `viewer.py` sends `campervan_motion` with each position parameter's assembly
 paths, axes, travel and published pose. The host retains each group's original translation or rotation and applies an
-absolute offset from that pose. Long-bed, cross-cushion and drawer sliders work without an animation timeline or regeneration.
+absolute offset from that pose. Long-bed, storage-lid and cross-cushion sliders work without an animation timeline or regeneration.
 Each bench slider also repositions its own cushions. Their tracks include position/angle keyframes from the same layout used
 by CAD, so regeneration at an intermediate position preserves the preview. Translation and
 rotation bases are stored separately for groups that use both.
@@ -665,7 +632,7 @@ localStorage. On page load or API session change, the controller restores the po
 requesting regeneration. New geometry receives the latest selected positions.
 Slider previews are combined into one animation-frame update using the latest values. Only changed motion
 tracks are applied. Mannequin fitting, seat compression and pillow deformation are recalculated for bed or
-mannequin changes; table, drawer, door and gear sliders leave them alone. A slider frame draws once. Releasing
+mannequin changes; table, storage-lid, door and gear sliders leave them alone. A slider frame draws once. Releasing
 a slider with the same value does not repeat the geometry update; its API save still occurs.
 Moving the bed extension above 0% automatically selects the Stowed table pose in the same preview frame.
 Releasing the bed slider saves both positions. Reloading with an extended bed also restores the table stowed.
@@ -676,7 +643,7 @@ Older project files and browser storage containing only the shared bed position 
 position. Once separate positions are saved, they remain independent.
 
 Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece picker. Unmodified primary drags on
-the moving bed support/slats, drawer, cabinet doors and mounted tabletop leaves take precedence over camera orbit.
+the moving bed slats/legs, storage lid, cabinet doors and mounted tabletop leaves take precedence over camera orbit.
 The 4px threshold preserves ordinary clicks and double-click cut-list navigation. Pointer capture owns the gesture;
 Escape, lost capture, page blur, tab changes and geometry replacement restore the starting pose and automatic
 table-return flag. `viewer-highlight.ts` supplies the same translucent surface tint and edge outline for persistent
@@ -862,22 +829,19 @@ the current revision and then starts layout optimisation. The BOM marks previous
 finishes, independently of CAD readiness, and reports cutting failures separately. Local geometry wrappers are
 detached before copying so extracting one piece does not copy its parent assembly.
 
-Plywood frames, skins, shelves and drawer panels, plus shelf ledges, guide ledges and slats,
-have material assignments. Hardware includes angle brackets, stop plates and complete drawer slides. Only the
-fixed rail leaves contribute to slide quantities; intermediate and moving stages belong to those same purchased
-slides. Bracket entries use arm length, width and steel thickness, not their rectangular bounding-box depth.
-The hinge and bracket screws are sourcing candidates without modelled fasteners; the hinge quantity is explicitly
-one and screw quantity remains unconfirmed. Their fit notes identify mounting details still to resolve.
+Plywood box panels, cross-bench frames, skins, cabinet panels and shelves have sheet assignments.
+All bed slats and the moving front support share slat stock. Two provisional bed legs and three provisional
+lid hinges have explicit whole-item quantities; their schematic components do not enter the wood cut list.
+Product selection, fixings and hardware strength remain unresolved.
 
 Other furniture leaves are listed as unassigned. Vehicle references and cushions are excluded.
 Cut rectangles are not a nesting plan: they exclude saw kerf, grain constraints and waste. Sheet and stock-length
 purchase quantities require a cutting layout; roles selecting the same product may share stock.
 
-Bed frame supports, cross-bench support rails and bed guide ledges use the selected 18mm plywood.
+Bed box panels and cross-bench support frames use the selected 18mm plywood.
 Cabinet front frame, cleats, joining rails and catch blocks share 40 × 18mm pine; the bridge uses 90 × 18mm pine.
-The cabinet uses 9mm scribed supporting panels and 6mm door/shelf plywood. The cross-bench rear skin remains 9mm plywood;
-the drawer uses 12mm sheets. Plywood parts retain their scribed profiles and openings in the cut list.
-The bed guides stand on edge, so their bearing width is the sheet thickness (18mm); their height follows the frames.
+The cabinet uses 9mm scribed supporting panels and 6mm door/shelf plywood. All three cross-bench frames share 18mm frame plywood.
+Plywood parts retain their scribed profiles and openings in the cut list. The moving front support uses the slat stock lying flat.
 Cabinet stock sections come from their selected timber products, with measured overrides.
 
 The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, listed at $33.47 per
@@ -885,10 +849,9 @@ The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, li
 the specification table's rounded 1200mm. Wellington branch stock remains unconfirmed. Door hinges use
 through-fixings in the 6mm faces; their fixing details still depend on the physical hinges.
 
-The cross-bench rear skin uses 9mm Tigerply Okoume-faced poplar-core plywood independently of cabinet stock. Its material
-role retains the `skins` ID and sets `cross_bench_skin_thickness_mm`. Projects selecting the former 4mm special-order
-skin product migrate to the 9mm product. The long bench has no cab-end skin. Slat and long-bench frame positions use
-their retained construction inset rather than skin thickness.
+The former cross-bench rear skin and separate table backing are removed. Saved `skins` material selections and
+`cross_bench_skin_thickness_mm` are discarded on load. The long bench has no cab-end skin. Slat and long-bench frame
+positions retain their construction inset.
 
 
 Sleeping pillows use the CC0 Poly Haven Throw Pillows 01 mesh (source/license beside frontend/src/pillow-mesh.json).
@@ -904,7 +867,7 @@ frontend/src/pillows.ts and update in the browser without CAD regeneration.
 the `Bench mount` display group with live height, arm swivel, tabletop rotation, fold and mounting-offset controls.
 The cabinet mount has been removed. The Show table selector switches between Bench mount and Stowed without
 regeneration. Stowed shows the folded pine with the detached upright beside the arm beneath the tabletop.
-The fixed furniture bracket and spacer remain on the bench. Stowed has its own live XYZ and facing controls;
+The fixed furniture bracket remains on the cross-bench rear frame. Stowed has its own live XYZ and facing controls;
 the arm automatically points towards the displaced tabletop, flipping 180° when the offset changes sides.
 The default aisle position is a preview pending a storage-location decision. The two display
 poses share component builders and one mount offset. The duplicate stowed geometry is excluded from the cut
@@ -920,7 +883,36 @@ barrel section, taper and countersunk holes are photo-based approximations. Each
 through the existing schematic fold. Nominal blind seats prevent metal/wood overlap without changing the
 cutting silhouette. The hardware groups contribute no wood or extra hinge purchases to the cut list.
 Actual recesses, joint gap and fixing details remain unmeasured. The two leaves have separate cutting profiles on
-1200 × 600 × 18mm pine stock; the single mount spacer remains frame plywood. There is one Lagun kit. The current
+1200 × 600 × 18mm pine stock; the rear mounting frame shares frame plywood. There is one Lagun kit. The current
 official tabletop mount is 240 × 200mm with 30mm overall profile depth. Its 240mm axis follows the tabletop length.
 Offset previews move the wood relative to the fixed mount; they do not add a sliding mechanism. Published
 dimensions and unverified hardware details are recorded in [Lagun table](research/lagun-table.md).
+
+
+### Perspective field of view
+
+The installed OCP camera starts at 22° vertical FOV. `viewer-camera.ts` stores an optional `fov` with the existing
+camera state; older saved poses retain 22°. The CAD Camera slider changes `pCamera.fov` and calls
+`updateProjectionMatrix()` without changing position, target or orbit distance. Geometry reloads create a fresh
+native camera, so the helper reapplies the stored FOV before saving the restored pose. Orthographic views retain
+the perspective angle for the next switch; scan camera persistence uses the same helper.
+
+Renderer contract: [Three.js PerspectiveCamera](https://threejs.org/docs/pages/PerspectiveCamera.html).
+
+### Human camera navigation
+
+`viewer-human.ts` owns the Human view toolbar toggle, context-menu command and H shortcut. It disables native
+orbit input while active. In the installed renderer, orbit mode ignores the quaternion argument of
+`setCameraLocationSettings`; position and an aligned look target therefore move together for translation, and the
+target rotates around the stationary eye for mouse look. Perspective switching restores the eye position after
+the native zoom conversion. Forward/back uses the normalized XY projection of the camera's forward direction,
+preserving height and movement speed when tilted. Strafe follows the camera orientation; Shift+Up/Down uses world Z.
+Movement is 500 mm/s, measured by animation-frame elapsed time. Human view requests pointer lock directly from the
+button/H gesture and activates on `pointerlockchange`. Locked `mousemove` uses `movementX/Y`, allowing unlimited
+turning with a hidden cursor. Escape/browser unlock, focus loss and window blur exit and clear held keys.
+Geometry replacement and leaving the CAD tab exit the mode; camera persistence remains shared with orbit mode.
+Pointer capture/release follows the [W3C Pointer Lock specification](https://w3c.github.io/pointerlock/).
+
+The toggle uses a stable accessible name and `aria-pressed` following the
+[WAI button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/). Controls appear while active; navigation keys
+are scoped to the focused viewport, editable controls retain their normal input, and Escape exits without trapping focus.

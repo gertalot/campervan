@@ -31,6 +31,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let returnMountedTable = storage.getItem(tableReturnKey) === 'true';
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
   delete positions.cross_bed_extension_percent;
+  delete positions.drawer_extension_percent;
 
   function migrateDoorPositions() {
     for (const [old, names] of Object.entries({
@@ -48,7 +49,9 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     const next = { ...positions, ...patch };
     let mountedReturn = returnMountedTable;
     if ('table_mount' in patch) mountedReturn = false; // Explicit selection replaces the automatic return.
-    if ('bed_extension_percent' in patch) {
+    if ((patch.bed_lid_open_percent ?? 0) > 0) next.bed_extension_percent = 0;
+    if ((patch.bed_extension_percent ?? 0) > 0) next.bed_lid_open_percent = 0;
+    if ('bed_extension_percent' in patch || 'bed_lid_open_percent' in patch) {
       if (next.bed_extension_percent > 0 && next.table_mount !== 2) {
         mountedReturn = true;
         next.table_mount = 2;

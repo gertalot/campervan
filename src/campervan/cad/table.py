@@ -7,14 +7,12 @@ clamp internals are visual approximations; hole centres require the actual kit.
 from build123d import Align, Axis, Color, Compound, Cone, Cylinder, Face, Location, Part, Solid, Wire, fillet
 
 from campervan.cad.panels import panel
+from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH, cross_bench_layout
 from campervan.parameters import Parameters
 
 ROOT = "/Campervan/Laptop table"
 SILVER = Color(0.72, 0.75, 0.77)
 BLACK = Color(0.12, 0.13, 0.14)
-WOOD = Color(0.83, 0.70, 0.46)
-LAGUN_BRACKET_WIDTH = 92.0
-MOVING_FRAME_CAB_TRIM = 5.0
 LAGUN_TOP_LENGTH = 240.0
 LAGUN_TOP_WIDTH = 200.0
 LAGUN_TOP_DEPTH = 30.0
@@ -164,18 +162,12 @@ def _leaves(p: Parameters, open_percent: float) -> Compound:
 
 
 def _fixed_mount(p: Parameters) -> Compound:
-    x = p.long_bench_width_mm + p.frame_thickness_mm
-    y = p.seat_length_mm - LAGUN_BRACKET_WIDTH / 2
-    t = p.frame_thickness_mm
-    backing = [block("Drawer frame spacer", (t, LAGUN_BRACKET_WIDTH,
-                     p.platform_height_mm - p.slat_thickness_mm),
-                     (-t, -LAGUN_BRACKET_WIDTH / 2, 0), WOOD)]
-
     bracket = Compound(label="Lagun hardware", children=[
-        block("Standard mounting bracket", (13, LAGUN_BRACKET_WIDTH, 170), (0, -46, 180)),
+        block("Standard mounting bracket", (13, LAGUN_BRACKET_WIDTH, 170),
+              (0, -LAGUN_BRACKET_WIDTH / 2, 100)),
     ])
-    result = Compound(label="Fixed mount", children=[Compound(label="Mount backing", children=backing), bracket])
-    result.location = Location((x, y, 0))
+    result = Compound(label="Fixed mount", children=[bracket])
+    result.location = Location(cross_bench_layout(p).mount_origin, (0, 0, -90))
     return result
 
 
@@ -192,8 +184,7 @@ def _mounted_table(p: Parameters) -> Compound:
     height = Compound(label="Height adjustment", children=[_upright(), orientation])
     height.location = Location((32, 0, leg_bottom))
     result = Compound(label="Bench mount", children=[height])
-    result.location = Location((p.long_bench_width_mm + p.frame_thickness_mm,
-                                p.seat_length_mm - LAGUN_BRACKET_WIDTH / 2, 0))
+    result.location = Location(cross_bench_layout(p).mount_origin, (0, 0, -90))
     return result
 
 

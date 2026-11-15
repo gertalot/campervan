@@ -55,7 +55,7 @@ def _hinged_door(
     upper: bool = False,
     reverse: bool = False,
 ) -> DoorBuild:
-    face = p.bed_width_mm + 6
+    face = p.bed_width_mm + p.bed_inward_offset_mm + 6
     reveal, thickness = p.cabinet_door_gap_mm, p.cabinet_door_thickness_mm
     if thickness + 1.2 + 0.5 + 2.4 + 1.5 > 12 or p.cabinet_frame_thickness_mm + 1.2 + 0.5 + 2.4 + 1.5 > 25:
         raise ValueError("Selected door/frame thickness needs longer hinge bolts than the modelled M3 × 12 / 25 sets.")

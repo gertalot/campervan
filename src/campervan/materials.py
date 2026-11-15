@@ -57,7 +57,7 @@ ROLES = [
         default_product_id="specrite-pine-18-1200-600",
         note="Two 700 × 250 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
         "Grain follows the 700mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
-        "The mounting spacer remains frame plywood.",
+        "The rear cross-bench mounting frame shares frame plywood.",
     ),
     MaterialRole(
         id="lagun",
@@ -90,14 +90,7 @@ ROLES = [
         kind="sheet",
         fields={"thickness": "cabinet_partition_thickness_mm"},
     ),
-    MaterialRole(
-        id="skins",
-        name="Cross-bench rear plywood",
-        kind="sheet",
-        fields={"thickness": "cross_bench_skin_thickness_mm"},
-    ),
     MaterialRole(id="shelves", name="Shelf plywood", kind="sheet", fields={"thickness": "cabinet_shelf_thickness_mm"}),
-    MaterialRole(id="drawer", name="Drawer plywood", kind="sheet", fields={"thickness": "drawer_ply_mm"}),
     MaterialRole(
         id="slats",
         name="Existing bed slats",
@@ -114,13 +107,9 @@ for role in ROLES:
         "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "pinetrim-40-18-1800",
         "cabinet-partitions": "tigerply-okoume-9",
-        "skins": "tigerply-okoume-9",
         "shelves": "bbi-redline-6-1200-1195",
-        "drawer": "tigerply-12",
     }.get(role.id)
-    if role.id == "drawer":
-        role.note = "Drawer sides, ends and bottom share 12mm sheets; plan cuts together."
-    elif role.id == "shelves":
+    if role.id == "shelves":
         role.note = "6mm pantry shelves bear on face-mounted timber cleats."
     elif role.id == "cabinet-frames":
         role.note = (
@@ -130,8 +119,6 @@ for role in ROLES:
         role.note = (
             "9mm supporting end panels and centre divider: scribe side and ceiling edges. Van side closes the back."
         )
-    elif role.id == "skins":
-        role.note = "9mm plywood cross-bench rear skin."
 
 ROLES.extend(
     [
@@ -258,50 +245,20 @@ ROLES.extend(
             ),
         ),
         MaterialRole(
-            id="guides",
-            name="Bed guide ledges",
-            kind="sheet",
-            fields={"thickness": "ledge_width_mm"},
-            default_product_id="tigerply-18",
-            note="Cut upright strips from the same plywood stock as the frames.",
-        ),
-        MaterialRole(
-            id="brackets",
-            name="Bed angle brackets",
-            kind="hardware",
-            fields={"length": "bracket_arm_mm", "width": "bracket_width_mm", "thickness": "bracket_thickness_mm"},
-            default_product_id="carinya-50-40",
-            note=(
-                "Three on the long bench; the fixed cross bench has no angle brackets. "
-                "Check hole positions and bend radius on receipt."
-            ),
-        ),
-        MaterialRole(
-            id="slides",
-            name="Locking drawer sliders",
-            kind="hardware",
-            fields={
-                "length": "drawer_length_mm",
-                "width": "slide_height_mm",
-                "thickness": "slide_thickness_mm",
-                "travel": "slide_travel_mm",
-            },
-            default_product_id="instantpanel-locking-1200",
-            note=(
-                "One complete pair, locking fully closed and fully open. Includes all three telescoping stages. "
-                "Levers project toward the rear doors; allow 50mm operating clearance. M5 fixings not included."
-            ),
-        ),
-        MaterialRole(
-            id="bracket-screws",
-            name="Bracket screws",
+            id="bed-lid-hinges",
+            name="Storage bed lid hinges (provisional)",
             kind="hardware",
             fields={},
-            default_product_id="zenith-8g-15",
-            note=(
-                "Candidate for brackets into 18mm ply: 15mm screw through 2mm steel. "
-                "Check holes and 3mm head allowance; fixing count not modelled."
-            ),
+            quantity=3,
+            note="Three schematic wall-side hinges for one full-length lid. Product, leaves, fixings and capacity unconfirmed.",
+        ),
+        MaterialRole(
+            id="bed-legs",
+            name="Bed support legs (provisional)",
+            kind="hardware",
+            fields={},
+            quantity=2,
+            note="Two unsourced removable metal table legs. Diameter and length are visual envelopes; mounting and strength unconfirmed.",
         ),
     ]
 )
@@ -318,8 +275,6 @@ class Selection(BaseModel):
 def active_roles(parameters: Parameters) -> list[MaterialRole]:
     """Keep optional component selections saved, but omit their purchasing requirements."""
     excluded = set()
-    if not parameters.drawer_included:
-        excluded.update({"drawer", "slides"})
     if not parameters.table_included:
         excluded.update({"table-plywood", "lagun", "table-hinges"})
     return [role for role in ROLES if role.id not in excluded]
@@ -346,8 +301,6 @@ class CutPart(BaseModel):
 def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
     """Filter manufacturing requirements without removing reference geometry or its hierarchy."""
     excluded = []
-    if not parameters.drawer_included:
-        excluded.append("Long bench / Rear drawer")
     if not parameters.table_included:
         excluded.append("Laptop table")
     return [cut for cut in cuts if not any(cut.path == root or cut.path.startswith(root + " / ") for root in excluded)]
@@ -400,7 +353,9 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         project = Project.model_validate(saved | {"parameters": parameters})
     else:
         project = Project()
-    for role in ("deck", "bearers", "stops", "lid-hinge"):
+    for role in (
+        "deck", "bearers", "stops", "lid-hinge", "drawer", "slides", "guides", "brackets", "bracket-screws", "skins"
+    ):
         project.materials.pop(role, None)
     # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.
     project.materials.pop("cabinet-stays", None)
@@ -429,10 +384,6 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         project.materials.pop(retired, None)
     if project.materials.get("cabinet-partitions", Selection()).product_id == "birch-3-2440":
         project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-9")
-    if project.materials.get("skins", Selection()).product_id == "tigerply-okoume-4":
-        project.materials["skins"] = Selection(product_id="tigerply-okoume-9")
-    if project.materials.get("slides", Selection()).product_id == "instantpanel-1200":
-        project.materials["slides"] = Selection(product_id="instantpanel-locking-1200")
     if project.materials.get("table-plywood", Selection()).product_id in {
         "tigerply-18",
         "tigerply-12",

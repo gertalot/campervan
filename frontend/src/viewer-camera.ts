@@ -1,7 +1,7 @@
 import { createViewCube } from './view-cube';
 
 export interface CameraState {
-  position: number[]; quaternion: number[]; target: number[]; zoom: number; ortho: boolean; viewHeight?: number;
+  position: number[]; quaternion: number[]; target: number[]; zoom: number; ortho: boolean; viewHeight?: number; fov?: number;
 }
 interface CameraQuaternion {
   toArray(): number[];
@@ -24,7 +24,10 @@ interface CameraPose {
 }
 export interface CameraViewer {
   ready: boolean;
-  rendered: { camera: { camera: CameraPose & { top: number; bottom: number } } };
+  rendered: { camera: {
+    camera: CameraPose & { top: number; bottom: number };
+    pCamera: { fov: number; updateProjectionMatrix(): void };
+  } };
   getCameraPosition(): number[];
   getCameraQuaternion(): number[];
   getCameraTarget(): number[];
@@ -39,6 +42,8 @@ export function createViewerCamera(container: HTMLElement, current: () => Camera
   cameraKey: string, isRendering: () => boolean = () => false) {
   let cameraAnimation: number | null = null;
   let cube: ReturnType<typeof createViewCube> | undefined;
+  const savedFov = JSON.parse(localStorage.getItem(cameraKey) ?? 'null')?.fov;
+  let fieldOfView: number = Number.isFinite(savedFov) ? Math.max(20, Math.min(100, savedFov)) : 22;
   function cancelCameraAnimation() {
     if (cameraAnimation !== null) cancelAnimationFrame(cameraAnimation);
     cameraAnimation = null;
@@ -52,6 +57,7 @@ export function createViewerCamera(container: HTMLElement, current: () => Camera
     return viewer?.ready ? {
       position: viewer.getCameraPosition(), quaternion: viewer.getCameraQuaternion(),
       target: viewer.getCameraTarget(), zoom: viewer.getCameraZoom(), ortho: viewer.getOrtho(),
+      fov: viewer.rendered.camera.pCamera.fov,
       viewHeight: viewer.getOrtho()
         ? (viewer.rendered.camera.camera.top - viewer.rendered.camera.camera.bottom) / viewer.getCameraZoom()
         : undefined,
@@ -64,6 +70,20 @@ export function createViewerCamera(container: HTMLElement, current: () => Camera
     if (camera) localStorage.setItem(cameraKey, JSON.stringify(camera));
   }
   window.addEventListener('pagehide', saveCamera);
+
+  function applyFieldOfView() {
+    const viewer = current();
+    if (!viewer?.ready) return;
+    const projection = viewer.rendered.camera.pCamera;
+    projection.fov = fieldOfView;
+    projection.updateProjectionMatrix();
+  }
+
+  function setFieldOfView(degrees: number) {
+    fieldOfView = Math.max(20, Math.min(100, degrees));
+    applyFieldOfView();
+    saveCamera();
+  }
 
   function setDirection(direction: [number, number, number], animate = true) {
     const viewer = current();
@@ -112,7 +132,8 @@ export function createViewerCamera(container: HTMLElement, current: () => Camera
   }
 
   return {
-    cameraState, saveCamera, cancelCameraAnimation,
+    cameraState, saveCamera, cancelCameraAnimation, applyFieldOfView, setFieldOfView,
+    getFieldOfView: () => fieldOfView,
     attachCube() {
       cube ??= createViewCube(container, setDirection, orbitCube);
       this.updateCube();

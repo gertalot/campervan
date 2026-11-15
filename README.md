@@ -3,7 +3,7 @@
 A local CAD and build-planning app for a Nissan NV200 campervan conversion. Use it to design the furniture,
 check the available space, plan the build and track materials and purchases.
 
-The design includes a sliding slat bed, cross bench, storage cabinet, locking rear drawer and folding laptop table.
+The design includes a hinged sliding-slat storage bed, cross bench, storage cabinet and folding laptop table.
 The model uses parametric Python geometry built with [build123d](https://github.com/gumyr/build123d).
 
 ## The application

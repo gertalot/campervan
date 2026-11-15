@@ -74,27 +74,27 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
     from campervan.cad.gear import gear_motions
     from campervan.cad.table import table_motions
     from campervan.cad.mirror import mirror_motion_tracks
-    from campervan.cad.sliding_bed import long_bed_layout
+    from campervan.cad.sliding_bed import LID_OPEN_ANGLE, long_bed_layout
 
-    drawer = "/Campervan/Long bench/Rear drawer"
     door_tracks: list[dict[str, Any]] = [
         {
             "path": f"/Campervan/Vehicle references/Sliding doors/{side.title()} door",
             "axis": axis,
             "keyframes": [
-                (percent, sliding_door_offset(parameters, percent, side == "right")[index])
-                for percent in (0, 85, 100)
+                (percent, sliding_door_offset(parameters, percent, side == "right")[index]) for percent in (0, 85, 100)
             ],
         }
         for side in ("left", "right")
         for index, axis in enumerate(("x", "y"))
     ]
-    door_tracks.append({
-        "path": "/Campervan/Vehicle references/Rear opening/Rear hatch",
-        "axis": "x",
-        "kind": "rotation",
-        "keyframes": [(percent, rear_hatch_angle(percent)) for percent in (0, 100)],
-    })
+    door_tracks.append(
+        {
+            "path": "/Campervan/Vehicle references/Rear opening/Rear hatch",
+            "axis": "x",
+            "kind": "rotation",
+            "keyframes": [(percent, rear_hatch_angle(percent)) for percent in (0, 100)],
+        }
+    )
     # The host applies independent translations and hinge rotations relative to the published CAD pose.
     return {
         "type": "campervan_motion",
@@ -111,7 +111,7 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
                 "tracks": mirror_motion_tracks(
                     [
                         {
-                            "path": "/Campervan/Long bench/Sliding bed/Sliding assembly",
+                            "path": "/Campervan/Long bench/Hinged lid/Sliding bed/Sliding assembly",
                             "axis": "x",
                             "keyframes": bed_keyframes(long_bed_layout(parameters).travel),
                         },
@@ -119,17 +119,16 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
                     ]
                 ),
             },
-            "drawer_extension_percent": {
-                "position": parameters.drawer_extension_percent,
+            "bed_lid_open_percent": {
+                "position": parameters.bed_lid_open_percent,
                 "tracks": mirror_motion_tracks(
                     [
-                        {"path": f"{drawer}/Tray", "axis": "y", "travel": -parameters.slide_travel_mm},
                         {
-                            "path": f"{drawer}/Drawer sliders/Intermediate",
+                            "path": "/Campervan/Long bench/Hinged lid",
                             "axis": "y",
-                            "travel": -parameters.slide_travel_mm / 2,
+                            "kind": "rotation",
+                            "travel": -LID_OPEN_ANGLE,
                         },
-                        {"path": f"{drawer}/Drawer sliders/Moving", "axis": "y", "travel": -parameters.slide_travel_mm},
                     ]
                 ),
             },

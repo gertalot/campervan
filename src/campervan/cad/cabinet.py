@@ -140,7 +140,7 @@ def build_cabinet(p: Parameters) -> Compound:
     # The rear jamb preserves the loading opening; the cab-end upright stops under its shelf cleat.
     bridge_inner = layout.lower_back - p.cabinet_bridge_thickness_mm
     jamb_inner = layout.lower_back - w
-    if jamb_inner - (layout.front + t) < 230:
+    if FURNITURE_FIT_ENABLED and jamb_inner - (layout.front + t) < 230:
         raise ValueError("Cabinet rear opening must retain 230mm clear width.")
     jamb = panel(w, t, p.cabinet_rear_storage_height_mm)
     jamb.label, jamb.color = "Rear loading jamb", WOOD

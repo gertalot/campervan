@@ -12,6 +12,12 @@ from campervan.parameters import Parameters
 
 def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
+    if "Storage box" in path:
+        return "frames"
+    if "Provisional metal legs" in path:
+        return "bed-legs"
+    if "Lid hinges" in path:
+        return "bed-lid-hinges"
     if "Laptop table" in path:
         return "table-plywood" if name in {"fixed tabletop leaf", "folding tabletop leaf"} else "frames"
     if name == "finished floor plywood":
@@ -29,20 +35,10 @@ def material_for(path: tuple[str, ...]) -> str:
             return "cabinet-partitions"
         if name == "plywood door":
             return "cabinet-doors"
-    if "Angle brackets" in path:
-        return "brackets"
-    if "Rear drawer" in path and "Drawer sliders" in path:
-        return "slides"
-    if "Guide ledges" in path:
-        return "guides"
     if "Shelf ledges" in path or "Corner cleats" in path or "Rail joint blocks" in path:
         return "ledges"
     if "Shelves" in path:
         return "shelves"
-    if "Rear drawer" in path and "Tray" in path:
-        return "drawer"
-    if "skin" in name or name == "separating panel":
-        return "skins"
     if "slat" in name:
         return "slats"
     if "frame" in name or name in {"rear header", "tie strip (extension stop)", "rear leg", "cab-end leg"}:
@@ -57,6 +53,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
+        if "Lid hinges" in path or "Provisional metal legs" in path:
+            return  # Whole purchased items use explicit role quantities, not component envelopes.
         if "Laptop table" in path and "Stowed" in path:
             return  # Another pose of the same two leaves and purchased leg kit.
         if "Laptop table" in path and "Table hinges · Homer HOM006136" in path:
@@ -75,21 +73,6 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
         profile: dict[str, Any] = {}
-        if material == "slides":
-            # The fixed, intermediate and moving leaves describe the same two purchased slides.
-            if "Fixed" not in path:
-                return
-            length, width, thickness = (
-                parameters.drawer_length_mm,
-                parameters.slide_height_mm,
-                parameters.slide_thickness_mm,
-            )
-        elif material == "brackets":
-            length, width, thickness = (
-                parameters.bracket_arm_mm,
-                parameters.bracket_width_mm,
-                parameters.bracket_thickness_mm,
-            )
         if material in {"slats", "cabinet-frames", "cabinet-bridge"}:
             if material == "cabinet-frames":
                 width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
@@ -110,11 +93,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             "floor",
             "frames",
             "cabinet-partitions",
-            "skins",
             "shelves",
-            "drawer",
             "cabinet-doors",
-            "guides",
             "table-plywood",
         }:
             try:

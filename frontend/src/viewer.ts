@@ -7,6 +7,7 @@ import { createSeatCushion } from './seat-cushion';
 import { createVehicleFade } from './vehicle-fade';
 import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
+import { createViewerHuman, type HumanViewer } from './viewer-human';
 import { createLayoutMirror } from './layout-mirror';
 import { Box3, DoubleSide, FrontSide, Mesh, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
@@ -26,11 +27,11 @@ interface MotionController {
   restorePositions(snapshot: DragSnapshot): void;
   savePositions(patch?: Record<string, number>): Promise<void>;
 }
-interface CadViewer extends CameraViewer {
+interface CadViewer extends HumanViewer {
   display: {
     shapeFilterDropDownMenu: { setValue(value: string): void };
   };
-  rendered: CameraViewer['rendered'] & {
+  rendered: HumanViewer['rendered'] & {
     scene: Scene;
     nestedGroup: { groups: Record<string, SceneGroup> };
     orientationMarker: { setVisible(value: boolean): void };
@@ -66,6 +67,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const layoutMirror = createLayoutMirror();
   let scanReference: Object3D | undefined;
   let crossSections: Object3D | undefined;
+  const human = createViewerHuman(container, () => viewer,
+    () => { cancelCameraAnimation(); drag.cancel(); }, saveCamera);
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
     cancelCameraAnimation, saveCamera);
   const drag = createViewerDrag(container, {
@@ -78,7 +81,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     snapshot: () => motionController?.snapshotPositions() ?? { positions: { ...positions }, returnMountedTable: false },
     restore: snapshot => motionController?.restorePositions(snapshot),
   });
-  pieces.setCommands(drag.commands);
+  pieces.setCommands(() => [...human.commands(), ...drag.commands()]);
 
   function previewPose(patch: Record<string, number>) {
     motionController?.previewPositions(patch);
@@ -283,7 +286,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           viewer = this as unknown as CadViewer;
           unsubscribeTool?.();
           unsubscribeTool = (this as unknown as PieceViewer).state.subscribe('activeTool', () => {
-            drag.toolChanged(); pieces.toolChanged();
+            drag.toolChanged(); pieces.toolChanged(); human.toolChanged(hasActiveTool(this as unknown as PieceViewer));
             if (hasActiveTool(this as unknown as PieceViewer)) this.display.shapeFilterDropDownMenu.setValue('All');
           });
           const update = this.update.bind(this);
@@ -351,7 +354,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           if (message.type === 'data') {
             scanReference?.removeFromParent();
             crossSections?.removeFromParent();
-            drag.cancel();
+            human.cancel(); drag.cancel();
             pieces.clear();
             vehicleFade.clear();
             layoutMirror.clear();
@@ -385,6 +388,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             trimToolbar();
             pieces.attach();
             drag.attach();
+            human.attach();
             page.resize();
             if (camera && viewer?.ready) {
               const projection = viewer.rendered.camera.camera;
@@ -394,6 +398,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
                 : null;
               viewer.setCameraLocationSettings(camera.position, camera.quaternion, camera.target, zoom, false);
             }
+            cameraNavigation.applyFieldOfView();
             saveCamera();
             onModel();
             showTables();
@@ -435,6 +440,11 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       scheduleMove(name);
     },
     setMotionController(controller: MotionController) { motionController = controller; },
+    getFieldOfView: cameraNavigation.getFieldOfView,
+    setFieldOfView(degrees: number) {
+      cameraNavigation.setFieldOfView(degrees);
+      viewer?.update(true, false);
+    },
     setScanReference(root: Object3D | undefined) {
       scanReference?.removeFromParent();
       scanReference = root;
@@ -461,7 +471,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     previewPositions: previewPose,
     savePositions: saveAcceptedPositions,
-    cancelDrag: drag.cancel,
+    cancelDrag() { human.cancel(); drag.cancel(); },
     setPieceLink: pieces.setLink,
     focusPiece: pieces.focus,
     setSeeInside(enabled: boolean) {

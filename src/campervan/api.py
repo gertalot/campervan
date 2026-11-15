@@ -36,7 +36,6 @@ from campervan.worker import model_updates
 
 
 class BuildOptions(BaseModel):
-    drawer_included: float = Field(default=1, ge=0, le=1, multiple_of=1, allow_inf_nan=False)
     table_included: float = Field(default=1, ge=0, le=1, multiple_of=1, allow_inf_nan=False)
 
 
@@ -55,7 +54,7 @@ class Positions(BaseModel):
     table_stowed_yaw_deg: float = Field(default=0, ge=0, le=360, allow_inf_nan=False)
 
     bed_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    drawer_extension_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    bed_lid_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     doors_close_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_rear_upper_1_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_rear_upper_2_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)

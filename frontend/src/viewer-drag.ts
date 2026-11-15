@@ -134,33 +134,10 @@ function hingeSolver(target: Target, camera: Camera, rect: DOMRect, x: number, y
 
 export function createViewerDrag(container: HTMLElement, host: DragHost) {
   let gesture: Gesture | null = null, hover: Target | null = null, latestHover: PointerEvent | null = null;
-  let frame = 0, attached = false, orbit = false, suppressClickUntil = 0;
+  let frame = 0, attached = false, suppressClickUntil = 0;
   let removeOverlay: (() => void) | undefined;
   const hint = document.createElement('div'); hint.className = 'cad-drag-hint'; hint.hidden = true;
   hint.setAttribute('role', 'status'); hint.setAttribute('aria-live', 'polite');
-  const tools = document.createElement('span'); tools.className = 'cad-piece-controls cad-drag-controls';
-  tools.dataset.campervanControl = 'true';
-  const tooltip = document.createElement('span'); tooltip.className = 'tcv_tooltip';
-  const buttonFrame = document.createElement('span'); buttonFrame.className = 'tcv_button_frame';
-  const orbitButton = document.createElement('button'); orbitButton.type = 'button';
-  orbitButton.className = 'tcv_reset tcv_btn cad-piece-button';
-  orbitButton.setAttribute('aria-keyshortcuts', 'O');
-  orbitButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"'
-    + ' stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'
-    + '<ellipse cx="12" cy="12" rx="9" ry="5" transform="rotate(-30 12 12)"/>'
-    + '<path d="m18 3 3 3-4 1M7 21l-4-2 2-3"/><circle cx="12" cy="12" r="2"/></svg>';
-  buttonFrame.append(orbitButton); tooltip.append(buttonFrame); tools.append(tooltip);
-  function setOrbit(value: boolean) {
-    cancel(); orbit = value; orbitButton.setAttribute('aria-pressed', String(orbit));
-    orbitButton.classList.toggle('is-active', orbit);
-    const label = `Orbit camera over movable parts · O · Alt-drag also orbits`;
-    orbitButton.setAttribute('aria-label', 'Orbit camera over movable parts');
-    orbitButton.title = label; tooltip.dataset.tooltip = label;
-    container.classList.toggle('cad-orbit-override', orbit);
-  }
-  orbitButton.onclick = () => setOrbit(!orbit);
-  setOrbit(false);
-
   function targetAt(event: MouseEvent): Target | null {
     const viewer = host.viewer(); if (!viewer?.ready) return null;
     if (hasActiveTool(viewer) || viewer.state.get('animationMode') === 'explode') return null;
@@ -173,11 +150,11 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     for (const [field, motion] of Object.entries(host.motions())) {
       const track = motion.tracks.find(item => under(hit.path, item.path)); if (!track) continue;
       const group = groups[track.path]; if (!group) continue;
-      if (field === 'bed_extension_percent' && track.path.includes('/Long bench/Sliding bed/Sliding assembly')) {
+      if (field === 'bed_extension_percent' && track.path.includes('/Long bench/Hinged lid/Sliding bed/Sliding assembly')) {
         return { kind: 'linear', field, track, path: track.path, label: 'Convert bed', group, point: hit.point };
       }
-      if (field === 'drawer_extension_percent' && track.path.endsWith('/Rear drawer/Tray')) {
-        return { kind: 'linear', field, track, path: track.path, label: 'Extend drawer', group, point: hit.point };
+      if (field === 'bed_lid_open_percent' && track.kind === 'rotation') {
+        return { kind: 'hinge', field, track, path: track.path, label: 'Open storage lid', group, point: hit.point };
       }
       if (track.kind === 'rotation' && /\/Cabinet\/(?:(?:Lower|Upper) module\/)?Doors\//.test(track.path)) {
         return { kind: 'hinge', field, track, path: track.path,
@@ -259,7 +236,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     }
     if (current || !latestHover) return;
     const event = latestHover; latestHover = null;
-    const target = orbit || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ? null : targetAt(event);
+    const target = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ? null : targetAt(event);
     if (target?.path !== hover?.path) { hover = target; overlay(target); }
     container.classList.toggle('cad-can-drag', Boolean(target));
     if (target) showHint(`${target.label} · Drag · Alt-drag orbits`, event.clientX, event.clientY);
@@ -291,7 +268,7 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
   }
   function pointerDown(event: PointerEvent) {
     if (!(event.target instanceof HTMLCanvasElement) || event.button !== 0 || !event.isPrimary
-      || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || orbit || gesture) return;
+      || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || gesture) return;
     const target = targetAt(event); if (!target) return;
     const solver = makeSolver(target, event); if (!solver) return;
     gesture = { id: event.pointerId, canvas: event.target, target, snapshot: host.snapshot(), solver,
@@ -319,20 +296,17 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
   }
   function commands(): PlanMenuItem[] {
     return [
-      { label: 'Orbit camera over movable parts', group: 'camera', shortcut: 'O / Alt-drag', ariaShortcut: 'O',
-        checked: orbit, run: () => setOrbit(!orbit) },
       { label: 'Cancel dragging', group: 'motion', shortcut: 'Esc', ariaShortcut: 'Escape',
         enabled: Boolean(gesture?.active), run: cancel },
     ];
   }
   function toolChanged() {
     cancel(); suppressClickUntil = 0;
-    orbitButton.disabled = hasActiveTool(host.viewer());
   }
   return {
     attach() {
       toolChanged();
-      container.querySelector('.tcv_cad_toolbar')?.append(tools); container.append(hint);
+      container.append(hint);
       if (attached) return; attached = true;
       container.addEventListener('pointerdown', pointerDown, true);
       container.addEventListener('pointermove', pointerMove, true);
@@ -352,11 +326,6 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
           event.preventDefault(); event.stopImmediatePropagation(); cancel();
         }
       }, true);
-      container.addEventListener('keydown', event => {
-        if (hasActiveTool(host.viewer()) || event.ctrlKey || event.metaKey || event.altKey || event.key.toLowerCase() !== 'o'
-          || (event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]')) return;
-        event.preventDefault(); event.stopPropagation(); setOrbit(!orbit);
-      });
       window.addEventListener('blur', cancel); window.addEventListener('pagehide', cancel);
       document.addEventListener('visibilitychange', () => { if (document.hidden) cancel(); });
     },

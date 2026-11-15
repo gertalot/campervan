@@ -6,6 +6,29 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 RETIRED_PARAMETERS = frozenset(
     {
+        "drawer_included",
+        "drawer_mount_band_mm",
+        "arch_clearance_mm",
+        "rear_corner_allowance_mm",
+        "drawer_frame_height_mm",
+        "ledge_width_mm",
+        "sliding_strip_width_mm",
+        "strip_end_clearance_mm",
+        "bracket_arm_mm",
+        "bracket_width_mm",
+        "bracket_thickness_mm",
+        "bracket_bend_radius_mm",
+        "bracket_head_allowance_mm",
+        "bracket_clearance_mm",
+        "drawer_ply_mm",
+        "drawer_height_mm",
+        "drawer_side_band_mm",
+        "drawer_floor_clearance_mm",
+        "drawer_length_mm",
+        "slide_thickness_mm",
+        "slide_height_mm",
+        "slide_travel_mm",
+        "drawer_extension_percent",
         "floor_step_inset_mm",
         "floor_step_drop_mm",
         "floor_arch_foot_flare_mm",
@@ -23,6 +46,7 @@ RETIRED_PARAMETERS = frozenset(
         "cross_lid_finger_diameter_mm",
         "cross_lid_open_percent",
         "cross_bed_extension_percent",
+        "cross_bench_skin_thickness_mm",
         "cab_backrest_length_mm",
         "drawer_rear_setback_mm",
         "cabinet_table_height_mm",
@@ -47,15 +71,6 @@ RETIRED_PARAMETERS = frozenset(
 class Parameters(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True, allow_inf_nan=False)
 
-    drawer_included: float = Field(
-        default=1,
-        ge=0,
-        le=1,
-        multiple_of=1,
-        title="Rear drawer",
-        description="Include the drawer tray and sliders in cut lists and the BOM. The design remains in CAD.",
-        json_schema_extra={"unit": "", "group": ["Included in build"], "control": "build"},
-    )
     table_included: float = Field(
         default=1,
         ge=0,
@@ -866,7 +881,7 @@ class Parameters(BaseModel):
         default=400.0,
         gt=0,
         title="Platform height",
-        description="Finished slat-top height; frame height subtracts slat thickness.",
+        description="Finished slat-top height. The box panels support the slats directly.",
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
@@ -875,63 +890,48 @@ class Parameters(BaseModel):
     )
 
     member_width_mm: float = Field(
-        default=60.0, gt=0, title="Member width", json_schema_extra={"unit": "mm", "group": ["Long bench"]}
+        default=60.0,
+        gt=0,
+        title="Member width",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},
     )
 
     inside_radius_mm: float = Field(
-        default=25.0, gt=0, title="Opening radius", json_schema_extra={"unit": "mm", "group": ["Long bench"]}
-    )
-
-    drawer_mount_band_mm: float = Field(
-        default=100.0,
+        default=25.0,
         gt=0,
-        title="Slide mounting band",
-        description="Height of the lower drawer-slide mounting rails in the long bench and cross-bench end frames.",
-        json_schema_extra={"unit": "mm", "group": ["Long bench"]},
-    )
-
-    arch_clearance_mm: float = Field(
-        default=50.0,
-        ge=0,
-        title="Arch clearance",
-        description="Target longitudinal clearance; rear corner setback can reduce the rear gap.",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Wall-side frame"]},
-    )
-
-    rear_corner_allowance_mm: float = Field(
-        default=20.0,
-        ge=0,
-        title="Corner allowance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Wall-side frame"]},
+        title="Opening radius",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},
     )
 
     long_bench_inset_mm: float = Field(
         default=4.0,
         gt=0,
         title="Construction inset",
-        description="Retained wall-side and cab-end layout allowance, independent of cross-bench skin thickness.",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame"]},
+        description="Wall-side setback of the plywood storage box, independent of cross-bench skin thickness.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Storage box"]},
     )
 
-    drawer_frame_height_mm: float = Field(
-        default=300.0,
-        gt=0,
-        title="Frame height",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Internal drawer-support frame"]},
+    bed_inward_offset_mm: float = Field(
+        default=24.0,
+        ge=0,
+        title="Bed inward offset",
+        description="Move both benches, their slats, cushions and mounted table towards the aisle together.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
-    drawer_arch_clearance_mm: float = Field(
+    cross_bench_arch_clearance_mm: float = Field(
         default=10.0,
         gt=0,
-        title="Arch clearance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Internal drawer-support frame"]},
+        title="Wall-side arch clearance",
+        description="Retained cross-bench support offset from the wheel arch.",
+        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},
     )
 
     bed_width_mm: float = Field(
         default=1070.0,
         gt=0,
         title="Bed width",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed"]},
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Hinged lid", "Sliding bed"]},
     )
 
     slat_thickness_mm: float = Field(
@@ -959,11 +959,24 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
-    ledge_width_mm: float = Field(
-        default=18.0,
-        gt=0,
-        title="Ledge width",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Fixed frame", "Guide ledges"]},
+    bed_lid_open_percent: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        title="Open storage lid (%)",
+        description="Lift the complete retracted slat lid from 0 to 75 degrees. Retract the bed and remove cushions first.",
+        json_schema_extra={"unit": "%", "group": ["Long bench", "Hinged lid"], "control": "position"},
+    )
+
+    bed_leg_diameter_mm: float = Field(
+        default=25.0,
+        gt=3,
+        title="Provisional leg diameter",
+        description="Unsourced metal table-leg envelope, with a nominal 1.5mm wall. Length follows the lid rail height.",
+        json_schema_extra={
+            "unit": "mm",
+            "group": ["Long bench", "Hinged lid", "Sliding bed", "Sliding assembly", "Provisional metal legs"],
+        },
     )
 
     bed_extension_percent: float = Field(
@@ -971,146 +984,12 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Long bench conversion (%)",
-        description="0–40 extends the long bed; 40–80 repositions its cushions; 80–100 lowers its backrests.",
+        description="0–40 extends the long bed; 40–80 repositions its cushions; 80–100 lowers its backrest.",
         json_schema_extra={
             "unit": "%",
-            "group": ["Long bench", "Sliding bed", "Sliding assembly"],
+            "group": ["Long bench", "Hinged lid", "Sliding bed", "Sliding assembly"],
             "control": "position",
         },
-    )
-
-    sliding_strip_width_mm: float = Field(
-        default=40.0,
-        gt=0,
-        title="Tie strip width",
-        json_schema_extra={
-            "unit": "mm",
-            "group": ["Long bench", "Sliding bed", "Sliding assembly", "Tie strip (extension stop)"],
-        },
-    )
-
-    strip_end_clearance_mm: float = Field(
-        default=2.0,
-        ge=0,
-        title="Strip end gap",
-        json_schema_extra={
-            "unit": "mm",
-            "group": ["Long bench", "Sliding bed", "Sliding assembly", "Tie strip (extension stop)"],
-        },
-    )
-
-    bracket_arm_mm: float = Field(
-        default=50.0,
-        gt=0,
-        title="Arm length",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    bracket_width_mm: float = Field(
-        default=40.0,
-        gt=0,
-        title="Width",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    bracket_thickness_mm: float = Field(
-        default=2.0,
-        gt=0,
-        title="Thickness",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    bracket_bend_radius_mm: float = Field(
-        default=3.0,
-        gt=0,
-        title="Bend radius",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    bracket_head_allowance_mm: float = Field(
-        default=3.0,
-        ge=0,
-        title="Head allowance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    bracket_clearance_mm: float = Field(
-        default=1.0,
-        gt=0,
-        title="Clearance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Sliding bed", "Sliding assembly", "Angle brackets"]},
-    )
-
-    drawer_ply_mm: float = Field(
-        default=12.0,
-        gt=0,
-        title="Plywood thickness",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Tray"]},
-    )
-
-    drawer_height_mm: float = Field(
-        default=290.0,
-        gt=0,
-        title="Tray height",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Tray"]},
-    )
-
-    drawer_side_band_mm: float = Field(
-        default=90.0,
-        gt=0,
-        title="Side lower band",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Tray"]},
-    )
-
-    drawer_floor_clearance_mm: float = Field(
-        default=10.0,
-        gt=0,
-        title="Floor clearance",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Tray"]},
-    )
-
-    drawer_length_mm: float = Field(
-        default=1200.0,
-        gt=0,
-        title="Closed drawer slider length",
-        description="Also sets the drawer side length; the two end panels cap the sides.",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
-    )
-
-    slide_thickness_mm: float = Field(
-        default=19.0,
-        gt=0,
-        title="Mounting gap",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
-    )
-
-    slide_height_mm: float = Field(
-        default=53.0,
-        gt=0,
-        title="Drawer slider height",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
-    )
-
-    slide_travel_mm: float = Field(
-        default=1215.0,
-        gt=0,
-        title="Travel",
-        json_schema_extra={"unit": "mm", "group": ["Long bench", "Rear drawer", "Drawer sliders"]},
-    )
-
-    drawer_extension_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Drawer extension (%)",
-        json_schema_extra={"unit": "%", "group": ["Long bench", "Rear drawer"], "control": "position"},
-    )
-
-    cross_bench_skin_thickness_mm: float = Field(
-        default=9.0,
-        gt=0,
-        title="Rear skin thickness",
-        json_schema_extra={"unit": "mm", "group": ["Cross bench", "Rear skin"]},
     )
 
     cross_bench_overhang_mm: float = Field(
@@ -1118,7 +997,7 @@ class Parameters(BaseModel):
         ge=0,
         title="Aisle slat overhang / foot recess",
         description=(
-            "Overhang at the aisle end. The wall-side cross-bench frame aligns with the internal drawer support."
+            "Overhang at the aisle end. The wall-side cross-bench frame aligns with the wall-side cross-bench support datum."
         ),
         json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},
     )
@@ -1127,7 +1006,7 @@ class Parameters(BaseModel):
         default=100.0,
         gt=0,
         title="Foam thickness (all)",
-        description="Shared thickness of all five seat and backrest cushions.",
+        description="Shared thickness of all three seat and backrest cushions.",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Cushions"]},
     )
 
@@ -1537,9 +1416,9 @@ class Parameters(BaseModel):
     )
 
     @property
-    def drawer_support_x_mm(self) -> float:
-        """Shared wall-side face of the drawer support and cross-bench leg frame."""
-        return (self.cargo_width_mm - self.arch_gap_mm) / 2 + self.drawer_arch_clearance_mm
+    def cross_bench_support_x_mm(self) -> float:
+        """Wall-side face of the cross-bench leg frame, retained from the previous bed layout."""
+        return (self.cargo_width_mm - self.arch_gap_mm) / 2 + self.cross_bench_arch_clearance_mm
 
     @model_validator(mode="before")
     @classmethod
@@ -1547,6 +1426,10 @@ class Parameters(BaseModel):
         """Preserve construction datums while retiring superseded controls."""
         if isinstance(data, dict):
             data = data.copy()
+            if "bed_box_inward_offset_mm" in data:
+                data.setdefault("bed_inward_offset_mm", data.pop("bed_box_inward_offset_mm"))
+            if "drawer_arch_clearance_mm" in data:
+                data.setdefault("cross_bench_arch_clearance_mm", data.pop("drawer_arch_clearance_mm"))
             for legacy, fields in (
                 (
                     "cabinet_upper_doors_open_percent",
@@ -1578,8 +1461,9 @@ class Parameters(BaseModel):
     @model_validator(mode="after")
     def check_geometry(self) -> Self:
         if (
-            self.bed_width_mm - self.cross_bench_overhang_mm - self.drawer_support_x_mm <= 2 * self.frame_thickness_mm
-            or self.cargo_length_mm - self.seat_length_mm - self.cross_bench_skin_thickness_mm
+            self.bed_width_mm - self.cross_bench_overhang_mm - self.cross_bench_support_x_mm
+            <= 2 * self.frame_thickness_mm
+            or self.cargo_length_mm - self.seat_length_mm
             <= 2 * self.member_width_mm + 2 * self.inside_radius_mm
         ):
             raise ValueError("Cross-bench overhang must leave room for two support frames and their rounded openings.")

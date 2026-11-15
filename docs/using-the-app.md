@@ -19,6 +19,17 @@ Saved scans and the scan-processing backend are retained.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
 
 The browser remembers the camera, visibility and sidebar choices. Use the viewer toolbar to reset or refit the camera.
+
+**Camera → Field of view** widens the perspective view without moving the camera. The slider controls the vertical
+angle from 20° to 100°; 22° preserves the original CAD view, while 60° is a useful starting point inside the van.
+The chosen angle is saved in this browser and reapplied after model reloads. It is retained when switching between
+perspective and orthographic projection, but only changes the perspective view. Wider angles introduce stronger
+perspective distortion; they are not a calibrated reproduction of human vision.
+
+The control reuses a labelled native range input, keyboard interaction and a degree value, following
+[WAI form labels](https://www.w3.org/WAI/tutorials/forms/labels/) and
+[slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/). This does not establish full accessibility compliance.
+
 The cabinet filters reuse native labelled checkboxes, Space-key activation and the existing mixed state when the two
 modules differ, following the relevant [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 This is a focused interaction choice, not a claim of full accessibility conformance.
@@ -79,7 +90,7 @@ meaning. These choices do not establish full accessibility compliance.
 
 ### Included in build
 
-The separate **Included in build** section below Visibility controls the **Rear drawer** and **Lagun table**.
+The separate **Included in build** section below Visibility controls the **Lagun table**.
 Untick an item to omit it from cut lists and active BOM requirements. Choices save automatically, with an explicit
 **Saving… / Saved** message. They do not require Apply or CAD regeneration. Tick an item to include its requirements again.
 The design, hierarchy, dimensions, motion controls and product selections remain available throughout.
@@ -87,9 +98,8 @@ Excluded items are hidden immediately, without changing their saved eye settings
 its previous visibility, including any hidden subcomponents and table pose. Its eye buttons are disabled while
 excluded. The Visibility checkboxes retain their saved choices as well. A failed save restores the prior inclusion.
 
-The drawer option excludes its tray and sliders from manufacturing and purchasing. The stationary bench support
-remains required because it also supports the bed. The table option excludes both tabletop leaves, its mounting
-spacer, Lagun kit and hinges from manufacturing and purchasing; existing bench-frame requirements stay.
+The table option excludes both tabletop leaves, Lagun kit and hinges from manufacturing
+and purchasing. The storage box remains required. The old rear drawer and its purchasing option have been removed.
 Saved purchases with ownership, bought quantities or recorded spending remain as **Unused stock**, with zero future
 requirement. Notes and quantity overrides are retained even when their inactive row is hidden.
 Any previous cutting layouts are used only if they still match the included parts; rearrange affected stock as needed.
@@ -102,13 +112,13 @@ These native labelled checkboxes sit outside the model-parameter form in a separ
 Change dimensions in the sidebar and apply them. The app reports invalid values and explains dependent limits.
 **Regenerate** forces a fresh geometry build. Matching saved geometry loads without rebuilding.
 
-Live sliders and direct dragging operate the bed, rear drawer, individual cabinet doors and mounted table.
+Live sliders and direct dragging operate the sliding bed, storage lid, individual cabinet doors and mounted table.
 Movable parts glow cyan on hover and during dragging. Motion follows the joint limits; there is no collision detection.
 
 | Control | Behaviour |
 | --- | --- |
-| Long bench conversion | Extends the frame, repositions cushions, then lowers backrests. Reverse to undo the sequence. |
-| Drawer extension | Moves the rear drawer on its sliders. |
+| Long bench conversion | Extends the moving slats and legs, moves the blue seat sideways, then lowers the orange backrest alongside it. Reverse to undo the sequence. |
+| Open storage lid | Retracts the slats and lifts the whole lid up to 75 degrees. Extending the bed closes it. |
 | Doors closed | Closes both sliding doors and lowers the rear hatch. At 0%, the hatch is raised 90°; at 100%, all doors are closed. |
 | Cabinet door sliders | Open individual doors; find them under Cabinet → Doors. The model hierarchy places each door in its Lower or Upper module. |
 | Unfold tabletop | Top-level slider: 0% folded, 100% flat. |
@@ -119,8 +129,16 @@ back before retracting the frame. Release pauses and saves the pose. **Escape** 
 Dragging near the tabletop centre keeps its heading; dragging near an edge steers both swivel joints.
 Extending the bed stows a mounted table; retracting the bed restores it when the bed caused the stow.
 
-Use **Alt-drag** or the toolbar's **Orbit camera over movable parts** button (**O**) to orbit over draggable objects.
-Right-click for the same camera action and its shortcut. Rotate the camera if a part's allowed motion is edge-on.
+Use **Alt-drag** to orbit over draggable objects. Rotate the camera if a part's allowed motion is edge-on.
+
+The toolbar's person icon enables **Human view** (**H**, also in the right-click menu). It switches to perspective,
+preserving your position and field of view. It captures and hides the pointer; move the mouse to look around without
+holding a button or reaching a window edge.
+**Up/Down** moves forward/back along your view's horizontal heading, keeping the current height even when looking
+up or down; **Left/Right** moves sideways relative to your view.
+**Shift+Up/Down** moves vertically along world Z. Hold an arrow for continuous movement. **Escape** or the person icon
+leaves Human view and releases the pointer. Losing viewport focus also exits, so fields and menus retain their normal keys.
+Your camera position is saved; Human view itself starts off when you reload.
 
 ### Mannequins and gear
 
@@ -138,6 +156,7 @@ positions. Reference geometry and hardware envelopes still need comparison with 
 ### Finding a piece
 
 Double-click wood in CAD to find it in the cut list. Double-click a cutting piece to frame it in CAD.
+Modified double-clicks do not hide or isolate parts; use the sidebar visibility controls to show or hide geometry.
 Both views highlight the piece in magenta until you select another or press **Escape**. Clicking empty CAD space clears
 selection. The CAD toolbar and right-click menu also offer **Show in cut list** and **Clear selection**.
 Faded near-side vehicle surfaces do not intercept interior piece picking in **See inside** mode.
@@ -248,3 +267,26 @@ Eight estimated M5 × 90mm countersunk fixing sets join the side rails; there ar
 Keep the interface unglued. Slide the upper module into alignment before fitting bolts. Hardware envelopes and
 joint machining need confirmation before cutting. The earlier plywood-cabinet module notes describe the superseded
 construction; use [the replacement construction rationale](research/cabinet-redesign.md) for this model.
+
+
+## Hinged storage bed
+
+The long bench is one plywood box with a centre divider and one full-length sliding-slat lid.
+Under **Long bench → Hinged lid**, **Open storage lid (%)** lifts it up to 75 degrees. Opening storage retracts
+the moving slats; extending the bed closes the lid and stows the table. Opening the lid does not stow the table.
+Remove/reposition cushions first;
+they keep their existing separate couch-to-bed conversion.
+
+Both slat sets now rest directly on the box panels, whose tops reach the slat undersides. The box has no bottom:
+it stands on the van floor. Its wall-side outer face is flush with the slat ends. The centre divider supports the
+middle of the lid. Only the moving front support remains, lying flat above its provisional metal legs.
+
+The box panels remain solid for this first version. The current hinges and opening motion are temporary previews;
+slat connections and hinge placement need redesign after removing both fixed horizontal supports. Hardware,
+wall clearance, alignment and stops remain unresolved.
+
+The **Long bench → Bed inward offset** dimension moves the complete bed towards the aisle. The accepted 24mm
+middle-pillar offset now applies to both benches, all slats and cushions, the moving support and legs, the hinge
+preview and the table's mounted bracket/working pose. The sleeping width stays 1070mm; extension travel stays 452mm.
+The separately positioned stowed table does not move. The earlier box-only setting is preserved as this shared offset.
+The cabinet front now follows the bed offset, reducing its depth by 24mm at the accepted setting. Wheel-arch fitting remains separate.

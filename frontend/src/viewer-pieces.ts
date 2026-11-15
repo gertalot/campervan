@@ -145,9 +145,10 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (path) select(path); else clear();
   });
   container.addEventListener('dblclick', event => {
-    if (hasActiveTool(getViewer()) || !canvasEvent(event)
-      || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!canvasEvent(event)) return;
+    // Reserve all canvas double-clicks: the renderer otherwise uses modifiers to hide/isolate parts.
     event.preventDefault(); event.stopImmediatePropagation();
+    if (hasActiveTool(getViewer()) || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     select(pick(event));
     if (selected) navigate(); else clear();
   }, true);

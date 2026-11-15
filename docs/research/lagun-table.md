@@ -10,7 +10,7 @@ listed $47; local store stock was not confirmed. This replaces the $139 Prempane
 on tabletop stock. Both leaves fit side by side on one panel with kerf allowance; run grain along the 700mm length.
 The finger-jointed, laminated radiata pine is sold for interior furniture and tabletops. Finish both faces and all
 edges, including hinge pockets. The nominal 6.2kg full-panel weight gives approximately 3.0kg for the two blanks,
-before rounding, pockets, finish and hardware. The mounting spacer remains the bench's 18mm plywood.
+before rounding, pockets, finish and hardware. The cross-bench mounting frame uses the bench's 18mm plywood.
 
 Each leaf has 20mm plan-view corner radii and a 3mm round-over on its top and bottom perimeter edges. These
 design dimensions have controls in the sidebar. The cut list carries the rounded outlines; edge round-over
@@ -44,17 +44,17 @@ recess geometry and fixings still need establishing on the hardware.
 `cad/table.py` supplies the bench-mounted table. The cabinet mounting option, its controls, plywood pieces and
 additional bracket have been removed. The Stowed display group shows the folded top with its disassembled leg.
 
-The drawer-frame mounting post is 92mm wide along the van, ending at the cross-bench skin. One matching
-92 × 372 × 18mm spacer brings its outer face flush with the retracted moving frame's outer face. The fixed
-frame's middle post and all slats retain their positions. The moving frame is shortened a further 5mm at its
-cab end, leaving a 5mm overhang beneath the last moving slat.
+The mounting bracket faces rearwards on the cross bench's transverse 18mm frame, between its longitudinal frames.
+Its 92mm-wide solid aisle-side post replaces the old storage-box mounting backing. Shared cross-bench layout datums
+place both bracket and mounted table at X=830, Y=1280, rotated −90° about Z in furniture coordinates, including
+the accepted 24mm inward bed offset. The detached Stowed preview keeps its own position.
 
-At the current dimensions, the mounting post and spacer occupy Y=1188–1280mm in furniture coordinates. The
-moving frame ends at Y=1185mm, leaving 3mm clearance throughout its 452mm sideways travel. The plate occupies
-the same 92mm fore/aft span as the spacer. The illustrative height-clamp handle points vertically so its
-envelope also stays within that span. The tie strip stays inside the fixed frame; the moving slats pass above
-the spacer at the slat bearing height. The existing runtime dimensional check rejects a frame end reaching
-the mounting post. These separations do not certify the unmeasured handle envelope or physical fixings.
+At current dimensions the retracted bed's outermost slats finish at X=642. The upright body occupies X=811–849,
+leaving 169mm; its illustrative clamp handle starts at X=790, leaving 148mm. The bracket spans X=784–876.
+With the saved 750mm table height, the folded top's underside is Z=732 versus the bed slat top at Z=390.
+These are model envelope clearances; handles, holes and fixings still require checking against the actual hardware.
+The upright cannot remain mounted during bed extension across this space; the existing conversion control
+continues to switch the table to Stowed before extending the bed. Opening the storage lid does not stow the table.
 
 The sidebar's **Laptop table** group has a **Show table** selector with **Bench mount** and **Stowed** choices.
 Selection switches visibility immediately. The Bench mount group has live height, arm swivel, tabletop rotation

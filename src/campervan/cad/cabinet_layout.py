@@ -57,7 +57,7 @@ class CabinetLayout:
 
 def cabinet_layout(p: Parameters) -> CabinetLayout:
     w, t, skin = p.cabinet_frame_width_mm, p.cabinet_frame_thickness_mm, p.cabinet_partition_thickness_mm
-    front = p.bed_width_mm + 6.0  # Reserve the visible hinge barrel inside the previous bed envelope.
+    front = p.bed_width_mm + p.bed_inward_offset_mm + 6.0  # Follow the bed's shifted outer edge.
     curve = cabinet_back_profile(p, p.cabinet_back_clearance_mm)
     # A square-topped frame fits below the lowest wall-side ceiling. Skins supply the scribed trim.
     skin_top = ceiling_height(p, front + t, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm)
@@ -117,7 +117,9 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         stock = panel(w + allowance, p.cabinet_length_mm, split).moved(Location((back - w, 0, 0)))
         return sum(solid.volume for solid in (stock - vehicle_room).solids()) < 0.01
 
-    lo, hi = front + t + w + 230.0, p.cargo_width_mm
+    # A disabled loading-clearance check must not push the jamb beyond the fitted wall limit.
+    minimum_opening = 230.0 if FURNITURE_FIT_ENABLED else 0.0
+    lo, hi = front + t + w + minimum_opening, p.cargo_width_mm
     if FURNITURE_FIT_ENABLED and not fits(lo):
         raise ValueError("The rear jamb cannot retain 230mm chair-loading clearance.")
     for _ in range(16):

@@ -261,7 +261,9 @@ export function setupScan(panel: HTMLElement) {
       if (root) disposeObject(root);
       if (token === generation) status.textContent = error instanceof Error ? error.message : String(error);
     } finally {
-      if (token === generation) { loading = false; camera.saveCamera(); attachWorkflow(); }
+      if (token === generation) {
+        loading = false; camera.applyFieldOfView(); camera.saveCamera(); attachWorkflow();
+      }
     }
   }
 

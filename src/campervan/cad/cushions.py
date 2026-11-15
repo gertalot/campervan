@@ -1,4 +1,4 @@
-"""Five foam blocks: fixed cross seat and convertible long-bench cushions."""
+"""Three foam blocks: fixed cross seat and convertible long-bench seat/backrest."""
 
 from dataclasses import dataclass
 from math import cos, pi, radians, sin
@@ -68,14 +68,13 @@ class Cushion:
 def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
     width, length, end = p.long_bench_width_mm, p.seat_length_mm, p.cargo_length_mm
     foam, height = p.foam_thickness_mm, p.platform_height_mm
-    infill = (p.bed_width_mm - width) / 2
+    backrest_height = p.bed_width_mm - width
     cross_length = end - length
-    flat_z, upright_z = height + foam / 2, height + foam + infill / 2
-    # Fold the wall backrests toward the wall while retaining the same day/night bounds.
+    flat_z = height + foam / 2
+    # Fold the wall backrest toward the wall while retaining the same day/night bounds.
     wall_rotation = (0.0, 90.0, 0.0)
     flat = (0.0, 0.0, 0.0)
-    green = (0.46, 0.61, 0.35)
-    if infill <= 0:
+    if backrest_height <= 0:
         raise ValueError("Cushions need positive bed infill.")
     if foam >= min(width / 2, cross_length, length):
         raise ValueError("Upright backrests must leave room on both seat cushions.")
@@ -85,15 +84,15 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 "Long seat",
                 (width, length, foam),
                 (width / 2, length / 2, flat_z),
-                (infill + width / 2, length / 2, flat_z),
+                (backrest_height + width / 2, length / 2, flat_z),
                 flat,
                 (0.19, 0.47, 0.63),
             ),
             Cushion(
                 "Wall backrest",
-                (infill, length, foam),
-                (foam / 2, length / 2, upright_z),
-                (infill / 2, length / 2, flat_z),
+                (backrest_height, length, foam),
+                (foam / 2, length / 2, height + foam + backrest_height / 2),
+                (backrest_height / 2, length / 2, flat_z),
                 wall_rotation,
                 (0.83, 0.52, 0.22),
             ),
@@ -109,22 +108,6 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
                 flat,
                 (0.26, 0.57, 0.70),
                 position_parameter=None,
-            ),
-            Cushion(
-                "Right backrest",
-                (infill, cross_length, foam),
-                (foam / 2, (length + end) / 2, upright_z),
-                (width + 1.5 * infill, cross_length / 2, flat_z),
-                wall_rotation,
-                green,
-            ),
-            Cushion(
-                "Front backrest",
-                (infill, length - cross_length, foam),
-                (foam + (length - cross_length) / 2, end - foam / 2, upright_z),
-                (width + 1.5 * infill, (length + cross_length) / 2, flat_z),
-                (90, 0, 90),
-                green,
             ),
         )
     raise ValueError(f"Unknown cushion bench: {bench}")
