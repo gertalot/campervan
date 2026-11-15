@@ -10,6 +10,8 @@ deployed. The software stakes are low; keep the code, tooling and development pr
   to carry over from Onshape. The current FeatureScript sources are in `docs/fs/`.
 - [README](README.md): setup and the commands to develop, build and run the application.
 - [CAD model conventions](docs/cad-model.md): native assembly structure, coordinates and geometry source mapping.
+- [Cross-section authoring agreement](docs/cross-section-authoring.md): Gert's complete photo-based pillar
+  specification and numerical evidence method. Read it and its photographs before editing the XY Z=991mm draft.
 - Follow Gert's latest decisions and this file when older design or Flow documents prescribe heavier machinery.
 
 ## User experience

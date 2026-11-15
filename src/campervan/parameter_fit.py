@@ -5,8 +5,8 @@ from typing import TypedDict
 
 from campervan.parameters import Parameters
 
-# Vehicle modelling comes first. Furniture conflicts remain unresolved, and this
-# layer must neither block regeneration nor silently resize the furniture.
+# Disable furniture clearance checks and automatic fit adjustments while vehicle
+# modelling continues. Furniture geometry, motion and cutting parts remain enabled.
 FURNITURE_FIT_ENABLED = False
 
 

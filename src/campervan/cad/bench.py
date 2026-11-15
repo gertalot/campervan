@@ -10,6 +10,7 @@ from campervan.cad.panels import frame_panel, panel, slide_mount_frame
 from campervan.cad.sliding_bed import build_bed_slats, build_sliding_bed, long_bed_layout, relieve_aisle_frame
 from campervan.cad.table import LAGUN_BRACKET_WIDTH, MOVING_FRAME_CAB_TRIM
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 
 def build_long_bench(p: Parameters) -> Compound:
@@ -27,19 +28,19 @@ def build_long_bench(p: Parameters) -> Compound:
     post_end = post_start + member
     internal_x = drawer_support_x(p)
 
-    if rear_end >= arch_rear or post_end > length - member:
+    if FURNITURE_FIT_ENABLED and (rear_end >= arch_rear or post_end > length - member):
         raise ValueError("Wheel arch and rear corner leave insufficient room for the bench wall supports.")
-    if p.arch_height_mm > height - member:
+    if FURNITURE_FIT_ENABLED and p.arch_height_mm > height - member:
         raise ValueError("Wheel arch reaches above the underside of the bench top band.")
     end_clearance = min(arch_rear - rear_end, p.arch_clearance_mm)
-    if end_clearance < radius:
+    if FURNITURE_FIT_ENABLED and end_clearance < radius:
         corner_height = height - member - radius + sqrt(radius**2 - (radius - end_clearance) ** 2)
         if p.arch_height_mm > corner_height:
             raise ValueError("Wheel arch intersects the rounded wall-frame opening corners.")
-    if internal_x <= max(total, setback) or internal_x + thickness >= width - thickness:
+    if FURNITURE_FIT_ENABLED and (internal_x <= max(total, setback) or internal_x + thickness >= width - thickness):
         raise ValueError("Internal drawer support must clear the rear corner and leave a rear opening.")
 
-    if p.drawer_frame_height_mm >= height - member:
+    if FURNITURE_FIT_ENABLED and p.drawer_frame_height_mm >= height - member:
         raise ValueError("Drawer support must leave room below the guide ledges.")
 
     parts: list[Part] = []
@@ -59,7 +60,7 @@ def build_long_bench(p: Parameters) -> Compound:
     # Widen only the cab-end post; the middle post and slat layout stay at their datums.
     mount_start = length - LAGUN_BRACKET_WIDTH
     moving_end = layout.slat_ys[-2] + p.slat_width_mm - MOVING_FRAME_CAB_TRIM
-    if moving_end >= mount_start:
+    if FURNITURE_FIT_ENABLED and moving_end >= mount_start:
         raise ValueError("The moving bed frame must end before the 92mm table mounting post.")
     aisle = slide_mount_frame(length, thickness, height, member, p.drawer_mount_band_mm, radius,
                               cab_end_width=LAGUN_BRACKET_WIDTH)

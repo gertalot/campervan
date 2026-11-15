@@ -50,12 +50,19 @@ p { margin: 0; }
 #scan-reference p { font-size: 11px; color: #aab3c0; white-space: normal; margin: 8px 0 0; }
 #scan-reference .cross-sections { margin-top: 16px; padding-top: 12px; border-top: 1px solid #34373e; }
 #scan-reference .cross-sections h3 { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: #c6ced9; }
-#scan-reference .section-family { margin-top: 12px; padding-top: 10px; border-top: 1px solid #34373e; }
-#scan-reference .section-family h4 { margin: 0 0 8px; color: #c6ced9; font-size: 11px; font-weight: 500; }
-#scan-reference .section-station { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  font-size: 10px; color: #aab3c0; }
-#scan-reference .section-station label { white-space: nowrap; }
-#scan-reference .section-station input { width: 65px; margin: 0 3px; }
+#scan-reference .section-family { margin-top: 8px; padding-top: 8px; border-top: 1px solid #34373e; }
+#scan-reference .section-family:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+#scan-reference .section-family h4, #scan-reference .section-opacity h4 {
+  margin: 0 0 3px; color: #c6ced9; font-size: 11px; font-weight: 500; }
+#scan-reference .cross-sections input[type="range"] { height: 18px; padding: 0; margin: 2px 0; }
+#scan-reference .section-station { display: flex; align-items: center; justify-content: flex-end; gap: 3px;
+  margin: 0 0 5px; font-size: 10px; color: #aab3c0; }
+#scan-reference .section-station input { width: 54px; height: 22px; }
+#scan-reference .section-blue-actions { display: flex; align-items: center; justify-content: space-between; }
+#scan-reference .section-blue-actions button { padding: 1px 5px; margin: 0; font-size: 10px; }
+#scan-reference .section-family select { margin-top: 2px; height: 22px; }
+#scan-reference .section-opacity { margin-top: 10px; padding-top: 8px; border-top: 1px solid #34373e; }
+#scan-reference .section-opacity label { display: block; margin-top: 5px; }
 #scan-reference .section-raw { color: #59e68b; }
 #scan-reference .section-raw input { accent-color: #36ed76; }
 #scan-reference .section-blue { color: #79b1ff; }

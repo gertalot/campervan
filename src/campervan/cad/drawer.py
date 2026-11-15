@@ -4,6 +4,7 @@ from build123d import Color, Compound, Location, Part
 
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 
 def drawer_support_x(p: Parameters) -> float:
@@ -27,13 +28,15 @@ def build_rear_drawer(p: Parameters) -> Compound:
         raise ValueError("Drawer dimensions leave insufficient room inside the tray or its open sides.")
     if side_length <= 2 * p.member_width_mm + 2 * p.inside_radius_mm:
         raise ValueError("Drawer sides need room for the end uprights and rounded opening.")
-    if length >= p.seat_length_mm - p.frame_thickness_mm - p.long_bench_inset_mm:
+    if FURNITURE_FIT_ENABLED and length >= p.seat_length_mm - p.frame_thickness_mm - p.long_bench_inset_mm:
         raise ValueError("Closed drawer must clear the cab-end frame.")
-    if bottom + height >= header_bottom:
+    if FURNITURE_FIT_ENABLED and bottom + height >= header_bottom:
         raise ValueError("Drawer must fit below the rear header.")
-    if bottom + ply + p.slide_height_mm > min(p.drawer_mount_band_mm, bottom + p.drawer_side_band_mm):
+    if FURNITURE_FIT_ENABLED and (
+        bottom + ply + p.slide_height_mm > min(p.drawer_mount_band_mm, bottom + p.drawer_side_band_mm)
+    ):
         raise ValueError("Drawer sliders must fit on both continuous mounting bands.")
-    if not p.drawer_length_mm <= p.slide_travel_mm < 2 * p.drawer_length_mm:
+    if FURNITURE_FIT_ENABLED and not p.drawer_length_mm <= p.slide_travel_mm < 2 * p.drawer_length_mm:
         raise ValueError("Drawer slider travel must provide full extension while retaining telescoping overlap.")
 
     pieces: list[Part] = []

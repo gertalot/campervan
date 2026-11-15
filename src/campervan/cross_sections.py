@@ -16,7 +16,7 @@ class SectionRecord(BaseModel):
 
 
 class OutlineSegment(SectionRecord):
-    """Coordinates are horizontal position and CAD Z in the section's plane, in millimetres."""
+    """Coordinates are the authored plane's two coordinates, in millimetres."""
 
     kind: Literal["line", "cubic"]
     end: Point
@@ -32,12 +32,21 @@ class OutlineSegment(SectionRecord):
         return self
 
 
+class SectionPath(SectionRecord):
+    """An authored additional contour, independent of the main body outline."""
+
+    label: str = Field(default="", max_length=240)
+    start: Point
+    segments: list[OutlineSegment] = Field(min_length=1)
+
+
 class CrossSection(SectionRecord):
     id: str = Field(min_length=1, max_length=128)
     label: str = Field(default="", max_length=240)
-    plane: Literal["XZ", "YZ"] = "XZ"
+    plane: Literal["XZ", "YZ", "XY"] = "XZ"
     y_mm: float | None = None
     x_mm: float | None = None
+    z_mm: float | None = None
     scan_key: str = Field(min_length=1, max_length=240)
     centre_x_mm: float = 750.0
     start: Point | None = None
@@ -47,20 +56,34 @@ class CrossSection(SectionRecord):
     mirror_x: bool = True
     opposite_start: Point | None = None
     opposite_segments: list[OutlineSegment] | None = Field(default=None, min_length=1)
+    details: list[SectionPath] = Field(default_factory=list)
+    opposite_details: list[SectionPath] | None = None
     state: Literal["draft", "recorded"] = "draft"
     notes: str = ""
 
     @model_validator(mode="after")
     def plane_and_outline(self) -> Self:
-        if self.opposite_segments is not None and not self.notes.strip():
+        if self.plane == "XY":
+            if self.z_mm is None or self.start is None or self.x_mm is not None or self.y_mm is not None:
+                raise ValueError("An XY section needs z_mm and a [centred X, Y] start, without x_mm or y_mm.")
+            if (
+                self.opposite_start is not None
+                or self.opposite_segments is not None
+                or self.opposite_details is not None
+            ):
+                raise ValueError("An XY section uses one full outline, without opposite outlines.")
+            return self
+        if self.z_mm is not None:
+            raise ValueError("Only XY sections define z_mm.")
+        if (self.opposite_segments is not None or self.opposite_details is not None) and not self.notes.strip():
             raise ValueError("Explain the authored side-to-side exception in the section notes.")
         if self.plane == "YZ":
             if self.x_mm is None or self.start is None or self.y_mm is not None:
                 raise ValueError("A YZ section needs x_mm and a [Y, Z] start, without y_mm.")
             if self.opposite_start is not None and self.opposite_segments is None:
                 raise ValueError("An opposite start needs an authored opposite outline.")
-            if self.opposite_segments is not None and not self.mirror_x:
-                raise ValueError("An opposite YZ outline requires mirror_x so both side positions are displayed.")
+            if (self.opposite_segments is not None or self.opposite_details is not None) and not self.mirror_x:
+                raise ValueError("Opposite YZ outlines require mirror_x so both side positions are displayed.")
             return self
 
         if self.y_mm is None or self.x_mm is not None or self.start is not None:
@@ -77,16 +100,24 @@ class CrossSection(SectionRecord):
         self._validate_half(self.segments, floor, ceiling)
         if self.opposite_segments is not None:
             self._validate_half(self.opposite_segments, floor, ceiling)
+        for detail in self.details + (self.opposite_details or []):
+            if detail.start[0] < 0:
+                raise ValueError("XZ coordinates must be nonnegative distances from the centreline.")
+            self._validate_distances(detail.segments)
         return self
+
+    @staticmethod
+    def _validate_distances(segments: list[OutlineSegment]) -> None:
+        for segment in segments:
+            for point in (segment.end, segment.control1, segment.control2):
+                if point is not None and point[0] < 0:
+                    raise ValueError("XZ coordinates must be nonnegative distances from the centreline.")
 
     @staticmethod
     def _validate_half(segments: list[OutlineSegment], floor: float, ceiling: float) -> None:
         if len(segments) < 3:
             raise ValueError("An XZ half-outline needs at least three segments.")
-        for segment in segments:
-            for point in (segment.end, segment.control1, segment.control2):
-                if point is not None and point[0] < 0:
-                    raise ValueError("XZ coordinates must be nonnegative distances from the centreline.")
+        CrossSection._validate_distances(segments)
         first, last = segments[0], segments[-1]
         if first.kind != "line" or first.end[0] <= 0 or abs(first.end[1] - floor) > 1e-6:
             raise ValueError("The outline must start with a horizontal floor from the centreline.")

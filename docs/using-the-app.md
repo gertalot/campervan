@@ -47,24 +47,35 @@ These are focused design decisions, not a claim of full accessibility compliance
 ### Cross sections
 
 Under **Scan comparison → Cross sections**, **XZ · transverse** moves along Y from rear to front;
-**YZ · longitudinal** moves along X from left to right. Both can be visible together. Each number field sets an
+**YZ · longitudinal** moves along X from left to right; **XY · horizontal** moves along Z from bottom to top.
+All three can be visible together. Each number field sets an
 exact position in millimetres; each slider's arrow keys move it by 1mm. The green line
 is the raw mesh intersection, with scan gaps and fragments retained. It remains available when the scan mesh is hidden.
+The YZ control uses X=0 at the vehicle centreline, negative on the left and positive on the right. Its range is fixed
+at −800 to +800mm, and it initially opens at 0. Scan bounds do not change this range.
+The YZ green control shows both +X and −X sections together, each cut independently from the scan so real left/right
+differences remain visible. The shared green opacity slider controls both. At X=0 there is only one centreline section.
 
 Ask the assistant to create a blue draft at the chosen position. Blue is an authored interpretation based on the scan,
 vehicle construction, measurements and your estimates. There is no point averaging or automatic blue generation.
-Refine it through conversation, then press the section's **Record** button when satisfied. Choose the next position yourself;
+Refine it through conversation, then press **Record** beside Blue sections when satisfied.
+The button appears only when a draft is selected. Choose the next position yourself;
 moving the green section does not change any blue geometry.
 
 **Blue sections** returns to an authored station. The active outline is thicker and prominent; other outlines remain
-faint. Green and blue have independent visibility sliders: 0% hides a line. Position and opacity choices survive a
+faint. The single **Section opacity** group controls green raw lines and blue authored lines across all planes: 0% hides
+that colour. Position and opacity choices survive a
 reload. Authored outlines and recorded sections are retained in `data/cross-sections.json`; back it up with your
 project data. Revising a recorded outline creates a new draft and keeps the original.
 
 Opposite-side YZ profiles normally share the same rear-door shape. An authored YZ pair appears at matching distances
 from the centreline; choosing either station makes that side prominent. Explicitly authored differences can retain
-larger driver-side seatbelt trim or other local asymmetry. The status names the paired X stations, and
-**Record this YZ pair** records both. Longitudinal profiles are never mirrored front-to-back.
+larger driver-side seatbelt trim or other local asymmetry. **Record pair** records both stations together. Longitudinal profiles are never mirrored front-to-back.
+
+The compact layout retains native labelled sliders and numeric fields. Names identify the plane/axis and slider
+value text includes millimetres, following [WAI labels](https://www.w3.org/WAI/tutorials/forms/labels/) and
+[slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/). Shared opacity labels include both colour and
+meaning. These choices do not establish full accessibility compliance.
 
 ### Included in build
 

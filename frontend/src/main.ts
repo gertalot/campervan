@@ -51,7 +51,7 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
   for (const mode of ['seated', 'lying', 'lying-second']) element(`mannequin-${mode}-status`).textContent = message;
 }, pose => mannequinControls.fitted(pose));
 const visibility = setupVisibility(element('visibility'), viewer);
-setupCadScanReference(element('scan-reference'), viewer);
+const scanComparison = setupCadScanReference(element('scan-reference'), viewer);
 const seeInside = element<HTMLInputElement>('see-inside');
 seeInside.checked = localStorage.getItem('campervan.see-inside') !== 'false';
 viewer.setSeeInside(seeInside.checked);
@@ -280,6 +280,7 @@ const controller = createController(api, {
   },
   setParameters(parameters, reset) {
     viewer.setLayoutWidth(parameters.cargo_width_mm);
+    scanComparison?.setCentreline(parameters.cargo_width_mm / 2);
     const stack = 2 * parameters.table_ply_thickness_mm;
     element('table-stowed-summary').textContent = `Folded top with upright and arm stored underneath. `
       + `Approx. ${stack + 77}mm thick including the ${stack}mm timber stack. `

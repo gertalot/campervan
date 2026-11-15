@@ -1,12 +1,17 @@
 import { request } from './api';
 
-export type SectionPlane = 'XZ' | 'YZ';
-export type SectionPoint = [number, number]; // XZ: distance from centreline/Z; YZ: Y/Z, in millimetres
+export type SectionPlane = 'XZ' | 'YZ' | 'XY';
+export type SectionPoint = [number, number]; // XZ: distance/Z; YZ: Y/Z; XY: centred X/Y, in millimetres
 export interface OutlineSegment {
   kind: 'line' | 'cubic';
   end: SectionPoint;
   control1?: SectionPoint | null;
   control2?: SectionPoint | null;
+}
+export interface SectionPath {
+  label: string;
+  start: SectionPoint;
+  segments: OutlineSegment[];
 }
 export interface AuthoredSection {
   id: string;
@@ -14,6 +19,7 @@ export interface AuthoredSection {
   plane: SectionPlane;
   y_mm: number | null;
   x_mm: number | null;
+  z_mm: number | null;
   scan_key: string;
   centre_x_mm: number;
   start: SectionPoint | null;
@@ -23,6 +29,8 @@ export interface AuthoredSection {
   mirror_x: boolean;
   opposite_start: SectionPoint | null;
   opposite_segments: OutlineSegment[] | null;
+  details: SectionPath[];
+  opposite_details: SectionPath[] | null;
   state: 'draft' | 'recorded';
   notes: string;
 }

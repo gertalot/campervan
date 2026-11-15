@@ -24,13 +24,28 @@ The vehicle uses its pre-experiment baseline geometry; no scan-fitted rear-floor
 
 ## Cross sections
 
-**Scan comparison → Cross sections** provides two independent families: XZ intersections move along CAD Y
-(rear to front), and YZ intersections move along CAD X (left to right). Each has its own position slider, number
-field and green/blue opacity sliders. Negative rear stations remain selected while a scan loads. Green is the raw section,
+The [photo-based cross-section authoring agreement](cross-section-authoring.md) preserves Gert's complete pillar
+description, required nine-feature XY Z=991mm construction and numerical evidence method. Consult the complete
+agreement and its photographs before editing that draft. Earlier rejected blue coordinates are not measurements.
+
+**Scan comparison → Cross sections** provides three independent families: XZ intersections move along CAD Y
+(rear to front), YZ intersections move along CAD X (left to right), and XY intersections move along CAD Z
+(bottom to top). Each has its own position slider, number
+field and blue-section dropdown. One green/blue opacity pair controls all planes. Negative rear stations remain
+selected while a scan loads. Green is the raw section,
 including disconnected fragments and gaps. It uses the full-resolution mesh when the result exposes one, otherwise
-the displayed reference mesh. The same saved registration and browser translation offsets apply. Two 50mm triangle
-indexes share the transformed vertex buffers, making both sections independent of CAD regeneration. Coplanar triangles do not acquire invented
+the displayed reference mesh. The same saved registration and browser translation offsets apply. Three 50mm triangle
+indexes share the transformed vertex buffers, making the sections independent of CAD regeneration. Coplanar triangles do not acquire invented
 internal cut edges.
+
+The YZ position control is centre-based: 0 is the vehicle centreline, left is negative, right is positive, and the
+range is exactly −800 to +800mm. It initially resets to 0 when adopting this convention. The centreline comes from
+`cargo_width_mm / 2`; slider offsets convert to registered CAD X by adding that value. Geometry and stored `x_mm`
+remain in their existing CAD frame, preserving recorded outlines and registration. All YZ station labels, numeric
+inputs and saved inspection preferences use the centred convention. Out-of-range saved stations remain retained
+but cannot be selected through this fixed-range control.
+The YZ raw overlay cuts the scan independently at both signed slider positions, +X and −X. It does not mirror or
+average green geometry. The green opacity control applies to both cuts; coincident centreline cuts are drawn once.
 
 Blue outlines are authored through conversation. There is no automatic cleaning, point averaging, symmetry fitting
 or initial shape generation. Gert chooses the station; the assistant uses scan evidence, recorded dimensions, vehicle
@@ -59,13 +74,26 @@ the same authored profile at `x_mm` and `2 * centre_x_mm - x_mm`, matching oppos
 profile at the inspection station is prominent; its counterpart stays faint. `mirror_x: false` authors one station.
 An explicit `opposite_segments` and optional `opposite_start` can capture local trim differences on the other side;
 otherwise it uses the primary profile. An authored departure from symmetry requires explanatory `notes`. Seats and
-seatbelt trim are not forced to match. **Record this YZ pair** explicitly records a shared pair, including its overrides.
+seatbelt trim are not forced to match. **Record pair** explicitly records a shared YZ pair, including its overrides.
+
+XY sections have `z_mm` and an explicit `start`. Their points are `[centred X, Y]`, with signed X offsets
+from `centre_x_mm`. They use a full authored outline without automatic mirroring or opposite outlines; optional
+`details` use the same coordinates. Horizontal stations use the registered scan Z bounds.
 
 Legacy records default to XZ, preserving their coordinates and shape. There is no point averaging or fitting in
-either plane. Cubic segments are subdivided for display to 0.25mm chord tolerance, not fitted to the scan.
+any plane. Cubic segments are subdivided for display to 0.25mm chord tolerance, not fitted to the scan.
 
-The active blue section is 3px wide; inactive outlines are faint. Green is 1.5px wide. Each has its own opacity slider,
-independent of scan opacity/visibility and vehicle visibility. Moving green does not change recorded geometry.
+Separate authored objects, such as seat outlines, use `details`: each has a `label`, explicit `start` and `segments`.
+These contours are independent of the body boundary and are not joined or closed automatically. At a paired YZ
+station the same details appear on both sides unless `opposite_details` explicitly supplies alternatives; departures
+require notes. XZ details use the same nonnegative half-section coordinates as the body. The renderer does not
+generate object outlines from the scan. Any authorized numerical summary, such as averaging measured ceiling drops,
+is recorded as an authoring decision rather than a general contour-cleaning operation.
+
+The active blue section is 3px wide at the blue slider's opacity; inactive outlines are 2px wide at 60% of that opacity.
+Green is 1.5px wide. One green and one blue opacity slider apply to all three planes,
+independent of scan opacity/visibility and vehicle visibility. Position controls and blue-section dropdowns are
+stacked compactly; Record appears beside the dropdown label only for a selected draft. Moving green does not change recorded geometry.
 Selecting an authored section returns to its station. Lines are non-pickable overlays and survive CAD replacement.
 Controls use native range/number inputs with visible units, following the relevant
 [WAI slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/). Thickness uses the existing Three.js
@@ -91,9 +119,9 @@ The vehicle arches and metal floor use the original footprint without that plywo
 Vehicle geometry takes priority over furniture fit. Furniture dimensions remain unchanged; the existing bench-frame
 clearance conflict is deliberately unresolved. Furniture-fit gating and automatic furniture adjustments are disabled
 with `FURNITURE_FIT_ENABLED = False` in `parameter_fit.py`; they do not block vehicle regeneration or constrain the form.
-While disabled, model generation publishes the vehicle and floor plywood only, with vehicle-door motions. Furniture
-and stored-gear construction is paused so its constructor guards cannot block this car-first pass. Saved furniture
-dimensions are retained. The cache fingerprint includes this switch's module.
+The switch controls clearance checks and automatic fit adjustments only. The complete interior, stored gear,
+furniture motions and cutting parts remain enabled, using the saved dimensions even where clearances conflict.
+Checks required to construct valid geometry remain active. The cache fingerprint includes this switch's module.
 
 The vehicle is an interior-design reference, not a reproduction of scan irregularities. Treat the metal floor as
 flat and horizontal; plywood rests on its high points. Impose left/right symmetry on the fixed body, matching

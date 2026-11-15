@@ -1,9 +1,10 @@
-/** Independent section stations and visibility, sharing one authored-section document. */
+/** Independent section stations with shared raw/authored visibility. */
 import { readCrossSections, recordCrossSection, type AuthoredSection, type SectionDocument,
   type SectionPlane } from './cross-section-api';
 
 export function sectionStations(section: AuthoredSection): number[] {
   if (section.plane === 'XZ') return [section.y_mm!];
+  if (section.plane === 'XY') return [section.z_mm!];
   const x = section.x_mm!, opposite = 2 * section.centre_x_mm - x;
   return section.mirror_x && Math.abs(opposite - x) > 0.001 ? [x, opposite] : [x];
 }
@@ -18,9 +19,6 @@ export interface SectionControls {
 interface Panel extends SectionControls {
   range: HTMLInputElement;
   numeric: HTMLInputElement;
-  output: HTMLOutputElement;
-  rawInput: HTMLInputElement;
-  blueInput: HTMLInputElement;
   select: HTMLSelectElement;
   record: HTMLButtonElement;
   rawStatus: HTMLParagraphElement;
@@ -34,108 +32,110 @@ export function createSectionControls(container: HTMLElement, changed: (panel: S
   const host = container.querySelector<HTMLElement>('.cross-sections')!;
   let document: SectionDocument = { version: 1, revision: -1, sections: [] };
   let refreshing = false, recording = false, readFailed = false;
+  let centreX = 750;
   const panels: Panel[] = [];
-  const axis = (plane: SectionPlane) => plane === 'XZ' ? 'Y' : 'X';
+  const opacityKey = 'campervan.cross-sections.opacity';
+  const opacity = JSON.parse(localStorage.getItem(opacityKey)
+    ?? localStorage.getItem('campervan.cross-sections.yz')
+    ?? localStorage.getItem('campervan.cross-sections') ?? '{}');
+  const rawOpacity = Number(opacity.rawOpacity ?? 100) / 100;
+  const blueOpacity = Number(opacity.blueOpacity ?? 100) / 100;
+  localStorage.setItem(opacityKey, JSON.stringify({ rawOpacity: rawOpacity * 100, blueOpacity: blueOpacity * 100 }));
+  const axis = (plane: SectionPlane) => plane === 'XZ' ? 'Y' : plane === 'YZ' ? 'X' : 'Z';
+  const displayCoordinate = (plane: SectionPlane, value: number) => plane === 'YZ' ? value - centreX : value;
+  const worldCoordinate = (plane: SectionPlane, value: number) => plane === 'YZ' ? value + centreX : value;
+  const coordinateLabel = (plane: SectionPlane, value: number) => {
+    const displayed = displayCoordinate(plane, value);
+    return plane === 'YZ' && displayed > 0 ? `+${displayed}` : String(displayed);
+  };
   const active = (panel: Panel) => document.sections.find(section => section.plane === panel.plane
     && section.id === panel.activeId && sectionStations(section).some(at => Math.abs(at - panel.coordinate) < 0.5));
   function save(panel: Panel) {
-    localStorage.setItem(panel.key, JSON.stringify({ coordinate: panel.coordinate,
-      ...(panel.plane === 'XZ' ? { y: panel.coordinate } : {}), activeId: panel.activeId,
-      rawOpacity: panel.rawOpacity * 100, blueOpacity: panel.blueOpacity * 100 }));
+    localStorage.setItem(panel.key, JSON.stringify({ coordinate: displayCoordinate(panel.plane, panel.coordinate),
+      ...(panel.plane === 'YZ' ? { origin: 'centre' } : {}),
+      ...(panel.plane === 'XZ' ? { y: panel.coordinate } : {}), activeId: panel.activeId }));
   }
   function updateBounds(panel: Panel) {
     const stations = document.sections.filter(section => section.plane === panel.plane).flatMap(sectionStations);
-    const low = Math.floor(Math.min(panel.bounds?.[0] ?? Math.min(0, panel.coordinate), ...stations));
-    const high = Math.ceil(Math.max(panel.bounds?.[1]
-      ?? Math.max(panel.coordinate, panel.plane === 'XZ' ? 2000 : 1500), ...stations));
+    const low = panel.plane === 'YZ' ? centreX - 800
+      : Math.floor(Math.min(panel.bounds?.[0] ?? Math.min(0, panel.coordinate), ...stations));
+    const high = panel.plane === 'YZ' ? centreX + 800 : Math.ceil(Math.max(panel.bounds?.[1]
+      ?? Math.max(panel.coordinate, 2000), ...stations));
     for (const input of [panel.range, panel.numeric]) {
-      input.min = String(low); input.max = String(high); input.disabled = !panel.bounds && !stations.length;
+      input.min = String(displayCoordinate(panel.plane, low));
+      input.max = String(displayCoordinate(panel.plane, high)); input.disabled = !panel.bounds && !stations.length;
     }
     panel.coordinate = Math.max(low, Math.min(high, panel.coordinate));
   }
   function update(panel: Panel) {
     const current = active(panel), coordinate = panel.coordinate, coordinateAxis = axis(panel.plane);
-    panel.range.value = panel.numeric.value = String(coordinate);
-    panel.output.value = `${coordinateAxis} = ${coordinate} mm`;
-    panel.range.setAttribute('aria-valuetext', `${coordinateAxis} ${coordinate} millimetres`);
-    for (const [input, opacity] of [[panel.rawInput, panel.rawOpacity], [panel.blueInput, panel.blueOpacity]] as const) {
-      input.value = String(Math.round(opacity * 100));
-      input.setAttribute('aria-valuetext', `${input.value} percent`);
-      input.parentElement!.querySelector('output')!.value = `${input.value}%`;
-    }
+    panel.range.value = panel.numeric.value = String(displayCoordinate(panel.plane, coordinate));
+    panel.range.setAttribute('aria-valuetext', `${coordinateAxis} ${coordinateLabel(panel.plane, coordinate)} millimetres`
+      + (panel.plane === 'YZ' ? ' from vehicle centreline' : panel.plane === 'XY' ? ' height' : ' from rear datum'));
     const choices = document.sections.filter(section => section.plane === panel.plane)
       .flatMap(section => sectionStations(section).map(at => ({ section, at }))).sort((a, b) => a.at - b.at);
-    panel.select.replaceChildren(new Option('At current position', ''), ...choices.map(({ section, at }) =>
-      new Option(`${coordinateAxis} ${at} mm · ${section.label || section.state}${section.label ? ` · ${section.state}` : ''}`,
-        JSON.stringify([section.id, at]))));
+    panel.select.replaceChildren(new Option('At current position', ''), ...choices.map(({ section, at }) => {
+      const outside = panel.plane === 'YZ' && Math.abs(displayCoordinate(panel.plane, at)) > 800;
+      const option = new Option(`${coordinateAxis} ${coordinateLabel(panel.plane, at)} mm · ${section.label || section.state}`
+        + (section.label ? ` · ${section.state}` : '') + (outside ? ' · outside ±800 mm' : ''), JSON.stringify([section.id, at]));
+      option.disabled = outside;
+      return option;
+    }));
     panel.select.value = current ? JSON.stringify([current.id, sectionStations(current)
       .find(at => Math.abs(at - coordinate) < 0.5)!]) : '';
+    panel.record.hidden = !current || current.state !== 'draft';
     panel.record.disabled = recording || !current || current.state === 'recorded';
     panel.record.textContent = current?.plane === 'YZ' && sectionStations(current).length > 1
-      ? 'Record this YZ pair' : `Record this ${panel.plane} section`;
-    const opposite = current?.plane === 'YZ' && Math.abs(current.x_mm! - coordinate) > 0.5;
-    panel.blueStatus.textContent = current
-      ? `${current.state === 'recorded' ? 'Recorded' : 'Draft'} · ${current.label || `${coordinateAxis} ${coordinate} mm`}`
-        + (opposite ? current.opposite_segments ? ' · authored opposite-side detail' : ' · matching opposite profile' : '')
-        + (current.plane === 'YZ' && sectionStations(current).length > 1
-          ? ` · paired X stations ${sectionStations(current).join(' / ')} mm` : '')
-        + (current.notes ? ` — ${current.notes}` : '')
-      : `No blue draft at ${coordinateAxis} = ${coordinate} mm. Ask me to create this section.`;
+      ? 'Record pair' : 'Record';
+    panel.blueStatus.textContent = '';
+    panel.blueStatus.hidden = true;
     changed(panel);
   }
   function move(panel: Panel, value: number, selectedId?: string) {
     if (!Number.isFinite(value)) return;
-    panel.coordinate = Math.max(Number(panel.range.min), Math.min(Number(panel.range.max), value));
+    panel.coordinate = Math.max(worldCoordinate(panel.plane, Number(panel.range.min)),
+      Math.min(worldCoordinate(panel.plane, Number(panel.range.max)), value));
     panel.activeId = selectedId ?? [...document.sections].reverse().find(section => section.plane === panel.plane
       && sectionStations(section).some(at => Math.abs(at - panel.coordinate) < 0.5))?.id ?? null;
     update(panel); save(panel);
   }
-  for (const plane of ['XZ', 'YZ'] as const) {
+  for (const plane of ['XZ', 'YZ', 'XY'] as const) {
     const coordinateAxis = axis(plane);
-    const title = plane === 'XZ' ? 'XZ · transverse' : 'YZ · longitudinal';
-    const direction = plane === 'XZ' ? 'Rear → front' : 'Left → right';
-    const datum = plane === 'XZ' ? 'rear' : 'left';
+    const title = plane === 'XZ' ? 'XZ · transverse' : plane === 'YZ' ? 'YZ · longitudinal' : 'XY · horizontal';
+    const direction = plane === 'XZ' ? 'Rear → front' : plane === 'YZ' ? 'Left (−) → right (+)' : 'Bottom → top';
     host.insertAdjacentHTML('beforeend', `
       <section class="section-family" data-section-plane="${plane}" aria-labelledby="section-${plane}-heading">
         <h4 id="section-${plane}-heading">${title}</h4>
-        <label class="reference-opacity">Position ${coordinateAxis} from ${datum} datum <output data-section-position-value></output>
-          <input type="range" min="0" max="2000" step="1" data-section-position disabled />
+        <input type="range" min="0" max="2000" step="1" data-section-position
+          aria-label="${title} position ${coordinateAxis} in millimetres" disabled />
+        <label class="section-station">${direction}: ${coordinateAxis} =
+          <input type="number" step="1" data-section-position-number
+            aria-label="${title} position ${coordinateAxis} in millimetres" disabled /> mm
         </label>
-        <div class="section-station"><span>${direction}</span>
-          <label>${coordinateAxis} <input type="number" step="1" data-section-position-number disabled /> mm</label>
-        </div>
-        <label class="reference-opacity section-raw">Green · raw scan <output></output>
-          <input type="range" min="0" max="100" step="5" data-section-raw-opacity aria-label="${plane} green raw scan opacity" />
-        </label>
-        <label class="reference-opacity section-blue">Blue · authored <output></output>
-          <input type="range" min="0" max="100" step="5" data-section-blue-opacity aria-label="${plane} blue authored opacity" />
-        </label>
-        <label class="reference-result">Blue sections<select data-section-saved aria-label="${plane} blue sections"></select></label>
-        <button type="button" data-section-record disabled>Record this ${plane} section</button>
-        <p data-section-raw-status role="status"></p>
-        <p data-section-blue-status role="status" aria-live="polite"></p>
+        <div class="section-blue-actions"><label for="section-${plane}-saved">Blue sections</label>
+          <button type="button" data-section-record hidden>Record</button></div>
+        <select id="section-${plane}-saved" data-section-saved aria-label="${plane} blue sections"></select>
+        <p data-section-raw-status role="status" hidden></p>
+        <p data-section-blue-status role="status" aria-live="polite" hidden></p>
       </section>`);
     const family = host.querySelector<HTMLElement>(`[data-section-plane="${plane}"]`)!;
     const find = <T extends HTMLElement>(selector: string) => family.querySelector<T>(selector)!;
-    const key = plane === 'XZ' ? 'campervan.cross-sections' : 'campervan.cross-sections.yz';
+    const key = plane === 'XZ' ? 'campervan.cross-sections' : `campervan.cross-sections.${plane.toLowerCase()}`;
     const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
-    const previous = saved.coordinate ?? saved.y;
+    const previous = plane === 'YZ' ? saved.origin === 'centre' ? saved.coordinate : 0 : saved.coordinate ?? saved.y;
     const panel: Panel = {
-      plane, coordinate: Number.isFinite(previous) ? previous : plane === 'XZ' ? 1000 : 750,
-      activeId: saved.activeId ?? null, rawOpacity: Number(saved.rawOpacity ?? 100) / 100,
-      blueOpacity: Number(saved.blueOpacity ?? 100) / 100, key,
+      plane, coordinate: worldCoordinate(plane, Number.isFinite(previous) ? previous : plane === 'XZ' ? 1000 : 0),
+      activeId: plane === 'YZ' && saved.origin !== 'centre' ? null : saved.activeId ?? null,
+      rawOpacity, blueOpacity, key,
       range: find('[data-section-position]'), numeric: find('[data-section-position-number]'),
-      output: find('[data-section-position-value]'), rawInput: find('[data-section-raw-opacity]'),
-      blueInput: find('[data-section-blue-opacity]'), select: find('[data-section-saved]'),
+      select: find('[data-section-saved]'),
       record: find('[data-section-record]'), rawStatus: find('[data-section-raw-status]'), blueStatus: find('[data-section-blue-status]'),
     };
     panels.push(panel);
-    panel.range.oninput = () => move(panel, panel.range.valueAsNumber);
+    panel.range.oninput = () => move(panel, worldCoordinate(plane, panel.range.valueAsNumber));
     panel.numeric.oninput = () => {
-      if (panel.numeric.value !== '' && panel.numeric.validity.valid) move(panel, panel.numeric.valueAsNumber);
+      if (panel.numeric.value !== '' && panel.numeric.validity.valid) move(panel, worldCoordinate(plane, panel.numeric.valueAsNumber));
     };
-    panel.rawInput.oninput = () => { panel.rawOpacity = Number(panel.rawInput.value) / 100; update(panel); save(panel); };
-    panel.blueInput.oninput = () => { panel.blueOpacity = Number(panel.blueInput.value) / 100; update(panel); save(panel); };
     panel.select.onchange = () => {
       if (!panel.select.value) return;
       const [id, at] = JSON.parse(panel.select.value) as [string, number];
@@ -148,14 +148,39 @@ export function createSectionControls(container: HTMLElement, changed: (panel: S
         document = await recordCrossSection(section.id, document.revision);
       } catch (error) {
         panel.blueStatus.textContent = `Section was not recorded: ${String(error)}`;
+        panel.blueStatus.hidden = false;
         return;
       } finally { recording = false; panels.forEach(item => { item.record.disabled = active(item)?.state !== 'draft'; }); }
       panels.forEach(update); save(panel);
     };
   }
-  host.insertAdjacentHTML('beforeend', '<p>Choose a position, then ask me to draft the blue outline. We refine it together '
-    + 'before you record it. Inactive blue sections stay faint. Opposite-side YZ profiles normally match; '
-    + 'local differences can be authored explicitly. Zero opacity hides a line.</p>');
+  host.insertAdjacentHTML('beforeend', `
+    <section class="section-opacity" aria-labelledby="section-opacity-heading">
+      <h4 id="section-opacity-heading">Section opacity</h4>
+      <label class="section-raw">Green · raw scan <output></output>
+        <input type="range" min="0" max="100" step="5" data-section-opacity="rawOpacity" />
+      </label>
+      <label class="section-blue">Blue · authored <output></output>
+        <input type="range" min="0" max="100" step="5" data-section-opacity="blueOpacity" />
+      </label>
+    </section>`);
+  for (const property of ['rawOpacity', 'blueOpacity'] as const) {
+    const input = host.querySelector<HTMLInputElement>(`[data-section-opacity="${property}"]`)!;
+    const showOpacity = () => {
+      input.value = String(Math.round(panels[0][property] * 100));
+      input.setAttribute('aria-valuetext', input.value + ' percent');
+      input.parentElement!.querySelector('output')!.value = input.value + '%';
+    };
+    showOpacity();
+    input.oninput = () => {
+      const value = Number(input.value) / 100;
+      panels.forEach(panel => { panel[property] = value; changed(panel); });
+      showOpacity();
+      localStorage.setItem(opacityKey, JSON.stringify({
+        rawOpacity: panels[0].rawOpacity * 100, blueOpacity: panels[0].blueOpacity * 100,
+      }));
+    };
+  }
   async function refresh() {
     if (refreshing || recording) return;
     refreshing = true;
@@ -172,7 +197,10 @@ export function createSectionControls(container: HTMLElement, changed: (panel: S
       }
       readFailed = false;
     } catch (error) {
-      readFailed = true; panels.forEach(panel => { panel.blueStatus.textContent = `Could not read blue sections: ${String(error)}`; });
+      readFailed = true; panels.forEach(panel => {
+        panel.blueStatus.textContent = `Could not read blue sections: ${String(error)}`;
+        panel.blueStatus.hidden = false;
+      });
     } finally { refreshing = false; }
   }
   panels.forEach(panel => { updateBounds(panel); move(panel, panel.coordinate, panel.activeId ?? undefined); });
@@ -182,12 +210,26 @@ export function createSectionControls(container: HTMLElement, changed: (panel: S
   return {
     panels,
     sections: () => document.sections,
+    displayCoordinate,
+    rawStations(plane: SectionPlane, coordinate: number) {
+      const opposite = 2 * centreX - coordinate;
+      return plane === 'YZ' && Math.abs(opposite - coordinate) > 0.001 ? [coordinate, opposite] : [coordinate];
+    },
+    setCentreline(value: number) {
+      if (!Number.isFinite(value) || value === centreX) return;
+      const panel = panels.find(item => item.plane === 'YZ')!;
+      const offset = panel.coordinate - centreX;
+      centreX = value; panel.coordinate = centreX + offset;
+      updateBounds(panel); move(panel, panel.coordinate);
+    },
     setBounds(plane: SectionPlane, bounds: [number, number] | undefined) {
       const panel = panels.find(item => item.plane === plane)!;
       panel.bounds = bounds; updateBounds(panel); move(panel, panel.coordinate, panel.activeId ?? undefined);
     },
     status(plane: SectionPlane, text: string) {
-      panels.find(item => item.plane === plane)!.rawStatus.textContent = text;
+      const status = panels.find(item => item.plane === plane)!.rawStatus;
+      status.textContent = text;
+      status.hidden = !text;
     },
   };
 }

@@ -34,20 +34,36 @@ function pathPoints(start: SectionPoint, segments: OutlineSegment[]): SectionPoi
 
 function outlinePositions(section: AuthoredSection, station: number): Float32Array {
   const positions: number[] = [];
-  if (section.plane === 'YZ') {
+  if (section.plane === 'XY') {
+    for (const path of [{ start: section.start!, segments: section.segments }, ...section.details]) {
+      const points = pathPoints(path.start, path.segments);
+      for (let i = 1; i < points.length; i++) {
+        for (const [x, y] of [points[i - 1], points[i]]) positions.push(section.centre_x_mm + x, y, station);
+      }
+    }
+  } else if (section.plane === 'YZ') {
     const opposite = Math.abs(station - section.x_mm!) > 0.001;
-    const points = pathPoints(opposite ? section.opposite_start ?? section.start! : section.start!,
-      opposite ? section.opposite_segments ?? section.segments : section.segments);
-    for (let i = 1; i < points.length; i++) {
-      for (const [y, z] of [points[i - 1], points[i]]) positions.push(station, y, z);
+    const paths = [{
+      start: opposite ? section.opposite_start ?? section.start! : section.start!,
+      segments: opposite ? section.opposite_segments ?? section.segments : section.segments,
+    }, ...(opposite ? section.opposite_details ?? section.details ?? [] : section.details ?? [])];
+    for (const path of paths) {
+      const points = pathPoints(path.start, path.segments);
+      for (let i = 1; i < points.length; i++) {
+        for (const [y, z] of [points[i - 1], points[i]]) positions.push(station, y, z);
+      }
     }
   } else {
     for (const sign of [-1, 1]) {
-      const points = pathPoints([0, section.floor_z_mm!],
-        sign > 0 ? section.opposite_segments ?? section.segments : section.segments);
-      for (let i = 1; i < points.length; i++) {
-        for (const point of [points[i - 1], points[i]]) {
-          positions.push(section.centre_x_mm + sign * point[0], section.y_mm!, point[1]);
+      const paths = [{ start: [0, section.floor_z_mm!] as SectionPoint,
+        segments: sign > 0 ? section.opposite_segments ?? section.segments : section.segments },
+      ...(sign > 0 ? section.opposite_details ?? section.details ?? [] : section.details ?? [])];
+      for (const path of paths) {
+        const points = pathPoints(path.start, path.segments);
+        for (let i = 1; i < points.length; i++) {
+          for (const point of [points[i - 1], points[i]]) {
+            positions.push(section.centre_x_mm + sign * point[0], section.y_mm!, point[1]);
+          }
         }
       }
     }
@@ -96,6 +112,7 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
   const layers = {
     XZ: { raw: new Group(), blue: new Group(), index: undefined as ScanSectionIndex | undefined },
     YZ: { raw: new Group(), blue: new Group(), index: undefined as ScanSectionIndex | undefined },
+    XY: { raw: new Group(), blue: new Group(), index: undefined as ScanSectionIndex | undefined },
   };
   for (const layer of Object.values(layers)) overlay.add(layer.blue, layer.raw);
   viewer.setCrossSections(overlay);
@@ -113,20 +130,22 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
       const layer = layers[panel.plane];
       clear(layer.raw); clear(layer.blue);
       if (layer.index) {
-        const segments = layer.index.section(panel.coordinate);
-        if (segments.length) {
-          const contour = line(segments, '#36ed76', 1.5, panel.rawOpacity, 9002);
-          contour.visible = panel.rawOpacity > 0; layer.raw.add(contour);
+        for (const station of controls.rawStations(panel.plane, panel.coordinate)) {
+          const segments = layer.index.section(station);
+          if (segments.length) {
+            const contour = line(segments, '#36ed76', 1.5, panel.rawOpacity, 9002);
+            contour.name = `${panel.plane} raw section at ${controls.displayCoordinate(panel.plane, station)} mm`;
+            contour.visible = panel.rawOpacity > 0; layer.raw.add(contour);
+          }
         }
-        controls.status(panel.plane, (segments.length / 6) + ' raw scan segments at '
-          + (panel.plane === 'XZ' ? 'Y' : 'X') + ' = ' + panel.coordinate + ' mm. Gaps remain open.');
+        controls.status(panel.plane, '');
       }
       for (const section of controls.sections()) {
         if (section.plane !== panel.plane) continue;
         for (const station of sectionStations(section)) {
           const selected = section.id === panel.activeId && Math.abs(station - panel.coordinate) < 0.5;
-          const outline = line(outlinePositions(section, station), '#368cff', selected ? 3 : 1.25,
-            panel.blueOpacity * (selected ? 1 : 0.14), selected ? 9001 : 9000);
+          const outline = line(outlinePositions(section, station), '#368cff', selected ? 3 : 2,
+            panel.blueOpacity * (selected ? 1 : 0.6), selected ? 9001 : 9000);
           outline.name = 'Blue section ' + section.id + ' at ' + station;
           outline.visible = panel.blueOpacity > 0; layer.blue.add(outline);
         }
@@ -142,20 +161,21 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
     if (sourceOwned && source) disposeObject(source);
   });
   return {
+    setCentreline: controls.setCentreline,
     async setReference(scan: ScanResult | undefined, reference: Object3D | undefined) {
       const token = ++generation;
-      for (const plane of ['XZ', 'YZ'] as const) {
+      for (const plane of ['XZ', 'YZ', 'XY'] as const) {
         layers[plane].index = undefined; clear(layers[plane].raw); controls.setBounds(plane, undefined);
       }
       viewer.setCrossSections(overlay);
       if (!scan || !reference) {
-        for (const plane of ['XZ', 'YZ'] as const) controls.status(plane, 'Choose a registered scan to inspect its sections.');
+        for (const plane of ['XZ', 'YZ', 'XY'] as const) controls.status(plane, 'Choose a registered scan to inspect its sections.');
         return;
       }
       const registration = reference.matrix.clone();
       const full = scan.layers?.find(layer => layer.id === 'mesh-full');
       const nextKey = scan.key + ':' + (full?.asset ?? 'display');
-      for (const plane of ['XZ', 'YZ'] as const) controls.status(plane, full
+      for (const plane of ['XZ', 'YZ', 'XY'] as const) controls.status(plane, full
         ? 'Loading full-resolution scan for sections…' : 'Preparing displayed scan for sections…');
       try {
         if (!full || sourceKey !== nextKey || !source) {
@@ -168,16 +188,17 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
         await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
         if (token !== generation) return;
         const meshes = indexedMeshes(source, sourceOwned ? registration : new Matrix4());
-        // The two axis indexes retain the same transformed vertex/index buffers.
+        // All axis indexes share the transformed vertex/index buffers.
         layers.XZ.index = new ScanSectionIndex(meshes, 1);
         layers.YZ.index = new ScanSectionIndex(meshes, 0);
-        for (const plane of ['XZ', 'YZ'] as const) {
+        layers.XY.index = new ScanSectionIndex(meshes, 2);
+        for (const plane of ['XZ', 'YZ', 'XY'] as const) {
           const index = layers[plane].index!;
           controls.setBounds(plane, [index.min, index.max]);
         }
       } catch (error) {
         if (token === generation) {
-          for (const plane of ['XZ', 'YZ'] as const) {
+          for (const plane of ['XZ', 'YZ', 'XY'] as const) {
             layers[plane].index = undefined;
             controls.status(plane, 'Could not section the scan: ' + String(error));
           }

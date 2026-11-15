@@ -10,6 +10,7 @@ from campervan.cad.drawer import drawer_support_x
 from campervan.cad.panels import panel, slide_mount_frame
 from campervan.cad.table import MOVING_FRAME_CAB_TRIM
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 
 @dataclass(frozen=True)
@@ -43,21 +44,27 @@ def long_bed_layout(p: Parameters) -> BedLayout:
         raise ValueError("Long bench needs 7–101 interleaving slats, including three moving slats for the brackets.")
     margin = (p.seat_length_mm - (count * p.slat_width_mm + (count - 1) * p.slat_side_gap_mm)) / 2
     ys = tuple(margin + i * pitch for i in range(count))
-    if travel <= 0 or strip_x < wall_inner + p.slat_side_gap_mm:
+    if travel <= 0 or (FURNITURE_FIT_ENABLED and strip_x < wall_inner + p.slat_side_gap_mm):
         raise ValueError(
             "Bed width must allow extension while keeping the retracted tie strip between the fixed frames."
         )
-    if p.strip_end_clearance_mm >= p.ledge_width_mm or setback + 2 * p.ledge_width_mm >= p.seat_length_mm - wall_inner:
+    if FURNITURE_FIT_ENABLED and (
+        p.strip_end_clearance_mm >= p.ledge_width_mm or setback + 2 * p.ledge_width_mm >= p.seat_length_mm - wall_inner
+    ):
         raise ValueError("Guide ledges need clear space between them and positive bearing under the tie strip.")
-    if any(p.member_width_mm <= y < setback for y in ys[::2]):
+    if FURNITURE_FIT_ENABLED and any(p.member_width_mm <= y < setback for y in ys[::2]):
         raise ValueError("A shortened rear fixed slat misses the rear support; adjust slat spacing or bench length.")
-    if ys[1] + p.slat_width_mm <= rear or ys[-2] >= front:
+    if FURNITURE_FIT_ENABLED and (ys[1] + p.slat_width_mm <= rear or ys[-2] >= front):
         raise ValueError("The first and last moving slats must overlap the tie strip.")
     height = p.platform_height_mm - p.slat_thickness_mm
-    if 2 * p.frame_thickness_mm > p.member_width_mm or height - 2 * p.frame_thickness_mm <= p.arch_height_mm:
+    if 2 * p.frame_thickness_mm > p.member_width_mm or (
+        FURNITURE_FIT_ENABLED and height - 2 * p.frame_thickness_mm <= p.arch_height_mm
+    ):
         raise ValueError("Tie strip and ledges need room in the top band and above the wheel arch.")
     depth = p.bracket_thickness_mm + max(p.bracket_head_allowance_mm, p.bracket_bend_radius_mm) + p.bracket_clearance_mm
-    if strip_x + p.sliding_strip_width_mm + p.bracket_clearance_mm > p.long_bench_width_mm - p.bracket_arm_mm:
+    if FURNITURE_FIT_ENABLED and (
+        strip_x + p.sliding_strip_width_mm + p.bracket_clearance_mm > p.long_bench_width_mm - p.bracket_arm_mm
+    ):
         raise ValueError("Bracket arms must clear the moving tie strip.")
     if (
         p.bracket_width_mm + 2 * p.bracket_clearance_mm > p.slat_width_mm

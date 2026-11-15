@@ -23,8 +23,6 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     <label class="reference-opacity">Vehicle opacity <output data-vehicle-opacity-value></output>
       <input type="range" min="0" max="100" step="5" data-vehicle-opacity />
     </label>
-    <p>Light pink is vehicle CAD. See inside fades nearby vehicle surfaces and hides the outside-facing backs
-      of scan surfaces. Both opacity sliders still apply. Furniture and visibility switches keep their usual behaviour.</p>
     <details><summary>Reference position</summary>
       <p>Offsets in CAD millimetres. X across, Y forwards, Z up. Reset restores the saved registration.</p>
       <div class="reference-offsets">
@@ -166,4 +164,5 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   }
   refresh.onclick = () => { void refreshReferences(); };
   void refreshReferences();
+  return { setCentreline: sections.setCentreline };
 }

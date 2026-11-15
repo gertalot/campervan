@@ -9,6 +9,7 @@ from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 WOOD = Color(0.84, 0.64, 0.39)
 SKIN = Color(0.91, 0.80, 0.62)
@@ -27,7 +28,7 @@ def build_cabinet(p: Parameters) -> Compound:
     posts: list[Part] = []
     joint_rails: list[tuple[str, Part]] = []
     bridge_top = layout.first - shelf - w
-    if bridge_top - p.cabinet_bridge_height_mm < p.arch_height_mm + 3:
+    if FURNITURE_FIT_ENABLED and bridge_top - p.cabinet_bridge_height_mm < p.arch_height_mm + 3:
         raise ValueError("The wheel-arch bridge beneath the lower shelf cleats must clear the wheel arch.")
 
     def fit(part: Part) -> Part:
@@ -76,7 +77,7 @@ def build_cabinet(p: Parameters) -> Compound:
     def add(part: Part, module: str, group: str, *, fitted: bool = True) -> Part:
         if fitted:
             fitted_part = scribed_sheet(part, 1) if group == "Skin" else fit(part)
-            if group == "Frames" and part.volume - fitted_part.volume > 0.1:
+            if FURNITURE_FIT_ENABLED and group == "Frames" and part.volume - fitted_part.volume > 0.1:
                 raise ValueError(f"Cabinet timber intersects the fitting envelope: {part.label}")
             part = fitted_part
         if group == "Frames" and module == "Upper module" and part.bounding_box().min.Z < layout.split - 0.001:

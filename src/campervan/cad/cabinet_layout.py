@@ -7,6 +7,7 @@ from build123d import Edge, Face, Location, Part, Plane, Side, Solid, Wire
 from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
+from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 
 def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
@@ -70,7 +71,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     bays = ((w, middle - w / 2), (middle + w / 2, p.cabinet_length_mm - w))
     if min(end - start for start, end in bays) < 120 or not w < first < split - 2 * w < upper < top - w:
         raise ValueError("Cabinet bays and shelves must leave usable inset-door openings.")
-    if first - w < p.arch_height_mm + 3:
+    if FURNITURE_FIT_ENABLED and first - w < p.arch_height_mm + 3:
         raise ValueError("Cabinet lower shelf rail must clear the wheel arch.")
     if w <= p.cabinet_shelf_thickness_mm + 12:
         raise ValueError("Cabinet timber must leave room for the shelf seats and module fixings.")
@@ -117,7 +118,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         return sum(solid.volume for solid in (stock - vehicle_room).solids()) < 0.01
 
     lo, hi = front + t + w + 230.0, p.cargo_width_mm
-    if not fits(lo):
+    if FURNITURE_FIT_ENABLED and not fits(lo):
         raise ValueError("The rear jamb cannot retain 230mm chair-loading clearance.")
     for _ in range(16):
         mid = (lo + hi) / 2

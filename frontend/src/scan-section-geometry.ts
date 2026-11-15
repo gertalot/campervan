@@ -1,4 +1,4 @@
-/** Exact XZ or YZ cuts through the registered scan, in CAD millimetres. */
+/** Exact axis-aligned cuts through the registered scan, in CAD millimetres. */
 export interface SectionMesh {
   positions: Float32Array;
   indices: Uint32Array;
@@ -16,7 +16,7 @@ export class ScanSectionIndex {
   readonly max: number;
   private readonly bins = new Map<number, Bucket[]>();
 
-  constructor(meshes: SectionMesh[], private readonly axis: 0 | 1 = 1) {
+  constructor(meshes: SectionMesh[], private readonly axis: 0 | 1 | 2 = 1) {
     let min = Infinity, max = -Infinity, faceCount = 0;
     for (const mesh of meshes) {
       const { positions, indices } = mesh;
