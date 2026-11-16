@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from math import floor
 
-from build123d import Align, Axis, Color, Compound, Cylinder, Location, Part, fillet
+from build123d import Align, Axis, Color, Compound, Cylinder, Face, Location, Part, Solid, Wire, fillet
 
 from campervan.cad.bed_motion import bed_offset
 from campervan.cad.bed_lift import RAIL_WIDTH, lid_location
@@ -16,6 +16,7 @@ HINGE_SLAT_TRIM = 5.0
 COMB_TOOTH_OVERHANG = 20.0
 BOX_RAIL_RESERVE = 20.0
 MOVING_FRAME_UPSTAND = 50.0
+SIDE_RAIL_END_RADIUS = 10.0
 FIXED_SLAT_END_TRIM = 10.0
 FIXED_SLAT_GROOVE_DEPTH = 8.0
 FIXED_SLAT_GROOVE_CLEARANCE = 2.0
@@ -47,6 +48,12 @@ def lid_slots(p: Parameters, slat_ys: tuple[float, ...]) -> tuple[tuple[float, f
     return tuple((start, start + width) for start in starts)
 
 
+def rear_wall_corner_cutter(cut: float, height: float) -> Solid:
+    """Trim the rear/wall corner to X + Y = cut, through the whole thickness."""
+    outline = Wire.make_polygon([(-1, -1, -1), (cut + 1, -1, -1), (-1, cut + 1, -1)])
+    return Solid.extrude(Face(outline), (0, 0, height + 2))
+
+
 def long_bed_layout(p: Parameters) -> BedLayout:
     gap = p.slat_side_gap_mm
     rear = p.long_bench_inset_mm + p.frame_thickness_mm
@@ -69,7 +76,7 @@ def long_bed_layout(p: Parameters) -> BedLayout:
         raise ValueError("The storage box needs positive internal height and width below its lid supports.")
     if p.frame_thickness_mm >= BOX_RAIL_RESERVE:
         raise ValueError("The moving plywood rail must fit within the reserved 20mm beside the box wall.")
-    if front - lid_rear - p.bed_slat_rear_setback_mm - HINGE_SLAT_TRIM - p.frame_thickness_mm <= travel:
+    if front - lid_rear - p.bed_slat_rear_setback_mm - HINGE_SLAT_TRIM - 2 * p.frame_thickness_mm <= travel:
         raise ValueError("Shortened sliding slats must retain positive overlap at full bed extension.")
     if 2 * p.bed_lid_strip_width_mm >= p.long_bench_width_mm:
         raise ValueError("The two solid lid bands must leave positive ventilation slot length.")
@@ -110,15 +117,18 @@ def long_bed_layout(p: Parameters) -> BedLayout:
 def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compound:
     name = "Moving" if moving else "Fixed"
     # Both slat sets reach back across the space freed by the removed hinge strip.
-    slat_length = layout.front - layout.lid_rear - p.bed_slat_rear_setback_mm - HINGE_SLAT_TRIM
+    slat_length = (layout.front - layout.lid_rear - p.bed_slat_rear_setback_mm
+                   - HINGE_SLAT_TRIM - p.frame_thickness_mm)
     if moving:
         slat_length -= p.frame_thickness_mm  # Butt against the raised frame instead of overlapping it.
     else:
         slat_length -= FIXED_SLAT_END_TRIM
-    x = p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM
+    x = p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
     slats = []
     for i in range(1 if moving else 0, len(layout.slat_ys), 2):
         slat = panel(slat_length, p.slat_width_mm, p.slat_thickness_mm)
+        if not moving and i == 0:
+            slat -= rear_wall_corner_cutter(p.slat_width_mm / 2, p.slat_thickness_mm)
         slat.location = Location((x, layout.slat_ys[i], layout.slat_bottom - layout.box_top))
         slat.label, slat.color = f"{name} slat {i + 1:02}", WOOD if moving else FIXED_WOOD
         slats.append(slat)
@@ -131,6 +141,7 @@ def slat_support(p: Parameters, layout: BedLayout, name: str, x: float) -> Part:
     rail = frame_panel(length, p.frame_thickness_mm, layout.slat_bottom + MOVING_FRAME_UPSTAND,
                        [(member, length - member, -2 * radius,
                          layout.slat_bottom - p.bed_moving_rail_height_mm)], radius)
+    rail = fillet(rail.edges().filter_by(Axis.Y).group_by(Axis.Z)[-1], SIDE_RAIL_END_RADIUS)
     clearance = FIXED_SLAT_GROOVE_CLEARANCE
     for y in layout.slat_ys[::2]:
         groove = panel(p.slat_width_mm + 2 * clearance, FIXED_SLAT_GROOVE_DEPTH + 1,
@@ -185,6 +196,11 @@ def build_sliding_bed(p: Parameters, layout: BedLayout) -> Compound:
 def build_lid(p: Parameters, layout: BedLayout) -> Compound:
     width = p.long_bench_width_mm - p.frame_thickness_mm
     strip = panel(width, p.seat_length_mm, p.frame_thickness_mm)
+    # Continue the first fixed slat's 45° cut through the plywood, accounting
+    # for the slat's wall setback and the rear row margin.
+    corner_cut = (p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
+                  + layout.slat_ys[0] + p.slat_width_mm / 2)
+    strip -= rear_wall_corner_cutter(corner_cut, p.frame_thickness_mm)
     band = p.bed_lid_strip_width_mm
     slot_length = p.long_bench_width_mm - 2 * band
     for start, end in lid_slots(p, layout.slat_ys):
@@ -202,10 +218,15 @@ def build_lid(p: Parameters, layout: BedLayout) -> Compound:
         edge_relief = panel(rebate_depth + 1, notch_width, p.frame_thickness_mm + 2)
         strip -= edge_relief.moved(Location((width - rebate_depth, start_y, -1)))
     strip.label, strip.color = "Slotted plywood lid", Color(0.88, 0.61, 0.25)
+    retainer = panel(p.frame_thickness_mm, p.seat_length_mm - corner_cut, MOVING_FRAME_UPSTAND)
+    retainer = fillet(retainer.edges().filter_by(Axis.X).group_by(Axis.Z)[-1], SIDE_RAIL_END_RADIUS)
+    retainer.label, retainer.color = "Wall-side cushion rail", Color(0.88, 0.61, 0.25)
+    retainer.location = Location((0, corner_cut, p.frame_thickness_mm))
     lid = Compound(
         label="Hinged lid",
         children=[
             strip,
+            retainer,
             build_bed_slats(p, layout, moving=False),
             build_sliding_bed(p, layout),
         ],

@@ -3,7 +3,7 @@
 import { createViewerCamera, type CameraState, type CameraViewer } from './viewer-camera';
 import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPose } from './mannequin';
 import { createPillows } from './pillows';
-import { createSeatCushion } from './seat-cushion';
+import { createCushionFoam } from './cushion-foam';
 import { createVehicleFade } from './vehicle-fade';
 import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
@@ -62,7 +62,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   const mannequins: Partial<Record<MannequinPose['mode'], Awaited<ReturnType<typeof loadMannequin>>>> = {};
   let mannequinLoading: Promise<void> | undefined;
   const mannequinPoses = { seated: { ...seatedPose }, lying: { ...lyingPose }, 'lying-second': { ...secondLyingPose } };
-  let seatCushion: ReturnType<typeof createSeatCushion> | undefined;
+  let seatCushion: ReturnType<typeof createCushionFoam> | undefined;
   const vehicleFade = createVehicleFade();
   const layoutMirror = createLayoutMirror();
   let scanReference: Object3D | undefined;
@@ -101,7 +101,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     pillows = module.createPillows();
     layoutMirror.inOriginalCoordinates(() => {
       pillows.attach(viewer!.rendered.nestedGroup.groups);
-      pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+      const lid = positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0;
+      const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
+      pillows.pose(bed, lid);
+      pillows.squash(bed);
     });
     viewer.update(true, true);
   });
@@ -124,25 +127,52 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   function showMannequin(render = true) {
     if (!viewer?.ready) return;
     layoutMirror.inOriginalCoordinates(() => {
+      const lid = positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0;
+      const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
+      pillows.pose(bed, lid);
       fitMannequin();
+      pillows.squash(bed);
       for (const model of Object.values(mannequins)) layoutMirror.add(model.root);
     });
     if (render) viewer.update(true, false);
+  }
+
+  function cushionRails() {
+    const groups = viewer!.rendered.nestedGroup.groups;
+    const lid = '/Campervan/Long bench/Hinged lid';
+    return [
+      `${lid}/Wall-side cushion rail`,
+      `${lid}/Sliding bed/Sliding assembly/Moving front slat support/Moving support frame`,
+    ].flatMap(path => groups[path] ? [groups[path] as unknown as Object3D] : []);
+  }
+
+  function renderFoam() {
+    if (!viewer?.ready) return;
+    (viewer as unknown as PieceViewer).idPicker?.setDirty();
+    viewer.update(true, false);
   }
 
   function fitMannequin() {
     if (!viewer?.ready) return;
     const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
     for (const model of Object.values(mannequins)) model.root.visible = false;
+    const groups = viewer.rendered.nestedGroup.groups;
+    const seat = groups['/Campervan/Long bench/Cushions/Long seat/Foam/Core'] as unknown as Object3D;
+    const back = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam/Core'] as unknown as Object3D;
+    const crossSeat = groups['/Campervan/Cross bench/Cushions/Cross seat/Foam/Core'] as unknown as Object3D;
+    if (!seat || !back || !crossSeat) return;
+    seatCushion ??= createCushionFoam(seat, back, crossSeat, cushionRails(), renderFoam,
+      operation => layoutMirror.inOriginalCoordinates(operation));
+    if ((positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0) > 0) {
+      seatCushion.deform(null, positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0);
+      pillows.supportHead(null); pillows.supportHead(null, false);
+      onMannequinStatus('Close the storage lid to show the seated preview.');
+      return;
+    }
     const mode = bed === 100 ? 'lying' : 'seated';
     const mannequin = mannequins[mode];
     const mannequinPose = mannequinPoses[mode];
-    if (!mannequin) return;
-    const groups = viewer.rendered.nestedGroup.groups;
-    const seat = groups['/Campervan/Long bench/Cushions/Long seat/Foam'] as unknown as Object3D;
-    const back = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam'] as unknown as Object3D;
-    if (!seat || !back) return;
-    seatCushion ??= createSeatCushion(seat);
+    if (!mannequin) { seatCushion.deform(null); return; }
     pillows.supportHead(null);
     pillows.supportHead(null, false);
     if (mannequinPose.mode === 'lying') {
@@ -223,9 +253,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     }
     applyMotionTransforms(positions, changed);
     const bedChanged = !changed || changed.has('bed_extension_percent');
-    if (bedChanged) pillows.pose(positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0);
+    const lidChanged = !changed || changed.has('bed_lid_open_percent');
+    const foamChanged = bedChanged || lidChanged || mannequinChanged;
     if (!changed || changed.has('table_mount')) showTables();
-    if (bedChanged || mannequinChanged) showMannequin(false);
+    if (foamChanged) showMannequin(false);
     (viewer as unknown as PieceViewer).idPicker?.setDirty();
     viewer.update(true, true);
   }

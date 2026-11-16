@@ -431,8 +431,15 @@ Seven 51 × 42mm top rebates accommodate the horizontal bracket flanges. They ar
 clearance around 2mm steel and retaining 15mm of plywood below. Only a narrow 3mm edge relief passes through
 the lid for each vertical flange. The recesses stop 31mm short of the ventilation slots and open towards the aisle.
 Both slat sets extend 100mm wallward into the space freed by the removed stationary strip. Fixed slats are
-585mm long (X27–612 retracted), shortened by 10mm at the aisle end. Moving slats are 577mm (X27–604), butting
+567mm long (X45–612 retracted), shortened by 10mm at the aisle end. Moving slats are 559mm (X45–604), butting
 against the frame's inner face. Both sets retain the 5mm wall-end trim and square ends.
+Both sets lose a further 18mm at the wall end for an 18 × 50mm cushion-retaining rail on top of the lid.
+The trimmed rail spans X22–40, Y68–1280 and Z372–422, matching the sliding frame's top height and leaving a 5mm gap
+before the slat ends. It belongs to `Hinged lid`, follows its motion, and uses frame plywood in the BOM.
+At the rear/wall corner, the first fixed slat has a 40 × 40mm, 45° corner cut, leaving 40mm of its 80mm end.
+The lid plywood follows that same cut plane (lid-local X + Y = 68mm at the saved dimensions).
+The wall-side rail has a square rear end at Y68 across its full 18mm thickness, avoiding a sharp angled point.
+Both side rails have 10mm-radius top end corners, rounded through their 18mm thickness: four corners in total.
 `bed_slat_rear_setback_mm` is zero; extension travel is
 448mm to preserve the 1070mm bed width. The box walls keep their existing positions.
 The rear end panel is placed at local Y155–173 beneath the first complete solid lid rib beyond the rear corner;
@@ -460,7 +467,7 @@ The cabinet front follows the bed offset to retain its former nominal face gap. 
 separate fitting work; the accepted middle-pillar placement does not certify those clearances.
 
 At the saved 390mm slat-top height, the lid underside and box rim are Z354. The moving support is a single 18mm
-plywood frame, from the floor to Z422. Its lower top member is 70mm high (Z302–372),
+plywood frame, from the floor to Z422. Its lower top member is 50mm high (Z322–372),
 with 60mm-wide integral legs and a 25mm-radius open-bottom cutout matching the cross-bench frame construction.
 `bed_moving_rail_height_mm` controls the top member; leg width and opening radius use the existing frame parameters.
 The frame spans X604–622 and the full Y0–1280 bench length. It has no hinge notches.
@@ -470,8 +477,10 @@ The frame's upper 50mm is continuous, with a smooth outer face. Eight 84 × 22mm
 8mm deep at Z370–392, with 2mm clearance above/below and beside each fixed slat, and nominal 2mm corner radii.
 They leave 10mm of outer plywood. The fixed ends enter 8mm and meet the groove backs when retracted; the groove
 ceilings retain the sliding frame after 2mm of vertical take-up during lifting. This is geometric retention, not a
-load rating. The brackets and lid rebates retain their positions. Blind routing is separate from the nesting outline.
+load rating. The lid rebates retain their positions. Blind routing is separate from the nesting outline.
 One Carinya 50 × 50 × 40 × 2mm angle joins each moving slat underside to the frame's wall-side face.
+The vertical flanges remain face-mounted, with no rail recesses. Their lower edges at Z322 are flush
+with the narrower rail's lower edge. The rail remains 18mm plywood and the brackets retain their original positions.
 The seven angle leaves share the sliding transform and use the existing eight-pack catalogue product.
 `Slat angle brackets` has its own hardware material role ahead of the parent frame-plywood assignment, so the
 BOM counts actual brackets and excludes them from sheet nesting. Hole centres are illustrative; match actual
@@ -480,8 +489,9 @@ fixings to the supplied hardware and 18mm timber before drilling.
 `Hinged lid` owns the plywood and the retained slat/slider geometry. `Lid hinges` owns the two mechanisms,
 including separately animated upper rails, arms and telescoping springs. Opening storage retracts the bed;
 extending it closes the lid and stows the table. Opening storage keeps the selected table pose unless retracting
-an extended bed restores a table previously stowed by conversion. Cushions retain their separate conversion
-poses and do not yet follow the lifting lid. Their clearance is not established by this mechanism preview.
+an extended bed restores a table previously stowed by conversion. The blue cushion follows the lid's linkage
+transform as its placement carrier; the orange cushion stays upright and lifts just enough to clear blue.
+Actual foam forces and wall/mesh clearance remain unverified.
 
 The Lagun bracket now attaches to the cross bench's rear mounting frame, clear of the retracted long bed.
 
@@ -516,6 +526,9 @@ extended cross bench's four moving rows. The first starts at Y = 1280; the last 
 86⅔mm ventilation gaps fill the 580mm depth. The junction to the long bench's last extended moving slat remains
 90mm, with no added empty margin at either end of the cross bench. Slat count stays four; their gaps follow the shared
 stock width and cross-bench depth.
+The rearmost slat (nearest the long bench) is 50mm shorter at its aisle end: 1020mm at the default bed width.
+Its exposed rear/aisle corner has a 40mm plan radius at the default 80mm slat width, carried through the full
+18mm thickness. The other three slats remain full length; supporting frames and cushions retain their dimensions.
 The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
 Its conversion slider is removed. The former green backrests are removed; the long bench's taller orange backrest
 and blue seat now fill the complete sleeping width.
@@ -632,6 +645,21 @@ Each cushion is a centred native box in its own located Compound.
 Cushions hold until 40%; by 80% the seat has shifted and the backrest has turned above the seats;
 the final stage lowers the backrest. CAD and live tracks use the same sampled poses.
 This previews manual repositioning; real cushion fit and intermediate handling remain visual checks.
+Storage-lid tracks act on a `Foam` assembly parent, while conversion tracks retain the cushion parent groups.
+The `Foam / Core` mesh keeps OCP's native box-centring offset untouched; this offset must not be replaced by
+absolute storage tracks, even at the closed pose. Deformation reads the core mesh, while pillow bounds use its parent.
+The blue child uses the lid delta conjugated through its closed cushion pose, including the 7mm wall offset.
+`cushion-foam.ts` performs one direct geometry update per pose. Blue keeps its slab shape and is uniformly
+compressed in width between the two rails, with 1mm side clearance. During storage opening it follows the lid
+and loses at most 3mm of thickness. Orange remains upright, rises as a whole, and compresses at most 3mm at
+its lower edge. Every orange vertex is constrained above blue's planar upper surface with 0.5mm clearance;
+the linear half-space condition also separates the triangle interiors. No gravity, velocities, material solver,
+iterations or settling animation remain. `foam-surface.ts` supplies a rounded, seam-smoothed display mesh
+with 25mm XY and 10mm Z spacing. Dimensions in CAD and purchasing data remain nominal.
+The fixed cross-bench blue cushion uses the same rounded foam skin and display settings, at its existing size
+and placement. It does not participate in the long bench's storage-lid fitting.
+CAD child poses and browser keyframes share `lid_cushion_locations`; all XYZ rotation components are specified.
+Manufactured foam dimensions and the manual bed-conversion sequence remain unchanged.
 
 `frontend/src/viewer.ts` owns the viewer host. It embeds the installed OCP renderer through `createPage`, using the
 constructor hook to retain the viewer instance. FastAPI serves that package's JS/CSS at `/viewer-assets`; Vite proxies
@@ -789,10 +817,12 @@ Gaze compensation is shared between neck and head, maintaining
 a downward laptop gaze without forcing the skull to counter-rotate against a backward-pointing neck.
 Manual poses can exceed furniture clearances or available foam compression; the sidebar reports the detected limits.
 
-`frontend/src/seat-cushion.ts` subdivides the displayed seat foam and dents its top beneath the posed skin, keeping the
-bottom fixed. Compression is a visual approximation, capped at 55% of foam thickness. Hiding the person restores the
-original geometry. This does not change the manufactured CAD cushion or simulate foam stiffness. The seated preview
-is hidden during bed extension because it is not a lying-down pose.
+`frontend/src/cushion-foam.ts` retains the original seated-preview indentation field beneath the posed
+mannequin, keeping the cushion bottom fixed and capping the visual dent at 55% of thickness. Lid fitting
+is a separate direct pose calculation in the same single mesh update, with no simulation or settling.
+Disposal restores the CAD mesh. Picking IDs and component visibility are preserved.
+These effects do not change manufactured CAD dimensions. Mannequins are hidden
+during storage opening; their saved visibility preferences return when the lid closes.
 
 The **Mannequin** group contains **Seated mannequin**, **Lying mannequin** and **Second lying mannequin** controls
 and independent rig instances. Both lying people use the same measured body size, each fitted to its own pillow.
@@ -894,6 +924,11 @@ Each measures 600 × 400 × 200mm throughout conversion.
 Both lie across the cab end with centres 500mm apart. Their 600mm width envelopes overlap by 100mm
 and overhang by 15mm each side at the 1070mm bed width.
 The long-bench slider moves both pillows without changing their width or requiring regeneration.
+The rear black pillow also follows blue's storage-lid transform and its small thickness compression.
+In couch mode it clears orange's aisle face with up to 15mm of local cloth flattening; deeper overlap moves
+the pillow as a whole. Both adjustments run along blue's top plane, preserving its resting clearance.
+Each pose starts from the original cloth vertices, with no simulation or settling. Bed conversion and
+the lying mannequins' pillow indentations retain their existing behavior.
 CAD supplies visibility anchors only. Pillow geometry, support contact, rotations and conversion poses are owned by
 frontend/src/pillows.ts and update in the browser without CAD regeneration.
 

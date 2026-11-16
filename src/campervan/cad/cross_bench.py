@@ -1,6 +1,6 @@
 """Fixed cross bench: three open-legged plywood frames and directly fastened slats."""
 
-from build123d import Color, Compound, Location
+from build123d import Axis, Color, Compound, Location, fillet
 
 from campervan.cad.cushions import build_cushions
 from campervan.cad.cross_bench_layout import cross_bench_layout
@@ -36,7 +36,13 @@ def build_cross_bench(p: Parameters) -> Compound:
         raise ValueError("Cross bench needs room for four full-width slats and ventilation gaps.")
     slats = []
     for i in range(count):
-        slat = panel(width, p.slat_width_mm, p.slat_thickness_mm)
+        slat_length = width - 50 if i == 0 else width
+        slat = panel(slat_length, p.slat_width_mm, p.slat_thickness_mm)
+        if i == 0:
+            # Ease the aisle corner nearest the long bench, where legs pass.
+            corner = [edge for edge in slat.edges().filter_by(Axis.Z)
+                      if abs(edge.center().X - slat_length) < 1e-6 and abs(edge.center().Y) < 1e-6]
+            slat = fillet(corner, p.slat_width_mm / 2)
         slat.label, slat.color = f"Fixed slat {i + 1:02}", Color(0.87, 0.70, 0.43)
         slat.location = Location((0, rear + i * (p.slat_width_mm + gap), height))
         slats.append(slat)

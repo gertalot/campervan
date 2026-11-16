@@ -6,10 +6,13 @@ from math import cos, pi, radians, sin
 from build123d import Box, Color, Compound, Location
 
 from campervan.cad.bed_motion import BED_EXTENDED, CUSHIONS_POSITIONED
+from campervan.cad.bed_lift import lid_location
+from campervan.cad.sliding_bed import long_bed_layout
 from campervan.parameters import Parameters
 
 Vector3 = tuple[float, float, float]
 Pose = tuple[float, Vector3, Vector3]
+CUSHION_WALL_GAP = 7.0
 
 
 @dataclass(frozen=True)
@@ -115,9 +118,14 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
 
 def build_cushions(p: Parameters, bench: str) -> Compound:
     pieces = []
+    lift = lid_cushion_locations(p, p.bed_lid_open_percent) if bench == "Long bench" else {}
     for cushion in cushion_layout(p, bench):
-        foam = Box(*cushion.size)
-        foam.label, foam.color = "Foam", Color(*cushion.color)
+        core = Box(*cushion.size)
+        core.label, core.color = "Core", Color(*cushion.color)
+        # OCP extracts a box's corner/centring offset onto its mesh node. Animate
+        # a real assembly parent so absolute tracks cannot overwrite that offset.
+        foam = Compound(label="Foam", children=[core])
+        foam.location = lift.get(cushion.label, Location())
         piece = Compound(label=cushion.label, children=[foam])
         percent = getattr(p, cushion.position_parameter) if cushion.position_parameter else 0
         piece.location = cushion.location(percent)
@@ -128,8 +136,43 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
     pieces.append(Compound(label="Rear pillow" if bench == "Long bench" else "Front pillow", children=[pillow]))
     # Keep wall clearance on the parent so CAD poses and live child motion share the offset.
     cushions = Compound(label="Cushions", children=pieces)
-    cushions.location = Location((7, 0, 0))
+    cushions.location = Location((CUSHION_WALL_GAP, 0, 0))
     return cushions
+
+
+def lid_cushion_locations(p: Parameters, percent: float) -> dict[str, Location]:
+    """Foam-child poses keep storage lifting independent of parent conversion poses.
+
+    The blue seat follows the linkage. The browser directly fits it between
+    the rails and raises the upright backrest above its top plane, with only
+    slight visual compression. There is no settling or material simulation.
+    """
+    layout = long_bed_layout(p)
+    opened = lid_location(layout.lid_rear, layout.box_top, percent)
+    closed = lid_location(layout.lid_rear, layout.box_top, 0)
+    delta = opened * closed.inverse()
+    seat, back = cushion_layout(p, "Long bench")
+    offset = Location((CUSHION_WALL_GAP, 0, 0))
+    seat_base = offset * seat.location(0)
+    return {
+        seat.label: seat_base.inverse() * delta * seat_base,
+        back.label: Location(),
+    }
+
+
+def lid_cushion_tracks(p: Parameters) -> list[dict[str, object]]:
+    poses = [(percent, lid_cushion_locations(p, percent)) for percent in range(101)]
+    tracks: list[dict[str, object]] = []
+    for label in ("Long seat", "Wall backrest"):
+        for index, axis in enumerate("xyz"):
+            for kind in ("translation", "rotation"):
+                tracks.append({
+                    "path": f"/Campervan/Long bench/Cushions/{label}/Foam", "axis": axis, "kind": kind,
+                    "keyframes": [(percent, round(tuple(getattr(locations[label],
+                                      "position" if kind == "translation" else "orientation"))[index], 8))
+                                  for percent, locations in poses],
+                })
+    return tracks
 
 
 def cushion_motion_tracks(p: Parameters, position_parameter: str) -> list[dict[str, object]]:

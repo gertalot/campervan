@@ -4,12 +4,14 @@ import asset from '../../src/campervan/cad/pillow_mesh.json';
 
 /** Poly Haven cloth mesh inside the CAD pillow's existing pose/visibility group. */
 export function createPillows() {
-  const meshes: { mesh: Mesh; supportsHead: boolean; original: Float32Array }[] = [];
-  const placements: { root: Object3D; day: Vector3; night: Vector3; rotation: Quaternion }[] = [];
+  const meshes: { mesh: Mesh; supportsHead: boolean; original: Float32Array; lift?: Object3D }[] = [];
+  const placements: { root: Object3D; day: Vector3; night: Vector3; rotation: Quaternion; lift?: Object3D }[] = [];
+  let backrest: Object3D | undefined;
   return {
     attach(groups: Record<string, unknown>) {
       meshes.length = 0;
       placements.length = 0;
+      backrest = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam/Core'] as Object3D | undefined;
       for (const [path, value] of Object.entries(groups)) {
         if (!path.endsWith('/Pillow')) continue;
         const cad = value as Object3D & { front: Mesh; back?: Mesh; edges?: Object3D & { geometry: BufferGeometry } };
@@ -21,7 +23,18 @@ export function createPillows() {
           frame.updateWorldMatrix(true, false);
           const inverse = frame.matrixWorld.clone().invert();
           const bounds = (object: Object3D) => new Box3().setFromObject(object).applyMatrix4(inverse);
-          const bed = bounds(cross), seat = bounds(long);
+          const bed = bounds(cross);
+          // Recover the closed seat reference even when geometry arrives with
+          // storage already open. The Foam assembly contains only the lift delta.
+          long.updateWorldMatrix(true, true);
+          const parent = long.parent!;
+          const unlift = parent.matrixWorld.clone().multiply(long.matrix.clone().invert())
+            .multiply(parent.matrixWorld.clone().invert());
+          const seatMesh = (groups['/Campervan/Long bench/Cushions/Long seat/Foam/Core'] as
+            Object3D & { front: Mesh }).front;
+          seatMesh.geometry.computeBoundingBox();
+          const seat = seatMesh.geometry.boundingBox!.clone()
+            .applyMatrix4(inverse.clone().multiply(unlift).multiply(seatMesh.matrixWorld));
           const rear = path.includes('/Rear pillow/');
           const rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), rear ? Math.PI / 4 : 0)
             .multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), rear ? -Math.PI / 4 : Math.PI / 4));
@@ -58,7 +71,7 @@ export function createPillows() {
           );
           const middle = (bed.min.x + bed.max.x) / 2;
           placements.push({ root, day, night: new Vector3(middle + (rear ? 250 : -250),
-            bed.max.y - 200, bed.max.z + 100), rotation });
+            bed.max.y - 200, bed.max.z + 100), rotation, lift: rear ? long : undefined });
           cad.position.set(0, 0, 0);
           cad.rotation.set(0, 0, 0);
         }
@@ -98,8 +111,10 @@ export function createPillows() {
           cad.edges.geometry.dispose();
           cad.edges.geometry = new BufferGeometry();
         }
-        meshes.push({ mesh, supportsHead: path.includes("/Front pillow/"), original: new Float32Array(vertices) });
-        if (cad.back) meshes.push({ mesh: cad.back, supportsHead: path.includes("/Front pillow/"), original: new Float32Array(vertices) });
+        const lift = path.includes('/Rear pillow/') ? long : undefined;
+        meshes.push({ mesh, supportsHead: path.includes("/Front pillow/"), original: new Float32Array(vertices), lift });
+        if (cad.back) meshes.push({ mesh: cad.back, supportsHead: path.includes("/Front pillow/"),
+          original: new Float32Array(vertices), lift });
       }
     },
     supportHead(head: Box3 | null, front = true) {
@@ -126,16 +141,76 @@ export function createPillows() {
         mesh.geometry.computeBoundingSphere();
       }
     },
-    pose(percent: number) {
+    pose(percent: number, lidPercent = 0) {
       const compression = Math.max(0, Math.min(1, (percent - 40) / 40));
-      for (const { root, day, night, rotation } of placements) {
+      for (const { root, day, night, rotation, lift } of placements) {
         root.position.copy(day).lerp(night, compression);
         root.quaternion.copy(rotation).slerp(new Quaternion(), compression);
+        root.scale.set(1, 1, 1);
+        root.updateMatrix();
+        if (lift && lidPercent > 0) {
+          const parent = lift.parent!;
+          parent.updateMatrix(); lift.updateMatrix();
+          const delta = parent.matrix.clone().multiply(lift.matrix).multiply(parent.matrix.clone().invert());
+          root.matrix.premultiply(delta).decompose(root.position, root.quaternion, root.scale);
+          const up = new Vector3(0, 0, 1).transformDirection(parent.matrix.clone().multiply(lift.matrix));
+          root.position.addScaledVector(up, -3 * lidPercent / 100);
+        }
         root.updateMatrixWorld(true);
       }
       for (const { mesh } of meshes) {
         mesh.scale.x = 600;
         mesh.updateMatrixWorld(true);
+      }
+      this.supportHead(null, false);
+    },
+    squash(bedPercent = 0) {
+      if (bedPercent > 0) return;
+      // Small, direct cloth flattening against orange. There is no simulation.
+      const orange = (backrest as (Object3D & { front?: Mesh }) | undefined)?.front;
+      if (orange) orange.updateWorldMatrix(true, false);
+      const orangeBounds = orange ? new Box3().setFromObject(orange) : null;
+      const normal = orange ? new Vector3(0, 0, 1).transformDirection(orange.matrixWorld) : new Vector3();
+      const plane = new Vector3();
+      if (orange) {
+        orange.geometry.computeBoundingBox();
+        orange.geometry.boundingBox!.getCenter(plane);
+        plane.z = orange.geometry.boundingBox!.max.z;
+        plane.applyMatrix4(orange.matrixWorld);
+      }
+      for (const { mesh, supportsHead, original, lift } of meshes) {
+        if (supportsHead) continue;
+        const positions = mesh.geometry.getAttribute('position');
+        const pillowBounds = new Box3().setFromObject(mesh);
+        const contact = orangeBounds && lift
+          && pillowBounds.max.y > orangeBounds.min.y && pillowBounds.min.y < orangeBounds.max.y
+          && pillowBounds.max.z > orangeBounds.min.z && pillowBounds.min.z < orangeBounds.max.z;
+        const direction = new Vector3();
+        if (contact) {
+          const up = new Vector3(0, 0, 1).transformDirection(lift.matrixWorld);
+          const dot = normal.dot(up);
+          direction.copy(normal).addScaledVector(up, -dot).divideScalar(1 - dot * dot);
+        }
+        const point = new Vector3();
+        let penetration = 0;
+        if (contact) for (let i = 0; i < positions.count; i++) {
+          point.fromArray(original, i * 3).applyMatrix4(mesh.matrixWorld);
+          penetration = Math.max(penetration, 0.5 - point.sub(plane).dot(normal));
+        }
+        const shift = Math.max(0, penetration - 15);
+        const inverse = mesh.matrixWorld.clone().invert();
+        for (let i = 0; i < positions.count; i++) {
+          point.fromArray(original, i * 3);
+          if (contact) {
+            point.applyMatrix4(mesh.matrixWorld).addScaledVector(direction, shift);
+            const distance = point.clone().sub(plane).dot(normal);
+            point.addScaledVector(direction, Math.max(0, 0.5 - distance)).applyMatrix4(inverse);
+          }
+          positions.setXYZ(i, point.x, point.y, point.z);
+        }
+        positions.needsUpdate = true;
+        mesh.geometry.computeVertexNormals();
+        mesh.geometry.computeBoundingBox(); mesh.geometry.computeBoundingSphere();
       }
     },
   };

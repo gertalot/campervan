@@ -70,7 +70,7 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
     from campervan.cad.bed_motion import bed_keyframes
     from campervan.cad.body import rear_hatch_angle, sliding_door_offset
     from campervan.cad.cabinet_doors import cabinet_door_motions
-    from campervan.cad.cushions import cushion_motion_tracks
+    from campervan.cad.cushions import cushion_motion_tracks, lid_cushion_tracks
     from campervan.cad.gear import gear_motions
     from campervan.cad.table import table_motions
     from campervan.cad.mirror import mirror_motion_tracks
@@ -123,7 +123,8 @@ def motion_data(parameters: Parameters) -> dict[str, Any]:
             "bed_lid_open_percent": {
                 "position": parameters.bed_lid_open_percent,
                 "tracks": mirror_motion_tracks(
-                    lift_motion_tracks(long_bed_layout(parameters).lid_rear, long_bed_layout(parameters).box_top)
+                    [*lift_motion_tracks(long_bed_layout(parameters).lid_rear, long_bed_layout(parameters).box_top),
+                     *lid_cushion_tracks(parameters)]
                 ),
             },
         },

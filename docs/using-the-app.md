@@ -281,15 +281,22 @@ translates towards the aisle while opening approximately 34 degrees. Both arms, 
 springs follow the same fitted geometry. Missing pivot and mounting dimensions are inferred from the product
 photograph; this is not a drilling template or a verified load rating.
 
-Both slat sets extend across the former hinge strip. Fixed slats are 585mm long; moving slats are 577mm long,
+Both slat sets extend across the former hinge strip. Fixed slats are 567mm long; moving slats are 559mm long,
 ending against the support frame. The frame is full bench length, with a smooth 50mm rise above the slat undersides.
 Eight inside-face grooves, 84 × 22mm and 8mm deep, accept the fixed slat ends with 2mm side/vertical clearance.
 The continuous 10mm outer face hides the grooves; their ceilings retain the retracted sliding frame during lifting.
+An 18 × 50mm rail on the lid's wall-side edge provides a cushion stop when lifting. Its top matches
+the sliding frame, and both slat sets are shortened 18mm at that end to leave room for it and the existing 5mm gap.
 The lid's aisle edge is recessed 18mm throughout. The hinges' upper rails are shortened 18mm at the gas-spring end,
-preserving all pivot positions. The moving support is one 18mm plywood frame with a 70mm top member and integral
+preserving all pivot positions. The moving support is one 18mm plywood frame with a 50mm lower top member and integral
 60mm-wide legs at both ends, using the same rounded cutout as the cross-bench frames. It reaches the floor and
-supports the slats directly, without spacer blocks, metal legs or hinge notches. Cushions retain their separate
-conversion poses and do not yet follow the storage lid.
+supports the slats directly, without spacer blocks, metal legs or hinge notches.
+The blue cushion fits between the side rails and rides the lid during storage opening. Orange stays upright
+and rises enough to clear it; both allow at most 3mm of visual compression during opening. Each pose updates
+directly, without gravity, sliding, bouncing or settling. The existing seated-mannequin indentation is retained.
+The rear black pillow rides with blue, flattening slightly against orange when needed.
+Cutting dimensions and manual bed conversion are unchanged. The mannequin
+preview is hidden while storage is open and returns to its saved visibility preference on closing.
 Each moving slat has a metal angle fastening it to the support frame. Small aisle-edge lid recesses clear the
 angles as the bed slides in: 3mm-deep top rebates retain 15mm of plywood, with 1mm clearance around the steel.
 Only a narrow 3mm edge relief goes through the lid for the vertical flange. The BOM uses the existing Carinya

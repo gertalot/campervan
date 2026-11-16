@@ -987,7 +987,7 @@ class Parameters(BaseModel):
     )
 
     bed_moving_rail_height_mm: float = Field(
-        default=70.0,
+        default=50.0,
         gt=0,
         title="Moving frame top rail height",
         description="Top rail of the open-legged plywood support frame. Legs and rounded opening match the other bench frames.",

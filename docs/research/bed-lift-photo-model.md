@@ -52,14 +52,17 @@ photo-derived hardware model, not measured installation tolerances.
 The lid has seven 400 × 50mm through-slots. Its aisle edge is recessed 18mm to X604, making the main body
 582 × 1280 × 18mm with an 82mm aisle band and 100mm wall-side band. Its former full-width hinge tabs are removed:
 the shortened 582mm upper rails now fit entirely beneath the recessed lid.
-The stationary 100mm strip and its short fixed-slat ends are removed. Fixed slats are 585mm long, shortened
-10mm at the aisle end from the prior 595mm blanks: X27–612 retracted. Moving slats are 577mm (X27–604),
+The stationary 100mm strip and its short fixed-slat ends are removed. Fixed slats are 567mm long, shortened
+10mm at the aisle end and a further 18mm at the wall end: X45–612 retracted. Moving slats are 559mm (X45–604),
 butting against the raised support frame. Both sets have square ends and retain the 5mm wall-end trim.
 `bed_slat_rear_setback_mm` is zero.
+A wall-side cushion rail is 18 × 1212 × 50mm after the rear corner trim, spanning X22–40, Y68–1280 and Z372–422.
+It matches the sliding frame's upper height, leaves the existing 5mm gap to the shortened slats, and follows
+the lid as a fixed cushion-retaining edge. Slat aisle ends, bracket positions and fixed-slat groove engagement stay unchanged.
 Extension travel is 448mm, preserving the 1070mm extended bed width. The box-wall positions are unchanged.
 The moving support is one 18mm plywood frame at X604–622 alongside the recessed lid edge, without spacer blocks
 or metal table legs. It reaches from the floor to Z422, including a continuous 50mm rise above the slat undersides.
-The lower top rail remains 70mm high (Z302–372), with 60mm-wide integral legs and a rounded open-bottom cutout using the existing
+The lower top rail is 50mm high (Z322–372), with 60mm-wide integral legs and a rounded open-bottom cutout using the existing
 cross-bench frame helper and 25mm radius. Leg width/radius follow `member_width_mm` and `inside_radius_mm`;
 `bed_moving_rail_height_mm` controls the lower top member's height. The frame spans the full bench length,
 Y0–1280. The metal-leg parameter and purchasing role are retired.
@@ -71,9 +74,10 @@ groove backs, so the 8mm depth does not include additional end clearance. The gr
 slats after 2mm of relative vertical movement, retaining the sliding frame when lifting the lid. This is geometric
 engagement, not a load rating; the animation carries the retracted frame with the lid without modelling take-up.
 Nominal internal groove corner radius is 2mm. First/last grooves retain 3mm end margins and the continuous outer skin.
-Angles remain beneath the shortened moving slat ends, so their positions and lid rebates are unchanged.
+Angles remain face-mounted beneath the shortened moving slat ends, in their original positions. The rail's
+lower edge is raised 20mm to align with the bracket bottoms; no bracket pockets are cut in the rail.
 Seven existing-catalogue [Carinya 50 × 50 × 40 × 2mm angles](https://www.bunnings.co.nz/carinya-50-x-50-x-40-x-2mm-galvanised-reinforcing-angle-bracket-8-pack_p3962402)
-tie each moving slat underside to the frame's wall-side face. The 50mm vertical flange fits inside the 70mm top member.
+tie each moving slat underside to the frame's wall-side face. Their 50mm vertical flanges match the lower top member.
 Each angle has a 51 × 42mm top rebate, just 3mm deep (2mm steel plus 1mm clearance), retaining 15mm plywood below.
 The vertical flange alone needs a narrow 3mm-wide through-relief at the aisle edge. The rebates span X553–604,
 leaving 31mm of plywood before the ventilation slots at X522; the edge relief spans X601–604.
@@ -81,7 +85,12 @@ They move out through the open notches with the sliding frame. The lower flanges
 by 4mm, and the horizontal flanges sit 16mm above the box tops. Hole positions in CAD are illustrative; actual
 bracket holes and short screw lengths need matching to the supplied hardware. No quantified stiffness/load rating
 is established by the geometry. The BOM counts the bracket leaves, so seven pieces require one existing eight-pack.
-Cushions retain their separate conversion poses and do not yet ride the lid; cushion clearance remains design work.
+Cushion storage placement uses the linkage delta for blue. The display fits its width uniformly between
+the rails and allows at most 3mm thickness compression during lifting. Orange remains upright, lifts as a
+whole and compresses at most 3mm at its lower edge. Its vertices stay above blue's final top plane with
+0.5mm clearance, separating triangle interiors too. This is one direct pose update, with no physics,
+iterations, gravity or settling. Manufactured dimensions stay unchanged. Storage transforms remain on
+the `Foam` children and conversion transforms on their parents.
 
 The existing running model regeneration and logs are the validation route. No tests or extra check processes are run.
 

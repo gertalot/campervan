@@ -18,7 +18,7 @@ def material_for(path: tuple[str, ...]) -> str:
         return "bed-slat-brackets"
     if "Moving front slat support" in path:
         return "frames"
-    if name == "slotted plywood lid":
+    if name in {"slotted plywood lid", "wall-side cushion rail"}:
         return "frames"
     if "Lid hinges" in path:
         return "bed-lid-hinges"
