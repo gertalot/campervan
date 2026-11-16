@@ -1,6 +1,6 @@
 /** Pointer gestures for the existing constrained assembly motions. */
 import {
-  Raycaster, Vector2, Vector3,
+  Matrix4, Quaternion, Raycaster, Vector2, Vector3,
   type Camera, type Object3D,
 } from 'three';
 import type { PlanMenuItem } from './plan-dropdown';
@@ -90,19 +90,30 @@ function linearSolver(target: Target, camera: Camera, rect: DOMRect, x: number, 
 }
 
 function hingeSolver(target: Target, camera: Camera, rect: DOMRect, x: number, y: number,
-  pose: Patch): Solver {
-  const field = target.field!, track = target.track!, initial = pose[field];
+  pose: Patch, tracks: Track[]): Solver {
+  const field = target.field!, initial = pose[field];
   target.group.updateWorldMatrix(true, false);
-  const pivot = target.group.getWorldPosition(new Vector3()), axis = new Vector3(); axis[track.axis] = 1;
-  if (target.group.parent) {
-    const matrix = target.group.parent.matrixWorld;
-    axis.transformDirection(matrix);
-    // Rotation axes reverse handedness under a reflection; translation axes do not.
-    if (matrix.determinant() < 0) axis.negate();
-  }
-  const radius = target.point.clone().sub(pivot), radians = (track.travel ?? 0) * Math.PI / 180 / 100;
-  const projected = (value: number) => screen(radius.clone().applyAxisAngle(axis, (value - initial) * radians)
-    .add(pivot), camera, rect);
+  const localPoint = target.group.worldToLocal(target.point.clone());
+  const position = target.group.position.clone(), rotation = target.group.rotation.clone();
+  const ownTracks = tracks.filter(item => item.path === target.path);
+  const projected = (value: number) => {
+    const nextPosition = position.clone(), nextRotation = rotation.clone();
+    for (const item of ownTracks) {
+      const transform = item.kind === 'rotation' ? nextRotation : nextPosition;
+      const units = item.kind === 'rotation' ? Math.PI / 180 : 1;
+      if (item.keyframes) {
+        const points = item.keyframes;
+        const endIndex = points.findIndex(([percent], index) => index > 0 && percent >= value);
+        const [start, a] = points[endIndex - 1], [end, b] = points[endIndex];
+        transform[item.axis] = (a + (b - a) * (value - start) / (end - start)) * units;
+      } else {
+        transform[item.axis] += (value - initial) / 100 * (item.travel ?? 0) * units;
+      }
+    }
+    const matrix = new Matrix4().compose(nextPosition, new Quaternion().setFromEuler(nextRotation), target.group.scale);
+    if (target.group.parent) matrix.premultiply(target.group.parent.matrixWorld);
+    return screen(localPoint.clone().applyMatrix4(matrix), camera, rect);
+  };
   let anchor = projected(initial), pointer = new Vector2(x, y);
   const solver: Solver = {
     solve(clientX, clientY, current) {
@@ -148,7 +159,8 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
       return { kind: 'table', path: TABLE_ARM, label: 'Steer table', group: groups[TABLE_ARM], point: hit.point };
     }
     for (const [field, motion] of Object.entries(host.motions())) {
-      const track = motion.tracks.find(item => under(hit.path, item.path)); if (!track) continue;
+      const track = motion.tracks.find(item => under(hit.path, item.path)
+        && (field !== 'bed_lid_open_percent' || item.kind === 'rotation')); if (!track) continue;
       const group = groups[track.path]; if (!group) continue;
       if (field === 'bed_extension_percent' && track.path.includes('/Long bench/Hinged lid/Sliding bed/Sliding assembly')) {
         return { kind: 'linear', field, track, path: track.path, label: 'Convert bed', group, point: hit.point };
@@ -196,7 +208,8 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     const camera = viewer.rendered.camera.camera;
     const rect = (event.target as HTMLCanvasElement).getBoundingClientRect(), pose = host.pose();
     if (target.kind === 'linear') return linearSolver(target, camera, rect, event.clientX, event.clientY, pose);
-    if (target.kind === 'hinge') return hingeSolver(target, camera, rect, event.clientX, event.clientY, pose);
+    if (target.kind === 'hinge') return hingeSolver(target, camera, rect, event.clientX, event.clientY, pose,
+      host.motions()[target.field!].tracks);
     const groups = viewer.rendered.nestedGroup.groups, top = groups[TABLE_TOP], wood = groups[TABLE_WOOD];
     if (!top || !wood) return null;
     wood.updateWorldMatrix(true, false);

@@ -271,19 +271,20 @@ construction; use [the replacement construction rationale](research/cabinet-rede
 
 ## Hinged storage bed
 
-The long bench is one plywood box with a centre divider and one full-length sliding-slat lid.
-Under **Long bench → Hinged lid**, **Open storage lid (%)** lifts it up to 75 degrees. Opening storage retracts
-the moving slats; extending the bed closes the lid and stows the table. Opening the lid does not stow the table.
-Remove/reposition cushions first;
-they keep their existing separate couch-to-bed conversion.
+The long bench is one bottomless plywood box with a centre divider and a 600mm-wide slotted lifting lid.
+The stationary wall-side strip is removed. Seven 50mm-wide ventilation slots have solid 100mm bands at both ends;
+**Long bench → Hinged lid → Slotted plywood lid → Solid end band width** adjusts both bands.
 
-Both slat sets now rest directly on the box panels, whose tops reach the slat undersides. The box has no bottom:
-it stands on the van floor. Its wall-side outer face is flush with the slat ends. The centre divider supports the
-middle of the lid. Only the moving front support remains, lying flat above its provisional metal legs.
+**Open storage lid (%)** moves a photo-derived pair of Instant Panel gas-assisted four-bar linkages. The lid
+translates towards the aisle while opening approximately 34 degrees. Both arms, mounting rails and telescoping
+springs follow the same fitted geometry. Missing pivot and mounting dimensions are inferred from the product
+photograph; this is not a drilling template or a verified load rating.
 
-The box panels remain solid for this first version. The current hinges and opening motion are temporary previews;
-slat connections and hinge placement need redesign after removing both fixed horizontal supports. Hardware,
-wall clearance, alignment and stops remain unresolved.
+The hidden slats and their moving support retain their previous dimensions for the next design step. In particular,
+the existing spacer blocks need adapting to the new solid aisle band. Legs remain provisional and independently
+hideable. Cushions retain their separate conversion poses and do not yet follow the storage lid.
+Opening storage retracts the bed; extending it closes the lid and stows the table. Opening storage does not
+independently stow the table. See [working dimensions and limits](research/bed-lift-photo-model.md).
 
 The **Long bench → Bed inward offset** dimension moves the complete bed towards the aisle. The accepted 24mm
 middle-pillar offset now applies to both benches, all slats and cushions, the moving support and legs, the hinge

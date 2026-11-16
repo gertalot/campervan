@@ -246,13 +246,14 @@ Campervan
 │   │   ├── Rear end panel
 │   │   ├── Centre support divider
 │   │   └── Cab-end panel
-│   ├── Lid hinges (provisional)
+│   ├── Lid hinges (photo-derived gas-assisted pair)
 │   ├── Hinged lid
+│   │   ├── Slotted plywood lid
 │   │   ├── Fixed slats
 │   │   └── Sliding bed
 │   │       └── Sliding assembly
 │   │           ├── Moving slats
-│   │           ├── Moving front slat support (flat)
+│   │           ├── Moving front slat support
 │   │           └── Provisional metal legs
 │   └── Cushions
 │       ├── Long seat
@@ -417,41 +418,48 @@ editable and is not automatically changed to match it.
 `bench.py` builds one bottomless long-bench plywood storage box. Its two longitudinal walls, two end panels
 and transverse centre support divider stand directly on the finished van floor. The divider is centred on the
 bench length, making its two clear storage bays equal. Before its independent inward offset, the wall-side panel's outer face is flush with the rear
-ends of the slats. All five panels reach the slat undersides, supporting both slat sets directly. The floor closes
-the bottom; there is no separate plywood bottom and no fixed horizontal slat supports. Panels remain solid for now.
+ends of the slats. All panel tops are lowered 18mm to carry the slotted plywood lid without
+raising the slat surface. The floor closes the bottom; there is no separate plywood bottom. Panels remain solid.
 The old drawer, guide ledges, moving plywood aisle frame and angle brackets are removed. The separate cross bench
 retains its existing geometry and wall-side arch-relative support datum.
 
-`sliding_bed.py` builds one full-length slat lid. Only the moving slats have a horizontal cross support: one flat
-80 × 18mm front rail, carried by two provisional metal legs. The moving rear rail and both fixed rails are absent.
-With the saved 600mm couch width, 1070mm bed width and 18 × 80mm stock, furniture-local slats span X22–618.
-The moving front rail spans X538–618 when retracted. The box occupies X22–533; its wall-side panel spans X22–40
-and its aisle-side panel spans X515–533. These are the box positions before its independent inward offset. The moving assembly travels 452mm, so its extended slats span X474–1070
-and retain the full 18mm bearing on the box's aisle wall. The 5mm gap separates that wall from the moving rail before applying the box offset.
+`sliding_bed.py` builds one 600 × 1280 × 18mm slotted plywood lid, without the stationary wall strip.
+Seven 400 × 50mm slots preserve the former comb ledges, with 100mm solid bands at both wall and aisle ends.
+The lid spans local X22–622 and Z354–372 at the saved dimensions. `bed_lid_strip_width_mm` controls both bands.
+The remaining hidden slats retain their old 491mm blanks and positions pending a separate redesign; the old
+stationary fixed-slat ends are removed. `bed_slat_rear_setback_mm` retains the old 100mm setback independently
+of the removed strip. The box and moving rail retain their previous geometry for that next design step.
+
+`bed_lift.py` builds two gas-assisted four-bar mechanisms on the end-panel inside faces, replacing the three
+schematic barrels. Published A600/C270/D340/E420 dimensions and photo-estimated pivots define a rigid-link
+circle-intersection solver shared by CAD and browser animation. Using D340 as the inferred opening stop gives
+approximately 34.1 degrees, 79.6mm aisleward rear-edge movement and 7.3mm final rear-edge lift. The rear edge
+does not descend below its closed height along this fitted path. This is a photo-derived working model; actual
+pivots, mounting holes, spring stroke, capacity and stops need checking against the hardware. See the
+[dimension record and current limits](research/bed-lift-photo-model.md).
 
 `bed_inward_offset_mm` is a shared assembly placement for both benches. The accepted 24mm aisleward offset
 moves the box, fixed and moving slats, moving front rail, legs, hinge preview and both benches' cushions together.
 The table's mounting bracket and working pose follow the same offset; its independent stowed pose is unchanged.
 The box's wall-side outer face is local X46 (world X1454 at the 1500mm vehicle datum). The former box-only setting
-migrates to this shared bed setting without changing its value. Slat lengths and 452mm extension travel are unchanged,
+migrates to this shared bed setting without changing its value. The 452mm extension travel is unchanged,
 so the complete sleeping platform retains its 1070mm width, translated towards the aisle rather than narrowed.
-The box-to-moving-rail gap returns to 5mm. The cabinet front follows the bed offset to retain its former nominal face gap. The rear corner, front edge and wheel arch remain
+The cabinet front follows the bed offset to retain its former nominal face gap. The rear corner, front edge and wheel arch remain
 separate fitting work; the accepted middle-pillar placement does not certify those clearances.
 
-At the saved 390mm slat-top height, slat undersides and every box panel top are Z372. The moving front rail lies
-at Z354–372, with legs reaching its underside. The shared lid-opening preview rotates about the wall-side axis, translated with the rest of the bed. Hinges and slat connections require redesign now that the fixed rear rail has been removed;
-the schematic hinge barrels and motion preview do not establish a buildable lid assembly. Vehicle-wall clearance,
-fore–aft bed placement, hinge setback, hardware strength, alignment, retention and stops remain to refine.
+At the saved 390mm slat-top height, the lid underside and box rim are Z354. The retained moving rail
+occupies Z274–354; its old spacer blocks intersect the new solid aisle band and need redesign with the slats.
+The hidden provisional legs retain their old envelopes; mounting is unresolved.
 
-`Hinged lid` owns both combs; its `Sliding bed / Sliding assembly` child translates independently. Lid opening
-rotates about local Y from 0 to 75 degrees. The existing conversion slider retains its 0–40 extension, 40–80 cushion
-repositioning and 80–100 backrest-lowering stages. Opening storage retracts the bed; extending the bed closes the lid.
-Extending the bed stows the table; opening storage leaves its selected pose unchanged unless retracting an extended
-bed restores a table that conversion previously stowed. Cushions retain their separate conversion: remove/reposition
-them before lifting.
+`Hinged lid` owns the plywood and the retained slat/slider geometry. `Lid hinges` owns the two mechanisms,
+including separately animated upper rails, arms and telescoping springs. Opening storage retracts the bed;
+extending it closes the lid and stows the table. Opening storage keeps the selected table pose unless retracting
+an extended bed restores a table previously stowed by conversion. Cushions retain their separate conversion
+poses and do not yet follow the lifting lid. Their clearance is not established by this mechanism preview.
+
 The Lagun bracket now attaches to the cross bench's rear mounting frame, clear of the retracted long bed.
 
-Box panels share frame plywood; the moving front support shares slat stock. Legs and lid hinges appear as explicitly provisional
+Box panels, slotted lid, moving rail and spacer blocks share frame plywood. Legs and the lift pair appear as provisional
 hardware requirements. Superseded drawer, guide and bracket roles are retired when loading saved projects; purchase
 records with ownership or spending remain available as unused stock. Obsolete controls are dropped on load.
 `table_included` remains a saved purchasing choice independent of CAD visibility and live pose.
@@ -830,7 +838,7 @@ finishes, independently of CAD readiness, and reports cutting failures separatel
 detached before copying so extracting one piece does not copy its parent assembly.
 
 Plywood box panels, cross-bench frames, skins, cabinet panels and shelves have sheet assignments.
-All bed slats and the moving front support share slat stock. Two provisional bed legs and three provisional
+All bed slats share slat stock; the vertical moving rail and its blocks use frame plywood. Two provisional bed legs and three provisional
 lid hinges have explicit whole-item quantities; their schematic components do not enter the wood cut list.
 Product selection, fixings and hardware strength remain unresolved.
 
@@ -841,7 +849,7 @@ purchase quantities require a cutting layout; roles selecting the same product m
 Bed box panels and cross-bench support frames use the selected 18mm plywood.
 Cabinet front frame, cleats, joining rails and catch blocks share 40 × 18mm pine; the bridge uses 90 × 18mm pine.
 The cabinet uses 9mm scribed supporting panels and 6mm door/shelf plywood. All three cross-bench frames share 18mm frame plywood.
-Plywood parts retain their scribed profiles and openings in the cut list. The moving front support uses the slat stock lying flat.
+Plywood parts retain their scribed profiles and openings in the cut list. The moving front support is cut from 18mm frame plywood.
 Cabinet stock sections come from their selected timber products, with measured overrides.
 
 The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, listed at $33.47 per

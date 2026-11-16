@@ -246,11 +246,12 @@ ROLES.extend(
         ),
         MaterialRole(
             id="bed-lid-hinges",
-            name="Storage bed lid hinges (provisional)",
+            name="Storage bed gas-assisted lift pair (photo-derived)",
             kind="hardware",
             fields={},
-            quantity=3,
-            note="Three schematic wall-side hinges for one full-length lid. Product, leaves, fixings and capacity unconfirmed.",
+            quantity=1,
+            note="One pair of Instant Panel 600mm bed lifts. Pivot centres and mounting are photo estimates; "
+            "confirm actual stroke, fixings and supported lid weight. 20kg/30kg selection remains open.",
         ),
         MaterialRole(
             id="bed-legs",

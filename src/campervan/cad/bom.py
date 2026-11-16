@@ -14,6 +14,10 @@ def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
     if "Storage box" in path:
         return "frames"
+    if "Moving front slat support" in path:
+        return "frames"
+    if name == "slotted plywood lid":
+        return "frames"
     if "Provisional metal legs" in path:
         return "bed-legs"
     if "Lid hinges" in path:

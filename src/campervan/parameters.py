@@ -64,6 +64,7 @@ RETIRED_PARAMETERS = frozenset(
         "cabinet_module_timber_height_mm",
         "cabinet_return_width_mm",
         "cabinet_return_thickness_mm",
+        "bed_fixed_strip_width_mm",
     }
 )
 
@@ -881,7 +882,7 @@ class Parameters(BaseModel):
         default=400.0,
         gt=0,
         title="Platform height",
-        description="Finished slat-top height. The box panels support the slats directly.",
+        description="Finished slat-top height. The plywood comb bears on the box panels below the slats.",
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
@@ -959,13 +960,40 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Long bench"]},
     )
 
+    bed_slat_rear_setback_mm: float = Field(
+        default=100.0,
+        gt=0,
+        title="Slat rear setback (pending redesign)",
+        description="Retain the previous hidden slat lengths while designing the new lifting lid; no fixed wall strip.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Hinged lid", "Fixed slats"]},
+    )
+
+    bed_lid_strip_width_mm: float = Field(
+        default=100.0,
+        gt=0,
+        title="Solid end band width",
+        description="Continuous plywood band at both wall and aisle ends of the ventilation slots.",
+        json_schema_extra={"unit": "mm", "group": ["Long bench", "Hinged lid", "Slotted plywood lid"]},
+    )
+
     bed_lid_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
         title="Open storage lid (%)",
-        description="Lift the complete retracted slat lid from 0 to 75 degrees. Retract the bed and remove cushions first.",
+        description="Photo-derived gas-assisted four-bar lift: translates towards the aisle and opens about 34 degrees. Mounting estimates.",
         json_schema_extra={"unit": "%", "group": ["Long bench", "Hinged lid"], "control": "position"},
+    )
+
+    bed_moving_rail_height_mm: float = Field(
+        default=80.0,
+        gt=0,
+        title="Moving rail height",
+        description="Vertical frame-plywood rail below the 18mm blocks; fits the reserved space beside the box.",
+        json_schema_extra={
+            "unit": "mm",
+            "group": ["Long bench", "Hinged lid", "Sliding bed", "Sliding assembly", "Moving front slat support"],
+        },
     )
 
     bed_leg_diameter_mm: float = Field(
@@ -1448,6 +1476,8 @@ class Parameters(BaseModel):
                 if legacy in data:
                     for field in fields:
                         data.setdefault(field, data[legacy])
+            if "bed_fixed_strip_width_mm" in data:
+                data.setdefault("bed_slat_rear_setback_mm", data["bed_fixed_strip_width_mm"])
             data = {name: value for name, value in data.items() if name not in RETIRED_PARAMETERS}
             if data.get("table_mount") == 1:
                 data["table_mount"] = 0  # The cabinet mounting option has been removed.
