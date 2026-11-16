@@ -123,6 +123,17 @@ for role in ROLES:
 ROLES.extend(
     [
         MaterialRole(
+            id="bed-slat-brackets",
+            name="Moving bed slat-to-frame angles",
+            kind="hardware",
+            fields={},
+            default_product_id="carinya-50-40",
+            note="One Carinya 50 × 50 × 40 × 2mm angle per moving slat, fixed to its underside and the frame's inner face. "
+            "Seven angles use one eight-pack at the current layout. Lid rebates are 3mm deep with 1mm steel clearance; "
+            "only a narrow 3mm edge relief passes through the plywood for each vertical flange. "
+            "CAD holes are illustrative; confirm supplied hole positions and screw lengths for 18mm timber before drilling.",
+        ),
+        MaterialRole(
             id="cabinet-bridge",
             name="Cabinet wheel-arch bridge",
             kind="timber",
@@ -253,14 +264,6 @@ ROLES.extend(
             note="One pair of Instant Panel 600mm bed lifts. Pivot centres and mounting are photo estimates; "
             "confirm actual stroke, fixings and supported lid weight. 20kg/30kg selection remains open.",
         ),
-        MaterialRole(
-            id="bed-legs",
-            name="Bed support legs (provisional)",
-            kind="hardware",
-            fields={},
-            quantity=2,
-            note="Two unsourced removable metal table legs. Diameter and length are visual envelopes; mounting and strength unconfirmed.",
-        ),
     ]
 )
 
@@ -355,7 +358,8 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     else:
         project = Project()
     for role in (
-        "deck", "bearers", "stops", "lid-hinge", "drawer", "slides", "guides", "brackets", "bracket-screws", "skins"
+        "deck", "bearers", "stops", "lid-hinge", "drawer", "slides", "guides", "brackets", "bracket-screws", "skins",
+        "bed-legs",
     ):
         project.materials.pop(role, None)
     # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.

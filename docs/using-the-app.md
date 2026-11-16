@@ -272,22 +272,33 @@ construction; use [the replacement construction rationale](research/cabinet-rede
 ## Hinged storage bed
 
 The long bench is one bottomless plywood box with a centre divider and a 600mm-wide slotted lifting lid.
-The stationary wall-side strip is removed. Seven 50mm-wide ventilation slots have solid 100mm bands at both ends;
+The stationary wall-side strip is removed. Seven 50mm-wide ventilation slots have a 100mm wall band and an 82mm aisle band;
 **Long bench → Hinged lid → Slotted plywood lid → Solid end band width** adjusts both bands.
+The rear end panel and its lift are set forward beneath a complete solid lid rib to clear the modelled rear pillar.
 
 **Open storage lid (%)** moves a photo-derived pair of Instant Panel gas-assisted four-bar linkages. The lid
 translates towards the aisle while opening approximately 34 degrees. Both arms, mounting rails and telescoping
 springs follow the same fitted geometry. Missing pivot and mounting dimensions are inferred from the product
 photograph; this is not a drilling template or a verified load rating.
 
-The hidden slats and their moving support retain their previous dimensions for the next design step. In particular,
-the existing spacer blocks need adapting to the new solid aisle band. Legs remain provisional and independently
-hideable. Cushions retain their separate conversion poses and do not yet follow the storage lid.
+Both slat sets extend across the former hinge strip. Fixed slats are 585mm long; moving slats are 577mm long,
+ending against the support frame. The frame is full bench length, with a smooth 50mm rise above the slat undersides.
+Eight inside-face grooves, 84 × 22mm and 8mm deep, accept the fixed slat ends with 2mm side/vertical clearance.
+The continuous 10mm outer face hides the grooves; their ceilings retain the retracted sliding frame during lifting.
+The lid's aisle edge is recessed 18mm throughout. The hinges' upper rails are shortened 18mm at the gas-spring end,
+preserving all pivot positions. The moving support is one 18mm plywood frame with a 70mm top member and integral
+60mm-wide legs at both ends, using the same rounded cutout as the cross-bench frames. It reaches the floor and
+supports the slats directly, without spacer blocks, metal legs or hinge notches. Cushions retain their separate
+conversion poses and do not yet follow the storage lid.
+Each moving slat has a metal angle fastening it to the support frame. Small aisle-edge lid recesses clear the
+angles as the bed slides in: 3mm-deep top rebates retain 15mm of plywood, with 1mm clearance around the steel.
+Only a narrow 3mm edge relief goes through the lid for the vertical flange. The BOM uses the existing Carinya
+50 × 50 × 40 × 2mm eight-pack.
 Opening storage retracts the bed; extending it closes the lid and stows the table. Opening storage does not
 independently stow the table. See [working dimensions and limits](research/bed-lift-photo-model.md).
 
 The **Long bench → Bed inward offset** dimension moves the complete bed towards the aisle. The accepted 24mm
 middle-pillar offset now applies to both benches, all slats and cushions, the moving support and legs, the hinge
-preview and the table's mounted bracket/working pose. The sleeping width stays 1070mm; extension travel stays 452mm.
+preview and the table's mounted bracket/working pose. The sleeping width stays 1070mm; extension travel is 448mm.
 The separately positioned stowed table does not move. The earlier box-only setting is preserved as this shared offset.
 The cabinet front now follows the bed offset, reducing its depth by 24mm at the accepted setting. Wheel-arch fitting remains separate.

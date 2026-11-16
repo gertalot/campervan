@@ -65,6 +65,7 @@ RETIRED_PARAMETERS = frozenset(
         "cabinet_return_width_mm",
         "cabinet_return_thickness_mm",
         "bed_fixed_strip_width_mm",
+        "bed_leg_diameter_mm",
     }
 )
 
@@ -961,10 +962,10 @@ class Parameters(BaseModel):
     )
 
     bed_slat_rear_setback_mm: float = Field(
-        default=100.0,
-        gt=0,
-        title="Slat rear setback (pending redesign)",
-        description="Retain the previous hidden slat lengths while designing the new lifting lid; no fixed wall strip.",
+        default=0.0,
+        ge=0,
+        title="Slat rear setback",
+        description="Additional wall-side setback beyond the 5mm end trim. Zero recovers the removed 100mm hinge strip.",
         json_schema_extra={"unit": "mm", "group": ["Long bench", "Hinged lid", "Fixed slats"]},
     )
 
@@ -986,24 +987,13 @@ class Parameters(BaseModel):
     )
 
     bed_moving_rail_height_mm: float = Field(
-        default=80.0,
+        default=70.0,
         gt=0,
-        title="Moving rail height",
-        description="Vertical frame-plywood rail below the 18mm blocks; fits the reserved space beside the box.",
+        title="Moving frame top rail height",
+        description="Top rail of the open-legged plywood support frame. Legs and rounded opening match the other bench frames.",
         json_schema_extra={
             "unit": "mm",
             "group": ["Long bench", "Hinged lid", "Sliding bed", "Sliding assembly", "Moving front slat support"],
-        },
-    )
-
-    bed_leg_diameter_mm: float = Field(
-        default=25.0,
-        gt=3,
-        title="Provisional leg diameter",
-        description="Unsourced metal table-leg envelope, with a nominal 1.5mm wall. Length follows the lid rail height.",
-        json_schema_extra={
-            "unit": "mm",
-            "group": ["Long bench", "Hinged lid", "Sliding bed", "Sliding assembly", "Provisional metal legs"],
         },
     )
 

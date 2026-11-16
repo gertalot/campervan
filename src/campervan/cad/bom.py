@@ -14,12 +14,12 @@ def material_for(path: tuple[str, ...]) -> str:
     name = path[-1].lower()
     if "Storage box" in path:
         return "frames"
+    if "Slat angle brackets" in path:
+        return "bed-slat-brackets"
     if "Moving front slat support" in path:
         return "frames"
     if name == "slotted plywood lid":
         return "frames"
-    if "Provisional metal legs" in path:
-        return "bed-legs"
     if "Lid hinges" in path:
         return "bed-lid-hinges"
     if "Laptop table" in path:
@@ -57,7 +57,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
-        if "Lid hinges" in path or "Provisional metal legs" in path:
+        if "Lid hinges" in path:
             return  # Whole purchased items use explicit role quantities, not component envelopes.
         if "Laptop table" in path and "Stowed" in path:
             return  # Another pose of the same two leaves and purchased leg kit.

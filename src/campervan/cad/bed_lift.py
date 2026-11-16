@@ -14,6 +14,7 @@ from build123d import Align, Color, Compound, Cylinder, Location
 from campervan.cad.panels import panel
 
 TOP_RAIL = 600.0
+TOP_RAIL_END_TRIM = 18.0
 BASE_RAIL = 420.0
 LONG_ARM = 270.0
 STRUT_OPEN = 340.0
@@ -23,6 +24,7 @@ UPPER_SPACING = 155.0
 SHORT_ARM = 95.0
 UPPER_REAR_OFFSET = 25.0
 UPPER_PIVOT_DROP = 20.0
+UPPER_FLANGE_DEPTH = UPPER_PIVOT_DROP + 8.0
 STRUT_TOP_OFFSET = 500.0
 STRUT_ARM_OFFSET = 125.0
 RAIL_WIDTH = 30.0
@@ -126,17 +128,32 @@ def lift_members(pose: LiftPose) -> dict[str, tuple[float, float, float]]:
     }
 
 
-def build_lifts(rear: float, bottom: float, length: float, wall: float, percent: float) -> Compound:
+def lift_mounts(length: float, wall: float, rear_panel_y: float) -> tuple[tuple[str, float, bool], ...]:
+    """Fixed mounting faces, also used to position the wall-panel clearance cuts."""
+    return (("Rear lift", rear_panel_y + wall, False), ("Cab-end lift", length - wall, True))
+
+
+def lift_notches(length: float, wall: float, rear_panel_y: float) -> tuple[tuple[float, float, float], ...]:
+    """Y bounds and depth shared by the box walls and the sliding support rail."""
+    clearance = 5.0
+    depth = UPPER_FLANGE_DEPTH + 12.0  # Previous 30mm cuts, deepened by 10mm.
+    return tuple((y - (RAIL_WIDTH if mirrored else 0) - clearance,
+                  y + (0 if mirrored else RAIL_WIDTH) + clearance, depth)
+                 for _, y, mirrored in lift_mounts(length, wall, rear_panel_y))
+
+
+def build_lifts(rear: float, bottom: float, length: float, wall: float, percent: float,
+                *, rear_panel_y: float) -> Compound:
     pose = lift_pose(OPEN_ANGLE * percent / 100)
     assemblies = []
-    for name, y, mirrored in (("Rear lift", wall, False), ("Cab-end lift", length - wall, True)):
+    for name, y, mirrored in lift_mounts(length, wall, rear_panel_y):
         base = panel(BASE_RAIL, 4, 20)
         base.location = Location((-16, -4 if mirrored else 0, -10))
         base.label, base.color = "Fixed mounting rail", BLACK
-        upper = panel(TOP_RAIL, RAIL_WIDTH, 3)
+        upper = panel(TOP_RAIL - TOP_RAIL_END_TRIM, RAIL_WIDTH, 3)
         upper.location = Location((0, -RAIL_WIDTH if mirrored else 0, -3))
-        flange = panel(TOP_RAIL, 3, UPPER_PIVOT_DROP + 8)
-        flange.location = Location((0, -3 if mirrored else 0, -UPPER_PIVOT_DROP - 8))
+        flange = panel(TOP_RAIL - TOP_RAIL_END_TRIM, 3, UPPER_FLANGE_DEPTH)
+        flange.location = Location((0, -3 if mirrored else 0, -UPPER_FLANGE_DEPTH))
         upper += flange
         upper.label, upper.color = "Lid mounting rail (estimated section)", BLACK
         body = Cylinder(8, 180, rotation=(0, 90, 0), align=(Align.CENTER, Align.CENTER, Align.MIN))
