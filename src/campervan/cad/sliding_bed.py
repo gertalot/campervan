@@ -7,6 +7,7 @@ from build123d import Align, Axis, Color, Compound, Cylinder, Face, Location, Pa
 
 from campervan.cad.bed_motion import bed_offset
 from campervan.cad.bed_lift import RAIL_WIDTH, lid_location
+from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
@@ -25,6 +26,7 @@ SLAT_BRACKET_ARM = 50.0
 SLAT_BRACKET_WIDTH = 40.0
 SLAT_BRACKET_THICKNESS = 2.0
 SLAT_BRACKET_CLEARANCE = 1.0
+TABLE_MOUNT_CLEARANCE = 5.0
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,7 @@ class BedLayout:
     lid_rear: float
     box_top: float
     rear_panel_y: float
+    moving_support_length: float
 
 
 def lid_slots(p: Parameters, slat_ys: tuple[float, ...]) -> tuple[tuple[float, float], ...]:
@@ -82,8 +85,8 @@ def long_bed_layout(p: Parameters) -> BedLayout:
         raise ValueError("The two solid lid bands must leave positive ventilation slot length.")
     if p.bed_lid_strip_width_mm <= p.frame_thickness_mm:
         raise ValueError("The aisle-side lid band must retain wood after the moving rail recess.")
-    if p.bed_lid_strip_width_mm - p.frame_thickness_mm <= SLAT_BRACKET_ARM + SLAT_BRACKET_CLEARANCE:
-        raise ValueError("Bracket recesses must leave plywood between the aisle edge and ventilation slots.")
+    if p.bed_lid_strip_width_mm - p.frame_thickness_mm < SLAT_BRACKET_ARM + SLAT_BRACKET_CLEARANCE:
+        raise ValueError("The aisle-side lid band must accommodate the bracket flanges and clearance.")
     if p.slat_width_mm < SLAT_BRACKET_WIDTH + 2 * SLAT_BRACKET_CLEARANCE:
         raise ValueError("Moving slats must accommodate their angle brackets and side clearances.")
     if p.bed_moving_rail_height_mm < SLAT_BRACKET_ARM:
@@ -99,9 +102,15 @@ def long_bed_layout(p: Parameters) -> BedLayout:
         raise ValueError("Comb ledges need bearing under moving slats and clearance beside their rail spacers.")
     margin = (p.seat_length_mm - count * p.slat_width_mm - (count - 1) * gap) / 2
     ys = tuple(margin + i * (p.slat_width_mm + gap) for i in range(count))
+    moving_support_length = p.seat_length_mm - LAGUN_BRACKET_WIDTH - 2 * TABLE_MOUNT_CLEARANCE
+    last_bracket_end = ys[-2] + (p.slat_width_mm + SLAT_BRACKET_WIDTH) / 2
+    if last_bracket_end + TABLE_MOUNT_CLEARANCE > moving_support_length:
+        raise ValueError("The shortened sliding frame must support the last bracket beside the Lagun mount.")
     # Move the rear end wall beyond the rear corner and beneath a complete
     # transverse plywood rib. Its inside-mounted lift rail needs solid wood too.
     slots = lid_slots(p, ys)
+    if any(end - start < SLAT_BRACKET_WIDTH + 2 * SLAT_BRACKET_CLEARANCE for start, end in slots):
+        raise ValueError("Ventilation slots must be wide enough for the bracket rebates and clearance.")
     solid_starts = (0.0, *(end for _, end in slots))
     solid_ends = (*(start for start, _ in slots), p.seat_length_mm)
     pillar_end = max(0.0, p.rear_corner_radius_mm - p.furniture_rear_gap_mm)
@@ -111,7 +120,7 @@ def long_bed_layout(p: Parameters) -> BedLayout:
     if rear_panel_y is None:
         raise ValueError("Rear box wall and lift rail need a solid lid rib ahead of the rear pillar and behind the divider.")
     return BedLayout(ys, travel, rear, front, box_front, moving_front, slat_bottom,
-                     lid_rear, box_top, rear_panel_y)
+                     lid_rear, box_top, rear_panel_y, moving_support_length)
 
 
 def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compound:
@@ -136,14 +145,16 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
 
 
 def slat_support(p: Parameters, layout: BedLayout, name: str, x: float) -> Part:
-    """Full-length smooth-faced frame with blind routed pockets for fixed slat ends."""
-    length, member, radius = p.seat_length_mm, p.member_width_mm, p.inside_radius_mm
+    """Smooth-faced frame ending before the cab-end Lagun mounting area."""
+    length, member, radius = layout.moving_support_length, p.member_width_mm, p.inside_radius_mm
     rail = frame_panel(length, p.frame_thickness_mm, layout.slat_bottom + MOVING_FRAME_UPSTAND,
                        [(member, length - member, -2 * radius,
                          layout.slat_bottom - p.bed_moving_rail_height_mm)], radius)
     rail = fillet(rail.edges().filter_by(Axis.Y).group_by(Axis.Z)[-1], SIDE_RAIL_END_RADIUS)
     clearance = FIXED_SLAT_GROOVE_CLEARANCE
     for y in layout.slat_ys[::2]:
+        if y + p.slat_width_mm + clearance > length:
+            continue
         groove = panel(p.slat_width_mm + 2 * clearance, FIXED_SLAT_GROOVE_DEPTH + 1,
                        p.slat_thickness_mm + 2 * clearance)
         groove = fillet(groove.edges().filter_by(Axis.Y), clearance)
@@ -206,14 +217,14 @@ def build_lid(p: Parameters, layout: BedLayout) -> Compound:
     for start, end in lid_slots(p, layout.slat_ys):
         slot = panel(slot_length, end - start, p.frame_thickness_mm + 2)
         strip -= slot.moved(Location((band, start, -1)))
-    notch_depth = SLAT_BRACKET_ARM + SLAT_BRACKET_CLEARANCE
-    notch_width = SLAT_BRACKET_WIDTH + 2 * SLAT_BRACKET_CLEARANCE
+    slot_end = band + slot_length
+    notch_depth = width - slot_end
     rebate_depth = SLAT_BRACKET_THICKNESS + SLAT_BRACKET_CLEARANCE
-    for y in layout.slat_ys[1::2]:
-        start_y = y + (p.slat_width_mm - notch_width) / 2
-        # The horizontal flange only needs a shallow top rebate; retain the plywood below it.
+    for start_y, end_y in lid_slots(p, layout.slat_ys):
+        notch_width = end_y - start_y
+        # Join each slot to the aisle edge with a matching-width shallow rebate.
         rebate = panel(notch_depth + 1, notch_width, rebate_depth + 1)
-        strip -= rebate.moved(Location((width - notch_depth, start_y, p.frame_thickness_mm - rebate_depth)))
+        strip -= rebate.moved(Location((slot_end, start_y, p.frame_thickness_mm - rebate_depth)))
         # Only the vertical flange needs clearance through the narrow aisle edge.
         edge_relief = panel(rebate_depth + 1, notch_width, p.frame_thickness_mm + 2)
         strip -= edge_relief.moved(Location((width - rebate_depth, start_y, -1)))

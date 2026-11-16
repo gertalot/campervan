@@ -427,9 +427,10 @@ retains its existing geometry and wall-side arch-relative support datum.
 at their gas-spring ends to match, so the former lid tabs are removed. Pivot positions and kinematics are unchanged.
 Seven 400 × 50mm slots preserve the former comb ledges;
 the wall-side band is 100mm and the aisle band is 82mm. The lid remains at Z354–372.
-Seven 51 × 42mm top rebates accommodate the horizontal bracket flanges. They are 3mm deep, providing 1mm
-clearance around 2mm steel and retaining 15mm of plywood below. Only a narrow 3mm edge relief passes through
-the lid for each vertical flange. The recesses stop 31mm short of the ventilation slots and open towards the aisle.
+Seven 82 × 50mm top rebates accommodate the horizontal bracket flanges. Each matches its ventilation slot's
+width and extends from that slot to the aisle edge for easier routing. They are 3mm deep, providing 1mm
+clearance above 2mm steel and retaining 15mm of plywood below. Only a narrow 3mm edge relief passes through
+the lid for each vertical flange, using the same 50mm width.
 Both slat sets extend 100mm wallward into the space freed by the removed stationary strip. Fixed slats are
 567mm long (X45–612 retracted), shortened by 10mm at the aisle end. Moving slats are 559mm (X45–604), butting
 against the frame's inner face. Both sets retain the 5mm wall-end trim and square ends.
@@ -470,10 +471,11 @@ At the saved 390mm slat-top height, the lid underside and box rim are Z354. The 
 plywood frame, from the floor to Z422. Its lower top member is 50mm high (Z322–372),
 with 60mm-wide integral legs and a 25mm-radius open-bottom cutout matching the cross-bench frame construction.
 `bed_moving_rail_height_mm` controls the top member; leg width and opening radius use the existing frame parameters.
-The frame spans X604–622 and the full Y0–1280 bench length. It has no hinge notches.
+The frame spans X604–622 and Y0–1178, shortened 102mm at the cab end for the Lagun mounting area.
+Its integral cab-end leg moves with the new end. It has no hinge notches.
 Metal legs and spacer blocks are removed; the metal-leg purchasing role and diameter parameter are retired.
 Stationary box-wall notches remain.
-The frame's upper 50mm is continuous, with a smooth outer face. Eight 84 × 22mm inside-face grooves are routed
+The frame's upper 50mm is continuous, with a smooth outer face. Seven 84 × 22mm inside-face grooves are routed
 8mm deep at Z370–392, with 2mm clearance above/below and beside each fixed slat, and nominal 2mm corner radii.
 They leave 10mm of outer plywood. The fixed ends enter 8mm and meet the groove backs when retracted; the groove
 ceilings retain the sliding frame after 2mm of vertical take-up during lifting. This is geometric retention, not a
@@ -493,7 +495,12 @@ an extended bed restores a table previously stowed by conversion. The blue cushi
 transform as its placement carrier; the orange cushion stays upright and lifts just enough to clear blue.
 Actual foam forces and wall/mesh clearance remain unverified.
 
-The Lagun bracket now attaches to the cross bench's rear mounting frame, clear of the retracted long bed.
+The Lagun bracket attaches to the long box's aisle-facing wall at its cab end. An 18 × 92 × 170mm plywood pad
+spaces it out from the box face; the pad and bracket occupy Y1183–1275, leaving 5mm beside the sliding frame
+and 5mm before the box end. Including the shared 24mm bed offset, the bracket origin is X638/Y1229 with its
+normal towards the aisle. The upright's native X627–665 envelope leaves about 14mm from the fixed slats over
+the fitted lid stroke. This is an envelope check of the existing illustrative hardware, not a fabrication tolerance.
+The arm's existing world heading and live controls are retained. The detached Stowed pose is unchanged.
 
 Box panels, slotted lid and moving support frame share frame plywood. The lift pair remains a provisional
 hardware requirement. Superseded leg, drawer, guide and bracket roles are retired when loading saved projects; purchase
@@ -508,7 +515,7 @@ Re-including removes that mask, restoring the previous eye settings; disabled ey
 
 `cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
 18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. A third 18mm rear-facing frame fits
-between their inner faces and carries the Lagun bracket on a solid 92mm-wide aisle-side post.
+between their inner faces and retains its solid 92mm-wide aisle-side post; the Lagun mount has moved to the long box.
 At the default 400mm platform height,
 the frame tops are Z = 382; the 18mm slats bear directly on them. There is no divider, deck, sliding assembly,
 cab-end skin, hinged lid, brackets or stop plates.
@@ -942,10 +949,10 @@ The default aisle position is a preview pending a storage-location decision. The
 poses share component builders and one mount offset. The duplicate stowed geometry is excluded from the cut
 list and its tabletop leaves link to the working pose's cutting entries. Nominal packed thickness is 113mm
 (36mm pine + 30mm fitting + 47mm arm); actual handles and the storage channel remain unmeasured.
-The bench mount has a 92mm post and one 18mm spacer flush with the retracted moving frame. That moving frame is
-trimmed 5mm at its cab end, leaving 3mm beside the mounting post throughout sideways travel. Slats stay unchanged.
-The tabletop has two 700 × 250 × 18mm Specrite pine leaves with rounded corners and perimeter round-over.
-It folds from 500mm open width to a 250mm-wide, 36mm-thick stack. The long-edge hinge rotates above the fixed
+The bench mount attaches to the long box's aisle wall on an 18 × 92 × 170mm plywood pad. The moving frame is
+shortened 102mm at its cab end, leaving 5mm beside the mounting pad throughout sideways travel. Slats stay unchanged.
+The tabletop has two 600 × 200 × 18mm Specrite pine leaves with rounded corners and perimeter round-over.
+It folds from 400mm open width to a 200mm-wide, 36mm-thick stack. The long-edge hinge rotates above the fixed
 leaf. Two selected Homer HOM006136 hinges appear in both table poses, with centres at 20% and 80% along
 the seam. Their 114 × 42mm open footprint and 38mm pin width follow the supplier; thickness, pivot spacing,
 barrel section, taper and countersunk holes are photo-based approximations. Each half follows its leaf

@@ -170,13 +170,13 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "°", "group": ["Laptop table", "Stowed"], "control": "position"},
     )
     table_length_mm: float = Field(
-        default=700,
+        default=600,
         ge=240,
         title="Tabletop length",
         json_schema_extra={"unit": "mm", "group": ["Laptop table"]},
     )
     table_depth_mm: float = Field(
-        default=250,
+        default=200,
         ge=200,
         title="Folded width",
         description="Width of each leaf; the open tabletop is twice this width.",

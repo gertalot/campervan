@@ -1,4 +1,4 @@
-"""Shared cross-bench frame and rear-facing table-mount datums."""
+"""Cross-bench frame datums and the nominal Lagun bracket width."""
 
 from dataclasses import dataclass
 
@@ -15,7 +15,6 @@ class CrossBenchLayout:
     length: float
     height: float
     mounting_post_width: float
-    mount_origin: tuple[float, float, float]
 
 
 def cross_bench_layout(p: Parameters) -> CrossBenchLayout:
@@ -28,6 +27,4 @@ def cross_bench_layout(p: Parameters) -> CrossBenchLayout:
         length=p.cargo_length_mm - p.seat_length_mm,
         height=p.platform_height_mm - p.slat_thickness_mm,
         mounting_post_width=post,
-        # The bench root receives this same inward offset in model.py.
-        mount_origin=(aisle_x - post / 2 + p.bed_inward_offset_mm, p.seat_length_mm, 0),
     )

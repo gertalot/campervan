@@ -64,23 +64,27 @@ The moving support is one 18mm plywood frame at X604–622 alongside the recesse
 or metal table legs. It reaches from the floor to Z422, including a continuous 50mm rise above the slat undersides.
 The lower top rail is 50mm high (Z322–372), with 60mm-wide integral legs and a rounded open-bottom cutout using the existing
 cross-bench frame helper and 25mm radius. Leg width/radius follow `member_width_mm` and `inside_radius_mm`;
-`bed_moving_rail_height_mm` controls the lower top member's height. The frame spans the full bench length,
-Y0–1280. The metal-leg parameter and purchasing role are retired.
+`bed_moving_rail_height_mm` controls the lower top member's height. The frame spans Y0–1178, shortened 102mm
+at the cab end to leave a 92mm Lagun bracket width plus 5mm clearance on each side. Its integral cab-end leg
+moves with the new end. The last moving-slat angle ends at Y1170, leaving 8mm of frame beyond it.
+The metal-leg parameter and purchasing role are retired.
 It has no hinge notches. The stationary box walls retain their 40 × 40mm notches and 5mm side clearances.
-The former teeth are replaced by the smooth, continuous outer face. Eight rounded inside-face router grooves
+The former teeth are replaced by the smooth, continuous outer face. Seven rounded inside-face router grooves
 are 84 × 22mm and 8mm deep, at Z370–392, leaving 10mm of outer plywood intact. The fixed slats enter these
 grooves by 8mm when retracted; 2mm clearance is provided above, below and at either side. Their ends meet the
 groove backs, so the 8mm depth does not include additional end clearance. The groove ceilings pick up the fixed
 slats after 2mm of relative vertical movement, retaining the sliding frame when lifting the lid. This is geometric
 engagement, not a load rating; the animation carries the retracted frame with the lid without modelling take-up.
-Nominal internal groove corner radius is 2mm. First/last grooves retain 3mm end margins and the continuous outer skin.
+Nominal internal groove corner radius is 2mm. The first groove retains its 3mm rear margin; the final retained
+groove ends 71mm before the shortened cab end. The continuous outer skin remains intact.
 Angles remain face-mounted beneath the shortened moving slat ends, in their original positions. The rail's
 lower edge is raised 20mm to align with the bracket bottoms; no bracket pockets are cut in the rail.
 Seven existing-catalogue [Carinya 50 × 50 × 40 × 2mm angles](https://www.bunnings.co.nz/carinya-50-x-50-x-40-x-2mm-galvanised-reinforcing-angle-bracket-8-pack_p3962402)
 tie each moving slat underside to the frame's wall-side face. Their 50mm vertical flanges match the lower top member.
-Each angle has a 51 × 42mm top rebate, just 3mm deep (2mm steel plus 1mm clearance), retaining 15mm plywood below.
-The vertical flange alone needs a narrow 3mm-wide through-relief at the aisle edge. The rebates span X553–604,
-leaving 31mm of plywood before the ventilation slots at X522; the edge relief spans X601–604.
+Each angle has an 82 × 50mm top rebate, just 3mm deep (2mm steel plus 1mm clearance), retaining 15mm plywood below.
+The rebates match the ventilation slots' width and join them to the aisle edge, spanning X522–604 for easier routing.
+The vertical flange alone needs a narrow 3mm-wide through-relief at the aisle edge, spanning X601–604 and using
+the same 50mm width.
 They move out through the open notches with the sliding frame. The lower flanges clear the stationary aisle wall
 by 4mm, and the horizontal flanges sit 16mm above the box tops. Hole positions in CAD are illustrative; actual
 bracket holes and short screw lengths need matching to the supplied hardware. No quantified stiffness/load rating

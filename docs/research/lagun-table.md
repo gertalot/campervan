@@ -1,15 +1,15 @@
 # Lagun laptop table
 
-Gert's current top has two **700 × 250 × 18mm laminated pine leaves**. The second leaf folds onto the first:
-250mm folded width and 500mm open width. The folded stack is 36mm thick; the flat open top is 18mm thick.
+Gert's current top has two **600 × 200 × 18mm laminated pine leaves**. The second leaf folds onto the first:
+200mm folded width and 400mm open width. The folded stack is 36mm thick; the flat open top is 18mm thick.
 The length remains editable. The table is for use with the bed retracted; remove it for sleeping.
 
 The selected stock is the [1200 × 600 × 18mm Specrite pine panel](https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619),
 Bunnings I/N 0419619. On 6 November 2026, Bunnings and [SpecRite](https://www.specrite.co.nz/range/timber-panels-boards/0419619-1200-x-600-x-18mm-timber-multi-use-pine-panel)
 listed $47; local store stock was not confirmed. This replaces the $139 Prempanel bamboo selection, saving $92
-on tabletop stock. Both leaves fit side by side on one panel with kerf allowance; run grain along the 700mm length.
+on tabletop stock. Both leaves fit side by side on one panel with kerf allowance; run grain along the 600mm length.
 The finger-jointed, laminated radiata pine is sold for interior furniture and tabletops. Finish both faces and all
-edges, including hinge pockets. The nominal 6.2kg full-panel weight gives approximately 3.0kg for the two blanks,
+edges, including hinge pockets. The nominal 6.2kg full-panel weight gives approximately 2.1kg for the two blanks,
 before rounding, pockets, finish and hardware. The cross-bench mounting frame uses the bench's 18mm plywood.
 
 Each leaf has 20mm plan-view corner radii and a 3mm round-over on its top and bottom perimeter edges. These
@@ -30,7 +30,7 @@ are 114mm open length, 42mm maximum width and 38mm pin width.
 
 [Folding-table hinge research](table-hinges.md) records the selection and fitting requirements for this top.
 The CAD shows two tapered, countersunk Homer hinges in both table poses, with their centres at 20% and 80%
-of the tabletop length: 140mm from each end of the current 700mm top. Each half follows its timber leaf
+of the tabletop length: 120mm from each end of the current 600mm top. Each half follows its timber leaf
 through the existing fold animation. The 114 × 42mm open footprint and 38mm pin width follow Fosters.
 The 3mm metal thickness, 4mm pivot offsets, 3mm barrel radii, taper, corner radii and hole pattern are visual
 approximations from the photograph. Nominal blind seats extend 6mm below the upper face, leaving 12mm of the 18mm pine beneath them. They provide
@@ -44,13 +44,16 @@ recess geometry and fixings still need establishing on the hardware.
 `cad/table.py` supplies the bench-mounted table. The cabinet mounting option, its controls, plywood pieces and
 additional bracket have been removed. The Stowed display group shows the folded top with its disassembled leg.
 
-The mounting bracket faces rearwards on the cross bench's transverse 18mm frame, between its longitudinal frames.
-Its 92mm-wide solid aisle-side post replaces the old storage-box mounting backing. Shared cross-bench layout datums
-place both bracket and mounted table at X=830, Y=1280, rotated −90° about Z in furniture coordinates, including
-the accepted 24mm inward bed offset. The detached Stowed preview keeps its own position.
+The mounting bracket faces the aisle on the long box's cab-end area. The sliding support frame ends 102mm
+before the box end, at Y1178, with its integral cab-end leg relocated accordingly. The last moving-slat angle
+ends at Y1170 and remains fully supported. The bracket and an 18 × 92 × 170mm plywood mounting pad span
+Y1183–1275: 5mm clear of the frame and 5mm before the box end. The pad spaces the upright beyond the fixed slats.
+The bracket origin is X638/Y1229 including the accepted 24mm inward bed offset. Its normal faces +X;
+the arm orientation retains the old −90° heading so the saved swivel/tabletop directions are preserved.
+The detached Stowed preview keeps its own position. The cross bench's frames are unchanged.
 
-At current dimensions the retracted bed's outermost slats finish at X=642. The upright body occupies X=811–849,
-leaving 169mm; its illustrative clamp handle starts at X=790, leaving 148mm. The bracket spans X=784–876.
+Before the shared 24mm bed offset, the upright body occupies X627–665. The fixed slats' aisle edge peaks at
+approximately X612.97 through the fitted lift stroke, leaving about 14mm clearance to the upright.
 With the saved 750mm table height, the folded top's underside is Z=732 versus the bed slat top at Z=390.
 These are model envelope clearances; handles, holes and fixings still require checking against the actual hardware.
 The upright cannot remain mounted during bed extension across this space; the existing conversion control

@@ -7,7 +7,8 @@ clamp internals are visual approximations; hole centres require the actual kit.
 from build123d import Align, Axis, Color, Compound, Cone, Cylinder, Face, Location, Part, Solid, Wire, fillet
 
 from campervan.cad.panels import panel
-from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH, cross_bench_layout
+from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH
+from campervan.cad.sliding_bed import TABLE_MOUNT_CLEARANCE, long_bed_layout
 from campervan.parameters import Parameters
 
 ROOT = "/Campervan/Laptop table"
@@ -161,13 +162,22 @@ def _leaves(p: Parameters, open_percent: float) -> Compound:
     ])
 
 
+def _mount_location(p: Parameters) -> Location:
+    """Aisle-facing mount on the long box, beyond the shortened sliding frame."""
+    layout = long_bed_layout(p)
+    return Location((layout.box_front + p.bed_inward_offset_mm + p.frame_thickness_mm,
+                     layout.moving_support_length + TABLE_MOUNT_CLEARANCE + LAGUN_BRACKET_WIDTH / 2, 0))
+
+
 def _fixed_mount(p: Parameters) -> Compound:
     bracket = Compound(label="Lagun hardware", children=[
         block("Standard mounting bracket", (13, LAGUN_BRACKET_WIDTH, 170),
               (0, -LAGUN_BRACKET_WIDTH / 2, 100)),
     ])
-    result = Compound(label="Fixed mount", children=[bracket])
-    result.location = Location(cross_bench_layout(p).mount_origin, (0, 0, -90))
+    pad = block("Bench mounting pad", (p.frame_thickness_mm, LAGUN_BRACKET_WIDTH, 170),
+                (-p.frame_thickness_mm, -LAGUN_BRACKET_WIDTH / 2, 100), Color(0.88, 0.61, 0.25))
+    result = Compound(label="Fixed mount", children=[pad, bracket])
+    result.location = _mount_location(p)
     return result
 
 
@@ -181,10 +191,12 @@ def _mounted_table(p: Parameters) -> Compound:
     swivel = Compound(label="Swivel arm", children=[_arm(), tabletop])
     swivel.location = Location((0, 0, 507), (0, 0, p.table_arm_swivel_deg))
     orientation = Compound(label="Arm orientation", children=[swivel])
+    # Preserve the arm/tabletop's existing world heading when turning the upright mount.
+    orientation.location = Location((0, 0, 0), (0, 0, -90))
     height = Compound(label="Height adjustment", children=[_upright(), orientation])
     height.location = Location((32, 0, leg_bottom))
     result = Compound(label="Bench mount", children=[height])
-    result.location = Location(cross_bench_layout(p).mount_origin, (0, 0, -90))
+    result.location = _mount_location(p)
     return result
 
 

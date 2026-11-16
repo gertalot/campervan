@@ -55,8 +55,8 @@ ROLES = [
         kind="sheet",
         fields={"thickness": "table_ply_thickness_mm"},
         default_product_id="specrite-pine-18-1200-600",
-        note="Two 700 × 250 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
-        "Grain follows the 700mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
+        note="Two 600 × 200 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
+        "Grain follows the 600mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
         "The rear cross-bench mounting frame shares frame plywood.",
     ),
     MaterialRole(
