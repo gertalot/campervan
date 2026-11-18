@@ -1,6 +1,11 @@
 /.venv/
-# Local project inputs and scan data never belong in Git.
-/data/
+# Version the saved design and published scan reference; keep other local data private.
+/data/*
+!/data/project.json
+!/data/scan-reference/
+/data/scan-reference/*
+!/data/scan-reference/reference.json
+!/data/scan-reference/mesh.ply
 /.local/
 /data/*.tmp
 /.venv-prod/

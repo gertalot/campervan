@@ -89,8 +89,11 @@ async def export_site() -> None:
             )
 
     purchases = purchase_view(planning, project.materials, cuts, parameters=project.parameters, cutting=cutting)
+    reference_directory = root / "data" / "scan-reference"
+    reference = json.loads((reference_directory / "reference.json").read_text(encoding="utf-8"))
     snapshot = {
         "exported_at": datetime.now(UTC).isoformat(),
+        "scans": [reference],
         "parameters": parameter_response(
             f"static-{fingerprint[:16]}",
             project.parameters,
@@ -121,6 +124,9 @@ async def export_site() -> None:
         )
         _write_json(output / "snapshot.json", snapshot)
         _write_json(output / "viewer-frames.json", frames)
+        reference_output = output / "scan-reference"
+        reference_output.mkdir()
+        shutil.copyfile(reference_directory / "mesh.ply", reference_output / "mesh.ply")
         _copy_viewer_assets(output)
         (output / ".nojekyll").touch()
         destination = root / "site"

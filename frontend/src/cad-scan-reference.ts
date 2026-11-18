@@ -11,7 +11,6 @@ interface ReferenceViewer extends CrossSectionViewer {
 }
 
 export function setupCadScanReference(container: HTMLElement, viewer: ReferenceViewer) {
-  if (isStaticSite) return;
   container.hidden = false;
   container.insertAdjacentHTML('beforeend', `
     <label class="reference-toggle"><input type="checkbox" data-visible /> Show scan reference</label>
@@ -42,12 +41,12 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   const vehicleOutput = find<HTMLOutputElement>('[data-vehicle-opacity-value]');
   const status = find<HTMLParagraphElement>('[data-status]');
   const offsets = [...container.querySelectorAll<HTMLInputElement>('[data-offset]')];
-  const sections = setupCrossSections(container, viewer);
+  const sections = isStaticSite ? undefined : setupCrossSections(container, viewer);
   const key = 'campervan.cad.scan-reference';
   const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
   visible.checked = saved.visible ?? true;
-  opacity.value = String(saved.opacity ?? 45);
-  vehicleOpacity.value = String(saved.vehicleOpacity ?? 35);
+  opacity.value = String(saved.opacity ?? (isStaticSite ? 100 : 45));
+  vehicleOpacity.value = String(saved.vehicleOpacity ?? (isStaticSite ? 0 : 35));
   const translations: Record<string, number[]> = saved.translations ?? {};
   let scans: ScanResult[] = [], root: Object3D | undefined, generation = 0;
   const selected = () => scans.find(scan => scan.key === select.value);
@@ -91,13 +90,13 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     root.matrix.copy(transform).decompose(root.position, root.quaternion, root.scale);
     root.updateMatrixWorld(true);
     display();
-    void sections.setReference(scan, root);
+    void sections?.setReference(scan, root);
   }
   async function load() {
     const token = ++generation;
     viewer.setScanReference(undefined);
     viewer.setVehicleComparisonOpacity(null);
-    void sections.setReference(undefined, undefined);
+    void sections?.setReference(undefined, undefined);
     if (root) { disposeObject(root); root = undefined; }
     const scan = selected();
     if (!scan) return;
@@ -151,7 +150,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       if (scans.some(scan => scan.key === previous)) select.value = previous;
       if (!scans.length) {
         generation++; viewer.setScanReference(undefined); viewer.setVehicleComparisonOpacity(null);
-        void sections.setReference(undefined, undefined);
+        void sections?.setReference(undefined, undefined);
         if (root) { disposeObject(root); root = undefined; }
         status.textContent = 'No CAD-registered scan available.'; return;
       }
@@ -164,5 +163,5 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   }
   refresh.onclick = () => { void refreshReferences(); };
   void refreshReferences();
-  return { setCentreline: sections.setCentreline };
+  return sections && { setCentreline: sections.setCentreline };
 }

@@ -5,6 +5,7 @@ import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import { LoadingManager, Mesh, MeshBasicMaterial, MeshStandardMaterial, Points, PointsMaterial,
   type Material, type Object3D, type Texture, type MeshPhongMaterial } from 'three';
 import type { ScanResult as Scan, ScanLayer as Layer } from './scan-library-api';
+import { assetUrl } from './site-runtime';
 
 export function disposeObject(root: Object3D) {
   root.traverse(object => {
@@ -65,6 +66,7 @@ export async function loadObject(url: string, kind: Layer['kind'], mode = ''): P
 }
 
 export function layerUrl(scan: Scan, layer: Layer) {
+  if (scan.asset_base_url) return assetUrl(`${scan.asset_base_url}/${layer.asset}`);
   return scan.id
     ? `/api/v1/scans/runs/${encodeURIComponent(scan.id)}/assets/${layer.asset.split('/').map(encodeURIComponent).join('/')}`
     : `/api/v1/scans/${encodeURIComponent(scan.name)}`;

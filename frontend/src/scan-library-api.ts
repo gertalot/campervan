@@ -8,6 +8,7 @@ export interface TagAlignmentDefinition {
   x_direction: { from_tag: number; to_tag: number }; y_direction: { from_tag: number; to_tag: number };
 }
 export interface ScanResult {
+  asset_base_url?: string;
   key: string; id?: string; name: string; bytes: number; display_name: string;
   group_id: string | null; group_name: string | null; archived: boolean; is_default: boolean;
   layers?: ScanLayer[]; measured?: boolean; tag_layout_id?: string | null; tags?: ScanTag[]; tag_note?: string;

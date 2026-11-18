@@ -1,0 +1,74 @@
+{
+  "key": "run:corrected-7605be9e-6933-4e0e-b64d-1c8d94c0e6e1",
+  "name": "van-interior",
+  "display_name": "Registered van interior",
+  "bytes": 19779546,
+  "group_id": null,
+  "group_name": null,
+  "archived": false,
+  "is_default": true,
+  "units": "m",
+  "asset_base_url": "scan-reference",
+  "layers": [
+    {
+      "id": "mesh",
+      "label": "Coloured mesh",
+      "asset": "mesh.ply",
+      "kind": "mesh"
+    }
+  ],
+  "alignment": {
+    "status": "aligned",
+    "matrix": [
+      [
+        0.9888400725184378,
+        -0.13880146240019553,
+        0.054124532490340015,
+        0.1762184932387492
+      ],
+      [
+        0.14276525458875866,
+        0.9866821543993711,
+        -0.07795131988634052,
+        0.06581664146465382
+      ],
+      [
+        -0.042583953127177936,
+        0.08480849146979783,
+        0.9954868792257784,
+        0.47057413405682197
+      ],
+      [
+        0,
+        0,
+        0,
+        1
+      ]
+    ]
+  },
+  "cad_reference": {
+    "translation_mm": [
+      743.3,
+      31,
+      -12
+    ],
+    "rotation": [
+      [
+        0.9999843595481499,
+        0.0025021451733368027,
+        0.005001992463796336
+      ],
+      [
+        -0.0024782864719903016,
+        0.9999855507725807,
+        -0.004770360806177907
+      ],
+      [
+        -0.005013856324135932,
+        0.004757889825323387,
+        0.9999761115792571
+      ]
+    ],
+    "description": "Working rigid CAD registration: fitted cargo-floor plane, bilateral rear-panel centreline, and owner-measured closed-hatch inner centre at fitted-floor Z=390 mm. Rear hatch was closed in the capture; inner centre target Y=-30 mm follows approx100 mm bed setback minus130 mm hatch clearance. No scale fitting or deformation."
+  }
+}

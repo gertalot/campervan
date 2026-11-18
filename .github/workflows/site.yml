@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Check saved project inputs
-        run: git ls-files --error-unmatch data/project.json data/planning.json
+        run: git ls-files --error-unmatch data/project.json data/scan-reference/reference.json data/scan-reference/mesh.ply
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:

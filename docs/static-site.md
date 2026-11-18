@@ -7,9 +7,16 @@ make site
 ```
 
 The export goes into `site/` and includes the model, motion data, saved cutting layouts, bill of materials and purchases.
-Both the local application and exporter read `data/project.json` and `data/planning.json`. Commit these files with the
-source so GitHub Actions receives the saved design and purchase records. The static site excludes the Plan page and
-its document; the exporter reads the planning file only to produce the purchase data used by the BOM.
+Commit `data/project.json` with the source so GitHub Actions receives the saved design, materials and cutting layouts.
+Keep `data/planning.json` local and ignored. Local exports read it when present to include purchase records; GitHub
+Actions uses the exporter's existing default planning data when that file is absent. The static site excludes the
+Plan page and its document.
+
+The versioned `data/scan-reference/mesh.ply` is the selected coloured van-interior reference. Its minimal
+`reference.json` records the scan alignment and CAD registration. The exporter copies that mesh and includes its
+descriptor in the snapshot; the published CAD viewer uses the same loading, placement and opacity controls as the
+local viewer. Raw captures, processing runs and scan-editing/cross-section tools remain local. To publish a different
+reference, replace both the mesh and its registration together.
 
 The exporter reuses a matching model cache or builds the geometry offline. It starts no services.
 The saved project includes all three mannequin poses, their individual visibility and the group's visibility.
@@ -43,7 +50,7 @@ In the repository's **Settings → Pages → Build and deployment**, set **Sourc
 The workflow in [site.yml](../.github/workflows/site.yml) runs on pushes to `main`, or manually on `main` from Actions.
 Other branches skip the build and deployment.
 
-The workflow checks that both saved data files are tracked, runs `make setup` and `make site`, and uploads `site/` for
+The workflow checks that the saved project and scan-reference files are tracked, runs `make setup` and `make site`, and uploads `site/` for
 publication. It runs no tests or local services. The deployment provides the site's URL.
 
 Reference: [GitHub's Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
