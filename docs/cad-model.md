@@ -268,14 +268,14 @@ Campervan
 └── Cabinet
     ├── Lower module
     │   ├── Frames → front frame, cleats, arch bridge, catch blocks, rear jamb, cab-end bridge upright
-    │   │   └── Module joint → four lower side rails and eight M5 × 90mm bolt sets
+    │   │   └── Module joint → four lower side rails and eight M6 × 90mm hex bolt sets
     │   ├── Skin → 9mm centre/cab-end panels
     │   ├── Shelves → lower forward and both middle shelves
     │   └── Doors → lower flaps, storage pair and fixed hardware
     └── Upper module
         ├── Frames → front frame, shelf cleats and catch blocks
         │   └── Module joint → four upper side rails
-        ├── Skin → 9mm centre/cab-end/rear supporting panels
+        ├── Skin → 6mm centre/cab-end/rear supporting panels
         ├── Shelves → both upper shelves
         └── Doors → Rear/Cab-end upper 1/2 and fixed hardware
 ```
@@ -458,6 +458,22 @@ does not descend below its closed height along this fitted path. This is a photo
 pivots, mounting holes, spring stroke, capacity and stops need checking against the hardware. See the
 [dimension record and current limits](research/bed-lift-photo-model.md).
 
+Each lift has seven illustrative M6 through-bolts, spaced clear of the modelled pivots: four 40mm zinc-plated
+coach bolts in the fixed rail and three 50mm Pinnacle Black Ruspert Allen-drive round-head bolts through the
+fixed slat, plywood lid and moving rail. The mounting steel is 6.7mm thick, as supplied by Gert. The six upper
+bolts have top counterbores provisionally 18mm diameter × 6mm deep, leaving 12mm of the 18mm fixed slat.
+A nominal 16 × 1.6mm steel washer beneath each upper head spreads its bearing load. The estimated
+10.5mm-diameter, 3.3mm-high heads sit 1.1mm below the slat surface, with a provisional 4mm Allen socket.
+Pinnacle confirms a hex insert but does not publish these head/socket dimensions: measure the physical
+bolts and washers before boring. This establishes illustrative fit, not a verified wood bearing capacity.
+Fixed bolts have a 24.7mm grip; recessed upper bolts have a 38.3mm grip including their head washers.
+Another M6 × 16mm washer and nominal 6mm-high Nyloc sit against each steel rail. Upper fixings belong to
+`Upper rail`, so the existing motion tracks carry them with the lid. They also clamp the fixed slats to the lid.
+Placement is illustrative; no through-holes are cut into the wood or rails, only the top counterbores.
+Match-drill the physical hardware and confirm bearing area and moving-part clearance before construction.
+The BOM counts eight 40mm coach bolts, one six-pack of 50mm Allen bolts, twenty washers and fourteen Nylocs;
+the Nylocs replace the bolts' supplied plain nuts and require two twelve-packs.
+
 `bed_inward_offset_mm` is a shared assembly placement for both benches. The accepted 24mm aisleward offset
 moves the box, fixed and moving slats, moving front rail, legs, hinge preview and both benches' cushions together.
 The table's mounting bracket and working pose follow the same offset; its independent stowed pose is unchanged.
@@ -490,8 +506,8 @@ fixings to the supplied hardware and 18mm timber before drilling.
 
 `Hinged lid` owns the plywood and the retained slat/slider geometry. `Lid hinges` owns the two mechanisms,
 including separately animated upper rails, arms and telescoping springs. Opening storage retracts the bed;
-extending it closes the lid and stows the table. Opening storage keeps the selected table pose unless retracting
-an extended bed restores a table previously stowed by conversion. The blue cushion follows the lid's linkage
+extending it closes the lid. The Table checkbox selects the mounted or stowed table independently of either
+bed motion, including after reloading. The blue cushion follows the lid's linkage
 transform as its placement carrier; the orange cushion stays upright and lifts just enough to clear blue.
 Actual foam forces and wall/mesh clearance remain unverified.
 
@@ -542,9 +558,12 @@ and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 `cabinet.py` builds a panel-and-cleat cabinet in two modules. Both retain Frames, Skin, Shelves and Doors
-visibility groups. Skin now contains supporting 9mm Tigerply Okoume end panels and the centre divider, using the
+visibility groups. Skin now contains supporting 6mm Tigerply Okoume end panels and the centre divider, using the
 existing Bunnings product. It is not 3mm cladding over a separate timber skeleton. The front frame, shelf cleats,
 joining rails and hardware blocks use the existing 40 × 18mm pine. The arch bridge remains 90 × 18mm pine.
+The 6mm supporting-panel choice was approved on 17 November 2026 after comparing gravity compression and
+panel bending at an assumed 12kg per shelf. Existing cleats and framing remain; the comparison is not a verified
+cabinet load rating or a capacity check of its joints and vehicle attachments.
 
 Middle and cab-end panels have full-depth, jigsaw-scribed profiles against the actual side, pillars and finished
 ceiling. The rear upper panel follows the same contour and extends down to Z730. The lower rear timber jamb has
@@ -562,7 +581,7 @@ clearance. This keeps its full mating face on the supporting panel rather than s
 
 Five 6mm shelves retain their levels. The lowest forward shelf follows platform + foam + mattress clearance;
 the middle shelf tops/interface are at storage height + frame width (770mm), and the upper level follows the
-available module height. Shelves butt behind the front frame and between the 9mm panels. Both ends of each shelf
+available module height. Shelves butt behind the front frame and between the 6mm panels. Both ends of each shelf
 have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edges remain scribed to the van.
 There are no internal post cutouts. The front frame ties the panels together and stiffens the front shelf edge.
 
@@ -575,8 +594,10 @@ face and ends beneath its lower shelf cleat, providing a timber attachment for t
 This establishes an explicit support arrangement, not a verified complete cabinet load rating.
 
 Four pairs of straight transverse side joining rails retain the detachable joint. Lower rails have shallow
-shelf seats with solid lands around their two bolts; upper rails bear directly on those lands. Eight M5 × 90mm
-countersunk screw envelopes remain side-only. There are no front/rear longitudinal joining rails. The existing
+shelf seats with solid lands around their two bolts; upper rails bear directly on those lands. Eight ordinary
+zinc-plated M6 × 90mm hex bolt-and-nut sets remain side-only, with 6.5mm clearance holes and no countersinks.
+M6 × 16mm washers sit under both heads and nuts. The lower head and washer project about 5.6mm below the rail;
+head/nut sizes and washer thickness remain nominal envelopes. There are no front/rear longitudinal joining rails. The existing
 20mm lower panel guides and 0.5mm seam clearance remain at the middle/cab-end sides. The upper rear panel extends
 below the joint beside the lower rear header; this is an unglued locating overlap. Keep every detachable mating
 surface unglued. Module rails and fasteners remain in the Module joint subgroup under Frames.
@@ -588,18 +609,24 @@ same face position. This restores the previous 6mm nominal wood-face gap; hinge 
 5.7mm of it where their heights and fore–aft positions overlap the bed. The rear jamb continues to use the fitted
 wall limit rather than moving outwards to preserve the former 230mm opening.
 
-`cabinet_doors.py` retains nine 6mm inset doors, two face-mounted hinge envelopes per door, finger holes and roller
-catches. Six doors are drop-down flaps; the lowest rear pair and lowest forward door have vertical hinges. Fixed
-hinges through-bolt to the full 18mm front frame. Moving leaves and catch keepers bolt through plywood faces.
-Local front-edge shelf clearances accommodate hinge lands and nuts; no fixing goes into a 6mm plywood edge.
+`cabinet_doors.py` retains nine 6mm inset doors with edge-mounted continuous hinges, finger holes and roller
+catches. Six doors are drop-down flaps; the lowest rear pair and lowest forward door have vertical hinges.
+Each moving door carries a glued 18 × 18mm pine strip behind its hinged edge, stopping 10mm short of its
+perpendicular ends. The hinge has the same cut length as that strip. Leaves sit on opposing door/jamb edges;
+only the knuckle shows. The other three door edges overlap front rebates. Old exposed butt hinges, hinge bolts,
+drilled hinge holes, shelf hinge notches and vertical staggering are removed.
+`cabinet_piano.py` previews the Taskmaster 610 × 27mm hinge with a nominal 0.8mm leaf, 2mm pin and 3.6mm barrel.
+These section dimensions, the 2mm hinge gap and any mortices require physical confirmation. No unverified hinge
+fixing holes or screws are modelled. Catch keepers retain their through-face plywood bolts.
 Catch plates mount beneath square 40 × 40 × 18mm blocks attached to the front headers. Fixed and moving hardware
 follow Doors visibility; timber mounting blocks follow Frames. Door controls and motion paths remain unchanged.
 
-The BOM retains eighteen hinges, nine catch sets, eight module screw sets, 36 M3 × 25 frame bolt sets, 54 M3 × 12
-door/keeper sets, ninety backing washers and eighteen catch-block screws. Hardware geometry is still an estimated
-mounting envelope, not a manufacturer drilling template. Flap chains, cleat fixing holes and vehicle anchorage
-hardware remain to detail. Glue/clamp shelf cleats and supporting panels on the bench, dry-fit the module in the
-van, then complete the fixed joints. The four existing visibility filters and material role IDs remain stable.
+The BOM allows nine 610mm Taskmaster stainless piano-hinge lengths (one per door before offcut optimisation),
+18 × 18mm clear pine backing stock, nine catch sets, eight module bolt-and-nut sets with sixteen separate washers,
+eighteen M3 × 12 keeper sets,
+eighteen backing washers and eighteen catch-block screws. Hinge fixings remain unspecified. Hardware geometry
+is an estimated mounting envelope, not a manufacturer drilling template. Flap chains, cleat fixing holes and
+vehicle anchorage remain to detail. Pine backing strips follow the moving doors and appear in the cut list.
 
 The Visibility section provides independent Cabinet shelves, Cabinet doors, Cabinet skin and Cabinet frames
 checkboxes, each covering both modules. Hinges follow Doors, including their stationary leaves. These are local
@@ -703,11 +730,11 @@ Slider previews are combined into one animation-frame update using the latest va
 tracks are applied. Mannequin fitting, seat compression and pillow deformation are recalculated for bed or
 mannequin changes; table, storage-lid, door and gear sliders leave them alone. A slider frame draws once. Releasing
 a slider with the same value does not repeat the geometry update; its API save still occurs.
-Moving the bed extension above 0% automatically selects the Stowed table pose in the same preview frame.
-Releasing the bed slider saves both positions. Reloading with an extended bed also restores the table stowed.
-If extending the bed stowed a mounted table, returning the slider to 0% restores Bench mount. A table that was
-already stowed stays stowed. Browser storage remembers the automatic return across reloads; explicitly selecting
-a table pose cancels that pending return.
+The native labelled Table checkbox in Visibility selects mounted when checked and Stowed when unchecked,
+using the existing table_mount values 0 and 2. Bed extension and lid movement never change that selection.
+It persists through browser storage and pose saves, including when reloading an extended bed. The checkbox
+retains native label activation and Space-key toggling, following the
+[WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
 
@@ -911,14 +938,29 @@ purchase quantities require a cutting layout; roles selecting the same product m
 
 Bed box panels and cross-bench support frames use the selected 18mm plywood.
 Cabinet front frame, cleats, joining rails and catch blocks share 40 × 18mm pine; the bridge uses 90 × 18mm pine.
-The cabinet uses 9mm scribed supporting panels and 6mm door/shelf plywood. All three cross-bench frames share 18mm frame plywood.
+The cabinet uses 6mm scribed supporting panels and 6mm door/shelf plywood. All three cross-bench frames share 18mm frame plywood.
+
+The rear bay's top opening has a relocated 40 × 18mm stile at vehicle Y325 (local Y225 at the current
+100mm rear setback). Only its top flap narrows; the tier below and lower post retain their layout.
+A fixed 6mm inset panel closes the rear portion, with no interior divider or upper crosspiece.
+It uses the doors' face plane, perimeter reveal and edge treatment, with no hinges, catch or finger hole.
+Doors and the fixed panel overlap the through-openings by 8mm at the current 2mm reveal. The frame has
+10mm-wide front rebates whose depth matches the panel thickness (6mm, leaving 12mm rear bearing lands).
+The rebate cutters use closed poses independently of live door angles. Enlarged doors retain their
+outward hinge axes; catches follow the header edges, with local rear-land relief for their keepers. The bottom storage pair retains its
+2mm centre seam: there is no centre frame to rebate. Rebates are routing operations on the timber
+stock; door and fixed-panel cut outlines include their enlarged dimensions.
+Piano hinges run along the unrebated hinged edges; there are no exposed opposing leaves or staggered hinges.
+The rear upright extends to the scribed beam-clearance profile. The infill uses the existing cabinet-door plywood
+stock but belongs to Skin visibility. `cad/cabinet_upper.py` records provisional registered-scan roof
+landmarks for the infill and the rear supporting panel, with approximately 5mm fitting clearance.
+These profiles require visual/physical fitting; they are not a verified complete scan collision envelope.
 Plywood parts retain their scribed profiles and openings in the cut list. The moving front support is cut from 18mm frame plywood.
 Cabinet stock sections come from their selected timber products, with measured overrides.
 
-The nine cabinet doors use 6mm bbi Redline plywood from Mitre 10, SKU 303849, listed at $33.47 per
-1200 × 1195mm panel on 1 November 2026. The cutting stock uses the product title's 1195mm width rather than
-the specification table's rounded 1200mm. Wellington branch stock remains unconfirmed. Door hinges use
-through-fixings in the 6mm faces; their fixing details still depend on the physical hinges.
+The nine cabinet doors, shelves and supporting panels share 2400 × 1200 × 6mm Tigerply Okoume stock
+from Bunnings, item 0345103. Their parts share one cutting-stock group. Saved selections of the retired
+Redline product migrate to Tigerply. Piano-hinge fixing details still depend on the physical hinges.
 
 The former cross-bench rear skin and separate table backing are removed. Saved `skins` material selections and
 `cross_bench_skin_thickness_mm` are discarded on load. The long bench has no cab-end skin. Slat and long-bench frame
@@ -941,7 +983,7 @@ frontend/src/pillows.ts and update in the browser without CAD regeneration.
 
 `Laptop table` is a furniture-local assembly from `cad/table.py`, mirrored with the benches and cabinet. It contains
 the `Bench mount` display group with live height, arm swivel, tabletop rotation, fold and mounting-offset controls.
-The cabinet mount has been removed. The Show table selector switches between Bench mount and Stowed without
+The cabinet mount has been removed. The Table checkbox switches between Bench mount and Stowed without
 regeneration. Stowed shows the folded pine with the detached upright beside the arm beneath the tabletop.
 The fixed furniture bracket remains on the cross-bench rear frame. Stowed has its own live XYZ and facing controls;
 the arm automatically points towards the displaced tabletop, flipping 180° when the offset changes sides.
@@ -951,7 +993,7 @@ list and its tabletop leaves link to the working pose's cutting entries. Nominal
 (36mm pine + 30mm fitting + 47mm arm); actual handles and the storage channel remain unmeasured.
 The bench mount attaches to the long box's aisle wall on an 18 × 92 × 170mm plywood pad. The moving frame is
 shortened 102mm at its cab end, leaving 5mm beside the mounting pad throughout sideways travel. Slats stay unchanged.
-The tabletop has two 600 × 200 × 18mm Specrite pine leaves with rounded corners and perimeter round-over.
+The tabletop has two 600 × 200 × 18mm plywood leaves with rounded corners and perimeter round-over.
 It folds from 400mm open width to a 200mm-wide, 36mm-thick stack. The long-edge hinge rotates above the fixed
 leaf. Two selected Homer HOM006136 hinges appear in both table poses, with centres at 20% and 80% along
 the seam. Their 114 × 42mm open footprint and 38mm pin width follow the supplier; thickness, pivot spacing,
@@ -959,7 +1001,7 @@ barrel section, taper and countersunk holes are photo-based approximations. Each
 through the existing schematic fold. Nominal blind seats prevent metal/wood overlap without changing the
 cutting silhouette. The hardware groups contribute no wood or extra hinge purchases to the cut list.
 Actual recesses, joint gap and fixing details remain unmeasured. The two leaves have separate cutting profiles on
-1200 × 600 × 18mm pine stock; the rear mounting frame shares frame plywood. There is one Lagun kit. The current
+the same 18mm plywood stock as the bench frames, so their pieces share sheet layouts. There is one Lagun kit. The current
 official tabletop mount is 240 × 200mm with 30mm overall profile depth. Its 240mm axis follows the tabletop length.
 Offset previews move the wood relative to the fixed mount; they do not add a sliding mechanism. Published
 dimensions and unverified hardware details are recorded in [Lagun table](research/lagun-table.md).

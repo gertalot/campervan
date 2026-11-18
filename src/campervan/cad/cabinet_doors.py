@@ -1,15 +1,18 @@
-"""Inset 6mm doors with exposed hinges and through-face fastener envelopes."""
+"""Rebated 6mm doors with edge-mounted piano hinges and glued pine backing strips."""
 
 from dataclasses import dataclass
 
 from build123d import Align, Axis, Color, Compound, Cylinder, Face, GeomType, Location, Part, Solid, Wire, fillet
 
 from campervan.cad.panels import panel
+from campervan.cad.cabinet_piano import BACKING_SIZE, END_CLEARANCE, HINGE_PROJECTION, piano_leaves
+from campervan.cad.cabinet_upper import rear_upper_post_y
 from campervan.parameters import Parameters
 
 METAL = Color(0.48, 0.50, 0.53)
+DOOR_COLOR = Color(0.84, 0.72, 0.49)
+REBATE_WIDTH = 10.0
 FINGER_HOLE_DIAMETER = 30.0
-HINGE_PROJECTION = 3.0
 
 
 def _cylinder_x(radius: float, length: float, x: float, y: float, z: float) -> Part:
@@ -25,6 +28,7 @@ class DoorBuild:
     block: Part
     shelf_clearances: list[Part]
     frame_holes: list[Part]
+    rebates: list[Part]
 
 
 @dataclass
@@ -33,6 +37,18 @@ class CabinetDoors:
     blocks: dict[str, list[Part]]
     shelf_clearances: list[Part]
     frame_holes: list[Part]
+    rebates: list[Part]
+
+
+def panel_rebate(p: Parameters, start: float, bottom: float, width: float, height: float) -> Part:
+    """Closed-panel pocket, with the same reveal on every framed edge."""
+    gap = p.cabinet_door_gap_mm
+    face = p.bed_width_mm + p.bed_inward_offset_mm + 6
+    if p.cabinet_door_thickness_mm >= p.cabinet_frame_thickness_mm:
+        raise ValueError("Cabinet panel rebates must leave timber behind the panels.")
+    pocket = panel(width + 2 * gap, p.cabinet_door_thickness_mm, height + 2 * gap)
+    pocket = fillet(pocket.edges().filter_by(Axis.Y), p.cabinet_door_corner_radius_mm + gap)
+    return pocket.moved(Location((face + p.cabinet_door_thickness_mm, start - gap, bottom - gap), (0, 0, 90)))
 
 
 def _bolt_x(length: float, grip: float, x: float, y: float, z: float, label: str) -> Part:
@@ -57,8 +73,6 @@ def _hinged_door(
 ) -> DoorBuild:
     face = p.bed_width_mm + p.bed_inward_offset_mm + 6
     reveal, thickness = p.cabinet_door_gap_mm, p.cabinet_door_thickness_mm
-    if thickness + 1.2 + 0.5 + 2.4 + 1.5 > 12 or p.cabinet_frame_thickness_mm + 1.2 + 0.5 + 2.4 + 1.5 > 25:
-        raise ValueError("Selected door/frame thickness needs longer hinge bolts than the modelled M3 × 12 / 25 sets.")
     pin_x = face - HINGE_PROJECTION
     pin_y = start + width + reveal / 2 if reverse else start - reveal / 2
     pin_z = bottom - reveal / 2 if upper else bottom
@@ -80,66 +94,35 @@ def _hinged_door(
     wood -= hole
     circles = [e for e in wood.edges().filter_by(GeomType.CIRCLE) if abs(e.radius - 15) < 1e-6]
     wood = fillet(circles, edge)
-    moving, fixed, bolts = [], [], []
+    moving, fixed = [], []
     clearances: list[Part] = []
     frame_holes: list[Part] = []
-    centres = (start + 60, start + width - 60) if upper else (bottom + 60, bottom + height - 60)
-    for number, centre in enumerate(centres, 1):
-        sign = -1 if reverse else 1
-        if upper:
-            moving_leaf = panel(1.2, 35, 14).moved(Location((face - 1.2, centre - 17.5, pin_z)))
-            fixed_leaf = panel(1.2, 35, 14).moved(Location((face - 1.2, centre - 17.5, pin_z - 14)))
-            along = Location((pin_x, centre - 17.5, pin_z), (-90, 0, 0))
-            hole_points = [(centre + delta, pin_z + 7) for delta in (-8, 8)]
-            level = bottom - reveal
-            clearances.append(
-                panel(p.cabinet_frame_thickness_mm + 8, 37, 2 * p.cabinet_shelf_thickness_mm + 2).moved(
-                    Location((face - 1, centre - 18.5, level - p.cabinet_shelf_thickness_mm - 1))
-                )
-            )
-        else:
-            moving_leaf = panel(1.2, 14, 35).moved(
-                Location((face - 1.2, pin_y - (14 if reverse else 0), centre - 17.5))
-            )
-            fixed_leaf = panel(1.2, 14, 35).moved(Location((face - 1.2, pin_y - (0 if reverse else 14), centre - 17.5)))
-            along = Location((pin_x, pin_y, centre - 17.5))
-            hole_points = [(pin_y + sign * 7, centre + delta) for delta in (-8, 8)]
-        for y, z in hole_points:
-            bore = _cylinder_x(1.6, thickness + 4, face - 2, y, z)
-            wood -= bore.moved(wood_pose.inverse())
-            moving_leaf -= bore
-            fixed_y, fixed_z = (y, pin_z - 7) if upper else (pin_y - sign * 7, z)
-            fixed_leaf -= _cylinder_x(1.6, 4, face - 2, fixed_y, fixed_z)
-            bolt = _bolt_x(
-                12, thickness + 1.2, face - 1.2, y, z, f"Hinge {number} door bolt · M3 × 12 (estimated envelope)"
-            )
-            bolt.location = origin.inverse()
-            bolts.append(bolt)
-            fixed.append(
-                _bolt_x(
-                    25,
-                    p.cabinet_frame_thickness_mm + 1.2,
-                    face - 1.2,
-                    fixed_y,
-                    fixed_z,
-                    f"{label} fixed hinge {number} frame bolt · M3 × 25 (estimated envelope)",
-                )
-            )
-            frame_holes.append(_cylinder_x(1.6, p.cabinet_frame_thickness_mm + 2, face - 1, fixed_y, fixed_z))
-        moving_solids = list(moving_leaf.solids())
-        fixed_solids = list(fixed_leaf.solids())
-        for offset, span, moving_half in ((0, 7, False), (7, 21, True), (28, 7, False)):
-            barrel = Cylinder(2.7, span, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            barrel -= Cylinder(1.5, span, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            barrel = barrel.moved(along * Location((0, 0, offset)))
-            (moving_solids if moving_half else fixed_solids).extend(barrel.solids())
-        fixed_solids.extend(Cylinder(1.5, 35, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(along).solids())
-        leaf = Part(moving_solids, label=f"Hinge {number} moving leaf (estimated 35mm envelope)", color=METAL)
-        leaf.location = origin.inverse()
-        moving.append(leaf)
-        fixed.append(Part(fixed_solids, label=f"{label} fixed hinge {number} (estimated envelope)", color=METAL))
+    rebates = [panel_rebate(p, start, bottom, width, height)]
+    hinge_length = (width if upper else height) - 2 * END_CLEARANCE
+    if upper:
+        hinge_pose = Location((pin_x, start + width - END_CLEARANCE, pin_z), (90, 0, 0))
+        backing = panel(BACKING_SIZE, hinge_length, BACKING_SIZE).moved(
+            Location((face + thickness, start + END_CLEARANCE, bottom)))
+    else:
+        hinge_pose = (Location((pin_x, pin_y, bottom + height - END_CLEARANCE), (180, 0, 0))
+                      if reverse else Location((pin_x, pin_y, bottom + END_CLEARANCE)))
+        backing_y = start + width - BACKING_SIZE if reverse else start
+        backing = panel(BACKING_SIZE, BACKING_SIZE, hinge_length).moved(
+            Location((face + thickness, backing_y, bottom + END_CLEARANCE)))
+    backing.label, backing.color = "Pine hinge backing strip", Color(0.84, 0.64, 0.39)
+    backing.location = origin.inverse() * backing.location
+    fixed_leaf, moving_leaf = piano_leaves(hinge_length, reveal, hinge_pose)
+    fixed_leaf.label = f"{label} piano hinge fixed leaf (nominal section)"
+    moving_leaf.location = origin.inverse() * hinge_pose
+    fixed.append(fixed_leaf)
+    moving.append(moving_leaf)
     keeper_y = start + (width - hole_x if reverse else hole_x)
     header_bottom = bottom + height + reveal
+    # The keeper passes through the rear bearing lip. Its local relief leaves the
+    # rest of the rebate intact and the block screws in the rail's full-depth band.
+    rebates.append(panel(p.cabinet_frame_thickness_mm - thickness + 1, 28, 21 - reveal + 0.5).moved(
+        Location((face + thickness, keeper_y - 14, header_bottom - 21))
+    ))
     block_x = face + p.cabinet_frame_thickness_mm
     # One square-cut block, grain along Y, fixed broad-face to the back of the front header.
     block = panel(40, 18, 40)
@@ -225,19 +208,20 @@ def _hinged_door(
         [*keeper_plate.solids(), *keeper_tongue.solids()], label="Roller catch keeper (estimated envelope)", color=METAL
     )
     keeper.location = origin.inverse()
-    wood.label, wood.color = "Plywood door", Color(0.84, 0.72, 0.49)
+    wood.label, wood.color = "Plywood door", DOOR_COLOR
     wood.location = origin.inverse() * wood_pose
     door = Compound(
         label=label,
         children=[
             wood,
+            backing,
             keeper,
-            Compound(label="Hinges", children=[*moving, *bolts]),
+            Compound(label="Hinges", children=moving),
             Compound(label="Keeper fixings", children=keeper_bolts),
         ],
     )
     door.location = origin * Location((0, 0, 0), (0, -angle, 0) if upper else (0, 0, angle))
-    return DoorBuild(door, fixed, block, clearances, frame_holes)
+    return DoorBuild(door, fixed, block, clearances, frame_holes, rebates)
 
 
 def build_cabinet_doors(
@@ -252,16 +236,19 @@ def build_cabinet_doors(
     blocks: dict[str, list[Part]] = {name: [] for name in fixed}
     clearances: list[Part] = []
     frame_holes: list[Part] = []
+    rebates: list[Part] = []
     for bay_name, (start, end) in zip(("Rear", "Cab-end"), bay_spans, strict=True):
         openings = rear_openings if bay_name == "Rear" else opening_heights
         for index, (bottom, top) in enumerate(openings):
+            door_start = rear_upper_post_y(p) + p.cabinet_frame_width_mm if bay_name == "Rear" and index == 3 else start
             if bay_name == "Rear" and index == 0:
-                width = (end - start - 3 * reveal) / 2
+                width = (end - start + 2 * REBATE_WIDTH - 3 * reveal) / 2
                 specs = [
-                    ("Rear storage aft", start + reveal, width, False, p.cabinet_storage_aft_open_percent * 0.9),
+                    ("Rear storage aft", start - REBATE_WIDTH + reveal, width, False,
+                     p.cabinet_storage_aft_open_percent * 0.9),
                     (
                         "Rear storage fore",
-                        start + 2 * reveal + width,
+                        start - REBATE_WIDTH + 2 * reveal + width,
                         width,
                         True,
                         -p.cabinet_storage_fore_open_percent * 0.9,
@@ -281,18 +268,23 @@ def build_cabinet_doors(
                     if index == 0
                     else p.cabinet_front_upper_door_open_percent
                 )
-                specs = [(label, start + reveal, end - start - 2 * reveal, False, position * 0.9)]
+                specs = [(label, door_start - REBATE_WIDTH + reveal,
+                          end - door_start + 2 * REBATE_WIDTH - 2 * reveal, False, position * 0.9)]
             for label, left, width, reverse, angle in specs:
+                door_bottom = bottom - REBATE_WIDTH + reveal
+                door_height = top - bottom + 2 * REBATE_WIDTH - 2 * reveal
+                # The hinge edge fits the original through-opening; only the other
+                # three edges overlap their bearing rebates.
+                if index > 0:
+                    door_bottom += REBATE_WIDTH
+                    door_height -= REBATE_WIDTH
+                else:
+                    if not reverse:
+                        left += REBATE_WIDTH
+                    width -= REBATE_WIDTH
                 built = _hinged_door(
-                    p,
-                    label,
-                    left,
-                    bottom + reveal,
-                    width,
-                    top - bottom - 2 * reveal,
-                    angle,
-                    upper=index > 0,
-                    reverse=reverse,
+                    p, label, left, door_bottom, width, door_height, angle,
+                    upper=index > 0, reverse=reverse,
                 )
                 doors.append(built.door)
                 module = cabinet_door_module(label)
@@ -300,9 +292,10 @@ def build_cabinet_doors(
                 blocks[module].append(built.block)
                 clearances.extend(built.shelf_clearances)
                 frame_holes.extend(built.frame_holes)
+                rebates.extend(built.rebates)
     for module, parts in fixed.items():
         doors.append(Compound(label=f"{module} fixed hardware", children=parts))
-    return CabinetDoors(Compound(label="Doors", children=doors), blocks, clearances, frame_holes)
+    return CabinetDoors(Compound(label="Doors", children=doors), blocks, clearances, frame_holes, rebates)
 
 
 def cabinet_door_module(label: str) -> str:

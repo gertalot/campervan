@@ -3,6 +3,7 @@
 import hashlib
 import io
 import json
+from bisect import bisect_right
 from copy import deepcopy
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -10,14 +11,14 @@ from datetime import UTC, datetime
 from math import ceil, cos, floor, radians, sin
 from typing import Any
 
-from campervan.cutting_models import CuttingOptions, CuttingSettings, Mode, Stock, StockOptions
+from campervan.cutting_models import CuttingOptions, CuttingSettings, CuttingState, FittingMargins, Mode, Stock, StockOptions
 from campervan.materials import ROLES, CutPart, Selection, catalogue
 
 PROFILE_ALLOWANCE = 0.2  # Twice the 0.1 mm curve sampling tolerance.
 SCALE = 100  # Integer hundredths of a millimetre for the saw solver.
 
 
-def stock_groups(cuts: list[CutPart], selections: dict[str, Selection]) -> list[dict[str, Any]]:
+def stock_groups(cuts: list[CutPart], selections: dict[str, Selection], state: CuttingState) -> list[dict[str, Any]]:
     products = {product.id: product for product in catalogue()}
     roles = {role.id: role for role in ROLES}
     groups: dict[str, dict[str, Any]] = {}
@@ -41,6 +42,18 @@ def stock_groups(cuts: list[CutPart], selections: dict[str, Selection]) -> list[
                 "price": product.price_nzd if product else None,
             }
         groups[key]["parts"].append(cut.model_dump() | {"id": f"P{index + 1:03d}"})
+    for group in groups.values():
+        options = effective_options(group, state.settings, state.options.get(group["key"]))
+        for part in group["parts"]:
+            default = FittingMargins(**{edge: options.fitting_allowance for edge in part["fitting_edges"]})
+            margins = options.fitting_margins.get(part["path"], default) if group["kind"] == "sheet" else FittingMargins()
+            values = margins.model_dump()
+            part.update(
+                fitting_margins=values, template_fit=any(values.values()),
+                # Match solver precision, rounding floating-point noise before rounding stock upward.
+                blank_length=ceil(round((part["length"] + margins.left + margins.right) * SCALE, 6)) / SCALE,
+                blank_width=ceil(round((part["width"] + margins.top + margins.bottom) * SCALE, 6)) / SCALE,
+            )
     return list(groups.values())
 
 
@@ -77,7 +90,7 @@ def _source_hash(group: dict, options: CuttingOptions, version: int) -> str:
 def source_key(group: dict, options: CuttingOptions) -> str:
     parts = [part | {"outline": _profile_key(part["outline"]),
                      "holes": sorted(_profile_key(hole) for hole in part["holes"])} for part in group["parts"]]
-    return _source_hash(group | {"parts": parts}, options, 4)
+    return _source_hash(group | {"parts": parts}, options, 5)
 
 
 def refresh_layout_source(result: dict, group: dict, options: CuttingOptions) -> dict:
@@ -97,13 +110,31 @@ def effective_options(group: dict, settings: CuttingSettings, stock: StockOption
     return CuttingOptions(**selected.model_dump(), **settings.model_dump(exclude={"algorithm"}))
 
 
+def _breakdown_cuts(sheet: dict, trim: float) -> list[list[float]]:
+    """Full-width crosscuts along the original sheet's long dimension."""
+    axis = 0 if sheet["stock"]["length"] >= sheet["stock"]["width"] else 1
+    short = sheet["stock"]["width" if axis == 0 else "length"] - 2 * trim
+    return [cut for cut in sheet["cuts"]
+            if abs(cut[axis] - cut[axis + 2]) < 0.02
+            and min(cut[1 - axis], cut[3 - axis]) <= trim + 0.02
+            and max(cut[1 - axis], cut[3 - axis]) >= trim + short - 0.02]
+
+
+def _order_breakdown_cuts(sheet: dict, trim: float) -> None:
+    breakdown = _breakdown_cuts(sheet, trim)
+    # These parallel full-width cuts can precede every narrowing rip.
+    sheet["cuts"] = breakdown + [cut for cut in sheet["cuts"] if cut not in breakdown]
+    sheet["breakdown_cut_count"] = len(breakdown)
+
+
 def layout_score(result: dict) -> tuple:
-    """Rank stock use, middle-third crosscuts, useful offcuts, then saw-cut count."""
+    """Rank stock use, handling crosscuts/sections, offcuts, then saw-cut count."""
     offcut = result.get("best_offcut")
     sheet_layout = result["mode"] == "straight" and any(
         role.id == result["parts"][0]["material"] and role.kind == "sheet" for role in ROLES
     )
     missing_crosscuts = 0
+    handling_work = 0.0
     occupied_area = 0.0
     if sheet_layout:
         trim = result["options"]["trim"]
@@ -113,24 +144,29 @@ def layout_score(result: dict) -> tuple:
                 continue
             axis = 0 if sheet["stock"]["length"] >= sheet["stock"]["width"] else 1
             length = sheet["stock"]["length" if axis == 0 else "width"] - 2 * trim
-            width = sheet["stock"]["width" if axis == 0 else "length"] - 2 * trim
+            crosscuts = _breakdown_cuts(sheet, trim)
             distances = [
                 abs((cut[axis] - trim + kerf / 2) / length - 0.5) * 2
-                for cut in sheet["cuts"]
-                if abs(cut[axis] - cut[axis + 2]) < 0.02
-                and min(cut[1 - axis], cut[3 - axis]) <= trim + 0.02
-                and max(cut[1 - axis], cut[3 - axis]) >= trim + width - 0.02
+                for cut in crosscuts
             ]
             # Every cut in the middle third is equally useful for handling.
-            # Once one exists, useful offcuts and cut count decide the layout.
             missing_crosscuts += not any(d <= 1 / 3 + 0.00001 for d in distances)
+            boundaries = sorted({round(cut[axis], 2) for cut in crosscuts})
             blanks = [part["blank"] for part in sheet["parts"]]
+            for blank in blanks:
+                band = bisect_right(boundaries, blank[axis] + blank[axis + 2] / 2)
+                start = boundaries[band - 1] + kerf if band else trim
+                end = boundaries[band] if band < len(boundaries) else trim + length
+                # Weight real, separated section length by the wood being worked.
+                # Empty strips have no weight; extra cuts do not earn points themselves.
+                handling_work += blank[2] * blank[3] * max(0, end - start) / length
             if blanks:
                 occupied_area += (
                     max(b[0] + b[2] for b in blanks) - min(b[0] for b in blanks)
                 ) * (max(b[1] + b[3] for b in blanks) - min(b[1] for b in blanks))
     return (len(result["unplaced"]), result["full_stock_count"], result["offcut_count"], result["stock_area"],
-            missing_crosscuts,
+            missing_crosscuts, round(handling_work, 4),
+            -offcut["area"] if offcut else 0,
             offcut["perimeter_area_ratio"] if offcut else float("inf"),
             sum(len(sheet["cuts"]) for sheet in result["sheets"]), occupied_area)
 
@@ -173,15 +209,33 @@ def _join_sections(sheets: list[dict], options: CuttingOptions) -> list[dict]:
         stock, axis = section.stock, section.axis
         usable = [floor((stock[d] - 2 * trim) * SCALE) / SCALE for d in ("length", "width")]
         for index in range(max(map(len, sides))):
-            cut = trim + section.cut
+            split = section.cut
+            if index < len(sides[0]):
+                left = sides[0][index]
+                for remnant in left["remnants"]:
+                    # Transfer a native full-width trailing remnant to the far
+                    # end when joining, without repacking either section.
+                    trailing = (
+                        abs(remnant[1 - axis] - trim) < 0.02
+                        and abs(remnant[3 - axis] - usable[1 - axis]) < 0.02
+                        and abs(remnant[axis] + remnant[axis + 2] - trim - split) < 0.02
+                    )
+                    candidate = round(remnant[axis] - trim - kerf, 2)
+                    middle = abs((candidate + kerf / 2) / usable[axis] - 0.5) * 2 <= 1 / 3 + 0.00001
+                    if trailing and 0 < candidate < split and middle:
+                        split = candidate
+                        left["remnants"].remove(remnant)
+                        break
+            recovered = section.cut - split
+            cut = trim + split
             crosscut = [cut, trim, cut, trim + usable[1]] if axis == 0 else [trim, cut, trim + usable[0], cut]
             sheet = {"stock": stock, "parts": [], "cuts": [crosscut], "remnants": []}
             for side in (0, 1):
-                offset = 0.0 if side == 0 else section.cut + kerf
+                offset = 0.0 if side == 0 else split + kerf
                 if index >= len(sides[side]):
                     remnant = [trim, trim, *usable]
                     remnant[axis] += offset
-                    remnant[axis + 2] = section.cut if side == 0 else usable[axis] - offset
+                    remnant[axis + 2] = split if side == 0 else usable[axis] - offset
                     sheet["remnants"].append(remnant)
                     continue
                 half = sides[side][index]
@@ -196,6 +250,26 @@ def _join_sections(sheets: list[dict], options: CuttingOptions) -> list[dict]:
                     remnant[axis] += offset
                 for key in ("parts", "cuts", "remnants"):
                     sheet[key].extend(half[key])
+            if recovered > 0 and index < len(sides[1]):
+                right_end = trim + usable[axis] - recovered
+                tail = next((r for r in sheet["remnants"]
+                             if abs(r[1 - axis] - trim) < 0.02
+                             and abs(r[3 - axis] - usable[1 - axis]) < 0.02
+                             and abs(r[axis] + r[axis + 2] - right_end) < 0.02), None)
+                if tail is not None:
+                    tail[axis + 2] += recovered
+                else:
+                    # The former virtual edge is now inside the sheet. Separate
+                    # the recovered end strip, reserving its real saw kerf.
+                    end_cut = ([right_end, trim, right_end, trim + usable[1]] if axis == 0 else
+                               [trim, right_end, trim + usable[0], right_end])
+                    sheet["cuts"].append(end_cut)
+                    end_strip = [trim, trim, *usable]
+                    end_strip[axis], end_strip[axis + 2] = right_end + kerf, recovered - kerf
+                    if end_strip[axis + 2] > 0:
+                        sheet["remnants"].append(end_strip)
+            # The native left cut and the chosen join may be the same cut.
+            sheet["cuts"] = [list(line) for line in dict.fromkeys(tuple(line) for line in sheet["cuts"])]
             joined.append(sheet)
     return joined
 
@@ -212,9 +286,11 @@ def _crosscut_fractions(stocks: list[dict], parts: list[dict], grains: list[str]
     fractions = set()
     gap_boundaries = []
     for part, grain in zip(parts, grains):
-        sizes = [(part["width"], part["length"])] if grain == "width" else [(part["length"], part["width"])]
+        sizes = [(part["blank_width"], part["blank_length"])] if grain == "width" else [
+            (part["blank_length"], part["blank_width"])
+        ]
         if grain == "free":
-            sizes.append((part["width"], part["length"]))
+            sizes.append((part["blank_width"], part["blank_length"]))
         for size in sizes:
             if size[1 - axis] <= short and size[axis] < available:
                 fraction = max(size[axis], available - size[axis]) / available
@@ -266,6 +342,19 @@ def transform(points: list, angle: float, x: float, y: float) -> list[list[float
     return [[round(px * c - py * s + x, 4), round(px * s + py * c + y, 4)] for px, py in points]
 
 
+def _placed_reference(part: dict, angle: float, x: float, y: float) -> dict:
+    """Position the nominal profile relative to its enlarged blank's rotation origin."""
+    margins = part["fitting_margins"]
+
+    def place(points: list) -> list[list[float]]:
+        return transform([[px + margins["left"], py + margins["top"]] for px, py in points], angle, x, y)
+
+    return {
+        "outline": place(part["outline"] or rectangle(part["length"], part["width"])),
+        "holes": [place(hole) for hole in part["holes"]],
+    }
+
+
 def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable[[dict], None] | None = None,
            incumbent: dict | None = None) -> dict:
     """Solve a snapshot; no CAD work or project mutation occurs in this worker thread."""
@@ -309,12 +398,14 @@ def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable
         if nesting:
             def polygon(points):
                 return {"type": "polygon", "vertices": [{"x": x, "y": y} for x, y in points]}
-            item = polygon(part["outline"] or rectangle(part["length"], part["width"]))
-            item["holes"] = [polygon(hole) for hole in part["holes"]]
+            outline = (rectangle(part["blank_length"], part["blank_width"]) if part["template_fit"] else
+                       part["outline"] or rectangle(part["length"], part["width"]))
+            item = polygon(outline)
+            item["holes"] = [] if part["template_fit"] else [polygon(hole) for hole in part["holes"]]
             angles = [0, 90, 180, 270] if grain == "free" else [90, 270] if grain == "width" else [0, 180]
             item["allowed_rotations"] = [{"start": angle, "end": angle} for angle in angles]
         else:
-            length, width = part["length"], part["width"]
+            length, width = part["blank_length"], part["blank_width"]
             if grain == "width":
                 length, width = width, length
             item = {"width": ceil(length * SCALE), "height": ceil(width * SCALE), "oriented": grain != "free"}
@@ -337,8 +428,34 @@ def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable
             ]
             candidates.append((instance_data | {"objective": "variable-sized-bin-packing", "bin_types": bins},
                                sections, metadata))
+        # Seek workshop-friendly bands explicitly, alongside unrestricted layouts.
+        # Virtual sections keep the ORIGINAL stock's crosscut direction.
+        crosscut_candidates = []
+        for data, candidate_stocks, metadata in candidates:
+            axes = ({section.axis for section in metadata} if metadata is not None else
+                    {0 if stock["length"] >= stock["width"] else 1 for stock in candidate_stocks})
+            for axis in sorted(axes):
+                crosscut_data = data | {"first_stage_orientation": "vertical" if axis == 0 else "horizontal"}
+                band_limit = max(
+                    max(item["width"], item["height"]) if not item["oriented"] else
+                    item["width" if axis == 0 else "height"] for item in data["item_types"]
+                )
+                # Orientation alone permits one broad strip with staggered final cuts.
+                # Also seek bands no wider than the largest required blank in this direction.
+                crosscut_candidates.append((crosscut_data | {"maximum_distance_1_cuts": band_limit},
+                                            candidate_stocks, metadata))
+                crosscut_candidates.append((crosscut_data, candidate_stocks, metadata))
+            crosscut_candidates.append((data, candidate_stocks, metadata))
+        candidates = crosscut_candidates
 
     best = incumbent
+    if best is not None and not nesting and not timber:
+        best = deepcopy(best)
+        for sheet in best["sheets"]:
+            _order_breakdown_cuts(sheet, options.trim)
+        best["created"] = datetime.now(UTC).isoformat()
+        if on_update is not None:
+            on_update(best)
 
     def consider(output, candidate_stocks, metadata):
         nonlocal best
@@ -402,10 +519,18 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
                 shape = item["item_shapes"][0]
                 def points(elements):
                     return [[e["xs"] + options.trim, e["ys"] + trim_y] for e in elements]
-                placements.append({"id": part["id"], "path": part["path"],
-                                   "outline": points(shape["shape"]),
-                                   "holes": [points(h) for h in shape.get("holes", [])],
-                                   "angle": item["angle"]})
+                placement = {"id": part["id"], "path": part["path"],
+                             "outline": points(shape["shape"]),
+                             "holes": [points(h) for h in shape.get("holes", [])], "angle": item["angle"]}
+                if part["template_fit"]:
+                    xs, ys = zip(*placement["outline"], strict=True)
+                    left, top = min(xs), min(ys)
+                    rotated = transform(rectangle(part["blank_length"], part["blank_width"]), item["angle"], 0, 0)
+                    dx = left - min(px for px, _ in rotated)
+                    dy = top - min(py for _, py in rotated)
+                    placement.update(_placed_reference(part, item["angle"], dx, dy),
+                                     blank=[left, top, max(xs) - left, max(ys) - top])
+                placements.append(placement)
                 placed.add(part["id"])
             for _ in range(bin["copies"]):
                 sheets.append({"stock": stock, "parts": placements, "cuts": [], "remnants": []})
@@ -421,14 +546,12 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
                 if node.f >= 0 and node.item_type_id >= 0:
                     part = parts[node.item_type_id]
                     grain = grains[node.item_type_id]
-                    rotated = grain == "width" or (grain == "free" and abs(width - part["length"]) > 0.02)
+                    rotated = grain == "width" or (grain == "free" and abs(width - part["blank_length"]) > 0.02)
                     angle = 90 if rotated else 0
                     # A 90 degree rotation extends into negative X; translate it back into its blank.
-                    dx = x + (part["width"] if rotated else 0)
-                    outline = part["outline"] or rectangle(part["length"], part["width"])
+                    dx = x + (part["blank_width"] if rotated else 0)
                     placements.append({"id": part["id"], "path": part["path"],
-                                       "outline": transform(outline, angle, dx, y),
-                                       "holes": [transform(h, angle, dx, y) for h in part["holes"]],
+                                       **_placed_reference(part, angle, dx, y),
                                        "blank": [x, y, width, height], "angle": angle})
                     placed.add(part["id"])
                 elif not node.children and node.f >= 0 and node.item_type_id in (-1, -3):
@@ -461,9 +584,12 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
     if sections is not None:
         sheets = _join_sections(sheets, options)
         stocks = original_stocks if original_stocks is not None else stocks
+    if not nesting and group["kind"] == "sheet":
+        for sheet in sheets:
+            _order_breakdown_cuts(sheet, options.trim)
     stock_area = sum(s["stock"]["length"] * s["stock"]["width"] for s in sheets)
     used_parts = [p for p in parts if p["id"] in placed]
-    blank_area = sum(p["length"] * p["width"] for p in used_parts)
+    blank_area = sum(p["blank_length"] * p["blank_width"] for p in used_parts)
     profile_area = sum(polygon_area(p["outline"] or rectangle(p["length"], p["width"]))
                        - sum(polygon_area(h) for h in p["holes"]) for p in used_parts)
     unplaced = [p["id"] for p in parts if p["id"] not in placed]
@@ -473,7 +599,7 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
         for index, sheet in enumerate(sheets) for x, y, length, width in sheet["remnants"]
         if length > 0 and width > 0
     ]
-    best_offcut = min(offcuts, key=lambda offcut: (offcut["perimeter_area_ratio"], -offcut["area"]), default=None)
+    best_offcut = min(offcuts, key=lambda offcut: (-offcut["area"], offcut["perimeter_area_ratio"]), default=None)
     optimise_offcuts = not nesting and group["kind"] != "timber" and len(stocks) == 1
     stock_count_optimal = output.is_proven_optimal() if sections is None else False
     if optimise_offcuts and not unplaced and sheets:
@@ -494,6 +620,6 @@ def _read_layout(output, group, options, mode, stocks, grains, nesting, trim_y,
         "stock_count_optimal": stock_count_optimal, "optimises_offcuts": optimise_offcuts,
         "best_offcut": best_offcut,
         "objective": ("Fewest full stock pieces" if len(stocks) > 1 else
-                      "Fewest sheets, then middle-third crosscuts and useful rectangular offcuts"
+                      "Fewest sheets, then middle-third cuts, smaller crosscut sections and largest offcut"
                       if optimise_offcuts else "Fewest stock pieces"),
     }

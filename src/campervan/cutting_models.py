@@ -23,11 +23,21 @@ class CuttingSettings(BaseModel):
     kerf: float = Field(default=3, ge=0, le=20)
     trim: float = Field(default=0, ge=0, le=100)
     grain: Grain = "length"
+    fitting_allowance: float = Field(default=50, ge=0, le=500)
+
+
+class FittingMargins(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False, extra="forbid")
+    left: float = Field(default=0, ge=0, le=500)
+    right: float = Field(default=0, ge=0, le=500)
+    top: float = Field(default=0, ge=0, le=500)
+    bottom: float = Field(default=0, ge=0, le=500)
 
 
 class StockOptions(BaseModel):
     confirmed: bool = False
     orientations: dict[str, Grain] = Field(default_factory=dict)
+    fitting_margins: dict[str, FittingMargins] = Field(default_factory=dict)
     stock: list[Stock] = Field(default_factory=list, max_length=30)
 
 
@@ -36,6 +46,7 @@ class CuttingOptions(StockOptions):
     kerf: float
     trim: float
     grain: Grain
+    fitting_allowance: float = Field(default=50, ge=0, le=500)
 
 
 class CuttingState(BaseModel):

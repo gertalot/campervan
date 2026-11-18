@@ -5,7 +5,7 @@ from typing import Any
 from build123d import Location, Plane, Shape, Vector, Wire, section
 
 
-def flat_profile(part: Shape[Any]) -> dict[str, Any]:
+def flat_profile(part: Shape[Any], fitting_axes: dict[tuple[int, int], str] | None = None) -> dict[str, Any]:
     local = Shape.cast(part.wrapped).located(Location())
     box = local.bounding_box()
     sizes = list(box.size)
@@ -44,6 +44,11 @@ def flat_profile(part: Shape[Any]) -> dict[str, Any]:
         "outline": points(face.outer_wire()),
         "holes": [points(wire) for wire in face.inner_wires()],
         "profile_axes": f"Length = local {'XYZ'[along]}; width = local {'XYZ'[across]}",
+        "fitting_edges": {
+            edge: label for axis, label in (fitting_axes or {}).items()
+            if (edge := {(along, -1): "left", (along, 1): "right",
+                         (across, -1): "top", (across, 1): "bottom"}.get(axis)) is not None
+        },
         "profile_note": (
             "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations."
         ),

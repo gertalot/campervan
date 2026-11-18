@@ -9,7 +9,7 @@ Source: instantpanel.co.nz/product_img/OriginalPhotos/BIDX1PS26/gas-struts-frame
 from dataclasses import dataclass
 from math import atan2, cos, degrees, hypot, radians, sin, sqrt
 
-from build123d import Align, Color, Compound, Cylinder, Location
+from build123d import Align, Color, Compound, Cylinder, Location, Part, RegularPolygon, Solid, Sphere
 
 from campervan.cad.panels import panel
 
@@ -28,6 +28,12 @@ UPPER_FLANGE_DEPTH = UPPER_PIVOT_DROP + 8.0
 STRUT_TOP_OFFSET = 500.0
 STRUT_ARM_OFFSET = 125.0
 RAIL_WIDTH = 30.0
+MOUNT_STEEL = 6.7
+# Illustrative mounting centres, clear of the linkage and spring pivots.
+FIXED_BOLT_XS = (55.0, 155.0, 255.0, 395.0)
+LID_BOLT_XS = (85.0, 285.0, 465.0)
+LID_COUNTERBORE_RADIUS = 9.0
+LID_COUNTERBORE_DEPTH = 6.0
 GAS_AXIS_Y = 24.0
 BLACK = Color(0.14, 0.15, 0.16)
 SILVER = Color(0.7, 0.72, 0.74)
@@ -142,16 +148,58 @@ def lift_notches(length: float, wall: float, rear_panel_y: float) -> tuple[tuple
                  for _, y, mirrored in lift_mounts(length, wall, rear_panel_y))
 
 
+def mounting_bolt(wood: float, length: float, *, allen: bool = False) -> Part:
+    """Nominal M6 bolt, M6 × 16 washer and Nyloc; shaft points along +Z.
+
+    Head underside is Z=0. Allen heads have a washer at Z=0..1.6;
+    coach heads bear directly on wood. Physical head dimensions remain to confirm.
+    """
+    head_radius, head_height = (5.25, 3.3) if allen else (8.3, 3.5)
+    sphere_radius = (head_radius**2 + head_height**2) / (2 * head_height)
+    sphere = Sphere(sphere_radius).moved(Location((0, 0, sphere_radius - head_height)))
+    cap = sphere & panel(2 * head_radius, 2 * head_radius, head_height).moved(
+        Location((-head_radius, -head_radius, -head_height)))
+    if allen:
+        # Provisional button-head envelope: Pinnacle publishes the hex drive,
+        # but not the head or key dimensions. Confirm before machining pockets.
+        socket_face = RegularPolygon(4 / 3**0.5, 6).faces()[0]
+        cap -= Solid.extrude(socket_face, (0, 0, 2)).moved(Location((0, 0, -head_height)))
+    shaft = Cylinder(3, length, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    neck = panel(6, 6, 4).moved(Location((-3, -3, 0)))
+    washer_z = wood + MOUNT_STEEL
+    washer = (Cylinder(8, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN))
+              - Cylinder(3.25, 1.6, align=(Align.CENTER, Align.CENTER, Align.MIN)))
+    washer = washer.moved(Location((0, 0, washer_z)))
+    hex_face = RegularPolygon(10 / 3**0.5, 6).faces()[0]
+    nut = (Solid.extrude(hex_face, (0, 0, 6))
+           - Cylinder(3, 6, align=(Align.CENTER, Align.CENTER, Align.MIN)))
+    nut = nut.moved(Location((0, 0, washer_z + 1.6)))
+    pieces = [*shaft.solids(), *cap.solids(), *washer.solids(), *nut.solids()]
+    if allen:
+        head_washer = washer.moved(Location((0, 0, -washer_z)))
+        pieces.extend(head_washer.solids())
+    else:
+        pieces.extend(neck.solids())
+    bolt = Part(pieces)
+    bolt.color = SILVER
+    return bolt
+
+
 def build_lifts(rear: float, bottom: float, length: float, wall: float, percent: float,
-                *, rear_panel_y: float) -> Compound:
+                *, rear_panel_y: float, slat_thickness: float) -> Compound:
     pose = lift_pose(OPEN_ANGLE * percent / 100)
     assemblies = []
+    bolt = mounting_bolt(wall, 40)
+    # The head washer bears on the counterbore floor; its 1.6mm thickness
+    # raises the head's bearing plane above that floor.
+    lid_grip = wall + slat_thickness - LID_COUNTERBORE_DEPTH + 1.6
+    lid_bolt = mounting_bolt(lid_grip, 50, allen=True)
     for name, y, mirrored in lift_mounts(length, wall, rear_panel_y):
-        base = panel(BASE_RAIL, 4, 20)
-        base.location = Location((-16, -4 if mirrored else 0, -10))
+        base = panel(BASE_RAIL, MOUNT_STEEL, 20)
+        base.location = Location((-16, -MOUNT_STEEL if mirrored else 0, -10))
         base.label, base.color = "Fixed mounting rail", BLACK
-        upper = panel(TOP_RAIL - TOP_RAIL_END_TRIM, RAIL_WIDTH, 3)
-        upper.location = Location((0, -RAIL_WIDTH if mirrored else 0, -3))
+        upper = panel(TOP_RAIL - TOP_RAIL_END_TRIM, RAIL_WIDTH, MOUNT_STEEL)
+        upper.location = Location((0, -RAIL_WIDTH if mirrored else 0, -MOUNT_STEEL))
         flange = panel(TOP_RAIL - TOP_RAIL_END_TRIM, 3, UPPER_FLANGE_DEPTH)
         flange.location = Location((0, -3 if mirrored else 0, -UPPER_FLANGE_DEPTH))
         upper += flange
@@ -163,12 +211,25 @@ def build_lifts(rear: float, bottom: float, length: float, wall: float, percent:
         rod = Compound(label="Sliding rod", children=[shaft])
         rod.location = Location((pose.strut_length - 160, 0, 0))
         spring = Compound(label="Gas spring", children=[body, rod])
+        fixed_bolts, lid_bolts = [], []
+        for index, x in enumerate(FIXED_BOLT_XS, 1):
+            fixing = bolt.moved(Location((x, wall if mirrored else -wall, 0),
+                                         (90 if mirrored else -90, 0, 0)))
+            fixing.label = f"Fixed rail coach bolt {index} · M6 × 40 with washer and Nyloc (nominal)"
+            fixed_bolts.append(fixing)
+        for index, x in enumerate(LID_BOLT_XS, 1):
+            fixing = lid_bolt.moved(Location((x, -RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2,
+                                             lid_grip),
+                                         (180, 0, 0)))
+            fixing.label = f"Lid rail Allen bolt {index} · M6 × 50 with two washers and Nyloc (nominal)"
+            lid_bolts.append(fixing)
         members = {
             "Upper rail": Compound(label="Upper rail", children=[upper,
+                Compound(label="Lid mounting bolts", children=lid_bolts),
                 strut_pin("Upper gas-spring attachment", UPPER_REAR_OFFSET + STRUT_TOP_OFFSET,
                           -UPPER_PIVOT_DROP, mirrored)]),
-            "Rear arm": bar("Rear arm", SHORT_ARM, -9 if mirrored else 4),
-            "Front arm": bar("Front arm", LONG_ARM, -14 if mirrored else 9),
+            "Rear arm": bar("Rear arm", SHORT_ARM, -MOUNT_STEEL - 5 if mirrored else MOUNT_STEEL),
+            "Front arm": bar("Front arm", LONG_ARM, -MOUNT_STEEL - 10 if mirrored else MOUNT_STEEL + 5),
             "Gas spring": spring,
         }
         members["Front arm"].children = [*members["Front arm"].children,
@@ -177,7 +238,8 @@ def build_lifts(rear: float, bottom: float, length: float, wall: float, percent:
             members[key].location = Location((x, (-GAS_AXIS_Y if mirrored else GAS_AXIS_Y)
                                              if key == "Gas spring" else 0, z),
                                              (0, angle, 0))
-        assembly = Compound(label=name, children=[base, *members.values()])
+        assembly = Compound(label=name, children=[base,
+            Compound(label="Fixed mounting bolts", children=fixed_bolts), *members.values()])
         assembly.location = Location((rear - CLOSED.lid_rear[0], y, bottom - CLOSED.lid_rear[1]))
         assemblies.append(assembly)
     return Compound(label="Lid hinges", children=assemblies)

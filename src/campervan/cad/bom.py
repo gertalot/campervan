@@ -31,6 +31,10 @@ def material_for(path: tuple[str, ...]) -> str:
     if "Module fasteners" in path:
         return "cabinet-module-fasteners"
     if "Cabinet" in path:
+        if name == "pine hinge backing strip":
+            return "cabinet-hinge-backing"
+        if name == "rear top removable infill":
+            return "cabinet-doors"
         if name == "wheel-arch bridge":
             return "cabinet-bridge"
         if "Frames" in path:
@@ -77,11 +81,13 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
         profile: dict[str, Any] = {}
-        if material in {"slats", "cabinet-frames", "cabinet-bridge"}:
+        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing"}:
             if material == "cabinet-frames":
                 width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
             elif material == "cabinet-bridge":
                 width, thickness = parameters.cabinet_bridge_height_mm, parameters.cabinet_bridge_thickness_mm
+            elif material == "cabinet-hinge-backing":
+                width, thickness = 18.0, 18.0
             else:
                 width, thickness = parameters.slat_width_mm, parameters.slat_thickness_mm
             dimensions = list(size)
@@ -91,7 +97,9 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             if material in {"cabinet-frames", "cabinet-bridge"}:
                 profile = {
                     "profile_note": "Square-cut stock. Side joining rails have shelf seats and solid bolt lands; "
-                    "match-drill fixings."
+                    "match-drill fixings. Door and fixed-panel openings have 10mm-wide front rebates, "
+                    "depth equal to panel thickness, with local rear relief for catch keepers. "
+                    "Rear upper stile has a scribed top to clear the vehicle beam."
                 }
         if material in {
             "floor",
@@ -101,8 +109,19 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             "cabinet-doors",
             "table-plywood",
         }:
+            fitting_axes = {}
+            if "Cabinet" in path:
+                if part.label.endswith("supporting panel"):
+                    # mirror_assembly reflects each leaf through local X=0 before extraction.
+                    fitting_axes[(0, -1)] = "Wall"
+                    if "Upper module" in path:
+                        fitting_axes[(2, 1)] = "Roof"
+                elif "Shelves" in path:
+                    fitting_axes[(0, -1)] = "Wall"
+                elif part.label == "Rear top removable infill":
+                    fitting_axes[(2, 1)] = "Roof / vehicle beam"
             try:
-                profile = flat_profile(part)
+                profile = flat_profile(part, fitting_axes)
             except (ValueError, RuntimeError, IndexError) as error:
                 logging.getLogger(__name__).warning("Cutting profile for %s: %s", part.label, error)
                 profile = {

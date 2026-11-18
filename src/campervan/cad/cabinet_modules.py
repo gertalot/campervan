@@ -1,6 +1,6 @@
-"""Side-only countersunk module bolts, flush below the chair-loading opening."""
+"""Side module joints with ordinary M6 hex bolts and washers on both faces."""
 
-from build123d import Align, Color, Cone, Cylinder, Location, Part
+from build123d import Align, Color, Cylinder, Location, Part, RegularPolygon, Solid
 
 from campervan.parameters import Parameters
 
@@ -9,29 +9,31 @@ def module_fasteners(p: Parameters, split: float, centres: list[tuple[float, flo
     depth = p.cabinet_frame_width_mm
     bottom, top = split - depth, split + depth
     length = 90.0
-    if 2 * depth + 1 + 5 + 2 > length:
-        raise ValueError("Cabinet module rails are too deep for the nominal M5 × 90mm joint screws.")
+    washer_thickness, nut_height = 1.6, 5.0
+    if 2 * depth + 2 * washer_thickness + nut_height >= length:
+        raise ValueError("Cabinet module rails leave insufficient thread for the M6 × 90mm bolt and nut.")
     bores: list[Part] = []
     fasteners: list[Part] = []
     for index, (x, y) in enumerate(centres, 1):
-        bore = Cylinder(2.75, 2 * depth + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        countersink = Cone(5.2, 2.75, 3, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        bores.extend((bore.moved(Location((x, y, bottom - 1))), countersink.moved(Location((x, y, bottom)))))
-        shaft = Cylinder(2.5, length - 3, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(
-            Location((x, y, bottom + 3))
+        bore = Cylinder(3.25, 2 * depth + 2, align=(Align.CENTER, Align.CENTER, Align.MIN))
+        bores.append(bore.moved(Location((x, y, bottom - 1))))
+        shaft = Cylinder(3, length, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(
+            Location((x, y, bottom - washer_thickness))
         )
-        head = Cone(5, 2.5, 3, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(Location((x, y, bottom)))
+        hex_face = RegularPolygon(10 / 3**0.5, 6).faces()[0]
+        head = Solid.extrude(hex_face, (0, 0, 4)).moved(Location((x, y, bottom - washer_thickness - 4)))
         washer = (
-            Cylinder(7.5, 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            - Cylinder(2.75, 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            Cylinder(8, washer_thickness, align=(Align.CENTER, Align.CENTER, Align.MIN))
+            - Cylinder(3.25, washer_thickness, align=(Align.CENTER, Align.CENTER, Align.MIN))
         ).moved(Location((x, y, top)))
-        nut = (
-            Cylinder(4.5, 5, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            - Cylinder(2.5, 5, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        ).moved(Location((x, y, top + 1)))
+        lower_washer = washer.moved(Location((0, 0, bottom - washer_thickness - top)))
+        nut = (Solid.extrude(hex_face, (0, 0, nut_height))
+               - Cylinder(3, nut_height, align=(Align.CENTER, Align.CENTER, Align.MIN))).moved(
+            Location((x, y, top + washer_thickness))
+        )
         fastener = Part(
-            [*shaft.solids(), *head.solids(), *washer.solids(), *nut.solids()],
-            label=f"Side module screw {index} · M5 × 90 (estimated envelope)",
+            [*shaft.solids(), *head.solids(), *washer.solids(), *lower_washer.solids(), *nut.solids()],
+            label=f"Side module bolt {index} · M6 × 90 (estimated envelope)",
         )
         fastener.color = Color(0.43, 0.45, 0.48)
         fasteners.append(fastener)

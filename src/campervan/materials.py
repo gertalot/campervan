@@ -54,8 +54,8 @@ ROLES = [
         name="Tabletop panel",
         kind="sheet",
         fields={"thickness": "table_ply_thickness_mm"},
-        default_product_id="specrite-pine-18-1200-600",
-        note="Two 600 × 200 × 18mm pine leaves fit side by side on one 1200 × 600mm panel, including kerf. "
+        default_product_id="tigerply-18",
+        note="Two 600 × 200 × 18mm plywood leaves share the existing 18mm frame-plywood stock. "
         "Grain follows the 600mm length. Folded wood stack is 36mm. Finish both faces, edges and hinge pockets. "
         "The rear cross-bench mounting frame shares frame plywood.",
     ),
@@ -103,11 +103,11 @@ ROLES = [
 for role in ROLES:
     role.default_product_id = {
         "frames": "tigerply-18",
-        "table-plywood": "specrite-pine-18-1200-600",
+        "table-plywood": "tigerply-18",
         "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "pinetrim-40-18-1800",
-        "cabinet-partitions": "tigerply-okoume-9",
-        "shelves": "bbi-redline-6-1200-1195",
+        "cabinet-partitions": "tigerply-okoume-6",
+        "shelves": "tigerply-okoume-6",
     }.get(role.id)
     if role.id == "shelves":
         role.note = "6mm pantry shelves bear on face-mounted timber cleats."
@@ -117,7 +117,7 @@ for role in ROLES:
         )
     elif role.id == "cabinet-partitions":
         role.note = (
-            "9mm supporting end panels and centre divider: scribe side and ceiling edges. Van side closes the back."
+            "6mm supporting end panels and centre divider: scribe side and ceiling edges. Van side closes the back."
         )
 
 ROLES.extend(
@@ -143,31 +143,23 @@ ROLES.extend(
             "No middle posts.",
         ),
         MaterialRole(
-            id="cabinet-hinge-frame-bolts",
-            name="Cabinet hinge-to-frame bolts",
-            kind="hardware",
-            fields={},
-            quantity=36,
-            default_product_id="champion-m3-25-20",
-            note="Two M3 × 25 through-bolts per fixed hinge leaf, with nuts and separate backing washers. "
-            "Confirm hole diameter against the purchased hinge; preserve full timber behind the hinge positions.",
-        ),
-        MaterialRole(
             id="cabinet-door-bolts",
-            name="Cabinet door and keeper through-bolts",
+            name="Cabinet catch-keeper through-bolts",
             kind="hardware",
             fields={},
-            quantity=54,
-            note="M3 × 12 pan-head bolt and nut sets: 36 for the moving hinge leaves and 18 for catch keepers. "
-            "Washers separate. Confirm head/hole fit on physical hardware; M3 × 12 is listed by an NZ supplier.",
+            quantity=18,
+            default_product_id="zenith-m3-12-ss316-8",
+            note="M3 × 12 round-head bolt and nut sets: two for each of the nine catch keepers. "
+            "Washers separate. Confirm head/hole fit on physical hardware.",
         ),
         MaterialRole(
             id="cabinet-hardware-washers",
             name="Cabinet hardware backing washers",
             kind="hardware",
             fields={},
-            quantity=90,
-            note="M3 flat backing washers, nominal 8mm outside diameter: 36 frame hinge, 36 door hinge, 18 keeper. "
+            quantity=18,
+            default_product_id="zenith-m3-flat-washer-ss316-35",
+            note="M3 flat backing washers, nominal 8mm outside diameter: 18 catch keeper fixings. "
             "Confirm bearing faces and fit on the physical hardware.",
         ),
         MaterialRole(
@@ -182,12 +174,22 @@ ROLES.extend(
         ),
         MaterialRole(
             id="cabinet-module-fasteners",
-            name="Cabinet module bolt sets",
+            name="Cabinet module hex bolts and nuts",
             kind="hardware",
             fields={},
-            note="Eight countersunk M5 × 90mm joint screws, with a top washer and locking nut. "
-            "Heads are flush below the lower rails to preserve chair clearance. "
-            "80mm nominal timber stack; product and final fixing details remain to select.",
+            default_product_id="zenith-m6-90-hex-zinc",
+            note="Eight ordinary zinc-plated M6 × 90mm hex bolt-and-nut sets. Nuts included; "
+            "two M6 washers per bolt purchased separately. 6.5mm straight clearance holes, no countersinks. "
+            "80mm timber stack; confirm actual washer thickness and full nut engagement before assembly.",
+        ),
+        MaterialRole(
+            id="cabinet-module-washers",
+            name="Cabinet module washers",
+            kind="hardware",
+            fields={},
+            quantity=16,
+            default_product_id="zenith-m6-16-flat-washer-zinc",
+            note="Two M6 × 16mm zinc-plated flat washers per module joint, under the hex head and supplied nut.",
         ),
         MaterialRole(
             id="cabinet-glue",
@@ -209,23 +211,33 @@ ROLES.extend(
             name="Cabinet door plywood",
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
-            default_product_id="bbi-redline-6-1200-1195",
+            default_product_id="tigerply-okoume-6",
             note="Nine 6mm inset doors sharing sheets with the shelves. "
-            "Six drop-down flaps, one front door and the bottom storage pair. Through-fix hinges on thin plywood.",
+            "Six drop-down flaps, one front door and the bottom storage pair. Piano hinges fix into pine-backed edges.",
         ),
         MaterialRole(
             id="cabinet-hinges",
             name="Cabinet door hinges",
             kind="hardware",
             fields={},
-            quantity=18,
-            default_product_id="zenith-butt-35",
-            note=(
-                "Two per door, visibly face-mounted on the flush inset door and timber frame. "
-                "Use through-face bolts and backing washers on the thin plywood door. "
-                "Fixed leaves use M3 × 25 through-bolts and moving leaves M3 × 12. "
-                "Hole sizes and leaf swage still require checking against the physical hinge."
-            ),
+            quantity=9,
+            default_product_id="taskmaster-piano-610-27-ss",
+            note="One 610 × 27mm stainless piano-hinge length per door, trimmed to the backing strip. "
+            "Mounting screws are included with the hinges, as shown in the product photo. "
+            "Allow approximately 180 screws across the nine trimmed hinges, included in the hinge price; "
+            "no separate screw purchase. Supplied screw size and count are not published. "
+            "Leaves hidden on the unrebated door/jamb edges. Leaf thickness, pin, gap, mortices and "
+            "fixing holes are provisional until checked against the physical hinge.",
+        ),
+        MaterialRole(
+            id="cabinet-hinge-backing",
+            name="Cabinet door hinge backing strips",
+            kind="timber",
+            fields={},
+            default_product_id="pinetrim-18-18-1200",
+            note="18 × 18mm untreated pine glued behind each 6mm door's hinge edge. "
+            "Ends stop 10mm short of perpendicular door edges to clear the remaining rebates. "
+            "Glue and clamp the full mating face; allow full cure, then accurately pilot-drill the assembled edge.",
         ),
         MaterialRole(
             id="cabinet-catches",
@@ -257,12 +269,60 @@ ROLES.extend(
         ),
         MaterialRole(
             id="bed-lid-hinges",
-            name="Storage bed gas-assisted lift pair (photo-derived)",
+            name="Storage bed gas-assisted lift pair · 30kg",
             kind="hardware",
             fields={},
             quantity=1,
+            default_product_id="instant-panel-bed-lift-30kg-600-pair",
             note="One pair of Instant Panel 600mm bed lifts. Pivot centres and mounting are photo estimates; "
-            "confirm actual stroke, fixings and supported lid weight. 20kg/30kg selection remains open.",
+            "30kg version selected. Seven M6 coach bolts per lift: four fixed and three moving. "
+            "Confirm actual stroke, fixing holes and supported lid weight.",
+        ),
+        MaterialRole(
+            id="bed-lift-bolts",
+            name="Bed lift fixed-rail coach-head through-bolts",
+            kind="hardware",
+            fields={},
+            quantity=8,
+            default_product_id="zenith-m6-40-coach-zinc",
+            note="Four M6 × 40mm coach bolts per fixed rail, eight for the pair. "
+            "Smooth heads face outwards; replace supplied nuts with separate Nylocs. "
+            "18mm ply plus 6.7mm steel mounting stack. CAD placement and head dimensions are illustrative; "
+            "match-drill physical hardware.",
+        ),
+        MaterialRole(
+            id="bed-lift-lid-bolts",
+            name="Bed lift recessed Allen-drive through-bolts",
+            kind="hardware",
+            fields={},
+            quantity=6,
+            default_product_id="pinnacle-m6-50-allen-ruspert-6",
+            note="Three M6 × 50mm Allen-drive round-head bolts per moving rail, six total (one pack). "
+            "Top counterbores in the fixed slats are provisionally 18mm diameter × 6mm deep, "
+            "with a 16mm washer beneath each head. Heads sit below the slat surface; Allen access is from above. "
+            "Bolt passes through the remaining slat, lid and 6.7mm steel rail. Replace supplied nuts with Nylocs. "
+            "Head size, key size and recess dimensions need checking against physical bolts before drilling.",
+        ),
+        MaterialRole(
+            id="bed-lift-washers",
+            name="Bed lift washers",
+            kind="hardware",
+            fields={},
+            quantity=20,
+            default_product_id="zenith-m6-16-flat-washer-zinc",
+            note="Fourteen M6 × 16mm steel washers against the hinge rails under the Nylocs, "
+            "plus six beneath the recessed Allen heads to spread load over the wood. "
+            "Nominal 1.6mm thickness; confirm against physical washers before boring the slats.",
+        ),
+        MaterialRole(
+            id="bed-lift-lock-nuts",
+            name="Bed lift M6 locking nuts",
+            kind="hardware",
+            fields={},
+            quantity=14,
+            default_product_id="zenith-m6-nyloc-zinc-12",
+            note="Fourteen M6 Nylocs replace the coach bolts' supplied plain nuts; buy two twelve-packs. "
+            "Confirm full nylon engagement and clearance from the moving linkage.",
         ),
     ]
 )
@@ -300,6 +360,7 @@ class CutPart(BaseModel):
     holes: list[list[tuple[float, float]]] = Field(default_factory=list)
     profile_note: str = ""
     profile_axes: str = ""
+    fitting_edges: dict[Literal["left", "right", "top", "bottom"], str] = Field(default_factory=dict)
 
 
 def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
@@ -363,9 +424,19 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     ):
         project.materials.pop(role, None)
     # The rejected lift-up layout used this role; individual drop-down flaps use chain instead.
+    project.materials.pop("cabinet-hinge-frame-bolts", None)
+    if project.materials.get("cabinet-hinges", Selection()).product_id == "zenith-butt-35":
+        project.materials["cabinet-hinges"] = Selection(product_id="taskmaster-piano-610-27-ss")
     project.materials.pop("cabinet-stays", None)
     project.materials.pop("lagun-second-bracket", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
+    project.materials.pop("cabinet-module-nuts", None)  # Ordinary bolt sets include their nuts.
+    if project.materials.get("cabinet-module-fasteners", Selection()).product_id in {
+        "anzor-m5-90-csk-316", "fortress-m5-90-csk-zinc-100"
+    }:
+        project.materials["cabinet-module-fasteners"] = Selection(product_id="zenith-m6-90-hex-zinc")
+    if project.materials.get("cabinet-module-washers", Selection()).product_id == "pinnacle-m5-flat-washer-ss316-12":
+        project.materials["cabinet-module-washers"] = Selection(product_id="zenith-m6-16-flat-washer-zinc")
     # Older sheet-framed cabinets use the current front frame and supporting panels.
     old_frame = project.materials.get("cabinet-frames", Selection()).product_id
     if (
@@ -375,9 +446,9 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     ):
         project.materials["cabinet-frames"] = Selection(product_id="pinetrim-40-18-1800")
         if "cabinet-partitions" not in project.materials:
-            project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-9")
-        project.materials["cabinet-doors"] = Selection(product_id="bbi-redline-6-1200-1195")
-        project.materials["shelves"] = Selection(product_id="bbi-redline-6-1200-1195")
+            project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-6")
+        project.materials["cabinet-doors"] = Selection(product_id="tigerply-okoume-6")
+        project.materials["shelves"] = Selection(product_id="tigerply-okoume-6")
         project.parameters = project.parameters.model_copy(
             update={
                 "cabinet_door_corner_radius_mm": 2.0,
@@ -387,17 +458,20 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         )
     for retired in ("ledges", "cabinet-module-timber", "cabinet-back", "cabinet-pillar"):
         project.materials.pop(retired, None)
+    for role, selection in project.materials.items():
+        if selection.product_id == "bbi-redline-6-1200-1195":
+            project.materials[role] = selection.model_copy(
+                update={"product_id": "tigerply-okoume-6", "purchase_quantity": None}
+            )
     if project.materials.get("cabinet-partitions", Selection()).product_id == "birch-3-2440":
-        project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-9")
-    if project.materials.get("table-plywood", Selection()).product_id in {
-        "tigerply-18",
-        "tigerply-12",
-        "tigerply-okoume-9",
-    }:
-        # Replace the superseded single plywood top with the two-leaf pine design.
-        project.materials["table-plywood"] = Selection(product_id="specrite-pine-18-1200-600")
-        project.parameters = project.parameters.model_copy(update={"table_depth_mm": 250.0})
+        project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-6")
+    if project.materials.get("table-plywood", Selection()).product_id == "specrite-pine-18-1200-600":
+        project.materials["table-plywood"] = project.materials.get(
+            "frames", Selection(product_id="tigerply-18")
+        ).model_copy(deep=True)
     project.materials = default_selections() | project.materials
+    if project.materials["bed-lift-lid-bolts"].product_id == "zenith-m6-55-coach-zinc":
+        project.materials["bed-lift-lid-bolts"] = Selection(product_id="pinnacle-m6-50-allen-ruspert-6")
     project.parameters = resolve(project.parameters, project.materials)
     return project
 

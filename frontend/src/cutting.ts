@@ -2,12 +2,14 @@ import { request, type ModelStatus } from './api';
 import { onTab, showTab } from './tabs';
 import { createPlanDropdown } from './plan-dropdown';
 import { cabinetSideLabel, drawingCut, mirrorsPart, mirrorsSheet, pieceGallery, sheetDrawing, updateDrawingMirror } from './cutting-diagrams';
-import { assembly, csv, download, el, fullName, isPlywood, materialName, mm, option, partColour, pieceKey } from './cutting-types';
+import { assembly, blankDimensions, blankSize, csv, download, el, fittingEdges, fittingMargins, fittingNote,
+  fullName, isPlywood, materialName, mm, option, partColour, pieceKey, sawSteps, templateFit, templateInstruction } from './cutting-types';
 import type { Data, Grain, Group, Mode, Part, Result, StockOptions } from './cutting-types';
 import { isStaticSite } from './site-runtime';
 import './cutting.css';
 
 const methodNames: Record<Mode, string> = { straight: 'Straight saw cuts', nesting: 'Nested shapes' };
+const previousModelMessage = 'These pieces are from the previous CAD model. The updated model is still loading.';
 
 export function setupCutting(host: HTMLElement, showInCad: (path: string) => void) {
   let data: Data | null = null, filter = 'all', loading = false, statusKey = '', savingFailed = false;
@@ -84,7 +86,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   const mode = () => data!.state.settings.algorithm;
   const resultKey = (g: Group) => `${g.key}:${mode()}`;
   const groupOptions = (g: Group): StockOptions => data!.state.options[g.key] ??= {
-    confirmed: false, orientations: {}, stock: structuredClone(g.stock),
+    confirmed: false, orientations: {}, fitting_margins: {}, stock: structuredClone(g.stock),
   };
   function filteredGroups() {
     return data!.groups.filter(g => filter === 'all' || (filter === 'timber' && g.kind === 'timber')
@@ -101,10 +103,12 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     pending = pending.then(async () => {
       const fresh = await request<Data>(path, 'PUT', snapshot);
       data!.sources = fresh.sources; data!.current = fresh.current;
-      data!.jobs = fresh.jobs;
+      data!.jobs = fresh.jobs; data!.groups = fresh.groups; data!.state.results = fresh.state.results;
       savingFailed = false;
       if (filter !== 'all') renderFocus();
-      else message('Cutting settings saved for the whole project.');
+      else renderOverview();
+      refreshInspectorMeasurements();
+      message('Cutting settings saved.');
     }).catch(error => { savingFailed = true; message(`Could not save cutting settings: ${error.message}`); });
   }
   function settingsChanged() {
@@ -138,6 +142,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       n => { data!.state.settings.kerf = n; settingsChanged(); }, 0, 20);
     numberField(form, 'Trim from each sheet edge (mm)', data!.state.settings.trim,
       n => { data!.state.settings.trim = n; settingsChanged(); }, 0, 100);
+    numberField(form, 'Default template-fitting allowance (mm)', data!.state.settings.fitting_allowance ?? 50,
+      n => { data!.state.settings.fitting_allowance = n; settingsChanged(); }, 0, 500);
     const grainLabel = el('label', 'Default grain direction'), grain = el('select');
     grain.append(option('length', 'Along each piece’s length'), option('width', 'Along each piece’s width'), option('free', 'Either direction'));
     grain.value = data!.state.settings.grain;
@@ -146,6 +152,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     grainLabel.append(grain); form.append(grainLabel); settings.append(form);
     settings.append(el('p', 'Kerf is the material removed by a cut. Edge trim reserves a strip around the sheet; use 0 for untrimmed edges.'));
     settings.append(el('p', 'Straight saw cuts arrange rectangular blanks; their curves and holes are cut afterwards. Nested shapes fit the actual profiles together.'));
+    settings.append(el('p', 'Template-fitting allowance enlarges only the marked fitting edges. Adjust individual edges in Piece details. Template-fit pieces reserve a complete rough blank in either layout method.'));
     return settings;
   }
 
@@ -183,7 +190,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       button.onclick = () => { filter = key; render(); }; filters.append(button);
     }
     host.append(filters, feedback, content, inspector);
-    if (!data.current) message('These pieces are from the previous CAD model. The updated model is still loading.');
+    if (!data.current) message(previousModelMessage);
+    else if (feedback.textContent === previousModelMessage) message('');
     if (filter === 'all') renderOverview();
     else renderFocus();
     markSelected();
@@ -216,8 +224,33 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     inspector.replaceChildren();
     const close = el('button', 'Close'); close.type = 'button'; close.className = 'cut-inspector-close'; close.onclick = () => inspector.close();
     inspector.append(close, el('h2', fullName(part)), el('p', part.path.split(' / ').join(' › ')),
-      pieceGallery([part], [g], () => {}, mirrored), el('strong', `${mm(part.length)} × ${mm(part.width)} × ${mm(part.thickness)} mm`),
       el('p', materialName(g)));
+    const preview = el('div'); preview.dataset.fittingPreview = '';
+    const measurements = el('div'); measurements.dataset.fittingSummary = '';
+    inspector.append(preview, measurements);
+    if (g.kind === 'sheet') {
+      const fitting = el('fieldset'); fitting.className = 'cut-fitting-settings'; fitting.append(el('legend', 'Template-fitting allowance'));
+      fitting.append(el('p', 'Edges refer to this unmirrored drawing: left/right and top/bottom. A zero allowance keeps that blank edge at the CAD datum.'));
+      const fields = el('div'); fields.className = 'cut-settings-fields'; fitting.append(fields);
+      for (const edge of fittingEdges) {
+        const label = `${edge[0].toUpperCase()}${edge.slice(1)}${part.fitting_edges?.[edge] ? ` · ${part.fitting_edges[edge]}` : ''} (mm)`;
+        const input = numberField(fields, label, fittingMargins(part)[edge], value => {
+          const opts = groupOptions(g); opts.fitting_margins ??= {};
+          const currentPart = data!.groups.find(group => group.key === g.key)?.parts.find(piece => piece.path === path) ?? part;
+          opts.fitting_margins[path] ??= { ...fittingMargins(currentPart) };
+          opts.fitting_margins[path][edge] = value; stockChanged(g);
+        }, 0, 500);
+        input.dataset.fittingEdge = edge;
+      }
+      if (!isStaticSite) {
+        const reset = el('button', 'Use default fitting edges'); reset.type = 'button';
+        reset.onclick = () => { delete groupOptions(g).fitting_margins?.[path]; stockChanged(g); };
+        fitting.append(reset);
+      }
+      fitting.append(el('p', 'Extra material is for physical templating, not a larger furniture model. Leave precise joining edges at 0mm.'));
+      inspector.append(fitting);
+    }
+    refreshInspectorMeasurements();
     const show = el('button', 'Show in 3D'); show.type = 'button'; show.onclick = () => goToCad(path);
     show.title = 'Double-click a piece to show it in 3D'; inspector.append(show);
     const result = data!.state.results[resultKey(g)];
@@ -240,6 +273,19 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const focused = document.activeElement as HTMLElement | null;
     if (!inspector.open) inspector.show();
     if (pointerX !== null) focused?.focus({ preventScroll: true });
+  }
+  function refreshInspectorMeasurements() {
+    const g = data?.groups.find(group => group.parts.some(part => part.path === selectedPath));
+    const part = g?.parts.find(piece => piece.path === selectedPath); if (!g || !part) return;
+    const preview = inspector.querySelector<HTMLElement>('[data-fitting-preview]');
+    preview?.replaceChildren(pieceGallery([part], [g], () => {}, false));
+    const measurements = inspector.querySelector<HTMLElement>('[data-fitting-summary]');
+    measurements?.replaceChildren(el('strong', `Cut blank: ${blankDimensions(part)} × ${mm(part.thickness)} mm`),
+      el('p', `CAD reference: ${mm(part.length)} × ${mm(part.width)} mm`));
+    if (templateFit(part)) measurements?.append(el('p', `Template fit · ${fittingNote(part)}`), el('p', templateInstruction));
+    for (const input of inspector.querySelectorAll<HTMLInputElement>('[data-fitting-edge]')) {
+      if (input !== document.activeElement) input.value = String(fittingMargins(part)[input.dataset.fittingEdge as keyof ReturnType<typeof fittingMargins>]);
+    }
   }
   function markSelected() {
     for (const node of host.querySelectorAll<HTMLElement | SVGElement>('[data-part]')) {
@@ -297,14 +343,16 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
   function partTable(g: Group) {
     const table = el('table'); table.className = 'cut-parts';
     const head = el('thead'), row = el('tr');
-    for (const title of ['Piece', 'Length × width (mm)', 'Thickness', 'Grain direction']) {
+    for (const title of ['Piece', 'Cut blank (mm)', 'CAD reference (mm)', 'Thickness', 'Grain direction']) {
       const th = el('th', title); th.scope = 'col'; row.append(th);
     }
     head.append(row); table.append(head); const body = el('tbody'); table.append(body);
     for (const part of g.parts) {
       const tr = el('tr'); tr.dataset.part = part.path;
       const td = el('td'), name = el('button', fullName(part)); name.type = 'button'; name.dataset.part = part.path; name.onclick = () => selectPart(part.path);
-      td.append(name); tr.append(td, el('td', `${mm(part.length)} × ${mm(part.width)}`), el('td', `${mm(part.thickness)} mm`));
+      td.append(name);
+      if (templateFit(part)) td.append(el('small', `Template fit · ${fittingNote(part)}`));
+      tr.append(td, el('td', blankDimensions(part)), el('td', `${mm(part.length)} × ${mm(part.width)}`), el('td', `${mm(part.thickness)} mm`));
       const orientation = el('td'), select = el('select'); select.setAttribute('aria-label', `Grain direction for ${fullName(part)}`);
       select.append(option('', 'Use global setting'), option('length', 'Along length'), option('width', 'Along width'), option('free', 'Either direction'));
       select.value = groupOptions(g).orientations[part.path] ?? ''; select.disabled = isStaticSite || g.kind === 'timber';
@@ -356,7 +404,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     if (!result) return;
     if (result.best_offcut) {
       const offcut = result.best_offcut;
-      root.append(el('p', `Best rectangular offcut: ${mm(offcut.length)} × ${mm(offcut.width)} mm · sheet ${offcut.sheet + 1}`));
+      root.append(el('p', `Largest rectangular offcut: ${mm(offcut.length)} × ${mm(offcut.width)} mm · sheet ${offcut.sheet + 1}. Other unlabelled spaces may also be reusable; openings inside parts are cut afterwards.`));
     }
     if (result.unplaced.length) {
       const unplaced = result.parts.filter(p => result.unplaced.includes(p.id));
@@ -382,35 +430,44 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
         const part = result.parts.find(p => p.path === placed.path)!;
         const li = el('li'), button = el('button', fullName(part)); button.type = 'button'; button.dataset.part = part.path;
         button.style.setProperty('--part-colour', partColour(part)); button.onclick = () => selectPart(part.path);
-        li.append(button, el('span', `${mm(part.length)} × ${mm(part.width)}`)); keyList.append(li);
+        const dimensions = el('span', `Cut blank: ${blankDimensions(part)}`);
+        if (templateFit(part)) dimensions.append(el('small', `CAD reference: ${mm(part.length)} × ${mm(part.width)}`),
+          el('small', `Template fit · ${fittingNote(part)}`));
+        li.append(button, dimensions); keyList.append(li);
       }
       card.append(keyList);
       const actions = el('div'); actions.className = 'cut-sheet-actions';
       const exportSvg = el('button', 'Save drawing'); exportSvg.type = 'button'; exportSvg.onclick = () => {
         const copy = svg.cloneNode(true) as SVGSVGElement;
         copy.setAttribute('width', `${svg.dataset.physicalWidth}mm`); copy.setAttribute('height', `${svg.dataset.physicalHeight}mm`);
-        copy.querySelector('.cut-saw-lines')?.setAttribute('display', svg.classList.contains('show-cuts') ? 'inline' : 'none');
         download(`${materialName(g).replace(/[^\w-]+/g, '-')}-${index + 1}-cabinet-${mirrored ? 'right' : 'left'}.svg`,
           new XMLSerializer().serializeToString(copy), 'image/svg+xml');
       }; actions.append(exportSvg); card.append(actions);
       if (sheet.cuts.length) {
-        const sequence = details(`Saw-cut sequence · ${sheet.cuts.length} cuts`, `sequence:${g.key}:${index}`);
+        const steps = sawSteps(sheet, result, g.kind);
+        card.append(el('p', 'Numbered dashed lines = saw cuts. Teal = fresh reference edge; red = separation or opposite-edge trim. Numbers match the sequence below.'));
+        const sequence = details(`Saw-cut sequence · ${steps.length} cuts`, `sequence:${g.key}:${index}`);
         sequence.className = 'cut-sequence';
-        sequence.addEventListener('toggle', () => svg.classList.toggle('show-cuts', sequence.open));
-        svg.classList.toggle('show-cuts', sequence.open);
         const list = el('ol');
         const updateSequence = () => {
           list.replaceChildren();
-          for (const cut of sheet.cuts) {
+          for (const [stepIndex, step] of steps.entries()) {
+            const { cut, kind } = step;
             const [x1, y1, x2, y2] = drawingCut(cut, sheet, mirrored);
-            list.append(el('li', x1 === x2
+            const instruction = x1 === x2
               ? `Crosscut at length ${mm(x1)} mm, across width coordinates ${mm(y1)}–${mm(y2)} mm.`
-              : `Rip at width ${mm(y1)} mm, along length coordinates ${mm(x1)}–${mm(x2)} mm.`));
+              : `Rip at width ${mm(y1)} mm, along length coordinates ${mm(x1)}–${mm(x2)} mm.`;
+            const prefix = kind === 'reference' ? stepIndex === 0
+              ? 'Sheet-end reference — make a straight edge: ' : 'Section reference — square to its cut end: ' : kind === 'trim'
+              ? 'Opposite-edge trim: ' : kind === 'breakdown' ? 'Break down sheet: ' : '';
+            list.append(el('li', `${prefix}${instruction}${kind === 'reference'
+              ? ' Keep the blade towards the discarded outer edge.' : ''}`));
           }
         };
         textUpdates.push(updateSequence); updateSequence();
-        sequence.append(el('p', 'Straight cuts separate rectangular blanks. Cut curves, openings and notches afterwards.'),
-          el('p', 'Coordinates start at the top-left corner. Lines mark finished edges; keep the blade on the waste side.'), list); card.append(sequence);
+        sequence.append(el('p', 'Straight cuts separate rectangular blanks. Template-fit contours are CAD references: keep their extra material until fitting from a physical template. Cut other curves, openings and notches afterwards.'),
+          el('p', 'Start with the sheet-end reference cut, then make parallel full-width breakdown cuts. Finish one section at a time: square its teal reference edge perpendicular to its new end, then make its remaining numbered cuts. Opposite-edge trims appear only when a blank reaches that edge.'),
+          el('p', 'Coordinates start at the top-left corner. Lines mark finished edges; keep the blade on the waste side. Opposite-edge trims discard the outer strip. With zero edge trim, no fresh reference cuts are reserved.'), list); card.append(sequence);
       }
       sheets.append(card);
     });
@@ -460,8 +517,12 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     finally { progressLoading = false; }
   }
   function exportCsv() {
-    const rows: (string | number)[][] = [['Assembly', 'Piece', 'Material', 'Length mm', 'Width mm', 'Thickness mm', 'CAD location']];
-    for (const g of filteredGroups()) for (const p of g.parts) rows.push([assembly(p), fullName(p), materialName(g), p.length, p.width, p.thickness, p.path]);
+    const rows: (string | number)[][] = [['Assembly', 'Piece', 'Material', 'Cut blank length mm', 'Cut blank width mm',
+      'CAD reference length mm', 'CAD reference width mm', 'Thickness mm', 'Fitting left mm', 'Fitting right mm',
+      'Fitting top mm', 'Fitting bottom mm', 'Fitting edges', 'Instructions', 'CAD location']];
+    for (const g of filteredGroups()) for (const p of g.parts) rows.push([assembly(p), fullName(p), materialName(g),
+      ...blankSize(p), p.length, p.width, p.thickness, ...fittingEdges.map(edge => fittingMargins(p)[edge]),
+      fittingNote(p), templateFit(p) ? templateInstruction : '', p.path]);
     download('campervan-cut-list.csv', csv(rows), 'text/csv;charset=utf-8');
   }
   void refresh();
@@ -471,7 +532,9 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     setMirrored(value: boolean) {
       if (mirrored === value) return;
       mirrored = value; layoutNote.textContent = cabinetSideLabel(mirrored);
-      for (const svg of host.querySelectorAll<SVGSVGElement>('svg')) updateDrawingMirror(svg, mirrored);
+      for (const svg of host.querySelectorAll<SVGSVGElement>('svg')) {
+        if (!svg.closest('[data-fitting-preview]')) updateDrawingMirror(svg, mirrored);
+      }
       for (const updates of mirrorTextUpdates.values()) for (const update of updates) update();
     },
     hasPart(path: string) { return Boolean(data?.groups.some(g => g.parts.some(p => p.path === path))); },

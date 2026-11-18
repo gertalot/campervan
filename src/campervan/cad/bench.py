@@ -42,7 +42,7 @@ def build_long_bench(p: Parameters) -> Compound:
         children=[
             Compound(label="Storage box", children=parts),
             build_lifts(layout.lid_rear, layout.box_top, length, t, p.bed_lid_open_percent,
-                        rear_panel_y=layout.rear_panel_y),
+                        rear_panel_y=layout.rear_panel_y, slat_thickness=p.slat_thickness_mm),
             build_lid(p, layout),
             build_cushions(p, "Long bench"),
         ],

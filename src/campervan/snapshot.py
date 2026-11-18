@@ -58,7 +58,7 @@ def cutting_data(
     cuts: list[CutPart], materials: dict[str, Selection], cutting: CuttingState,
     jobs: dict[str, dict[str, Any]], current: bool,
 ) -> dict[str, Any]:
-    groups = stock_groups(cuts, materials)
+    groups = stock_groups(cuts, materials, cutting)
     sources = {}
     state = cutting.model_dump()
     for group in groups:

@@ -78,7 +78,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     pick: pieces.pickPoint,
     preview: previewPose,
     save: () => { void saveAcceptedPositions(); },
-    snapshot: () => motionController?.snapshotPositions() ?? { positions: { ...positions }, returnMountedTable: false },
+    snapshot: () => motionController?.snapshotPositions() ?? { positions: { ...positions } },
     restore: snapshot => motionController?.restorePositions(snapshot),
   });
   pieces.setCommands(() => [...human.commands(), ...drag.commands()]);

@@ -27,8 +27,6 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let inputError: string | null = null;
   let previewRevision = 0;
   const positionKey = 'campervan.positions';
-  const tableReturnKey = 'campervan.table-return-after-bed';
-  let returnMountedTable = storage.getItem(tableReturnKey) === 'true';
   let positions: Parameters = JSON.parse(storage.getItem(positionKey) ?? '{}');
   delete positions.cross_bed_extension_percent;
   delete positions.drawer_extension_percent;
@@ -47,26 +45,13 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
 
   function candidate(patch: Parameters) {
     const next = { ...positions, ...patch };
-    let mountedReturn = returnMountedTable;
-    if ('table_mount' in patch) mountedReturn = false; // Explicit selection replaces the automatic return.
     if ((patch.bed_lid_open_percent ?? 0) > 0) next.bed_extension_percent = 0;
     if ((patch.bed_extension_percent ?? 0) > 0) next.bed_lid_open_percent = 0;
-    if ('bed_extension_percent' in patch || 'bed_lid_open_percent' in patch) {
-      if (next.bed_extension_percent > 0 && next.table_mount !== 2) {
-        mountedReturn = true;
-        next.table_mount = 2;
-      } else if (next.bed_extension_percent === 0 && mountedReturn) {
-        mountedReturn = false;
-        next.table_mount = 0;
-      }
-    }
-    return { positions: next, returnMountedTable: mountedReturn };
+    return { positions: next };
   }
-  function restore(snapshot: { positions: Parameters; returnMountedTable: boolean }) {
+  function restore(snapshot: { positions: Parameters }) {
     const before = positions;
     positions = { ...snapshot.positions };
-    returnMountedTable = snapshot.returnMountedTable;
-    storage.setItem(tableReturnKey, String(returnMountedTable));
     storage.setItem(positionKey, JSON.stringify(positions));
     for (const [name, value] of Object.entries(positions)) {
       if (before[name] !== value) view.setPosition(name, value);
@@ -177,10 +162,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
             return [name, saved !== undefined && (!options || options.some(option => option.value === saved))
               ? saved : value];
           }));
-        const restored = candidate({ bed_extension_percent: positions.bed_extension_percent });
-        positions = restored.positions;
-        returnMountedTable = restored.returnMountedTable;
-        storage.setItem(tableReturnKey, String(returnMountedTable));
+        positions = candidate({ bed_extension_percent: positions.bed_extension_percent }).positions;
         storage.setItem(positionKey, JSON.stringify(positions));
         for (const [name, value] of Object.entries(positions)) view.setPosition(name, value);
         view.setParameters({ ...data.parameters, ...positions }, true);
@@ -218,7 +200,7 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
       catch (error) { showError(error); }
     },
     previewPositions,
-    snapshotPositions: () => ({ positions: { ...positions }, returnMountedTable }),
+    snapshotPositions: () => ({ positions: { ...positions } }),
     restorePositions: restore,
     savePositions,
     previewPosition: (name: string, percent: number) => previewPositions({ [name]: percent }),

@@ -241,7 +241,8 @@ def build_app(
         return current_cutting_data(coordinator)
 
     def cutting_group(key: str, coordinator: Coordinator) -> dict[str, Any]:
-        group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials) if g["key"] == key), None)
+        group = next((g for g in stock_groups(coordinator.cuts, coordinator.materials, coordinator.cutting)
+                      if g["key"] == key), None)
         if group is None:
             raise HTTPException(422, "This material is no longer in the cut list.")
         return group

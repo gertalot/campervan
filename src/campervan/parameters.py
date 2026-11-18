@@ -89,8 +89,8 @@ class Parameters(BaseModel):
         ge=0,
         le=2,
         multiple_of=2,
-        title="Show table",
-        description="Switch instantly between the working table and the folded, disassembled storage preview.",
+        title="Table",
+        description="Checked: table mounted regardless of bed position. Unchecked: folded, disassembled storage preview.",
         json_schema_extra={
             "unit": "",
             "group": ["Laptop table"],
@@ -1056,7 +1056,7 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
     cabinet_partition_thickness_mm: float = Field(
-        default=9.0,
+        default=6.0,
         gt=0,
         title="Fixed cabinet panel thickness",
         description="Supporting plywood end panels and centre divider, with local timber cleats and backing.",

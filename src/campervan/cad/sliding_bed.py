@@ -6,7 +6,9 @@ from math import floor
 from build123d import Align, Axis, Color, Compound, Cylinder, Face, Location, Part, Solid, Wire, fillet
 
 from campervan.cad.bed_motion import bed_offset
-from campervan.cad.bed_lift import RAIL_WIDTH, lid_location
+from campervan.cad.bed_lift import (
+    LID_BOLT_XS, LID_COUNTERBORE_DEPTH, LID_COUNTERBORE_RADIUS, RAIL_WIDTH, lid_location, lift_mounts,
+)
 from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
@@ -133,11 +135,31 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
     else:
         slat_length -= FIXED_SLAT_END_TRIM
     x = p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
+    width, thickness = p.slat_width_mm, p.slat_thickness_mm
+    bevel = thickness / 2
+    # Opposing 45° long-edge chamfers: fixed top edges, moving underside edges.
+    # Keep the other half of each side square and retain the full stock envelope.
+    if moving:
+        section = [(bevel, 0), (width - bevel, 0), (width, bevel),
+                   (width, thickness), (0, thickness), (0, bevel)]
+    else:
+        section = [(0, 0), (width, 0), (width, bevel),
+                   (width - bevel, thickness), (bevel, thickness), (0, bevel)]
+    profile = Face(Wire.make_polygon([(0, y, z) for y, z in section]))
     slats = []
     for i in range(1 if moving else 0, len(layout.slat_ys), 2):
-        slat = panel(slat_length, p.slat_width_mm, p.slat_thickness_mm)
+        slat = Part([Solid.extrude(profile, (slat_length, 0, 0))])
         if not moving and i == 0:
             slat -= rear_wall_corner_cutter(p.slat_width_mm / 2, p.slat_thickness_mm)
+        if not moving:
+            for _, mount_y, mirrored in lift_mounts(p.seat_length_mm, p.frame_thickness_mm, layout.rear_panel_y):
+                bolt_y = mount_y + (-RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2)
+                if layout.slat_ys[i] <= bolt_y <= layout.slat_ys[i] + p.slat_width_mm:
+                    for bolt_x in LID_BOLT_XS:
+                        pocket = Cylinder(LID_COUNTERBORE_RADIUS, LID_COUNTERBORE_DEPTH + 1,
+                                          align=(Align.CENTER, Align.CENTER, Align.MIN))
+                        slat -= pocket.moved(Location((bolt_x - x, bolt_y - layout.slat_ys[i],
+                                                       p.slat_thickness_mm - LID_COUNTERBORE_DEPTH)))
         slat.location = Location((x, layout.slat_ys[i], layout.slat_bottom - layout.box_top))
         slat.label, slat.color = f"{name} slat {i + 1:02}", WOOD if moving else FIXED_WOOD
         slats.append(slat)

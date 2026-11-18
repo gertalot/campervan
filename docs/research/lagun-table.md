@@ -1,16 +1,12 @@
 # Lagun laptop table
 
-Gert's current top has two **600 × 200 × 18mm laminated pine leaves**. The second leaf folds onto the first:
+Gert's current top has two **600 × 200 × 18mm plywood leaves**. The second leaf folds onto the first:
 200mm folded width and 400mm open width. The folded stack is 36mm thick; the flat open top is 18mm thick.
 The length remains editable. The table is for use with the bed retracted; remove it for sleeping.
 
-The selected stock is the [1200 × 600 × 18mm Specrite pine panel](https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619),
-Bunnings I/N 0419619. On 6 November 2026, Bunnings and [SpecRite](https://www.specrite.co.nz/range/timber-panels-boards/0419619-1200-x-600-x-18mm-timber-multi-use-pine-panel)
-listed $47; local store stock was not confirmed. This replaces the $139 Prempanel bamboo selection, saving $92
-on tabletop stock. Both leaves fit side by side on one panel with kerf allowance; run grain along the 600mm length.
-The finger-jointed, laminated radiata pine is sold for interior furniture and tabletops. Finish both faces and all
-edges, including hinge pockets. The nominal 6.2kg full-panel weight gives approximately 2.1kg for the two blanks,
-before rounding, pockets, finish and hardware. The cross-bench mounting frame uses the bench's 18mm plywood.
+The tabletop uses the same 18mm Tigerply plywood stock as the bench frames. Its two leaves are grouped
+with those parts for sheet layouts; no separate laminated pine or bamboo panel is required. Finish both
+faces and edges, including hinge pockets. Grain follows the 600mm length.
 
 Each leaf has 20mm plan-view corner radii and a 3mm round-over on its top and bottom perimeter edges. These
 design dimensions have controls in the sidebar. The cut list carries the rounded outlines; edge round-over
@@ -56,11 +52,12 @@ Before the shared 24mm bed offset, the upright body occupies X627–665. The fix
 approximately X612.97 through the fitted lift stroke, leaving about 14mm clearance to the upright.
 With the saved 750mm table height, the folded top's underside is Z=732 versus the bed slat top at Z=390.
 These are model envelope clearances; handles, holes and fixings still require checking against the actual hardware.
-The upright cannot remain mounted during bed extension across this space; the existing conversion control
-continues to switch the table to Stowed before extending the bed. Opening the storage lid does not stow the table.
+The upright occupies part of the extended bed's space; the Table checkbox leaves the selected pose unchanged
+during bed conversion or storage-lid movement, so clearances are for visual inspection.
 
-The sidebar's **Laptop table** group has a **Show table** selector with **Bench mount** and **Stowed** choices.
-Selection switches visibility immediately. The Bench mount group has live height, arm swivel, tabletop rotation
+The **Table** checkbox in **Visibility** selects **Bench mount** when checked and **Stowed** when unchecked.
+Selection switches visibility immediately and persists regardless of bed/couch position or reloads.
+The Bench mount group has live height, arm swivel, tabletop rotation
 and **Mount towards short edge** controls, plus the fold control described above. Values persist in browser storage and use the existing live-position
 API and motion tracks. No pose control regenerates CAD or changes the cutting layout.
 

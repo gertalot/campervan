@@ -105,7 +105,7 @@ class Coordinator:
         if self.cuts_revision != self._status.requested_revision:
             return
         mode = self.cutting.settings.algorithm
-        for group in stock_groups(self.cuts, self.materials):
+        for group in stock_groups(self.cuts, self.materials, self.cutting):
             options = effective_options(group, self.cutting.settings, self.cutting.options.get(group["key"]))
             if not group["stock_sourced"] and not options.confirmed:
                 continue

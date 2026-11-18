@@ -4,6 +4,33 @@ Research date: 2026-10-26. The user approved both methods, selectable in the app
 
 ## Implementation
 
+### Template-fitting blanks
+
+Vehicle-fitting cabinet plywood reserves 50mm by default on its explicitly identified fitting edges. Supporting
+panels reserve wall-side stock, upper supporting panels also reserve roof stock, shelves reserve wall-side stock,
+and the irregular upper infill reserves roof/beam stock. Doors and joining edges do not acquire an allowance merely
+because their outlines contain curves or notches. CAD geometry and nominal dimensions remain unchanged.
+
+The global fitting amount and per-part left/right/top/bottom overrides extend existing cutting options. Physical
+fitting axes are mapped through the same local axes as profile extraction: drawing-bottom is positive profile Y,
+which is not necessarily vehicle-down. Furniture leaf geometry is reflected through local X=0 before extraction,
+so cabinet wall fitting uses negative local X while roof fitting remains positive local Z.
+Piece details use an unmirrored, labelled preview to avoid changing the
+meaning of saved edge settings when the cabinet side is mirrored. Native labelled numeric inputs follow
+[WAI form-label guidance](https://www.w3.org/WAI/tutorials/forms/labels/); this is not a universal compliance claim.
+
+`stock_groups` computes effective margins and rectangular blank dimensions once for the solver and displays.
+Straight packing, handling-cut candidates, rotation, area bounds and remainder metrics use those blank dimensions.
+Nesting reserves the entire enlarged rectangle for fitted pieces, including material inside vehicle notches and
+openings; other pieces cannot consume that stock. The nominal outline is translated inside the blank according to
+the selected margins and remains reference geometry. Changing allowances invalidates saved layout fingerprints.
+
+Piece cards, details, sheet keys and CSV distinguish **Cut blank** from **CAD reference**. Fitting drawings use a
+solid blank, dashed nominal contour, reserved-stock hatching and unchanged datum-edge marks. Saved SVGs include
+the legend and fitting instructions. Leave vehicle contours uncut until a physical template is made. This follows
+the established [rough/model dimension distinction](https://docs.opencutlist.org/features/parts/options#hide-rough-dimensions),
+with directional margins added for this project's scribed profiles.
+
 The Cut list tab uses PackingSolver 0.1.1229 for straight-cut blanks and actual-shape nesting. Its default overview
 draws all cutting pieces under their CAD assembly names, including the floor plywood. Thickness filters lead to
 the relevant pieces, named sheet drawings and detailed cut list. Equal timber cuts share a drawing and quantity;
@@ -19,20 +46,36 @@ Timber uses the same guillotine engine as fixed-width lengths, with end trims an
 
 Straight-cut sheets with one stock size use PackingSolver's `bin-packing-with-leftovers` objective, which searches
 for fewer sheets and a larger rectangular remainder. The coordinator ranks published candidates by stock use,
-then middle-third crosscuts, the best rectangular remnant's area/perimeter ratio, and the number of blank-separating
-saw cuts. Only separated rectangular remnants count; material inside profile openings is not included. A higher area/perimeter
-ratio favours larger, less slender rectangles. The drawing marks the best rectangle and gives its dimensions.
+then middle-third handling crosscuts, smaller occupied crosscut sections, the largest rectangular remnant's area,
+its area/perimeter ratio, and the number
+of blank-separating saw cuts. Only separated rectangular remnants count; material inside profile openings is not included.
+For equal areas, a higher area/perimeter ratio favours less slender rectangles. The drawing marks the largest rectangle
+and gives its dimensions. Handling cuts take precedence so full sheets can be divided into manageable sections.
+Within layouts satisfying the handling preferences, offcut area takes precedence over offcut shape to favour consolidation.
 When all of those priorities tie, the smaller bounding area around the placed blanks wins, preferring tighter
 packing over an empty band between groups of parts.
 
 For straight-cut sheet layouts, a full-width crosscut anywhere within the middle third of the long dimension is
-preferred after stock use. All positions in that band rank equally; useful offcuts and then cut count decide between
-them. There is no reward for moving closer to the exact centre. Sheets without a qualifying cut rank behind
+preferred after stock use. All positions in that band rank equally; further handling cuts, offcut area, shape and then
+cut count decide between them. There is no reward for moving closer to the exact centre. Sheets without a qualifying cut rank behind
 those with one; narrow end strips do not qualify. This preference does not apply to timber lengths or shape nesting.
 For an untrimmed 2400mm sheet the acceptable band runs from approximately 800 to 1600mm, accounting for the kerf centre.
 Existing saved layouts remain valid candidates, preventing a search from replacing them with extra sheets.
 
 The search explores both unrestricted sheets and sheets divided into two sections with a separating kerf.
+For each candidate it also explores an explicit crosscut-first orientation, retaining three stages so those sections
+can be ripped and finally trimmed. The orientation follows the original stock, including for virtual half sheets.
+Orientation alone still allows a broad first-stage strip containing staggered final cuts. A further candidate caps
+the first-stage band width at the largest required blank dimension in that direction, using the native
+`maximum_distance_1_cuts` constraint. Freely rotated items contribute their larger dimension so the cap does not
+assume an unavailable rotation. The uncapped crosscut-first and unrestricted candidates remain available.
+After the middle-third preference, the handling score weights each occupied section's physical length by its blank
+area, normalised by the full sheet length. Section boundaries come from actual full-width crosscuts and include kerf.
+Empty sections have no weight; the number of cuts earns no reward itself. This prioritises physically smaller
+workpieces over larger offcuts when they conflict, following
+[Kreg's grouped crosscut/rip workflow](https://learn.kregtool.com/learn/layout-and-cutting-to-maximize-plywood/).
+The saved valid incumbent remains a candidate. Its full-width breakdown cuts are displayed first, preserving native
+order among those cuts and among the remaining operations. This reordering cannot require an earlier narrowing rip.
 Candidate divisions use part dimensions and the blank edges of the valid saved layout throughout the middle third,
 followed by midpoint, 60% and two-thirds fallback positions. The saved layout also seeds the search's best result.
 Existing blank boundaries beside empty full-width bands are tried first, so those bands can be closed without
@@ -42,6 +85,11 @@ the native three-stage solver, giving the joined sheet an additional separating 
 are paired by their original stock type, with unused halves retained as rectangular offcuts. Finite stock quantities,
 grain direction, outer trim and kerf are preserved. Placements, cuts and remnants are translated back into the original
 sheet coordinates. The drawing uses its existing cut lines, without labels or special styling for the crosscut.
+When the left section has a native full-width trailing remnant, joining closes that empty band if the new join
+still satisfies the middle-third handling preference. The right section shifts intact; recovered material extends
+its far-end rectangular remnant, or is separated as a new end strip with its own kerf. This uses the same native
+cut trees, rather than moving individual parts. The drawing highlights only the largest rectangular remnant across
+the material's sheets; other reusable remnants are not coloured as waste.
 Once a complete layout is known, section copies are capped at that layout's sheet count. This makes a one-sheet
 section search use the two halves of one sheet, rather than two larger halves from two separate sheets.
 
@@ -53,7 +101,7 @@ The search finishes when all native candidate problems are solved or infeasible,
 would exceed the binding's signed 32-bit queue-size range. This does not prove the secondary ranking globally optimal.
 
 This is a heuristic search and candidate ranking, not an exact solver for all priorities: the native search objective does not
-directly optimise area/perimeter or cut count, and its callback only publishes improvements to its own objective.
+directly optimise section handling, area/perimeter or cut count, and its callback only publishes improvements to its own objective.
 It can miss a candidate with a better ratio or fewer cuts. Its leftovers objective also does not report a complete
 optimality proof. Sheet count is marked proven when it matches the greater of the blank-area lower bound and the
 solver's bin-packing bound. That claim does not extend to offcut quality or cut count. Staggered blanks can still

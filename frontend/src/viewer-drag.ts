@@ -13,7 +13,7 @@ export interface Track {
   keyframes?: [number, number][]; interpolation?: 'linear' | 'step';
 }
 export interface Motion { position: number; tracks: Track[] }
-export interface DragSnapshot { positions: Record<string, number>; returnMountedTable: boolean }
+export interface DragSnapshot { positions: Record<string, number> }
 export interface DragHost {
   viewer(): PieceViewer | undefined;
   motions(): Record<string, Motion>;

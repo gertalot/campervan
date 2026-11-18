@@ -55,6 +55,10 @@ the shortened 582mm upper rails now fit entirely beneath the recessed lid.
 The stationary 100mm strip and its short fixed-slat ends are removed. Fixed slats are 567mm long, shortened
 10mm at the aisle end and a further 18mm at the wall end: X45–612 retracted. Moving slats are 559mm (X45–604),
 butting against the raised support frame. Both sets have square ends and retain the 5mm wall-end trim.
+The fixed slats have 45-degree chamfers on both long upper edges; moving slats have the opposing chamfers
+on both long underside edges. Each chamfer reaches half the slat thickness (9mm deep and wide for 18mm stock),
+leaving the other half-edge square. Cross-bench slats are unchanged. These profiles allow an upward escape
+at the interleaving edges; actual guidance still depends on the rail grooves, clearances and assembled fit.
 `bed_slat_rear_setback_mm` is zero.
 A wall-side cushion rail is 18 × 1212 × 50mm after the rear corner trim, spanning X22–40, Y68–1280 and Z372–422.
 It matches the sliding frame's upper height, leaves the existing 5mm gap to the shortened slats, and follows

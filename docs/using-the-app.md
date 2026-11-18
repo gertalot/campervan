@@ -201,6 +201,20 @@ See [planner and purchase details](planner.md) for editing, saving and recovery 
 
 ## Cut list
 
+### Template-fitting allowance
+
+Cabinet panels and shelves that fit the van wall or roof start with **50mm extra on each identified fitting edge**.
+The model itself stays unchanged. In **Cutting settings**, change the shared template-fitting allowance if needed.
+Select a piece to adjust its four edge allowances or restore its defaults. The details preview is deliberately
+unmirrored and labels the drawing edges; roof/wall names identify the intended physical fitting edges. Joining
+edges start at zero. Other sheet pieces can receive an allowance explicitly in the same panel.
+
+**Cut blank** is the rough rectangle to cut from the sheet. **CAD reference** is the modelled size, not a surveyed
+final fitting contour. Solid blank outlines and dashed CAD profiles distinguish them, with hatching for retained
+stock and blue marks on unchanged datum edges. Leave irregular vehicle contours/notches uncut until templated.
+The optimiser reserves the complete larger blank in both modes, so nested pieces cannot consume fitting stock.
+Changing an allowance makes previous layouts stale and updates the rough dimensions in the cut list and exports.
+
 **All pieces** shows named flat drawings grouped by assembly. Select a plywood thickness for sheet layouts, or select
 timber and other sheet materials. Each sheet heading identifies the material, thickness, size and sheet number.
 Single-click a piece for its details; double-click to show it in CAD.
@@ -221,12 +235,22 @@ saved layout without restarting its search. Use Arrange to improve it further. P
 for unchanged inputs while the application stays running; Arrange resumes or restarts them.
 Design or cutting-setting changes replace affected searches.
 
-Straight-cut plywood candidates rank by sheet count, then the largest rectangular offcut's area/perimeter ratio,
-then the number of blank-separating cuts. A proven minimum sheet count does not prove the best possible offcut or cut
+Straight-cut plywood candidates rank by sheet count, then a middle-third handling crosscut on each full sheet,
+then smaller occupied crosscut sections, then largest rectangular offcut area. The search includes crosscut-first
+bands: break the sheet into sections, rip those into parts, then make any final trims. Empty waste strips do not
+earn a handling reward. Offcut shape and the number of blank-separating cuts break later ties.
+A proven minimum sheet count does not prove the best possible offcut or cut
 count. The search uses lower CPU priority and alternates running and paused intervals.
 
-Straight saw cuts produce rectangular blanks and an expandable cut sequence. Cut curves, notches, holes and finishing
-features afterwards. Nested shapes use the sampled profiles; cut pieces inside holes before the surrounding frames.
+Numbered dashed saw-cut lines with solid numbered badges are visible on sheet drawings and saved drawings; their
+numbers match the expandable cut sequence. Teal lines create fresh reference edges; red lines separate blanks or
+trim opposite edges. With a nonzero edge-trim allowance, straight sheet layouts include the initial short-end trim,
+parallel full-width breakdown cuts, then each occupied section's perpendicular reference cut and remaining cuts
+before proceeding to the next section. Opposite-edge trims are included only where a blank reaches that edge.
+Reference cuts discard material towards the outer stock edge. These operations use the reserved edge trim without
+changing the packing. Zero trim reserves no fresh reference cuts. Straight saw cuts produce rectangular blanks.
+Cut curves, notches, holes and finishing features afterwards. Nested shapes use the sampled profiles; cut pieces
+inside holes before the surrounding frames.
 Timber uses crosscuts in either mode. Hardware does not appear in the cutting list.
 
 Use **Save drawing** for sheet SVGs, **Export cut list** for CSV and **Print** for the current view.

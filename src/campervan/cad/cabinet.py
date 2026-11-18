@@ -2,11 +2,12 @@
 
 from typing import Any
 
-from build123d import Align, Color, Compound, Cylinder, Location, Part, Plane, Shape, Solid, section
+from build123d import Align, Axis, Color, Compound, Cylinder, Location, Part, Plane, Shape, Solid, fillet, section
 
-from campervan.cad.cabinet_doors import build_cabinet_doors, cabinet_door_module
+from campervan.cad.cabinet_doors import DOOR_COLOR, REBATE_WIDTH, build_cabinet_doors, cabinet_door_module, panel_rebate
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
+from campervan.cad.cabinet_upper import rear_face_clearance, rear_panel_clearance, rear_upper_post_y
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 from campervan.parameter_fit import FURNITURE_FIT_ENABLED
@@ -20,6 +21,9 @@ def build_cabinet(p: Parameters) -> Compound:
     w, t, skin = p.cabinet_frame_width_mm, p.cabinet_frame_thickness_mm, p.cabinet_partition_thickness_mm
     shelf = p.cabinet_shelf_thickness_mm
     middle, length = p.cabinet_rear_bay_length_mm, p.cabinet_length_mm
+    upper_post = rear_upper_post_y(p)
+    if not w < upper_post < layout.bays[0][1] - w - 120:
+        raise ValueError("Rear top door needs at least 120mm beside the roof-beam infill.")
     modules: dict[str, dict[str, list[Shape[Any]]]] = {
         name: {group: [] for group in ("Frames", "Skin", "Shelves", "Doors")}
         for name in ("Lower module", "Upper module")
@@ -124,17 +128,44 @@ def build_cabinet(p: Parameters) -> Compound:
             part = panel(w, t, top - bottom)
             part.label, part.color = f"{name} front stile", WOOD
             part.location = Location((layout.front + t, y, bottom), (0, 0, 90))
+            if module == "Upper module" and name == "Rear":
+                pose = part.location
+                part = Part((part & rear_face_clearance(p)).moved(pose.inverse()).solids(),
+                            label=part.label, color=WOOD)
+                part.location = pose
             part = add(part, module, "Frames")
             if part is not None:
                 posts.append(part)
         for level in levels:
             for bay, (start, end) in zip(("Rear", "Cab-end"), layout.bays, strict=True):
+                if module == "Upper module" and bay == "Rear" and level == layout.top:
+                    start = upper_post + w
                 part = panel(end - start, t, w)
                 part.label, part.color = f"{bay} front rail at {level:g}mm", WOOD
                 part.location = Location((layout.front + t, start, level - w), (0, 0, 90))
                 part = add(part, module, "Frames")
                 if part is not None:
                     timber.append((module, part))
+
+    # A fixed inset panel uses the same face, reveals and edge treatment as the doors.
+    stile = panel(w, t, layout.top - layout.upper)
+    stile.label, stile.color = "Rear top relocated stile", WOOD
+    stile.location = Location((layout.front + t, upper_post, layout.upper), (0, 0, 90))
+    posts.append(add(stile, "Upper module", "Frames"))
+    reveal = p.cabinet_door_gap_mm
+    infill_start, infill_bottom = w - REBATE_WIDTH + reveal, layout.upper - REBATE_WIDTH + reveal
+    infill_width = upper_post + REBATE_WIDTH - reveal - infill_start
+    infill_height = layout.top - infill_bottom
+    infill_rebate = panel_rebate(p, infill_start, infill_bottom, infill_width, infill_height)
+    infill = panel(infill_width, p.cabinet_door_thickness_mm, infill_height)
+    infill = fillet(infill.edges().filter_by(Axis.Y), p.cabinet_door_corner_radius_mm)
+    infill = fillet(infill.edges().filter_by(Axis.Y, reverse=True), p.cabinet_door_edge_radius_mm)
+    infill.label, infill.color = "Rear top removable infill", DOOR_COLOR
+    infill.location = Location((layout.front + p.cabinet_door_thickness_mm, infill_start, infill_bottom), (0, 0, 90))
+    pose = infill.location
+    infill = Part((infill & rear_face_clearance(p)).moved(pose.inverse()).solids(), label=infill.label, color=DOOR_COLOR)
+    infill.location = pose
+    add(infill, "Upper module", "Skin", fitted=False)
 
     # Wall-side end uprights give the bridge timber attachments at both ends.
     # The rear jamb preserves the loading opening; the cab-end upright stops under its shelf cleat.
@@ -209,6 +240,9 @@ def build_cabinet(p: Parameters) -> Compound:
     rear = panel(p.cargo_width_mm - layout.front, skin, p.body_height_mm - p.cabinet_rear_storage_height_mm + 10)
     rear.label, rear.color = "Rear supporting panel", SKIN
     rear.location = Location((layout.front + t, 0, p.cabinet_rear_storage_height_mm))
+    pose = rear.location
+    rear = Part((rear & rear_panel_clearance(p)).moved(pose.inverse()).solids(), label=rear.label, color=SKIN)
+    rear.location = pose
     add(rear, "Upper module", "Skin")
 
     # Four rails at the interface, including one on each side of the middle skin.
@@ -266,6 +300,19 @@ def build_cabinet(p: Parameters) -> Compound:
                     group = modules[owner]["Frames"]
                     group[next(i for i, item in enumerate(group) if item is rail)] = replacement
                     timber[index] = (owner, replacement)
+
+    # Rebates are cut at the closed pose, independently of the doors' current angles.
+    for groups in modules.values():
+        frames = groups["Frames"]
+        for index, frame in enumerate(frames):
+            if frame.children:
+                continue
+            box = frame.bounding_box()
+            for pocket in [*door_parts.rebates, infill_rebate]:
+                pb = pocket.bounding_box()
+                if all(a < d and c < b for a, b, c, d in zip(box.min, box.max, pb.min, pb.max, strict=True)):
+                    frame = cut(frame, pocket)
+            frames[index] = frame
 
     # Verify full timber surrounds every frame fixing before drilling its clearance hole.
     frame_parts = [part for groups in modules.values() for part in groups["Frames"] if not part.children]
