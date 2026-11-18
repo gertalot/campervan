@@ -43,7 +43,7 @@ export function createViewerCamera(container: HTMLElement, current: () => Camera
   let cameraAnimation: number | null = null;
   let cube: ReturnType<typeof createViewCube> | undefined;
   const savedFov = JSON.parse(localStorage.getItem(cameraKey) ?? 'null')?.fov;
-  let fieldOfView: number = Number.isFinite(savedFov) ? Math.max(20, Math.min(100, savedFov)) : 22;
+  let fieldOfView: number = Number.isFinite(savedFov) ? Math.max(20, Math.min(100, savedFov)) : 80;
   function cancelCameraAnimation() {
     if (cameraAnimation !== null) cancelAnimationFrame(cameraAnimation);
     cameraAnimation = null;
