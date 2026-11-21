@@ -1,8 +1,8 @@
 {
-  "key": "run:corrected-7605be9e-6933-4e0e-b64d-1c8d94c0e6e1",
-  "name": "van-interior",
-  "display_name": "Registered van interior",
-  "bytes": 19779546,
+  "key": "run:nv200-photo-20261120",
+  "name": "nv200-photo-20261120",
+  "display_name": "NV200 \u2014 detailed colour scan",
+  "bytes": 101185721,
   "group_id": null,
   "group_name": null,
   "archived": false,
@@ -12,63 +12,88 @@
   "layers": [
     {
       "id": "mesh",
-      "label": "Coloured mesh",
+      "label": "Detailed colour mesh",
       "asset": "mesh.ply",
       "kind": "mesh"
     }
   ],
   "alignment": {
     "status": "aligned",
+    "source_frame": "cleaned_scan_metres",
+    "target_frame": "scanruler_aligned",
+    "convention": "scan_to_reference",
     "matrix": [
       [
-        0.9888400725184378,
-        -0.13880146240019553,
-        0.054124532490340015,
-        0.1762184932387492
+        0.003910826025649396,
+        -0.033971817893738966,
+        -0.999415139483484,
+        -0.1962457019194667
       ],
       [
-        0.14276525458875866,
-        0.9866821543993711,
-        -0.07795131988634052,
-        0.06581664146465382
+        -0.9998916665714692,
+        -0.014314920332035718,
+        -0.003426102277722136,
+        -0.0724742843372889
       ],
       [
-        -0.042583953127177936,
-        0.08480849146979783,
-        0.9954868792257784,
-        0.47057413405682197
+        -0.014190157177672337,
+        0.9993202683048523,
+        -0.03402412077322274,
+        -1.0576437758942956
       ],
       [
-        0,
-        0,
-        0,
-        1
+        0.0,
+        0.0,
+        0.0,
+        1.0
       ]
     ]
   },
   "cad_reference": {
     "translation_mm": [
-      743.3,
-      31,
-      -12
+      767.4095503181135,
+      1336.840908727191,
+      -12.987508603222473
     ],
     "rotation": [
       [
-        0.9999843595481499,
-        0.0025021451733368027,
-        0.005001992463796336
+        0.0026935011755545605,
+        -0.9999934941028935,
+        0.002399333929223271
       ],
       [
-        -0.0024782864719903016,
-        0.9999855507725807,
-        -0.004770360806177907
+        0.9999859502274554,
+        0.002704419748548379,
+        0.00455910753515231
       ],
       [
-        -0.005013856324135932,
-        0.004757889825323387,
-        0.9999761115792571
+        -0.004565566680129339,
+        0.0023870202576218936,
+        0.9999867287795272
       ]
     ],
-    "description": "Working rigid CAD registration: fitted cargo-floor plane, bilateral rear-panel centreline, and owner-measured closed-hatch inner centre at fitted-floor Z=390 mm. Rear hatch was closed in the capture; inner centre target Y=-30 mm follows approx100 mm bed setback minus130 mm hatch clearance. No scale fitting or deformation."
+    "description": "Working rigid registration of the cleaned photographic scan to the previously CAD-registered interior scan. Preserves the 1205 mm wheel-arch-gap scale; no scale fitting or deformation. Inherits earlier scan and rear-datum uncertainty.",
+    "diagnostics": {
+      "reference_key": "run:corrected-7605be9e-6933-4e0e-b64d-1c8d94c0e6e1",
+      "method": "Open3D rigid point-to-plane ICP with Tukey loss on 20 mm samples, with the earlier scan cropped to the cargo region.",
+      "stages": [
+        {
+          "threshold_mm": 150.0,
+          "fitness": 0.9137088119559601,
+          "inlier_rmse_mm": 27.58137323418608
+        },
+        {
+          "threshold_mm": 80.0,
+          "fitness": 0.8810564807822251,
+          "inlier_rmse_mm": 17.57979673610488
+        },
+        {
+          "threshold_mm": 40.0,
+          "fitness": 0.8410111689653802,
+          "inlier_rmse_mm": 12.844268952384402
+        }
+      ],
+      "scale_fitting": false
+    }
   }
 }

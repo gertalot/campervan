@@ -7,7 +7,7 @@ from campervan.parameters import Parameters
 
 def rear_upper_post_y(p: Parameters) -> float:
     """Keep the complete post forward of the rear beam's observed Y320 edge."""
-    return 325.0 - p.furniture_rear_gap_mm
+    return 325.0 - p.cabinet_rear_y_mm
 
 
 def rear_face_clearance(p: Parameters) -> Solid:
@@ -20,7 +20,7 @@ def rear_face_clearance(p: Parameters) -> Solid:
             (190, 1230), (210, 1220), (230, 1215), (250, 1212), (270, 1213),
             (290, 1220), (310, 1252), (330, 1280), (350, 1280)]
     points = [(0, -200, -1), (0, 3000, -1), (0, 3000, 2000), (0, 351, 2000)]
-    points.extend((0, y - p.furniture_rear_gap_mm, z) for y, z in reversed(roof))
+    points.extend((0, y - p.cabinet_rear_y_mm, z) for y, z in reversed(roof))
     points.append((0, -200, 1210))
     return Solid.extrude(Face(Wire.make_polygon(points)), (p.cargo_width_mm + 10, 0, 0))
 

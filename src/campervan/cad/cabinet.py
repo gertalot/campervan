@@ -4,9 +4,11 @@ from typing import Any
 
 from build123d import Align, Axis, Color, Compound, Cylinder, Location, Part, Plane, Shape, Solid, fillet, section
 
+from campervan.cad.cabinet_backing import build_backing
 from campervan.cad.cabinet_doors import DOOR_COLOR, REBATE_WIDTH, build_cabinet_doors, cabinet_door_module, panel_rebate
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
+from campervan.cad.cabinet_scribing import scribe_cabinet
 from campervan.cad.cabinet_upper import rear_face_clearance, rear_panel_clearance, rear_upper_post_y
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
@@ -50,10 +52,11 @@ def build_cabinet(p: Parameters) -> Compound:
         result.location = pose
         return result
 
-    def scribed_sheet(part: Part, axis: int) -> Part:
+    def scribed_sheet(part: Part, axis: int, *, backed: bool = True) -> Part:
         """Intersect face/mid-plane templates, then extrude one square-edged jigsaw outline."""
         pose = part.location
-        local_room = layout.plywood_room.moved(pose.inverse())
+        room = layout.backed_plywood_room if backed else layout.plywood_room
+        local_room = room.moved(pose.inverse())
         size = part.bounding_box().size
         # These panels are translated only; the thin dimension is Y for skins and Z for shelves.
         thickness = size.Y if axis == 1 else size.Z
@@ -80,7 +83,9 @@ def build_cabinet(p: Parameters) -> Compound:
 
     def add(part: Part, module: str, group: str, *, fitted: bool = True) -> Part:
         if fitted:
-            fitted_part = scribed_sheet(part, 1) if group == "Skin" else fit(part)
+            fitted_part = (
+                scribed_sheet(part, 1, backed=part.label == "Middle supporting panel") if group == "Skin" else fit(part)
+            )
             if FURNITURE_FIT_ENABLED and group == "Frames" and part.volume - fitted_part.volume > 0.1:
                 raise ValueError(f"Cabinet timber intersects the fitting envelope: {part.label}")
             part = fitted_part
@@ -130,8 +135,9 @@ def build_cabinet(p: Parameters) -> Compound:
             part.location = Location((layout.front + t, y, bottom), (0, 0, 90))
             if module == "Upper module" and name == "Rear":
                 pose = part.location
-                part = Part((part & rear_face_clearance(p)).moved(pose.inverse()).solids(),
-                            label=part.label, color=WOOD)
+                part = Part(
+                    (part & rear_face_clearance(p)).moved(pose.inverse()).solids(), label=part.label, color=WOOD
+                )
                 part.location = pose
             part = add(part, module, "Frames")
             if part is not None:
@@ -163,7 +169,9 @@ def build_cabinet(p: Parameters) -> Compound:
     infill.label, infill.color = "Rear top removable infill", DOOR_COLOR
     infill.location = Location((layout.front + p.cabinet_door_thickness_mm, infill_start, infill_bottom), (0, 0, 90))
     pose = infill.location
-    infill = Part((infill & rear_face_clearance(p)).moved(pose.inverse()).solids(), label=infill.label, color=DOOR_COLOR)
+    infill = Part(
+        (infill & rear_face_clearance(p)).moved(pose.inverse()).solids(), label=infill.label, color=DOOR_COLOR
+    )
     infill.location = pose
     add(infill, "Upper module", "Skin", fitted=False)
 
@@ -231,10 +239,10 @@ def build_cabinet(p: Parameters) -> Compound:
             part.label, part.color = f"{name} supporting panel", SKIN
             part.location = Location((layout.front + t, y, lo))
             if name == "Middle" and module == "Lower module":
-                arch_inner = (p.cargo_width_mm + p.arch_gap_mm) / 2 - 3
-                clearance = panel(p.cargo_width_mm, skin + 2, bridge_top).moved(
-                    Location((min(bridge_inner, arch_inner), y - 1, 0))
-                )
+                gap = p.cabinet_module_clearance_mm
+                clearance = panel(
+                    p.cabinet_bridge_thickness_mm + 2 * gap, skin + 2, p.cabinet_bridge_height_mm + 2 * gap
+                ).moved(Location((bridge_inner - gap, y - 1, bridge_top - p.cabinet_bridge_height_mm - gap)))
                 part = cut(part, clearance)
             add(part, module, "Skin")
     rear = panel(p.cargo_width_mm - layout.front, skin, p.body_height_mm - p.cabinet_rear_storage_height_mm + 10)
@@ -244,6 +252,10 @@ def build_cabinet(p: Parameters) -> Compound:
     rear = Part((rear & rear_panel_clearance(p)).moved(pose.inverse()).solids(), label=rear.label, color=SKIN)
     rear.location = pose
     add(rear, "Upper module", "Skin")
+
+    for owner, back in build_backing(p):
+        back.color = SKIN
+        add(back, owner, "Skin", fitted=False)
 
     # Four rails at the interface, including one on each side of the middle skin.
     bolt_centres: list[tuple[float, float]] = []
@@ -359,10 +371,19 @@ def build_cabinet(p: Parameters) -> Compound:
 
     for door in door_parts.assembly.children:
         modules[cabinet_door_module(door.label)]["Doors"].append(door)
-    return Compound(
-        label="Cabinet",
-        children=[
-            Compound(label=module, children=[Compound(label=group, children=parts) for group, parts in groups.items()])
-            for module, groups in modules.items()
-        ],
+    filler = panel(t, length - upper_post, w)
+    filler.label, filler.color = "Scribed ceiling filler", WOOD
+    filler.location = Location((layout.front, upper_post, layout.top))
+    add(filler, "Upper module", "Frames", fitted=False)
+    return scribe_cabinet(
+        Compound(
+            label="Cabinet",
+            children=[
+                Compound(
+                    label=module, children=[Compound(label=group, children=parts) for group, parts in groups.items()]
+                )
+                for module, groups in modules.items()
+            ],
+        ),
+        p,
     )

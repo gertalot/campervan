@@ -5,6 +5,7 @@ from typing import Any
 
 from build123d import Location, Shape
 
+from campervan.cad.cabinet_scribing import is_scan_scribed
 from campervan.cad.cut_profiles import flat_profile
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
@@ -80,6 +81,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         size = Shape.cast(part.wrapped).located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
+        scribed = is_scan_scribed(path)
         profile: dict[str, Any] = {}
         if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing"}:
             if material == "cabinet-frames":
@@ -101,14 +103,18 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                     "depth equal to panel thickness, with local rear relief for catch keepers. "
                     "Rear upper stile has a scribed top to clear the vehicle beam."
                 }
-        if material in {
-            "floor",
-            "frames",
-            "cabinet-partitions",
-            "shelves",
-            "cabinet-doors",
-            "table-plywood",
-        }:
+        if (
+            material
+            in {
+                "floor",
+                "frames",
+                "cabinet-partitions",
+                "shelves",
+                "cabinet-doors",
+                "table-plywood",
+            }
+            or scribed
+        ):
             fitting_axes = {}
             if "Cabinet" in path:
                 if part.label.endswith("supporting panel"):
@@ -128,6 +134,11 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                     "profile_note": f"Rectangle only: CAD outline extraction failed ({error}). "
                     "Transfer the profile before cutting."
                 }
+        if scribed:
+            profile["profile_note"] = (
+                f"{profile.get('profile_note', '')} Scan-scribed edge: at least 3mm clearance from the "
+                "registered photographic scan. Preserve rebates and blind fixing holes."
+            ).strip()
         cuts.append(
             CutPart(
                 path=" / ".join(path[1:]), material=material, length=length, width=width, thickness=thickness, **profile

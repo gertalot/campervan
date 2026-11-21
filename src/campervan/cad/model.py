@@ -17,7 +17,8 @@ def build_campervan(parameters: Parameters) -> Compound:
     placement = Location((parameters.cargo_width_mm, parameters.furniture_rear_gap_mm, 0))
     bed_placement = Location((parameters.bed_inward_offset_mm, 0, 0))
     furniture = [build_long_bench(parameters).moved(bed_placement),
-                 build_cross_bench(parameters).moved(bed_placement), build_cabinet(parameters),
+                 build_cross_bench(parameters).moved(bed_placement),
+                 build_cabinet(parameters).moved(Location((0, parameters.cabinet_rear_inset_mm, 0))),
                  build_laptop_table(parameters)]
     return Compound(
         label="Campervan",

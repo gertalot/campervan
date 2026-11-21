@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from build123d import Edge, Face, Location, Part, Plane, Side, Solid, Wire
 
 from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
+from campervan.cad.cabinet_backing import fit_to_backings
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 from campervan.parameter_fit import FURNITURE_FIT_ENABLED
@@ -16,8 +17,8 @@ def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
     Construct against the actual left side, then reflect into furniture-local coordinates.
     The top meets the plywood underside. Recesses are bridged, not followed.
     """
-    start = max(p.furniture_rear_gap_mm, p.rear_corner_radius_mm + p.cabinet_back_clearance_mm)
-    end = p.furniture_rear_gap_mm + p.cabinet_length_mm
+    start = max(p.cabinet_rear_y_mm, p.rear_corner_radius_mm + p.cabinet_back_clearance_mm)
+    end = p.cabinet_rear_y_mm + p.cabinet_length_mm
     front = p.body_length_mm - p.left_door_front_offset_mm
     rear_post = front - p.side_opening_width_mm
     intrusion = p.roof_rail_intrusion_mm
@@ -53,6 +54,7 @@ class CabinetLayout:
     bays: tuple[tuple[float, float], tuple[float, float]]
     lower_back: float
     plywood_room: Part
+    backed_plywood_room: Part
 
 
 def cabinet_layout(p: Parameters) -> CabinetLayout:
@@ -77,7 +79,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         raise ValueError("Cabinet timber must leave room for the shelf seats and module fixings.")
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
     room = Part(
-        ((body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -p.furniture_rear_gap_mm, 0)))).solids()
+        ((body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, 0)))).solids()
     )
     timber_room = Part(room.solids())
     # Plywood follows the actual side/pillars and finished ceiling, independently of timber planes.
@@ -85,7 +87,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         (
             (body & ceiling_space(p, p.ceiling_ply_thickness_mm))
             .mirror(Plane.YZ)
-            .moved(Location((p.cargo_width_mm, -p.furniture_rear_gap_mm, 0)))
+            .moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, 0)))
         ).solids()
     )
     # The simpler inboard envelope below is for the timber only.
@@ -103,7 +105,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     room -= Solid.extrude(section, (0, p.cabinet_length_mm + 2, 0)).moved(Location((0, -1, 0)))
     arch = panel((p.cargo_width_mm - p.arch_gap_mm) / 2 + 6, p.arch_length_mm + 6, p.arch_height_mm + 3)
     arch.location = Location(
-        ((p.cargo_width_mm + p.arch_gap_mm) / 2 - 3, p.arch_rear_offset_mm - p.furniture_rear_gap_mm - 3, 0)
+        ((p.cargo_width_mm + p.arch_gap_mm) / 2 - 3, p.arch_rear_offset_mm - p.cabinet_rear_y_mm - 3, 0)
     )
     # The plane is a fitting datum, not a solid back panel: its lower central
     # opening is bridged over the wheel arch. Check the actual timbers against
@@ -136,8 +138,9 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         split,
         upper,
         # Cleats follow the supporting panels, not the old inboard back-frame plane.
-        Part((timber_room - arch).solids()),
+        Part((fit_to_backings(timber_room, p, first, split, upper) - arch).solids()),
         bays,
         lower_back,
         scribe_room,
+        Part((fit_to_backings(scribe_room, p, first, split, upper) - arch).solids()),
     )

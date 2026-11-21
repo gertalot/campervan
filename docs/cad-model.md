@@ -9,6 +9,15 @@ The source scan is aligned in metres, rotated by `cad_reference.rotation`, scale
 `cad_reference.translation_mm`, with optional per-result browser translation overrides. The reference is detached
 before OCP replaces geometry and reattached afterwards, outside CAD selection and furniture mirroring.
 
+The active reference is `nv200-photo-20261120`: the cleaned photographic scan with 4,877,862 triangles and recovered
+EXR texture colours stored on its vertices. Its 1205mm wheel-arch-gap calibration is preserved. A rigid point-to-plane
+fit to the earlier registered interior scan transfers the working CAD placement, including that registration's
+approximately centimetre-scale rear-datum uncertainty; it does not fit scale or deform the mesh. Published PLY
+coordinates are metres, while the original cleaned ScanRuler mesh remains in millimetres. The earlier reference
+remains available for comparison. The local run and `data/scan-reference/` contain the same replacement mesh and pose.
+The published photographic mesh has its triangle winding reversed to face into the cabin, as required by See inside.
+The source ScanRuler mesh is unchanged.
+
 During comparison, `vehicle-fade.ts` applies a light-pink display tint and a base vehicle opacity, including the
 wheel arches. See inside fading and click-through picking still apply to nearby panels and edges. Hiding the
 reference restores original material colours and opacity while retaining the See inside setting.
@@ -142,6 +151,25 @@ then `model.py` places the furniture using `x_world = cargo_width - x_local` and
 `y_world = y_local + furniture_rear_gap_mm`. The cabinet is on the left, the long bench on the right, and all cross-bench,
 drawer, bracket and cushion geometry is mirrored with them. The shared rear setback defaults to 100mm from the opening at the pillars. The closed hatch has 130mm
 centreline clearance behind that bed edge.
+
+The cabinet adds `cabinet_rear_inset_mm` to that shared setback; its fitting envelopes and roof landmarks use the
+same resulting `cabinet_rear_y_mm` datum. The current 10mm inset and 980mm cabinet length put its rear at Y110 and
+cab end at Y1090. The 550mm rear bay keeps the middle divider at Y660. Other furniture retains the shared setback.
+
+Eleven wooden cabinet parts have additional square-edged scan scribes. `cabinet_scribe_data.py` records the
+measured cut regions from the registered photographic scan at this placement; `cabinet_scribing.py` applies them
+after the original rebates and bores. The scan triangles spanning each complete stock thickness are projected and
+buffered, leaving at least 3mm to the observed surface. Wall-side/roof offcuts are removed while retaining the
+inboard joint land. Hardware and the van mesh are unchanged. Cutting outlines include the scribed timber as well
+as plywood. These profiles are tied to this scan, registration and panel placement; regenerate them if those change.
+The gap is relative to the reconstructed surface, not a claim of 3mm real-world positioning accuracy.
+The owner identified the hanging ceiling feature above the middle front stile as a removable Velcro strap. It is
+excluded from structural fitting, restoring the straight stile/rail tops and removing its cut from the divider.
+
+The upper front frame carries a separate scribed ceiling filler above its long top rail, between world Y325 and
+Y1090. It uses the cabinet-frame material and 40×18mm stock, with its bottom on the flat rail and its top following
+the plywood ceiling with at least 3mm nominal scan clearance. The plywood profile is continued across the removable
+strap. The existing rear roof-beam infill stays separate. The filler is included in the frame BOM and cutting outline.
 
 The reflection preserves native named assemblies, colours and visibility paths. Local translations reflect in X;
 rotations retain their X angle and reverse their Y/Z angles. `viewer.py` applies the same conversion to every live
@@ -585,8 +613,26 @@ available module height. Shelves butt behind the front frame and between the 6mm
 have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edges remain scribed to the van.
 There are no internal post cutouts. The front frame ties the panels together and stiffens the front shelf edge.
 
-The middle panel has an open-bottom wheel-arch clearance extending to the bridge top, avoiding dangling panel
-feet or a closed slot around the bridge. The bridge sits directly beneath the lowest forward shelf cleats,
+The lower middle panel extends over the wheel arch to the wall, following the existing 3mm scan-clearance scribe.
+A closed slot clears only the bridge timber, with the module fitting allowance around it. The divider continues
+below the timber to the wheel-arch clearance profile.
+
+Five flat 6mm backing sheets close the four upper cupboards and the lower cab-end upper cupboard. All backs run
+parallel to Y, with no rotation around Z. The front/rear top pair share one lean about Y; the front/rear bottom pair
+share another. The top and bottom rows meet at their common shelf height, Z1038.245mm, with different lean angles.
+The lower cab-end backing continues the bottom-row lean below the module joint. Front and rear backs are coplanar
+within each row. The bottom row leans about 5.6° and the top row about 19.8°; the whole cabinet is not in one plane.
+The cab-end bay is the left/wheel-arch column in the owner's front-view photographs. Its backs span the full bay,
+pass in front of the front pillar and meet the existing cab-facing skin/frame. The rear backs reach the rear corner
+pillar: their rear edges follow its boundary with 3mm clearance, leaving a small patch of metal exposed. There are
+no arbitrary stops halfway across either bay. The wheel-arch and chair bays remain open-backed.
+`cabinet_backing.py` fits shelves, middle panels, cleats and joining rails to the corresponding backing planes;
+joining bolt lands are rebuilt from those rails. Pillar regions beyond the rear backing edge retain their contours.
+The outer end panels retain their contoured outlines. The measured flat-sheet profiles in `cabinet_scribe_data.py`
+have at least 3mm nominal scan clearance and use the existing cabinet-partition plywood material. Lower/upper modules
+retain their Z770/770.5 backing seam, independently of the taller side-panel guide seam. Physical fit and backing
+fixings remain to be confirmed during the build.
+The bridge sits directly beneath the lowest forward shelf cleats,
 supporting them and the rear portion of the divider without separate bearing blocks. Its height follows the
 shelf and cleat dimensions while retaining at least 3mm wheel-arch clearance. The bridge butts between the rear
 timber jamb and a floor-standing 40 × 18mm cab-end upright. The new upright sits against the cab-end panel's inner

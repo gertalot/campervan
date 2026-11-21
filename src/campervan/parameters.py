@@ -1168,12 +1168,24 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
     )
 
+    cabinet_rear_inset_mm: float = Field(
+        default=0.0,
+        ge=0,
+        title="Extra rear setback",
+        description="Move only the cabinet forwards from the shared furniture rear setback.",
+        json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
+    )
+
+    @property
+    def cabinet_rear_y_mm(self) -> float:
+        return self.furniture_rear_gap_mm + self.cabinet_rear_inset_mm
+
     cabinet_length_mm: float = Field(
         default=1000.0,
         gt=0,
         title="Length",
         description=(
-            "Along the van from the furniture rear gap. "
+            "Along the van from the cabinet rear edge, including its extra rear setback. "
             "Original 1000mm cabinet length puts its cab-end panel 1100mm from the rear pillar datum."
         ),
         json_schema_extra={"unit": "mm", "group": ["Cabinet"]},
