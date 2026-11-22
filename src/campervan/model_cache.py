@@ -56,6 +56,10 @@ def model_fingerprint(parameters: Parameters) -> str:
     for path in sources:
         digest.update(path.name.encode())
         digest.update(path.read_bytes())
+    reference = Path("data/scan-reference")
+    digest.update((reference / "reference.json").read_bytes())
+    mesh = (reference / "mesh.ply").stat()
+    digest.update(f"{mesh.st_size}:{mesh.st_mtime_ns}".encode())
     # Include installed versions as well as source: this also works from a built wheel.
     digest.update(json.dumps(library_versions(), sort_keys=True).encode())
     return digest.hexdigest()

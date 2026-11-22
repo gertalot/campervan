@@ -8,7 +8,8 @@ const categories: Record<string, string[]> = {
   cabinetSkin: ['/Campervan/Cabinet/Lower module/Skin', '/Campervan/Cabinet/Upper module/Skin'],
   cabinetFrames: ['/Campervan/Cabinet/Lower module/Frames', '/Campervan/Cabinet/Upper module/Frames'],
   storedGear: ['/Campervan/Stored gear'],
-  longBench: ['/Campervan/Long bench'],
+  longBench: ['/Campervan/Long bench', '/Campervan/Laptop table/Fixed mount'],
+  table: ['/Campervan/Laptop table/Bench mount', '/Campervan/Laptop table/Stowed'],
   crossBench: ['/Campervan/Cross bench'],
   cushions: ['/Campervan/Long bench/Cushions', '/Campervan/Cross bench/Cushions'],
   slats: [
@@ -73,6 +74,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       delete rules[path];
     }
   }
+  rules[categories.longBench[1]] ??= rules[categories.longBench[0]] ?? true;
   if (localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(rules));
   // Assembly switches must retain independent content filters and reference-wire choices.
   const independentPaths = new Set([

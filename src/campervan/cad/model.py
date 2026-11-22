@@ -3,7 +3,7 @@
 from build123d import Compound, Location
 
 from campervan.cad.bench import build_long_bench
-from campervan.cad.body import build_floor_plywood
+from campervan.cad.floor import build_floor_plywood
 from campervan.cad.cabinet import build_cabinet
 from campervan.cad.cross_bench import build_cross_bench
 from campervan.cad.gear import build_stored_gear
@@ -14,7 +14,7 @@ from campervan.parameters import Parameters
 
 
 def build_campervan(parameters: Parameters) -> Compound:
-    placement = Location((parameters.cargo_width_mm, parameters.furniture_rear_gap_mm, 0))
+    placement = Location((parameters.cargo_width_mm, parameters.furniture_rear_gap_mm, parameters.floor_surface_z_mm))
     bed_placement = Location((parameters.bed_inward_offset_mm, 0, 0))
     furniture = [build_long_bench(parameters).moved(bed_placement),
                  build_cross_bench(parameters).moved(bed_placement),
@@ -25,7 +25,7 @@ def build_campervan(parameters: Parameters) -> Compound:
         children=[
             build_vehicle_references(parameters),
             build_floor_plywood(parameters),
-            build_stored_gear(parameters),
+            build_stored_gear(parameters).moved(Location((0, 0, parameters.floor_surface_z_mm))),
             *(mirror_assembly(assembly).moved(placement) for assembly in furniture),
         ],
     )

@@ -1,6 +1,6 @@
 """Rear top-tier frame and provisional scribe datums from the registered interior scan."""
 
-from build123d import Face, Solid, Wire
+from build123d import Face, Location, Solid, Wire
 
 from campervan.parameters import Parameters
 
@@ -22,7 +22,8 @@ def rear_face_clearance(p: Parameters) -> Solid:
     points = [(0, -200, -1), (0, 3000, -1), (0, 3000, 2000), (0, 351, 2000)]
     points.extend((0, y - p.cabinet_rear_y_mm, z) for y, z in reversed(roof))
     points.append((0, -200, 1210))
-    return Solid.extrude(Face(Wire.make_polygon(points)), (p.cargo_width_mm + 10, 0, 0))
+    return Solid.extrude(Face(Wire.make_polygon(points)), (p.cargo_width_mm + 10, 0, 0)).moved(
+        Location((0, 0, -p.floor_surface_z_mm)))
 
 
 def rear_panel_clearance(p: Parameters) -> Solid:
@@ -34,4 +35,5 @@ def rear_panel_clearance(p: Parameters) -> Solid:
     points = [(0, -1, -1), (p.cargo_width_mm, -1, -1), (p.cargo_width_mm, -1, 1040)]
     points.extend((p.cargo_width_mm - x, -1, z) for x, z in roof)
     points.append((0, -1, 1210))
-    return Solid.extrude(Face(Wire.make_polygon(points)), (0, p.cabinet_partition_thickness_mm + 2, 0))
+    return Solid.extrude(Face(Wire.make_polygon(points)), (0, p.cabinet_partition_thickness_mm + 2, 0)).moved(
+        Location((0, 0, -p.floor_surface_z_mm)))

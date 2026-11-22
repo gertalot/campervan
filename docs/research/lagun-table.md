@@ -42,8 +42,9 @@ additional bracket have been removed. The Stowed display group shows the folded 
 
 The mounting bracket faces the aisle on the long box's cab-end area. The sliding support frame ends 102mm
 before the box end, at Y1178, with its integral cab-end leg relocated accordingly. The last moving-slat angle
-ends at Y1170 and remains fully supported. The bracket and an 18 × 92 × 170mm plywood mounting pad span
-Y1183–1275: 5mm clear of the frame and 5mm before the box end. The pad spaces the upright beyond the fixed slats.
+ends at Y1170 and remains fully supported. An 18 × 97mm plywood mounting pad spans floor to box top
+(currently 364mm high). The pad occupies Y1183–1280, flush with the box end and 5mm clear of the frame.
+The bracket remains at Y1183–1275. The pad spaces the upright beyond the fixed slats.
 The bracket origin is X638/Y1229 including the accepted 24mm inward bed offset. Its normal faces +X;
 the arm orientation retains the old −90° heading so the saved swivel/tabletop directions are preserved.
 The detached Stowed preview keeps its own position. The cross bench's frames are unchanged.

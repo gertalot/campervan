@@ -72,12 +72,62 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   function navigate() {
     if (!hasActiveTool(getViewer()) && selected && link?.has(cutPath(selected))) link.show(cutPath(selected));
   }
+  function frame(box: Box3, direction?: Vector3) {
+    const viewer = getViewer();
+    if (!viewer?.ready || box.isEmpty()) return;
+    const centre = box.getCenter(new Vector3());
+    const camera = viewer.rendered.camera.camera.clone();
+    if (direction) {
+      camera.up.set(0, 0, 1);
+      camera.position.copy(centre).add(direction);
+      camera.lookAt(centre);
+    }
+    const inverse = camera.quaternion.clone().invert();
+    const rect = container.getBoundingClientRect(), aspect = rect.width / rect.height;
+    const tanY = Math.tan((viewer.rendered.camera.camera.fov ?? 50) * Math.PI / 360);
+    let distance = 0, halfHeight = 0;
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) {
+      for (const z of [box.min.z, box.max.z]) {
+        const corner = new Vector3(x, y, z).sub(centre).applyQuaternion(inverse);
+        const height = Math.max(Math.abs(corner.y), Math.abs(corner.x) / aspect);
+        halfHeight = Math.max(halfHeight, height);
+        distance = Math.max(distance, corner.z + height / tanY);
+      }
+    }
+    const offset = new Vector3(0, 0, Math.max(1, distance) * 1.1).applyQuaternion(camera.quaternion);
+    camera.position.copy(centre).add(offset);
+    const zoom = viewer.getOrtho()
+      ? (viewer.rendered.camera.camera.top - viewer.rendered.camera.camera.bottom) / Math.max(1, halfHeight * 2.2) : null;
+    viewer.setCameraLocationSettings(camera.position.toArray(), camera.quaternion.toArray(), centre.toArray(), zoom, true);
+    saveCamera();
+  }
+  function cargoBounds() {
+    const viewer = getViewer()!;
+    const box = new Box3();
+    for (const name of ['Floor outline', 'Roof']) {
+      const envelope = viewer.rendered.nestedGroup.groups[`/Campervan/Vehicle references/${name}`];
+      envelope.updateWorldMatrix(true, true);
+      box.union(new Box3().setFromObject(envelope));
+    }
+    return box;
+  }
+  function resetView() {
+    const viewer = getViewer();
+    if (!viewer?.ready || hasActiveTool(viewer)) return;
+    cancelCamera();
+    frame(cargoBounds());
+  }
+  function resetCommand(): PlanMenuItem {
+    return { label: 'Reset view', group: 'camera', shortcut: 'R', ariaShortcut: 'R',
+      enabled: Boolean(getViewer()?.ready) && !hasActiveTool(getViewer()), run: resetView };
+  }
   function commands(): PlanMenuItem[] {
     return [
       { label: 'Show in cut list', group: 'piece', shortcut: 'Double-click',
         enabled: !hasActiveTool(getViewer()) && Boolean(selected && link?.has(cutPath(selected))), run: navigate },
       { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape',
         enabled: !hasActiveTool(getViewer()), run: () => { if (!hasActiveTool(getViewer())) clear(); } },
+      resetCommand(),
       ...extraCommands(),
     ];
   }
@@ -163,6 +213,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
       event.preventDefault(); openMenu();
     }
   });
+  container.addEventListener('keydown', event => {
+    if (event.key.toLowerCase() !== 'r' || event.repeat || event.defaultPrevented
+      || event.ctrlKey || event.metaKey || event.altKey || event.target !== container
+      || container.closest('[inert]') || hasActiveTool(getViewer())) return;
+    event.preventDefault(); event.stopImmediatePropagation(); resetCommand().run();
+  }, true);
   document.addEventListener('keydown', event => {
     if (hasActiveTool(getViewer()) || event.key !== 'Escape' || event.defaultPrevented
       || container.closest('[inert]') || !selected) return;
@@ -171,6 +227,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   }, true);
 
   return {
+    resetCommand,
     toolChanged() {
       down = undefined; menu.close();
       // Remove only our overlay: clear() would also reset the measurement endpoints.
@@ -199,6 +256,20 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
       const hits = ray.intersectObjects(meshes, false).filter(hit => !hit.object.userData.campervanOverlay);
       return hits.length ? { path, point: hits[0].point } : null;
     },
+    orbitTarget(): number[] {
+      const viewer = getViewer()!;
+      const rect = container.querySelector('canvas')!.getBoundingClientRect();
+      const hit = this.pickPoint(new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+      }));
+      if (hit) return hit.point.toArray();
+      const ray = new Raycaster();
+      ray.setFromCamera(new Vector2(0, 0), viewer.rendered.camera.camera);
+      const box = cargoBounds();
+      const target = ray.ray.intersectBox(box, new Vector3());
+      if (target && target.distanceToSquared(ray.ray.origin) >= 1) return target.toArray();
+      return ray.ray.at(Math.max(1, box.getSize(new Vector3()).length() / 2), new Vector3()).toArray();
+    },
     attach() { select(null); container.querySelector('.tcv_cad_toolbar')!.append(tools); },
     clear,
     focus(path: string) {
@@ -215,16 +286,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
       const direction = axis === 'x' ? new Vector3(centre.x < middle.x ? -1 : 1, -0.3, 0.25)
         : axis === 'y' ? new Vector3(0.25, centre.y < middle.y ? -1 : 1, 0.25) : new Vector3(0.15, -0.2, 1);
       direction.normalize();
-      const camera = viewer.rendered.camera.camera.clone(); camera.up.set(0, 0, 1);
-      const rect = container.getBoundingClientRect();
-      const diameter = Math.max(150, size.length()) * 1.35 / Math.min(1, rect.width / rect.height);
-      const fov = viewer.rendered.camera.camera.fov ?? 50;
-      const distance = viewer.getOrtho() ? diameter * 2 : diameter / (2 * Math.sin(fov * Math.PI / 360));
-      camera.position.copy(centre).addScaledVector(direction, distance); camera.lookAt(centre);
-      const zoom = viewer.getOrtho()
-        ? (viewer.rendered.camera.camera.top - viewer.rendered.camera.camera.bottom) / diameter : null;
-      viewer.setCameraLocationSettings(camera.position.toArray(), camera.quaternion.toArray(), centre.toArray(), zoom, true);
-      saveCamera();
+      frame(box, direction);
 
       viewer.update(true, false);
       container.focus({ preventScroll: true }); return true;

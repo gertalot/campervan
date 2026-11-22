@@ -91,7 +91,7 @@ export const fittingNote = (part: Part) => fittingEdges.filter(edge => fittingMa
   .map(edge => `${part.fitting_edges?.[edge] ? `${part.fitting_edges[edge]} / ` : ''}${edge}: +${mm(fittingMargins(part)[edge])}mm`).join('; ');
 export const templateInstruction = 'Leave vehicle contours and notches uncut until fitted from a physical template.';
 export function assembly(part: Pick<Part, 'path'>): string {
-  return part.path === 'Finished floor plywood' ? 'Floor'
+  return part.path === 'Finished floor plywood' || part.path.startsWith('Finished floor plywood / ') ? 'Floor'
     : part.path.includes('Rear drawer /') ? 'Drawer' : part.path.split(' / ')[0];
 }
 export const partName = (part: Pick<Part, 'path'>) => part.path.split(' / ').at(-1)!;
@@ -99,7 +99,7 @@ export const fullName = (part: Pick<Part, 'path'>) => `${assembly(part)} · ${pa
 export const pieceKey = (part: Part) => JSON.stringify([assembly(part),
   ['ledges', 'slats'].includes(part.material) ? '' : partName(part).replace(/\d+/g, '#'),
   part.material, part.length, part.width, part.thickness, part.outline, part.holes,
-  blankSize(part), fittingMargins(part), part.fitting_edges]);
+  blankSize(part), fittingMargins(part), part.fitting_edges, part.template_fit]);
 export const materialName = (group: Group) => group.kind === 'timber'
   ? `${mm(group.parts[0].width)} × ${mm(group.thickness)} mm timber`
   : `${mm(group.thickness)} mm ${group.name.replace(/\s*·\s*\d+(?:\.\d+)?\s*mm\s*$/i, '')}`;

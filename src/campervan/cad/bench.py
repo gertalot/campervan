@@ -3,6 +3,7 @@
 from build123d import Color, Compound, Location, Part
 
 from campervan.cad.cushions import build_cushions
+from campervan.cad.scan_scribing import scribe_assembly
 from campervan.cad.panels import panel
 from campervan.cad.sliding_bed import build_lid, long_bed_layout
 from campervan.cad.bed_lift import build_lifts, lift_notches
@@ -37,13 +38,14 @@ def build_long_bench(p: Parameters) -> Compound:
                     ("Centre support divider", (length - t) / 2), ("Cab-end panel", length - t)):
         place(name, (inside_width, t, layout.box_top), (rear + t, y, 0))
 
-    return Compound(
+    assembly = Compound(
         label="Long bench",
         children=[
             Compound(label="Storage box", children=parts),
             build_lifts(layout.lid_rear, layout.box_top, length, t, p.bed_lid_open_percent,
-                        rear_panel_y=layout.rear_panel_y, slat_thickness=p.slat_thickness_mm),
+                        rear_panel_y=layout.rear_panel_y),
             build_lid(p, layout),
             build_cushions(p, "Long bench"),
         ],
     )
+    return scribe_assembly(assembly, (p.bed_inward_offset_mm, p.furniture_rear_gap_mm, p.floor_surface_z_mm), inboard=1)

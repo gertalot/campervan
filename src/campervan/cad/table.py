@@ -170,12 +170,14 @@ def _mount_location(p: Parameters) -> Location:
 
 
 def _fixed_mount(p: Parameters) -> Compound:
+    layout = long_bed_layout(p)
     bracket = Compound(label="Lagun hardware", children=[
         block("Standard mounting bracket", (13, LAGUN_BRACKET_WIDTH, 170),
               (0, -LAGUN_BRACKET_WIDTH / 2, 100)),
     ])
-    pad = block("Bench mounting pad", (p.frame_thickness_mm, LAGUN_BRACKET_WIDTH, 170),
-                (-p.frame_thickness_mm, -LAGUN_BRACKET_WIDTH / 2, 100), Color(0.88, 0.61, 0.25))
+    pad = block("Bench mounting pad",
+                (p.frame_thickness_mm, LAGUN_BRACKET_WIDTH + TABLE_MOUNT_CLEARANCE, layout.box_top),
+                (-p.frame_thickness_mm, -LAGUN_BRACKET_WIDTH / 2, 0), Color(0.88, 0.61, 0.25))
     result = Compound(label="Fixed mount", children=[pad, bracket])
     result.location = _mount_location(p)
     return result

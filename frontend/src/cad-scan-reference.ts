@@ -22,15 +22,6 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     <label class="reference-opacity">Vehicle opacity <output data-vehicle-opacity-value></output>
       <input type="range" min="0" max="100" step="5" data-vehicle-opacity />
     </label>
-    <details><summary>Reference position</summary>
-      <p>Offsets in CAD millimetres. X across, Y forwards, Z up. Reset restores the saved registration.</p>
-      <div class="reference-offsets">
-        <label>X<input type="number" step="1" required data-offset="0" /></label>
-        <label>Y<input type="number" step="1" required data-offset="1" /></label>
-        <label>Z<input type="number" step="1" required data-offset="2" /></label>
-      </div>
-      <button type="button" data-reset>Reset position</button>
-    </details>
     <p role="status" aria-live="polite" data-status></p>`);
   const find = <T extends HTMLElement>(selector: string) => container.querySelector<T>(selector)!;
   const visible = find<HTMLInputElement>('[data-visible]');
@@ -40,20 +31,18 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   const vehicleOpacity = find<HTMLInputElement>('[data-vehicle-opacity]');
   const vehicleOutput = find<HTMLOutputElement>('[data-vehicle-opacity-value]');
   const status = find<HTMLParagraphElement>('[data-status]');
-  const offsets = [...container.querySelectorAll<HTMLInputElement>('[data-offset]')];
   const sections = isStaticSite ? undefined : setupCrossSections(container, viewer);
   const key = 'campervan.cad.scan-reference';
   const saved = JSON.parse(localStorage.getItem(key) ?? '{}');
   visible.checked = saved.visible ?? true;
   opacity.value = String(saved.opacity ?? (isStaticSite ? 100 : 45));
   vehicleOpacity.value = String(saved.vehicleOpacity ?? (isStaticSite ? 0 : 35));
-  const translations: Record<string, number[]> = saved.translations ?? {};
   let scans: ScanResult[] = [], root: Object3D | undefined, generation = 0;
   const selected = () => scans.find(scan => scan.key === select.value);
 
   function save() {
     localStorage.setItem(key, JSON.stringify({ result: select.value, visible: visible.checked,
-      opacity: Number(opacity.value), vehicleOpacity: Number(vehicleOpacity.value), translations }));
+      opacity: Number(opacity.value), vehicleOpacity: Number(vehicleOpacity.value) }));
   }
   function display() {
     output.value = `${opacity.value}%`;
@@ -78,7 +67,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   function position() {
     const scan = selected();
     if (!scan || !root) return;
-    const translation = translations[scan.key] ?? scan.cad_reference!.translation_mm;
+    const translation = scan.cad_reference!.translation_mm;
     const rotation = scan.cad_reference!.rotation;
     const orientation = rotation ? new Matrix4().fromArray([
       ...rotation[0], 0, ...rotation[1], 0, ...rotation[2], 0, 0, 0, 0, 1,
@@ -100,8 +89,6 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
     if (root) { disposeObject(root); root = undefined; }
     const scan = selected();
     if (!scan) return;
-    const translation = translations[scan.key] ?? scan.cad_reference!.translation_mm;
-    offsets.forEach((input, i) => { input.value = String(translation[i]); });
     const layer = scan.layers?.find(layer => layer.id === 'mesh')
       ?? scan.layers?.find(layer => layer.kind === 'mesh');
     if (!layer) { status.textContent = 'This reconstruction has no reference mesh.'; return; }
@@ -122,19 +109,6 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   opacity.oninput = () => { display(); save(); };
   vehicleOpacity.oninput = () => { display(); save(); };
   select.onchange = () => { save(); void load(); };
-  for (const input of offsets) input.onchange = () => {
-    if (offsets.some(field => field.value.trim() === '' || !field.validity.valid || !Number.isFinite(field.valueAsNumber))) {
-      input.reportValidity(); return;
-    }
-    translations[select.value] = offsets.map(field => field.valueAsNumber);
-    position(); save();
-  };
-  find<HTMLButtonElement>('[data-reset]').onclick = () => {
-    const scan = selected(); if (!scan) return;
-    delete translations[scan.key];
-    offsets.forEach((input, i) => { input.value = String(scan.cad_reference!.translation_mm[i]); });
-    position(); save();
-  };
   display();
   const refresh = find<HTMLButtonElement>('[data-refresh]');
   async function refreshReferences() {

@@ -45,8 +45,22 @@ ROLES = [
         name="Floor plywood",
         kind="sheet",
         fields={"thickness": "floor_ply_thickness_mm"},
-        note="The CAD floor is currently one panel. "
-        "Its sheet size and division into separate panels still need specifying.",
+        note="Two existing 12mm panels: rear 830 × 1200mm, front 1200mm long × 1450mm maximum width. "
+        "2030mm overall. Door-wing steps and chamfers are photo estimates pending physical confirmation.",
+    ),
+    MaterialRole(
+        id="floor-ribs", name="Floor pine ribs", kind="timber",
+        fields={"width": "floor_rib_width_mm", "thickness": "floor_rib_thickness_mm"},
+        default_product_id="hume-pinetrim-60-10-4800",
+        note="One shared 60 × 10mm frame: mitred perimeter, two longitudinal ribs, a supported panel seam and a three-part cross-batten at the door wings. "
+        "All joints stay in one 10mm layer; verify perimeter mitres against the actual plywood outline.",
+    ),
+    MaterialRole(
+        id="floor-insulation", name="Floor EPS insulation", kind="sheet",
+        fields={"thickness": "floor_insulation_thickness_mm"},
+        default_product_id="expol-thermaslab-10",
+        note="Nine infill pieces between the floor ribs, cut from one 2400 × 1200 × 10mm sheet. "
+        "No grain direction; rotate pieces when cutting. Floor assumed flat and horizontal.",
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
     MaterialRole(
@@ -230,6 +244,12 @@ ROLES.extend(
             "fixing holes are provisional until checked against the physical hinge.",
         ),
         MaterialRole(
+            id="cabinet-backing-cleats", name="Cabinet backing glue cleats", kind="timber", fields={},
+            default_product_id="pinetrim-18-18-1200",
+            note="18 × 18mm pine inside the leaning backs at their skin joints. "
+            "Glue to both plywood faces within each module; keep detachable joints unglued.",
+        ),
+        MaterialRole(
             id="cabinet-hinge-backing",
             name="Cabinet door hinge backing strips",
             kind="timber",
@@ -296,11 +316,12 @@ ROLES.extend(
             kind="hardware",
             fields={},
             quantity=6,
-            default_product_id="pinnacle-m6-50-allen-ruspert-6",
-            note="Three M6 × 50mm Allen-drive round-head bolts per moving rail, six total (one pack). "
-            "Top counterbores in the fixed slats are provisionally 18mm diameter × 6mm deep, "
-            "with a 16mm washer beneath each head. Heads sit below the slat surface; Allen access is from above. "
-            "Bolt passes through the remaining slat, lid and 6.7mm steel rail. Replace supplied nuts with Nylocs. "
+            default_product_id="pinnacle-m6-35-allen-ruspert-6",
+            note="Three M6 × 35mm Allen-drive round-head bolts per moving rail, six total (one pack). "
+            "Top counterbores in the solid plywood lid are provisionally 18mm diameter × 6mm deep, "
+            "with a 16mm washer beneath each head. Heads sit below the lid surface; Allen access is from above. "
+            "Bolt passes through the remaining lid and 6.7mm steel rail. "
+            "Fixed slats have access openings only and need independent fixing. Replace supplied nuts with Nylocs. "
             "Head size, key size and recess dimensions need checking against physical bolts before drilling.",
         ),
         MaterialRole(
@@ -361,6 +382,7 @@ class CutPart(BaseModel):
     profile_note: str = ""
     profile_axes: str = ""
     fitting_edges: dict[Literal["left", "right", "top", "bottom"], str] = Field(default_factory=dict)
+    template_fit: bool = False
 
 
 def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
@@ -373,7 +395,7 @@ def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
 
 def default_selections() -> dict[str, Selection]:
     return {role.id: Selection(product_id=role.default_product_id) for role in ROLES if role.default_product_id} | {
-        "slats": Selection(owned=True)
+        "slats": Selection(owned=True), "floor": Selection(owned=True)
     }
 
 
@@ -471,7 +493,7 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         ).model_copy(deep=True)
     project.materials = default_selections() | project.materials
     if project.materials["bed-lift-lid-bolts"].product_id == "zenith-m6-55-coach-zinc":
-        project.materials["bed-lift-lid-bolts"] = Selection(product_id="pinnacle-m6-50-allen-ruspert-6")
+        project.materials["bed-lift-lid-bolts"] = Selection(product_id="pinnacle-m6-35-allen-ruspert-6")
     project.parameters = resolve(project.parameters, project.materials)
     return project
 

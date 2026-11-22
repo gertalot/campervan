@@ -46,6 +46,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   onMannequinFit: (pose: Pick<MannequinPose, 'x' | 'y' | 'z' | 'facing' | 'hip' | 'knee'>) => void = () => {}) {
   let viewer: CadViewer | undefined;
   let excludedComponents: string[] = [];
+  let visibilityRules: Record<string, boolean> = {};
   let unsubscribeTool: (() => void) | undefined;
   let socket: WebSocket | undefined;
   let motions: Record<string, Motion> = {};
@@ -57,7 +58,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let motionController: MotionController | undefined;
   const cameraKey = 'campervan.camera';
   let rendering = false;
-  const cameraNavigation = createViewerCamera(container, () => viewer, cameraKey, () => rendering);
+  const cameraNavigation = createViewerCamera(container, () => viewer, cameraKey, () => rendering || human.isActive());
   const { cameraState, saveCamera, cancelCameraAnimation } = cameraNavigation;
   const mannequins: Partial<Record<MannequinPose['mode'], Awaited<ReturnType<typeof loadMannequin>>>> = {};
   let mannequinLoading: Promise<void> | undefined;
@@ -68,9 +69,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let scanReference: Object3D | undefined;
   let crossSections: Object3D | undefined;
   const human = createViewerHuman(container, () => viewer,
-    () => { cancelCameraAnimation(); drag.cancel(); }, saveCamera);
+    () => { cancelCameraAnimation(); drag.cancel(); }, saveCamera, () => pieces.orbitTarget());
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
-    cancelCameraAnimation, saveCamera);
+    () => { cancelCameraAnimation(); human.cancel(); drag.cancel(); }, saveCamera);
   const drag = createViewerDrag(container, {
     viewer: () => viewer as unknown as PieceViewer | undefined,
     motions: () => motions,
@@ -201,7 +202,11 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       return;
     }
     const visible = mannequinPose.visible && bed === 0;
-    const fitted = mannequin.seat({ ...mannequinPose, visible }, seatCushion.bounds(), new Box3().setFromObject(back).min.x);
+    const floor = groups['/Campervan/Finished floor plywood/Rear panel'] as unknown as Object3D;
+    if (!floor) return;
+    const floorZ = new Box3().setFromObject(floor).max.z;
+    const fitted = mannequin.seat({ ...mannequinPose, visible }, seatCushion.bounds(),
+      new Box3().setFromObject(back).min.x, floorZ);
     const { x, y, z, facing, hip, knee } = fitted.pose;
     Object.assign(mannequinPose, { x, y, z, facing, hip, knee });
     mannequinPose.fitSeat = false;
@@ -221,8 +226,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     if (!viewer?.ready) return;
     const selected = pose.table_mount ?? motions.table_mount?.position ?? 0;
     for (const [name, value] of [['Bench mount', 0], ['Stowed', 2]] as const) {
-      const group = viewer.rendered.nestedGroup.groups[`/Campervan/Laptop table/${name}`];
-      if (group) group.visible = selected === value;
+      const path = `/Campervan/Laptop table/${name}`;
+      const group = viewer.rendered.nestedGroup.groups[path];
+      const hidden = Object.entries(visibilityRules).some(([root, visible]) =>
+        !visible && (path === root || path.startsWith(`${root}/`)));
+      const excluded = excludedComponents.some(root => path === root || path.startsWith(`${root}/`));
+      if (group) group.visible = selected === value && !hidden && !excluded;
     }
     (viewer as unknown as PieceViewer).idPicker?.setDirty();
   }
@@ -315,6 +324,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         constructor(...args: any[]) {
           super(...args);
           viewer = this as unknown as CadViewer;
+          this.reset = () => pieces.resetCommand().run();
+          this.display.resize = () => pieces.resetCommand().run();
           unsubscribeTool?.();
           unsubscribeTool = (this as unknown as PieceViewer).state.subscribe('activeTool', () => {
             drag.toolChanged(); pieces.toolChanged(); human.toolChanged(hasActiveTool(this as unknown as PieceViewer));
@@ -342,7 +353,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           if (socket?.readyState === WebSocket.OPEN) socket.send(`U:${JSON.stringify({ command, text: message })}`);
         },
       });
-      const allowed = new Set(['perspective', 'transparent', 'blackedges', 'reset', 'resize', 'distance']);
+      const allowed = new Set(['perspective', 'transparent', 'blackedges', 'reset', 'distance']);
       if (isStaticSite) allowed.delete('distance');
       function trimToolbar() {
         // createPage clears the host when it creates the first display.
@@ -351,6 +362,13 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           const button = child.querySelector('input[class*="tcv_button_"]');
           if (button && [...allowed].some(name => button.classList.contains(`tcv_button_${name}`))) {
             child.dataset.campervanControl = 'true';
+            if (button.classList.contains('tcv_button_reset')) {
+              const action = pieces.resetCommand();
+              button.setAttribute('aria-label', action.label);
+              button.setAttribute('aria-keyshortcuts', action.ariaShortcut!);
+              button.setAttribute('title', `${action.label} · ${action.shortcut}`);
+              (button as HTMLInputElement).onclick = action.run;
+            }
           }
         }
         viewer?.rendered.orientationMarker.setVisible(true);
@@ -371,6 +389,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           }
           move();
         } else {
+          if (message.type === 'data') human.cancel();
           const camera: CameraState | null = message.type === 'data'
             ? cameraState() ?? JSON.parse(localStorage.getItem(cameraKey) ?? 'null') : null;
           if (message.config) {
@@ -385,7 +404,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           if (message.type === 'data') {
             scanReference?.removeFromParent();
             crossSections?.removeFromParent();
-            human.cancel(); drag.cancel();
+            drag.cancel();
             pieces.clear();
             vehicleFade.clear();
             layoutMirror.clear();
@@ -540,6 +559,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       return visible.some(Boolean) ? 'mixed' : 'hidden';
     },
     setVisibility(rules: Record<string, boolean>, independentRoots: string[] = []) {
+      visibilityRules = { ...rules };
       if (!viewer?.ready) return;
       const states: Record<string, number[]> = {};
       const hidden = Object.keys(rules).filter(path => !rules[path]);

@@ -187,17 +187,6 @@ const controller = createController(api, {
         inputs.set(name, input);
         continue;
       }
-      if (name === 'table_mount') {
-        const input = element<HTMLInputElement>(name);
-        input.disabled = false;
-        input.dataset.livePosition = 'true';
-        input.title = field.description ?? '';
-        input.onchange = () => {
-          void controller.savePosition(name, input.checked ? 0 : 2);
-        };
-        inputs.set(name, input);
-        continue;
-      }
       const topLevelControl = field.control === 'position'
         && (name === 'table_fold_open_percent' || !['Stored gear', 'Laptop table', 'Cabinet'].includes(field.group[0]));
       const parent = groupFor(topLevelControl ? [] : field.group, topLevelControl ? liveControls : fields);
@@ -312,7 +301,7 @@ const controller = createController(api, {
       if (dirty && !reset && !(input instanceof HTMLInputElement && input.readOnly)) continue;
       input.value = String(parameters[name]);
       if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-        input.checked = parameters[name] === (name === 'table_mount' ? 0 : 1);
+        input.checked = parameters[name] === 1;
       }
       const output = document.getElementById(`${name}-value`);
       if (output) output.textContent = input.value;
@@ -325,7 +314,7 @@ const controller = createController(api, {
     const input = inputs.get(name);
     if (input) input.value = String(percent);
     if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-      input.checked = percent === (name === 'table_mount' ? 0 : 1);
+      input.checked = percent === 1;
     }
     const output = document.getElementById(`${name}-value`);
     if (output) output.textContent = String(percent);
@@ -358,7 +347,7 @@ onTab(tab => { if (tab !== 'cad') viewer.cancelDrag(); });
 
 const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name,
   input instanceof HTMLInputElement && input.type === 'checkbox'
-    ? name === 'table_mount' ? String(input.checked ? 0 : 2) : String(Number(input.checked))
+    ? String(Number(input.checked))
     : input.value]));
 
 function refreshBuildVisibility() {

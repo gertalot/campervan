@@ -309,7 +309,8 @@ export function createMannequin(body: Group) {
       return { head: contactBounds('head'), feet: contactBounds('feet'),
         hands: contactBounds('hands'), belly: contactBounds('belly'), torso: contactBounds('torso'), bounds: new Box3().setFromObject(root, true) };
     },
-    seat(pose: MannequinPose, cushion: Box3, backrestFront: number) {
+    seat(pose: MannequinPose, cushion: Box3, backrestFront: number, floorZ: number) {
+      cushion = cushion.clone().translate(new Vector3(0, 0, -floorZ));
       const compression = Math.min(pose.compression, (cushion.max.z - cushion.min.z) * 0.5);
       const rig: RigPose = { ...pose, z: 0, hip: 90, knee: 90 };
       if (pose.fitSeat) { rig.x = cushion.min.x + 260; rig.facing = 270; }
@@ -340,9 +341,12 @@ export function createMannequin(body: Group) {
       const halfWidth = (bodyBounds.max.y - bodyBounds.min.y) / 2;
       if (pose.fitSeat) rig.y = Math.max(cushion.min.y + halfWidth + 110, Math.min(cushion.max.y - halfWidth - 10, pose.y));
       mannequin.setPose(rig);
+      const actualCompression = cushion.max.z - contactBounds('pelvis').min.z;
+      root.position.z += floorZ;
+      root.updateMatrixWorld(true);
       return {
         feet: contactBounds('feet'), legs: contactBounds('legs'), bounds: new Box3().setFromObject(root, true),
-        pose: rig, hip: rig.hip, knee: rig.knee, compression: cushion.max.z - contactBounds('pelvis').min.z,
+        pose: rig, hip: rig.hip, knee: rig.knee, compression: actualCompression,
       };
     },
   };

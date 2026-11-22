@@ -5,11 +5,24 @@ from typing import Any
 from build123d import Location, Plane, Shape, Vector, Wire, section
 
 
-def flat_profile(part: Shape[Any], fitting_axes: dict[tuple[int, int], str] | None = None) -> dict[str, Any]:
+def cutting_axes(part: Shape[Any], width: float | None = None,
+                 thickness: float | None = None) -> tuple[int, int, int]:
+    sizes = list(Shape.cast(part.wrapped).located(Location()).bounding_box().size)
+    if width is None or thickness is None:
+        return tuple(sorted(range(3), key=lambda axis: sizes[axis]))
+    remaining = list(range(3))
+    across = min(remaining, key=lambda axis: abs(sizes[axis] - width))
+    remaining.remove(across)
+    thin = min(remaining, key=lambda axis: abs(sizes[axis] - thickness))
+    remaining.remove(thin)
+    return thin, across, remaining[0]
+
+
+def flat_profile(part: Shape[Any], axes_order: tuple[int, int, int] | None = None) -> dict[str, Any]:
     local = Shape.cast(part.wrapped).located(Location())
     box = local.bounding_box()
     sizes = list(box.size)
-    thin, across, along = sorted(range(3), key=lambda axis: sizes[axis])
+    thin, across, along = axes_order or cutting_axes(part)
     axes = [Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)]
     normal = axes[along].cross(axes[across])
     # Union the two faces and mid-plane. Blind pockets remain solid in the
@@ -44,11 +57,6 @@ def flat_profile(part: Shape[Any], fitting_axes: dict[tuple[int, int], str] | No
         "outline": points(face.outer_wire()),
         "holes": [points(wire) for wire in face.inner_wires()],
         "profile_axes": f"Length = local {'XYZ'[along]}; width = local {'XYZ'[across]}",
-        "fitting_edges": {
-            edge: label for axis, label in (fitting_axes or {}).items()
-            if (edge := {(along, -1): "left", (along, 1): "right",
-                         (across, -1): "top", (across, 1): "bottom"}.get(axis)) is not None
-        },
         "profile_note": (
             "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations."
         ),

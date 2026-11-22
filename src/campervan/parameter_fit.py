@@ -26,7 +26,7 @@ def parameter_constraints(p: Parameters) -> dict[str, Constraint]:
         return {}
     minimum = max(
         p.slat_thickness_mm + p.member_width_mm + 0.1,
-        p.arch_height_mm + 3 - p.foam_thickness_mm - p.cabinet_mattress_clearance_mm + p.cabinet_frame_width_mm,
+        p.arch_height_mm - p.floor_surface_z_mm + 3 - p.foam_thickness_mm - p.cabinet_mattress_clearance_mm + p.cabinet_frame_width_mm,
     )
     maximum = (
         p.cabinet_rear_storage_height_mm

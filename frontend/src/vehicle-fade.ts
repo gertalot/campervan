@@ -25,7 +25,7 @@ function setOpacity(material: Material, opacity: number, edge: boolean) {
 }
 
 function directions(path: string): Direction[] {
-  if (path === '/Campervan/Finished floor plywood') return [floor];
+  if (path === '/Campervan/Finished floor plywood' || path.startsWith('/Campervan/Finished floor plywood/')) return [floor];
   const prefix = '/Campervan/Vehicle references/';
   if (!path.startsWith(prefix)) return [];
   const part = path.slice(prefix.length);

@@ -108,19 +108,13 @@ def long_bed_layout(p: Parameters) -> BedLayout:
     last_bracket_end = ys[-2] + (p.slat_width_mm + SLAT_BRACKET_WIDTH) / 2
     if last_bracket_end + TABLE_MOUNT_CLEARANCE > moving_support_length:
         raise ValueError("The shortened sliding frame must support the last bracket beside the Lagun mount.")
-    # Move the rear end wall beyond the rear corner and beneath a complete
-    # transverse plywood rib. Its inside-mounted lift rail needs solid wood too.
     slots = lid_slots(p, ys)
     if any(end - start < SLAT_BRACKET_WIDTH + 2 * SLAT_BRACKET_CLEARANCE for start, end in slots):
         raise ValueError("Ventilation slots must be wide enough for the bracket rebates and clearance.")
-    solid_starts = (0.0, *(end for _, end in slots))
-    solid_ends = (*(start for start, _ in slots), p.seat_length_mm)
-    pillar_end = max(0.0, p.rear_corner_radius_mm - p.furniture_rear_gap_mm)
-    rear_panel_y = next((start for start, end in zip(solid_starts, solid_ends, strict=True)
-                         if start >= pillar_end and end - start >= p.frame_thickness_mm + RAIL_WIDTH
-                         and start + p.frame_thickness_mm < (p.seat_length_mm - p.frame_thickness_mm) / 2), None)
-    if rear_panel_y is None:
-        raise ValueError("Rear box wall and lift rail need a solid lid rib ahead of the rear pillar and behind the divider.")
+    # Align the rectangular rear wall and longitudinal wall with the end of the lid's angled corner.
+    corner_cut = (p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
+                  + ys[0] + p.slat_width_mm / 2)
+    rear_panel_y = corner_cut
     return BedLayout(ys, travel, rear, front, box_front, moving_front, slat_bottom,
                      lid_rear, box_top, rear_panel_y, moving_support_length)
 
@@ -156,10 +150,9 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
                 bolt_y = mount_y + (-RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2)
                 if layout.slat_ys[i] <= bolt_y <= layout.slat_ys[i] + p.slat_width_mm:
                     for bolt_x in LID_BOLT_XS:
-                        pocket = Cylinder(LID_COUNTERBORE_RADIUS, LID_COUNTERBORE_DEPTH + 1,
+                        access = Cylinder(LID_COUNTERBORE_RADIUS, p.slat_thickness_mm + 2,
                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
-                        slat -= pocket.moved(Location((bolt_x - x, bolt_y - layout.slat_ys[i],
-                                                       p.slat_thickness_mm - LID_COUNTERBORE_DEPTH)))
+                        slat -= access.moved(Location((bolt_x - x, bolt_y - layout.slat_ys[i], -1)))
         slat.location = Location((x, layout.slat_ys[i], layout.slat_bottom - layout.box_top))
         slat.label, slat.color = f"{name} slat {i + 1:02}", WOOD if moving else FIXED_WOOD
         slats.append(slat)
@@ -231,14 +224,18 @@ def build_lid(p: Parameters, layout: BedLayout) -> Compound:
     strip = panel(width, p.seat_length_mm, p.frame_thickness_mm)
     # Continue the first fixed slat's 45° cut through the plywood, accounting
     # for the slat's wall setback and the rear row margin.
-    corner_cut = (p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
-                  + layout.slat_ys[0] + p.slat_width_mm / 2)
+    corner_cut = layout.rear_panel_y
     strip -= rear_wall_corner_cutter(corner_cut, p.frame_thickness_mm)
     band = p.bed_lid_strip_width_mm
     slot_length = p.long_bench_width_mm - 2 * band
+    # Leave a continuous solid rib above the rear wall and its inside-mounted lift rail.
+    rib_start = layout.rear_panel_y
+    rib_end = lift_mounts(p.seat_length_mm, p.frame_thickness_mm, layout.rear_panel_y)[0][1] + RAIL_WIDTH
     for start, end in lid_slots(p, layout.slat_ys):
-        slot = panel(slot_length, end - start, p.frame_thickness_mm + 2)
-        strip -= slot.moved(Location((band, start, -1)))
+        for low, high in ((start, min(end, rib_start)), (max(start, rib_end), end)):
+            if high > low:
+                slot = panel(slot_length, high - low, p.frame_thickness_mm + 2)
+                strip -= slot.moved(Location((band, low, -1)))
     slot_end = band + slot_length
     notch_depth = width - slot_end
     rebate_depth = SLAT_BRACKET_THICKNESS + SLAT_BRACKET_CLEARANCE
@@ -250,6 +247,12 @@ def build_lid(p: Parameters, layout: BedLayout) -> Compound:
         # Only the vertical flange needs clearance through the narrow aisle edge.
         edge_relief = panel(rebate_depth + 1, notch_width, p.frame_thickness_mm + 2)
         strip -= edge_relief.moved(Location((width - rebate_depth, start_y, -1)))
+    for _, mount_y, mirrored in lift_mounts(p.seat_length_mm, p.frame_thickness_mm, layout.rear_panel_y):
+        bolt_y = mount_y + (-RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2)
+        for bolt_x in LID_BOLT_XS:
+            pocket = Cylinder(LID_COUNTERBORE_RADIUS, LID_COUNTERBORE_DEPTH + 1,
+                              align=(Align.CENTER, Align.CENTER, Align.MIN))
+            strip -= pocket.moved(Location((bolt_x, bolt_y, p.frame_thickness_mm - LID_COUNTERBORE_DEPTH)))
     strip.label, strip.color = "Slotted plywood lid", Color(0.88, 0.61, 0.25)
     retainer = panel(p.frame_thickness_mm, p.seat_length_mm - corner_cut, MOVING_FRAME_UPSTAND)
     retainer = fillet(retainer.edges().filter_by(Axis.X).group_by(Axis.Z)[-1], SIDE_RAIL_END_RADIUS)

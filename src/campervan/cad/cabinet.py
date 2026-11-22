@@ -2,13 +2,14 @@
 
 from typing import Any
 
-from build123d import Align, Axis, Color, Compound, Cylinder, Location, Part, Plane, Shape, Solid, fillet, section
+from build123d import Align, Axis, Color, Compound, Cylinder, Face, Location, Part, Plane, Shape, Solid, Wire, fillet, section
 
-from campervan.cad.cabinet_backing import build_backing
+from campervan.cad.cabinet_backing import backing_glue_cleats, build_backing
 from campervan.cad.cabinet_doors import DOOR_COLOR, REBATE_WIDTH, build_cabinet_doors, cabinet_door_module, panel_rebate
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
-from campervan.cad.cabinet_scribing import scribe_cabinet
+from campervan.cad.scan_scribing import scribe_assembly
+from campervan.cad.scan_scribe_data import CABINET_SCRIBE_FLOOR_Z_MM
 from campervan.cad.cabinet_upper import rear_face_clearance, rear_panel_clearance, rear_upper_post_y
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
@@ -19,6 +20,8 @@ SKIN = Color(0.91, 0.80, 0.62)
 
 
 def build_cabinet(p: Parameters) -> Compound:
+    if abs(p.floor_surface_z_mm - CABINET_SCRIBE_FLOOR_Z_MM) > 0.001:
+        raise ValueError("Regenerate the cabinet scan profiles for the changed finished-floor elevation.")
     layout = cabinet_layout(p)
     w, t, skin = p.cabinet_frame_width_mm, p.cabinet_frame_thickness_mm, p.cabinet_partition_thickness_mm
     shelf = p.cabinet_shelf_thickness_mm
@@ -73,11 +76,25 @@ def build_cabinet(p: Parameters) -> Compound:
         if profile is None or not profile.faces():
             raise ValueError(f"No scribed plywood outline remains for {part.label}.")
         direction = (0, thickness, 0) if axis == 1 else (0, 0, thickness)
+        # Section intersections can retain inconsistent surface/vertex locations.
+        # Project their exact wires onto one plane before making the constant-thickness sheet.
+        box = profile.bounding_box()
+        span = 2 * (max(abs(value) for value in (*box.min, *box.max)) + box.diagonal)
+        target = Face.make_rect(span, span, Plane(origin=(0, 0, 0), x_dir=(1, 0, 0), z_dir=normal))
+
+        def planar_wire(wire: Wire) -> Wire:
+            projected, = wire.project_to_shape(target, direction=tuple(-value for value in normal))
+            return projected
+
+        faces = [Face(planar_wire(face.outer_wire()), [planar_wire(wire) for wire in face.inner_wires()])
+                 for face in profile.faces()]
         result = Part(
-            [solid for face in profile.faces() for solid in Solid.extrude(face, direction).solids()],
+            [solid for face in faces for solid in Solid.extrude(face, direction).solids()],
             label=part.label,
             color=part.color,
         )
+        if abs(tuple(result.bounding_box().size)[axis] - thickness) > 0.01:
+            raise ValueError(f"Scribed sheet changed its stock thickness: {part.label}")
         result.location = pose
         return result
 
@@ -95,28 +112,30 @@ def build_cabinet(p: Parameters) -> Compound:
             modules[module][group].append(part)
         return part
 
-    def cleat_end(y: float, panel_y: float, bottom: float, top: float) -> float:
-        """Square-cut stock fits the complete receiving band, not a single wall sample."""
+    def joining_rail_end(y: float, panel_y: float) -> float:
+        """Keep the original common footprint of both module rails and their bolt lands."""
         start = layout.front + t
         lo, hi = start, p.cargo_width_mm
         band_start, band_end = min(y, panel_y), max(y + t, panel_y + skin)
         for _ in range(12):
             end = (lo + hi) / 2
-            stock = panel(end - start, band_end - band_start, top - bottom).moved(Location((start, band_start, bottom)))
+            stock = panel(end - start, band_end - band_start, 2 * w).moved(
+                Location((start, band_start, layout.split - w)))
             if sum(solid.volume for solid in (stock - layout.frame_room).solids()) < 0.01:
                 lo = end
             else:
                 hi = end
         if lo - start < 120:
-            raise ValueError("Cabinet panel has insufficient depth for a shelf cleat.")
+            raise ValueError("Cabinet joining rails need at least 120mm of shared bearing.")
         return lo - 1
 
-    def cleat(label: str, y: float, bottom: float, top: float, owner: str, end: float) -> Part:
+    def cleat(label: str, y: float, bottom: float, top: float, owner: str, *, end: float | None = None) -> Part:
         start = layout.front + t
-        part = panel(end - start, t, top - bottom)
+        part = panel((p.cargo_width_mm if end is None else end) - start, t, top - bottom)
         part.location = Location((start, y, bottom))
         part.label, part.color = label, WOOD
-        part = add(part, owner, "Frames")
+        # Shelf cleats follow the backing; module rails retain their shared footprint and bolt positions.
+        part = add(fit(part), owner, "Frames")
         timber.append((owner, part))
         return part
 
@@ -201,9 +220,9 @@ def build_cabinet(p: Parameters) -> Compound:
         ("Cab-end", length - skin - t, length - skin),
     )
     for name, y, panel_y in sides:
-        end = cleat_end(y, panel_y, layout.split - w, layout.split + w)
+        end = joining_rail_end(y, panel_y)
         for owner, bottom in (("Lower module", layout.split - w), ("Upper module", layout.split)):
-            rail = cleat(f"{name} joining rail", y, bottom, bottom + w, owner, end)
+            rail = cleat(f"{name} joining rail", y, bottom, bottom + w, owner, end=end)
             joint_rails.append((owner, rail))
         if name in {"Middle cab-end", "Cab-end"}:
             bottom = layout.first - shelf - w
@@ -213,7 +232,6 @@ def build_cabinet(p: Parameters) -> Compound:
                 bottom,
                 layout.first - shelf,
                 "Lower module",
-                cleat_end(y, panel_y, bottom, layout.first - shelf),
             )
         bottom = layout.upper - shelf - w
         cleat(
@@ -222,7 +240,6 @@ def build_cabinet(p: Parameters) -> Compound:
             bottom,
             layout.upper - shelf,
             "Upper module",
-            cleat_end(y, panel_y, bottom, layout.upper - shelf),
         )
 
     # Full-profile supporting plywood replaces the old transverse ladders and thin cladding.
@@ -232,7 +249,7 @@ def build_cabinet(p: Parameters) -> Compound:
             (
                 "Upper module",
                 layout.split + p.cabinet_module_guide_height_mm + p.cabinet_module_clearance_mm,
-                p.body_height_mm + 10,
+                p.body_height_mm - p.floor_surface_z_mm + 10,
             ),
         ):
             part = panel(p.cargo_width_mm - layout.front, skin, hi - lo)
@@ -240,18 +257,25 @@ def build_cabinet(p: Parameters) -> Compound:
             part.location = Location((layout.front + t, y, lo))
             if name == "Middle" and module == "Lower module":
                 gap = p.cabinet_module_clearance_mm
+                # Open the bridge slot to the wall and floor: straight cuts, with no dangling lower tail.
                 clearance = panel(
-                    p.cabinet_bridge_thickness_mm + 2 * gap, skin + 2, p.cabinet_bridge_height_mm + 2 * gap
-                ).moved(Location((bridge_inner - gap, y - 1, bridge_top - p.cabinet_bridge_height_mm - gap)))
+                    p.cargo_width_mm - bridge_inner + gap + t, skin + 2, bridge_top + gap + 1
+                ).moved(Location((bridge_inner - gap, y - 1, -1)))
                 part = cut(part, clearance)
             add(part, module, "Skin")
-    rear = panel(p.cargo_width_mm - layout.front, skin, p.body_height_mm - p.cabinet_rear_storage_height_mm + 10)
-    rear.label, rear.color = "Rear supporting panel", SKIN
-    rear.location = Location((layout.front + t, 0, p.cabinet_rear_storage_height_mm))
-    pose = rear.location
-    rear = Part((rear & rear_panel_clearance(p)).moved(pose.inverse()).solids(), label=rear.label, color=SKIN)
-    rear.location = pose
-    add(rear, "Upper module", "Skin")
+    rear_guide_top = layout.split + p.cabinet_module_guide_height_mm
+    for module, lo, hi in (
+        ("Lower module", p.cabinet_rear_storage_height_mm, rear_guide_top),
+        ("Upper module", rear_guide_top + p.cabinet_module_clearance_mm,
+         p.body_height_mm - p.floor_surface_z_mm + 10),
+    ):
+        rear = panel(p.cargo_width_mm - layout.front, skin, hi - lo)
+        rear.label, rear.color = "Rear supporting panel", SKIN
+        rear.location = Location((layout.front + t, 0, lo))
+        pose = rear.location
+        rear = Part((rear & rear_panel_clearance(p)).moved(pose.inverse()).solids(), label=rear.label, color=SKIN)
+        rear.location = pose
+        add(rear, module, "Skin")
 
     for owner, back in build_backing(p):
         back.color = SKIN
@@ -265,6 +289,16 @@ def build_cabinet(p: Parameters) -> Compound:
         if box.size.X < 120:
             raise ValueError("Cabinet joining rails need two bolt positions clear of their ends.")
         bolt_centres.extend(((box.min.X + 40, box.center().Y), (box.max.X - 40, box.center().Y)))
+    for x, y in bolt_centres:
+        bearing = Cylinder(8, 2 * w, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(
+            Location((x, y, layout.split - w)))
+        supported = 0.0
+        for _, rail in joint_rails:
+            contact = rail & bearing
+            if contact is not None:
+                supported += sum(solid.volume for solid in contact.solids())
+        if supported < bearing.volume - 0.1:
+            raise ValueError(f"Cabinet module bolt lacks mating rail support at X={x:g}, Y={y:g}.")
     bores, fasteners = module_fasteners(p, layout.split, bolt_centres)
     modules["Lower module"]["Frames"].append(Compound(label="Module fasteners", children=fasteners))
 
@@ -280,10 +314,7 @@ def build_cabinet(p: Parameters) -> Compound:
             block.color = WOOD
             add(block, module, "Frames")
 
-    # Perimeter rebates are cut from the actual shelf solids. Solid pads remain around every module bolt.
-    pad_cuts = [
-        panel(24, 24, 2 * w + 2).moved(Location((x - 12, y - 12, layout.split - w - 1))) for x, y in bolt_centres
-    ]
+    # Shelves finish flush in continuous rail seats; joint bolts pass through the lower-module shelves.
     for bay, start, end, levels in (
         ("Rear", skin, middle, (layout.split, layout.upper)),
         ("Cab-end", middle + skin, length - skin, (layout.first, layout.split, layout.upper)),
@@ -298,17 +329,19 @@ def build_cabinet(p: Parameters) -> Compound:
             for post in posts:
                 if post.bounding_box().max.Z > level - shelf and post.bounding_box().min.Z < level:
                     part = cut(part, post)
-            if abs(level - layout.split) < 0.01:
-                for pad in pad_cuts:
-                    part = cut(part, pad)
             if any(face.inner_wires() for face in part.faces() if face.normal_at().Z > 0.99):
                 raise ValueError(f"Cabinet shelf has an internal framing cutout: {part.label}")
+            # Cut the rail seats from the unbored shelf so no bolt-sized timber islands remain.
+            seat = part
+            if abs(level - layout.split) < 0.01:
+                for bore in bores:
+                    part = cut(part, bore)
             module = "Lower module" if level <= layout.split else "Upper module"
             modules[module]["Shelves"].append(part)
             for index, (owner, rail) in enumerate(timber):
                 box = rail.bounding_box()
                 if owner == module and abs(box.max.Z - level) < 0.05:
-                    replacement = cut(rail, part)
+                    replacement = cut(rail, seat)
                     group = modules[owner]["Frames"]
                     group[next(i for i, item in enumerate(group) if item is rail)] = replacement
                     timber[index] = (owner, replacement)
@@ -362,6 +395,13 @@ def build_cabinet(p: Parameters) -> Compound:
                     part = cut(part, bore)
             group[index] = part
 
+    glue_cleats = backing_glue_cleats(p, layout.first, layout.split, layout.upper)
+    for module, groups in modules.items():
+        cleats = [cleat for owner, cleat in glue_cleats if owner == module]
+        for cleat in cleats:
+            cleat.color = WOOD
+        groups["Frames"].append(Compound(label="Backing glue cleats", children=cleats))
+
     for module, groups in modules.items():
         labels = {rail.label for owner, rail in joint_rails if owner == module}
         frames = groups["Frames"]
@@ -375,7 +415,7 @@ def build_cabinet(p: Parameters) -> Compound:
     filler.label, filler.color = "Scribed ceiling filler", WOOD
     filler.location = Location((layout.front, upper_post, layout.top))
     add(filler, "Upper module", "Frames", fitted=False)
-    return scribe_cabinet(
+    return scribe_assembly(
         Compound(
             label="Cabinet",
             children=[
@@ -385,5 +425,6 @@ def build_cabinet(p: Parameters) -> Compound:
                 for module, groups in modules.items()
             ],
         ),
-        p,
+        (0.0, p.cabinet_rear_y_mm, p.floor_surface_z_mm),
+        inboard=-1,
     )

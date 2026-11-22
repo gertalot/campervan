@@ -89,8 +89,9 @@ class Parameters(BaseModel):
         ge=0,
         le=2,
         multiple_of=2,
-        title="Table",
-        description="Checked: table mounted regardless of bed position. Unchecked: folded, disassembled storage preview.",
+        title="Table position",
+        description="Choose the mounted or stowed pose. The Table visibility checkbox hides either pose; "
+        "the fixed mounting bracket and backing follow Long bench.",
         json_schema_extra={
             "unit": "",
             "group": ["Laptop table"],
@@ -599,10 +600,10 @@ class Parameters(BaseModel):
     )
 
     floor_build_up_mm: float = Field(
-        default=18.0,
+        default=22.0,
         ge=0,
         title="Floor build-up",
-        description="Finished floor above vehicle floor; owner estimate.",
+        description="Vehicle-metal floor depth below the registered Z0 datum. Floor elevation is controlled separately.",
         json_schema_extra={"unit": "mm", "group": ["Vehicle references", "Body floor"]},
     )
 
@@ -610,8 +611,40 @@ class Parameters(BaseModel):
         default=12.0,
         ge=0,
         title="Floor plywood",
-        description="Owner reports 11–12mm; use 12mm within the 18mm total build-up.",
+        description="Owner-confirmed 12mm existing plywood floor panels, above the pine rib frame.",
         json_schema_extra={"unit": "mm", "group": ["Finished floor plywood"]},
+    )
+
+    floor_surface_z_mm: float = Field(
+        default=10.0,
+        ge=0,
+        title="Finished floor elevation",
+        description="Finished floor above the registered van Z0 datum. Furniture heights and gear Z positions "
+        "are relative to this floor; ceiling and vehicle geometry stay registered to the scan. "
+        "Changing this height requires refitting the measured cabinet scan profiles.",
+        json_schema_extra={"unit": "mm", "group": ["Finished floor plywood"]},
+    )
+
+    floor_insulation_thickness_mm: float = Field(
+        default=10.0,
+        gt=0,
+        title="Floor insulation thickness",
+        description="EPS infill beneath the plywood, between the pine ribs.",
+        json_schema_extra={"unit": "mm", "group": ["Finished floor plywood", "Floor insulation"]},
+    )
+
+    floor_rib_width_mm: float = Field(
+        default=60.0,
+        gt=0,
+        title="Pine rib width",
+        json_schema_extra={"unit": "mm", "group": ["Finished floor plywood", "Pine rib frame"]},
+    )
+
+    floor_rib_thickness_mm: float = Field(
+        default=10.0,
+        gt=0,
+        title="Pine rib thickness",
+        json_schema_extra={"unit": "mm", "group": ["Finished floor plywood", "Pine rib frame"]},
     )
 
     rear_corner_straight_mm: float = Field(

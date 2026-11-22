@@ -186,14 +186,14 @@ def mounting_bolt(wood: float, length: float, *, allen: bool = False) -> Part:
 
 
 def build_lifts(rear: float, bottom: float, length: float, wall: float, percent: float,
-                *, rear_panel_y: float, slat_thickness: float) -> Compound:
+                *, rear_panel_y: float) -> Compound:
     pose = lift_pose(OPEN_ANGLE * percent / 100)
     assemblies = []
     bolt = mounting_bolt(wall, 40)
     # The head washer bears on the counterbore floor; its 1.6mm thickness
     # raises the head's bearing plane above that floor.
-    lid_grip = wall + slat_thickness - LID_COUNTERBORE_DEPTH + 1.6
-    lid_bolt = mounting_bolt(lid_grip, 50, allen=True)
+    lid_grip = wall - LID_COUNTERBORE_DEPTH + 1.6
+    lid_bolt = mounting_bolt(lid_grip, 35, allen=True)
     for name, y, mirrored in lift_mounts(length, wall, rear_panel_y):
         base = panel(BASE_RAIL, MOUNT_STEEL, 20)
         base.location = Location((-16, -MOUNT_STEEL if mirrored else 0, -10))
@@ -221,7 +221,7 @@ def build_lifts(rear: float, bottom: float, length: float, wall: float, percent:
             fixing = lid_bolt.moved(Location((x, -RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2,
                                              lid_grip),
                                          (180, 0, 0)))
-            fixing.label = f"Lid rail Allen bolt {index} · M6 × 50 with two washers and Nyloc (nominal)"
+            fixing.label = f"Lid rail Allen bolt {index} · M6 × 35 with two washers and Nyloc (nominal)"
             lid_bolts.append(fixing)
         members = {
             "Upper rail": Compound(label="Upper rail", children=[upper,

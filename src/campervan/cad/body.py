@@ -533,18 +533,13 @@ def sliding_door(p: Parameters, front: float, right: bool) -> Compound:
     return door
 
 
-def floor_outline_wire(p: Parameters, *, front_y: float | None = None, plywood: bool = False) -> Wire:
-    """Straight rear sheet edge and notches around the wheel-house footprints."""
-    front = p.body_length_mm if front_y is None else front_y
+def floor_outline_wire(p: Parameters) -> Wire:
+    """Vehicle metal floor outline, independent of the owner's removable plywood panels."""
+    front = p.body_length_mm
     left = (p.cargo_width_mm - p.rear_opening_floor_width_mm) / 2
     pillar_start, pillar_end = rear_corner_base(p)
     rear_inset, pillar_inset, side_inset = left, left, 0.0
-    if plywood:
-        # Clean cutout around the matched floor-level corner return and brace:
-        # scan Z0 is ~145mm in at Y0 and ~39–41mm in at Y180–220.
-        # These straight segments clear that section without tracing its teeth.
-        rear_inset, pillar_inset, side_inset = 150.0, 140.0, 45.0
-    arch = wheel_arch_footprint(p, side_inset=side_inset, clearance=5.0 if plywood else 0.0)
+    arch = wheel_arch_footprint(p)
     pts = [
         (rear_inset, 0, 0),
         (p.cargo_width_mm - rear_inset, 0, 0),
@@ -655,15 +650,6 @@ def rounded_rear_corner(p: Parameters, sections: list[list[Wire]], rear: list[Sh
             caps.append(Face.make_surface(boundary))
         solids.append(Solid(Shell([*rear[i].faces(), outside, *ends, *caps])))
     return Part(solids[0].fuse(solids[1]).solids(), color=WALL)
-
-
-def build_floor_plywood(p: Parameters) -> Solid:
-    # Furniture is set forward from the rear opening; support the cross-bench feet
-    # even when their front edge extends beyond the nominal cargo-body boundary.
-    front = max(p.body_length_mm, p.furniture_rear_gap_mm + p.cargo_length_mm)
-    plywood = Solid.extrude(Face(floor_outline_wire(p, front_y=front, plywood=True)), (0, 0, -p.floor_ply_thickness_mm))
-    plywood.label, plywood.color = "Finished floor plywood", Color(0.76, 0.70, 0.55, 0.32)
-    return plywood
 
 
 def build_body(p: Parameters) -> list[Compound]:

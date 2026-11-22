@@ -249,8 +249,17 @@ export function sheetDrawing(sheet: Sheet, group: Group, result: Result, index: 
     }
     const candidates: Point[] = [0.5, 0.25, 0.75, 0.12, 0.88].map(t => [x1 + (x2 - x1) * t, y1 + (y2 - y1) * t]);
     const clearance = ([x, y]: Point) => Math.min(...badgePositions.map(([bx, by]) => Math.hypot(x - bx, y - by)));
-    const position = candidates.find(p => clearance(p) > font * 2)
-      ?? candidates.reduce((best, p) => clearance(p) > clearance(best) ? p : best);
+    let position: Point;
+    if (group.kind === 'timber') {
+      position = [(x1 + x2) / 2, -font * 2];
+      while (clearance(position) <= font * 2) position[1] -= font * 2;
+      const leader = node('line', { x1: position[0], y1: 0, x2: position[0], y2: position[1] + font * 0.8,
+        stroke: colour, 'stroke-width': 1.2, 'vector-effect': 'non-scaling-stroke' });
+      geometry.push(leader); cutLines.append(leader);
+    } else {
+      position = candidates.find(p => clearance(p) > font * 2)
+        ?? candidates.reduce((best, p) => clearance(p) > clearance(best) ? p : best);
+    }
     badgePositions.push(position);
     const [x, y] = position;
     const badge = node('circle', { cx: x, cy: y, r: font * 0.8, fill: colour, stroke: '#fffdf5', 'stroke-width': 5 });
@@ -262,7 +271,15 @@ export function sheetDrawing(sheet: Sheet, group: Group, result: Result, index: 
   // Paint every badge above every cut, including lines processed later in the sequence.
   cutLines.append(cutBadges);
   svg.append(cutLines);
-  svg.append(node('text', { x: length / 2, y: -font * 0.55, 'text-anchor': 'middle', fill: '#414b57',
+  const dimensionY = group.kind === 'timber' && badgePositions.length
+    ? Math.min(...badgePositions.map(([, y]) => y)) - font * 1.5 : -font * 0.55;
+  if (group.kind === 'timber') {
+    const topPadding = padding - dimensionY;
+    const height = width + topPadding + padding + legendHeight;
+    svg.setAttribute('viewBox', `${-padding} ${-topPadding} ${length + padding * 2} ${height}`);
+    svg.dataset.physicalHeight = String(height);
+  }
+  svg.append(node('text', { x: length / 2, y: dimensionY, 'text-anchor': 'middle', fill: '#414b57',
     'font-size': font, 'font-family': 'system-ui,sans-serif' }, `${mm(length)} mm`));
   svg.append(node('text', { x: -font * 0.5, y: width / 2,
     transform: `rotate(-90 ${-font * 0.5} ${width / 2})`, 'text-anchor': 'middle', fill: '#414b57',

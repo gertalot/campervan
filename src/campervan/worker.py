@@ -91,7 +91,12 @@ if __name__ == "__main__":
         # The viewer can now publish independently while this process extracts manufacturing data.
         os.nice(10)
         with redirect_stdout(sys.stderr):
-            cuts = cut_list(model, parameters)
+            construction = parameters.model_copy(update={
+                name: field.default for name, field in Parameters.model_fields.items()
+                if isinstance(field.json_schema_extra, dict) and field.json_schema_extra.get("control") == "position"
+            })
+            cutting_model = model if construction == parameters else build_campervan(construction)
+            cuts = cut_list(cutting_model, construction)
             (output / "cuts.json").write_text(json.dumps([cut.model_dump() for cut in cuts]))
         publish({"stage": "cuts"})
     except Exception as error:

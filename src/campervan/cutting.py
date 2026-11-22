@@ -46,10 +46,10 @@ def stock_groups(cuts: list[CutPart], selections: dict[str, Selection], state: C
         options = effective_options(group, state.settings, state.options.get(group["key"]))
         for part in group["parts"]:
             default = FittingMargins(**{edge: options.fitting_allowance for edge in part["fitting_edges"]})
-            margins = options.fitting_margins.get(part["path"], default) if group["kind"] == "sheet" else FittingMargins()
+            margins = options.fitting_margins.get(part["path"], default)
             values = margins.model_dump()
             part.update(
-                fitting_margins=values, template_fit=any(values.values()),
+                fitting_margins=values, template_fit=part["template_fit"] or any(values.values()),
                 # Match solver precision, rounding floating-point noise before rounding stock upward.
                 blank_length=ceil(round((part["length"] + margins.left + margins.right) * SCALE, 6)) / SCALE,
                 blank_width=ceil(round((part["width"] + margins.top + margins.bottom) * SCALE, 6)) / SCALE,
@@ -371,9 +371,16 @@ def layout(group: dict, options: CuttingOptions, mode: Mode, on_update: Callable
             raise ValueError("Edge trim leaves no usable stock.")
         if stock["offcut"] and stock["copies"] == 0:
             raise ValueError("Enter the quantity available for each offcut.")
-        if timber and abs(stock["width"] - group["parts"][0]["width"]) > 0.01:
-            raise ValueError("Timber stock must have the same width as the modelled section.")
+        if timber and stock["width"] < group["parts"][0]["width"] - 0.01:
+            raise ValueError("Timber stock is narrower than the modelled section.")
     parts = group["parts"]
+    if timber:
+        for part in parts:
+            if all(part["blank_width"] > stock["width"] + 0.01 for stock in stocks):
+                raise ValueError(
+                    f'{part["path"]} needs {part["blank_width"]:g}mm-wide timber including fitting allowance; '
+                    'choose wider stock or adjust its fitting allowance.'
+                )
     grains = ["length" if timber else options.orientations.get(p["path"], options.grain) for p in parts]
     instance_data: dict = {
         "objective": ("variable-sized-bin-packing" if len(stocks) > 1 else

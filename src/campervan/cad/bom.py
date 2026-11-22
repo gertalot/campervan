@@ -5,8 +5,9 @@ from typing import Any
 
 from build123d import Location, Shape
 
-from campervan.cad.cabinet_scribing import is_scan_scribed
-from campervan.cad.cut_profiles import flat_profile
+from campervan.cad.scan_scribing import scan_clearance_mm
+from campervan.cad.cut_profiles import cutting_axes, flat_profile
+from campervan.cad.fitting import VehicleFitting
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
 
@@ -25,13 +26,17 @@ def material_for(path: tuple[str, ...]) -> str:
         return "bed-lid-hinges"
     if "Laptop table" in path:
         return "table-plywood" if name in {"fixed tabletop leaf", "folding tabletop leaf"} else "frames"
-    if name == "finished floor plywood":
-        return "floor"
+    if "Finished floor plywood" in path:
+        if "Floor insulation" in path:
+            return "floor-insulation"
+        return "floor-ribs" if "Pine rib frame" in path else "floor"
     if name.startswith("roller catch keeper"):
         return "cabinet-catches"
     if "Module fasteners" in path:
         return "cabinet-module-fasteners"
     if "Cabinet" in path:
+        if "Backing glue cleats" in path:
+            return "cabinet-backing-cleats"
         if name == "pine hinge backing strip":
             return "cabinet-hinge-backing"
         if name == "rear top removable infill":
@@ -57,8 +62,10 @@ def material_for(path: tuple[str, ...]) -> str:
 
 def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
     cuts = []
+    fitting = VehicleFitting(parameters.cargo_width_mm)
 
-    def visit(part: Shape[Any], path: tuple[str, ...]) -> None:
+    def visit(part: Shape[Any], path: tuple[str, ...], parent: Location) -> None:
+        world = parent * part.location
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
@@ -74,31 +81,39 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             return  # One catch set is counted by its moving keeper.
         if part.children:
             for child in part.children:
-                visit(child, path)
+                visit(child, path, world)
             return
         # Each leaf retains its construction geometry. Remove its local placement;
         # ancestor transforms (bed motion, lid hinge, mirroring) do not change stock sizes.
         size = Shape.cast(part.wrapped).located(Location()).bounding_box().size
         thickness, width, length = sorted(round(value, 2) for value in size)
         material = material_for(path)
-        scribed = is_scan_scribed(path)
+        clearance = scan_clearance_mm(path)
+        scribed = clearance is not None
         profile: dict[str, Any] = {}
-        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing"}:
+        axes = cutting_axes(part)
+        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing", "cabinet-backing-cleats", "floor-ribs"}:
             if material == "cabinet-frames":
                 width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
             elif material == "cabinet-bridge":
                 width, thickness = parameters.cabinet_bridge_height_mm, parameters.cabinet_bridge_thickness_mm
-            elif material == "cabinet-hinge-backing":
+            elif material == "floor-ribs":
+                width, thickness = parameters.floor_rib_width_mm, parameters.floor_rib_thickness_mm
+            elif material in {"cabinet-hinge-backing", "cabinet-backing-cleats"}:
                 width, thickness = 18.0, 18.0
             else:
                 width, thickness = parameters.slat_width_mm, parameters.slat_thickness_mm
-            dimensions = list(size)
-            for section in (width, thickness):
-                dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
-            length = round(dimensions[0], 2)
+            axes = (2, 1, 0) if material == "floor-ribs" else cutting_axes(part, width, thickness)
+            if material == "floor-ribs":
+                length = round(size.X, 2)
+            else:
+                dimensions = list(size)
+                for section in (width, thickness):
+                    dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
+                length = round(dimensions[0], 2)
             if material in {"cabinet-frames", "cabinet-bridge"}:
                 profile = {
-                    "profile_note": "Square-cut stock. Side joining rails have shelf seats and solid bolt lands; "
+                    "profile_note": "Shelf cleats have bevelled backing ends; joining rails retain their shared footprint and flush shelf seats; "
                     "match-drill fixings. Door and fixed-panel openings have 10mm-wide front rebates, "
                     "depth equal to panel thickness, with local rear relief for catch keepers. "
                     "Rear upper stile has a scribed top to clear the vehicle beam."
@@ -107,6 +122,10 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             material
             in {
                 "floor",
+                "floor-insulation",
+                "cabinet-frames",
+                "cabinet-backing-cleats",
+                "floor-ribs",
                 "frames",
                 "cabinet-partitions",
                 "shelves",
@@ -115,28 +134,33 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             }
             or scribed
         ):
-            fitting_axes = {}
-            if "Cabinet" in path:
-                if part.label.endswith("supporting panel"):
-                    # mirror_assembly reflects each leaf through local X=0 before extraction.
-                    fitting_axes[(0, -1)] = "Wall"
-                    if "Upper module" in path:
-                        fitting_axes[(2, 1)] = "Roof"
-                elif "Shelves" in path:
-                    fitting_axes[(0, -1)] = "Wall"
-                elif part.label == "Rear top removable infill":
-                    fitting_axes[(2, 1)] = "Roof / vehicle beam"
             try:
-                profile = flat_profile(part, fitting_axes)
+                profile = flat_profile(part, axes)
             except (ValueError, RuntimeError, IndexError) as error:
                 logging.getLogger(__name__).warning("Cutting profile for %s: %s", part.label, error)
                 profile = {
                     "profile_note": f"Rectangle only: CAD outline extraction failed ({error}). "
                     "Transfer the profile before cutting."
                 }
+        if material in {"cabinet-frames", "cabinet-backing-cleats"}:
+            profile["profile_note"] = (
+                f"{profile.get('profile_note', '')} Shelf cleats meet the backing plane; module joining rails keep their original shared ends. Backing glue cleats have "
+                "bevelled ends at horizontal shelf/rail joints. Stock lengths include the long points; "
+                "transfer bevels from CAD before assembly."
+            ).strip()
+        if material in {"floor-ribs", "floor-insulation"}:
+            profile["profile_note"] = (
+                f"{profile.get('profile_note', '')} Floor assembly follows the existing floor panels on an assumed flat, "
+                "horizontal floor; ignore scan-floor noise when preparing these stock cuts."
+            ).strip()
+        elif material != "unassigned":
+            edges, template_fit = fitting.edges(
+                part, world, axes, profile.get("outline", []), furniture=path[1] != "Finished floor plywood"
+            )
+            profile.update(fitting_edges=edges, template_fit=template_fit)
         if scribed:
             profile["profile_note"] = (
-                f"{profile.get('profile_note', '')} Scan-scribed edge: at least 3mm clearance from the "
+                f"{profile.get('profile_note', '')} Scan-scribed edge: at least {clearance:g}mm clearance from the "
                 "registered photographic scan. Preserve rebates and blind fixing holes."
             ).strip()
         cuts.append(
@@ -145,5 +169,5 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             )
         )
 
-    visit(model, ())
+    visit(model, (), Location())
     return cuts

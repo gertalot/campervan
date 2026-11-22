@@ -10,10 +10,17 @@ Saved scans and the scan-processing backend are retained.
 
 ### Camera and visibility
 
+The finished-floor elevation is shared by the benches, cabinet, table and stored gear. Their height controls are
+relative to the finished floor; the van, scan and ceiling remain fixed. The current floor top is 10mm above the
+registered Z0 datum. Scan-fitted cabinet profiles have been refitted for this height.
+
 - Drag fixed parts or the background to orbit. Use the ViewCube for a face, edge or corner view.
 - Hide groups with their eye icons or use the category checkboxes in the sidebar.
 - **See inside** fades obstructing vehicle surfaces. Turn it off to view the opaque body; windows remain transparent.
 - Show **Wheel arches** independently of the rest of the vehicle.
+- **Long bench** also controls the table's fixed mounting bracket and backing plate.
+- **Table** hides or shows the table in either pose. Choose **Table position → Bench mount / Stowed** in the table
+  settings to change its pose; changing pose does not override the Table visibility switch.
 - Filter **Cabinet shelves**, **Cabinet doors**, **Cabinet skin** and **Cabinet frames** independently.
   Hinges follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
@@ -45,8 +52,8 @@ Turn **See inside** off to display both sides of the scan again. Scan opacity ap
 Hiding the reference restores normal vehicle colours and opacity while preserving the See inside setting.
 Wheel arches participate in the comparison opacity too. No progress outlines or experimental floor lines are shown.
 
-The result, both opacity settings and per-result XYZ display offsets are remembered in this browser.
-**Reference position → Reset position** restores the saved CAD registration; **Refresh references** reloads the list.
+The selected result and both opacity settings are remembered in this browser.
+**Refresh references** reloads the list. The scan uses its saved CAD registration directly.
 These controls do not change the scan, vehicle dimensions, pillar angles or manufacturing geometry.
 The scan remains outside CAD picking and furniture mirroring.
 
@@ -138,7 +145,11 @@ holding a button or reaching a window edge.
 up or down; **Left/Right** moves sideways relative to your view.
 **Shift+Up/Down** moves vertically along world Z. Hold an arrow for continuous movement. **Escape** or the person icon
 leaves Human view and releases the pointer. Losing viewport focus also exits, so fields and menus retain their normal keys.
-Your camera position is saved; Human view itself starts off when you reload.
+Leaving Human view keeps your current position, viewing direction and perspective. The orbit pivot is set on the
+point ahead of you, without moving the camera. This view is saved across reloads; Human view itself starts off.
+
+Use the toolbar's icon-only **Reset view** button, the right-click menu, or **R** with the viewport focused.
+Reset centres the rotation pivot on the van and fits it to the viewport, preserving viewing direction.
 
 ### Mannequins and gear
 
@@ -203,11 +214,18 @@ See [planner and purchase details](planner.md) for editing, saving and recovery 
 
 ### Template-fitting allowance
 
-Cabinet panels and shelves that fit the van wall or roof start with **50mm extra on each identified fitting edge**.
-The model itself stays unchanged. In **Cutting settings**, change the shared template-fitting allowance if needed.
-Select a piece to adjust its four edge allowances or restore its defaults. The details preview is deliberately
-unmirrored and labels the drawing edges; roof/wall names identify the intended physical fitting edges. Joining
-edges start at zero. Other sheet pieces can receive an allowance explicitly in the same panel.
+Plywood and timber edges fitted against the van's sidewalls or ceiling start with **50mm extra on those edges**.
+Floor contact does not add an allowance. Furniture joints, slots, rebates and rounded corners do not qualify by shape.
+The registered scan is sampled within a 10mm contact band, including the deliberate 3–5mm design clearances and
+rounded cutting envelopes. Cuts use the fixed construction pose, independent of the current door or bed animation.
+A vehicle-fitting notch inside the stock envelope keeps a rectangular template blank without enlarging unrelated edges.
+The CAD model itself stays unchanged.
+In **Cutting settings**, change the shared template-fitting allowance if needed. Select a piece to adjust its four
+edge allowances or restore its defaults. Explicit per-piece values, including zero, override automatic defaults.
+The details preview is deliberately unmirrored and labels the drawing edges; roof/wall names identify known fitting edges.
+Timber uses the same labelled allowance fields. If a side allowance exceeds its stock width, choose wider stock;
+the optimiser reports the required width rather than discarding the allowance. The existing labelled fields and
+fieldset grouping follow [W3C's labels and instructions guidance](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html).
 
 **Cut blank** is the rough rectangle to cut from the sheet. **CAD reference** is the modelled size, not a surveyed
 final fitting contour. Solid blank outlines and dashed CAD profiles distinguish them, with hatching for retained
@@ -251,7 +269,11 @@ Reference cuts discard material towards the outer stock edge. These operations u
 changing the packing. Zero trim reserves no fresh reference cuts. Straight saw cuts produce rectangular blanks.
 Cut curves, notches, holes and finishing features afterwards. Nested shapes use the sampled profiles; cut pieces
 inside holes before the surrounding frames.
-Timber uses crosscuts in either mode. Hardware does not appear in the cutting list.
+Timber uses crosscuts in either mode. Its cut-number badges sit above the timber with leader lines, staggered
+where cuts are close together; saved SVGs include the same spacing. Hardware does not appear in the cutting list.
+This preserves visible cut locations and part outlines, following the distinguishable-graphics guidance in
+[WCAG 2.2 SC 1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html)
+(consulted 22 November 2026); this is a layout decision, not a claim of overall accessibility compliance.
 
 Use **Save drawing** for sheet SVGs, **Export cut list** for CSV and **Print** for the current view.
 
@@ -285,9 +307,10 @@ the wheel-arch bridge uses 90 × 18mm pine. The rear corner uses ordinary 40 × 
 The rear end frame clears the pillar independently of the main back frame. Shelves and fixed middle/end skins extend past the timber
 and are jigsaw-scribed to the actual van side and finished ceiling. The van side closes the open back.
 Doors and shelves are 6mm plywood; fixed skins are 3mm birch.
-Cabinet → Module joint sets the 20mm guide lip and 0.5mm fitting clearance. The split follows the middle shelf tops.
+Cabinet → Module joint sets the 20mm lower-skin guide lips at the middle, cab-end and rear, with 0.5mm fitting clearance. The split follows the middle shelf tops. Those shelves belong to the lower module, flush in continuous rail
+seats, with drilled module-bolt holes instead of edge notches.
 
-Eight estimated M5 × 90mm countersunk fixing sets join the side rails; there are no front or rear rail bolts.
+Eight M6 × 90mm hex bolt-and-nut sets with washers join the side rails; there are no front or rear rail bolts.
 Keep the interface unglued. Slide the upper module into alignment before fitting bolts. Hardware envelopes and
 joint machining need confirmation before cutting. The earlier plywood-cabinet module notes describe the superseded
 construction; use [the replacement construction rationale](research/cabinet-redesign.md) for this model.

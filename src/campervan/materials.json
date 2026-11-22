@@ -1,18 +1,56 @@
 [
+{
+  "id": "expol-thermaslab-10",
+  "name": "Expol S Grade ThermaSlab · 2400 × 1200 × 10mm",
+  "supplier": "Bunnings Lyall Bay",
+  "url": "https://www.bunnings.co.nz/expol-2400-x-1200-x-10mm-s-grade-polystyrene-thermaslab-10mm_p0717137",
+  "kind": "sheet",
+  "dimensions": {
+    "length": 2400,
+    "width": 1200,
+    "thickness": 10
+  },
+  "price_nzd": 7.84,
+  "sale_unit": "sheet",
+  "specification": "I/N 0717137. 10mm EPS insulation infill between the floor battens. Cut the nine pieces with free rotation from one sheet; final fit follows the actual timber frame.",
+  "availability": "Listed online; Lyall Bay stock not checked.",
+  "checked": "2026-11-22"
+},
+{
+  "id": "hume-pinetrim-60-10-4800",
+  "name": "Hume Pine Pinetrim dressed board · 60 × 10mm × 4.8m",
+  "supplier": "Bunnings Lyall Bay",
+  "url": "https://www.bunnings.co.nz/hume-pine-60-x-10mm-4-8mm-pinetrim-dressed-board_p0298285",
+  "kind": "timber",
+  "dimensions": {
+    "length": 4800,
+    "width": 60,
+    "thickness": 10
+  },
+  "price_nzd": 25.96,
+  "sale_unit": "4.8m board",
+  "specification": "I/N 0298285. Untreated radiata pine dressed board. Use flat, 60mm wide and 10mm deep. The listing title says 4.8mm; 4.8m stock length is inferred from its $25.96 board price and $5.41 per linear metre. Confirm supplied length before purchasing. Perimeter mitres follow the provisional photo-based floor outline; verify against the actual panels.",
+  "availability": "Listed online; Lyall Bay stock not checked.",
+  "checked": "2026-11-22"
+},
   {
-    "id": "pinnacle-m6-50-allen-ruspert-6",
-    "name": "Pinnacle Black Ruspert Allen-drive round-head bolts and nuts · M6 × 50mm · 6 pack",
+    "id": "pinnacle-m6-35-allen-ruspert-6",
+    "name": "Pinnacle Black Ruspert Allen-drive round-head bolts and nuts · M6 × 35mm · 6 pack",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/pinnacle-m6-x-50mm-black-ruspert-round-head-bolts-and-nuts-6-pack_p0257710",
+    "url": "https://www.bunnings.co.nz/pinnacle-m6-x-35mm-black-ruspert-round-head-bolts-and-nuts-6-pack_p0257708",
     "kind": "hardware",
-    "dimensions": {"length": 50, "diameter": 6},
-    "price_nzd": 8.87,
+    "dimensions": {
+      "length": 35,
+      "diameter": 6
+    },
+    "price_nzd": 6.64,
     "sale_unit": "pack of 6 bolts and nuts",
     "pack_quantity": 6,
-    "specification": "I/N 0257710; Pinnacle SFA526. Steel M6 × 50mm round head with hex insert, 1mm pitch, Black Ruspert finish. One six-pack for the lid rails; replace included plain nuts with Nylocs. CAD head diameter 10.5mm, height 3.3mm and 4mm hex socket are provisional, not manufacturer dimensions. Top counterbores nominally 18mm diameter × 6mm deep with 16 × 1.6mm washers beneath the heads; measure actual bolts and washers before drilling.",
-    "availability": "Lyall Bay in stock; aisle 9, bay 4. Click & Collect available; orders after 4pm processed next day when checked.",
-    "checked": "2026-11-17"
+    "specification": "I/N 0257708. Steel M6 × 35mm round head with hex insert, 1mm pitch, Black Ruspert finish. One six-pack for the lid rails; replace included plain nuts with Nylocs. CAD head diameter 10.5mm, height 3.3mm and 4mm hex socket are provisional, not manufacturer dimensions. Top counterbores nominally 18mm diameter × 6mm deep with 16 × 1.6mm washers beneath the heads; measure actual bolts and washers before drilling.",
+    "availability": "Listed online; Lyall Bay stock not checked.",
+    "checked": "2026-11-22"
   },
+
   {
     "id": "zenith-m6-40-coach-zinc",
     "name": "Zenith zinc-plated coach-head bolt and nut · M6 × 40mm",

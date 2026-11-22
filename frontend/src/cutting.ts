@@ -183,7 +183,8 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       .sort((a, b) => a - b).map(n => [`ply:${n}`, `${mm(n)} mm plywood`]),
       ...(data.groups.some(g => g.kind === 'timber') ? [['timber', 'Timber']] : []),
       ...data.groups.filter(g => g.kind === 'sheet' && !isPlywood(g))
-        .map(g => [`sheet:${g.key}`, /bamboo/i.test(g.name) ? `${mm(g.thickness)} mm bamboo` : materialName(g)])];
+        .map(g => [`sheet:${g.key}`, g.parts.some(p => p.material === 'floor-insulation')
+          ? `${mm(g.thickness)}mm EPS` : /bamboo/i.test(g.name) ? `${mm(g.thickness)} mm bamboo` : materialName(g)])];
     if (!choices.some(([key]) => key === filter)) filter = 'all';
     for (const [key, name] of choices) {
       const button = el('button', name); button.type = 'button'; button.setAttribute('aria-pressed', String(filter === key));
@@ -228,7 +229,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     const preview = el('div'); preview.dataset.fittingPreview = '';
     const measurements = el('div'); measurements.dataset.fittingSummary = '';
     inspector.append(preview, measurements);
-    if (g.kind === 'sheet') {
+    if (g.kind === 'sheet' || g.kind === 'timber') {
       const fitting = el('fieldset'); fitting.className = 'cut-fitting-settings'; fitting.append(el('legend', 'Template-fitting allowance'));
       fitting.append(el('p', 'Edges refer to this unmirrored drawing: left/right and top/bottom. A zero allowance keeps that blank edge at the CAD datum.'));
       const fields = el('div'); fields.className = 'cut-settings-fields'; fitting.append(fields);
@@ -326,7 +327,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       const row = el('div'); row.className = 'cut-stock-row'; row.append(el('strong', entry.name));
       numberField(row, 'Length (mm)', entry.length, n => { entry.length = n; stockChanged(g); }, 1);
       const width = numberField(row, 'Width (mm)', entry.width, n => { entry.width = n; stockChanged(g); }, 1);
-      width.disabled = g.kind === 'timber';
+
       numberField(row, entry.offcut ? 'Pieces available' : 'Available (0 = unlimited)', entry.copies,
         n => { entry.copies = n; stockChanged(g); }, entry.offcut ? 1 : 0, 1000, true);
       if (!isStaticSite && opts.stock.length > 1) {

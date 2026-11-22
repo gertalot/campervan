@@ -9,7 +9,7 @@ export interface HumanViewer extends CameraViewer {
 }
 
 export function createViewerHuman(container: HTMLElement, current: () => HumanViewer | undefined,
-  prepare: () => void, save: () => void) {
+  prepare: () => void, save: () => void, orbitTarget: () => number[]) {
   let active = false, frame = 0, lastTime = 0;
   let requesting = false;
   let previousControls = true;
@@ -45,6 +45,7 @@ export function createViewerHuman(container: HTMLElement, current: () => HumanVi
     if (value === active || (value && (!viewer?.ready || button.disabled))) return;
     stop();
     if (value && viewer) {
+      active = true;
       prepare();
       if (viewer.getOrtho()) {
         const position = viewer.getCameraPosition(), target = viewer.getCameraTarget();
@@ -55,7 +56,11 @@ export function createViewerHuman(container: HTMLElement, current: () => HumanVi
       }
       previousControls = viewer.rendered.controls.controls.enabled;
       viewer.rendered.controls.controls.enabled = false;
-    } else if (viewer?.ready) viewer.rendered.controls.controls.enabled = previousControls;
+    } else if (viewer?.ready) {
+      viewer.rendered.controls.controls.enabled = previousControls;
+      // Keep the eye and viewing direction; only replace the distant look target.
+      viewer.setCameraLocationSettings(viewer.getCameraPosition(), viewer.getCameraQuaternion(), orbitTarget(), null, false);
+    }
     active = value;
     button.setAttribute('aria-pressed', String(active)); button.classList.toggle('is-active', active);
     container.classList.toggle('cad-human-view', active); hint.hidden = !active;
@@ -176,6 +181,7 @@ export function createViewerHuman(container: HTMLElement, current: () => HumanVi
   window.addEventListener('blur', () => setActive(false));
   document.addEventListener('visibilitychange', () => { if (document.hidden) setActive(false); });
   return {
+    isActive: () => active,
     commands: () => [command()],
     cancel: () => setActive(false),
     toolChanged(measuring: boolean) { if (measuring) setActive(false); button.disabled = measuring; },

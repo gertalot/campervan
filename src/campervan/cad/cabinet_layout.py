@@ -40,7 +40,7 @@ def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
             lo = mid
         else:
             hi = mid
-    return Wire(curve.trim(0, (lo + hi) / 2).edges()).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, 0)))
+    return Wire(curve.trim(0, (lo + hi) / 2).edges()).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, 0, -p.floor_surface_z_mm)))
 
 
 @dataclass
@@ -62,9 +62,10 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     front = p.bed_width_mm + p.bed_inward_offset_mm + 6.0  # Follow the bed's shifted outer edge.
     curve = cabinet_back_profile(p, p.cabinet_back_clearance_mm)
     # A square-topped frame fits below the lowest wall-side ceiling. Skins supply the scribed trim.
-    skin_top = ceiling_height(p, front + t, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm)
+    skin_top = ceiling_height(p, front + t, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm) - p.floor_surface_z_mm
     top = min(
         skin_top, ceiling_height(p, curve.position_at(1).X, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm)
+        - p.floor_surface_z_mm
     )
     first = p.platform_height_mm + p.foam_thickness_mm + p.cabinet_mattress_clearance_mm
     split = p.cabinet_rear_storage_height_mm + w
@@ -73,13 +74,13 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     bays = ((w, middle - w / 2), (middle + w / 2, p.cabinet_length_mm - w))
     if min(end - start for start, end in bays) < 120 or not w < first < split - 2 * w < upper < top - w:
         raise ValueError("Cabinet bays and shelves must leave usable inset-door openings.")
-    if FURNITURE_FIT_ENABLED and first - w < p.arch_height_mm + 3:
+    if FURNITURE_FIT_ENABLED and first - w < p.arch_height_mm + 3 - p.floor_surface_z_mm:
         raise ValueError("Cabinet lower shelf rail must clear the wheel arch.")
     if w <= p.cabinet_shelf_thickness_mm + 12:
         raise ValueError("Cabinet timber must leave room for the shelf seats and module fixings.")
     body, ceiling = interior_limits(p, p.cabinet_ceiling_gap_mm)
     room = Part(
-        ((body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, 0)))).solids()
+        ((body & ceiling).mirror(Plane.YZ).moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, -p.floor_surface_z_mm)))).solids()
     )
     timber_room = Part(room.solids())
     # Plywood follows the actual side/pillars and finished ceiling, independently of timber planes.
@@ -87,7 +88,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
         (
             (body & ceiling_space(p, p.ceiling_ply_thickness_mm))
             .mirror(Plane.YZ)
-            .moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, 0)))
+            .moved(Location((p.cargo_width_mm, -p.cabinet_rear_y_mm, -p.floor_surface_z_mm)))
         ).solids()
     )
     # The simpler inboard envelope below is for the timber only.
@@ -105,7 +106,7 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     room -= Solid.extrude(section, (0, p.cabinet_length_mm + 2, 0)).moved(Location((0, -1, 0)))
     arch = panel((p.cargo_width_mm - p.arch_gap_mm) / 2 + 6, p.arch_length_mm + 6, p.arch_height_mm + 3)
     arch.location = Location(
-        ((p.cargo_width_mm + p.arch_gap_mm) / 2 - 3, p.arch_rear_offset_mm - p.cabinet_rear_y_mm - 3, 0)
+        ((p.cargo_width_mm + p.arch_gap_mm) / 2 - 3, p.arch_rear_offset_mm - p.cabinet_rear_y_mm - 3, -p.floor_surface_z_mm)
     )
     # The plane is a fitting datum, not a solid back panel: its lower central
     # opening is bridged over the wheel arch. Check the actual timbers against
