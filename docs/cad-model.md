@@ -9,14 +9,13 @@ The source scan is aligned in metres, rotated by `cad_reference.rotation`, scale
 `cad_reference.translation_mm`. The reference is detached
 before OCP replaces geometry and reattached afterwards, outside CAD selection and furniture mirroring.
 
-The active reference is `nv200-photo-20261120`: the cleaned photographic scan with 4,877,862 triangles and recovered
-EXR texture colours stored on its vertices. Its 1205mm wheel-arch-gap calibration is preserved. A rigid point-to-plane
-fit to the earlier registered interior scan transfers the working CAD placement, including that registration's
-approximately centimetre-scale rear-datum uncertainty; it does not fit scale or deform the mesh. Published PLY
-coordinates are metres, while the original cleaned ScanRuler mesh remains in millimetres. Original capture databases remain available for reconstruction; the older generated runs were removed during storage
-cleanup. The local run serves the live viewer, while `data/scan-reference/` versions the same mesh and pose for exports.
-The published photographic mesh has its triangle winding reversed to face into the cabin, as required by See inside.
-The source ScanRuler mesh is unchanged.
+The active reference `nv200-photo-20261120` uses the 249,842-triangle export from
+`data/scanruler/nv200-250k-doors-colour.scanruler`. The rear and left sliding door panels were repaired before
+reduction. The PLY stores the recovered photographic texture as RGB on its 126,585 vertices.
+The export converts ScanRuler millimetres to metres and preserves the inward-facing triangle order used by See inside.
+It retains the 1205mm wheel-arch-gap calibration and the rigid registration to the earlier interior scan,
+including its approximately centimetre-scale rear-datum uncertainty. The local scan run and the versioned
+`data/scan-reference/` use the same mesh and pose for the live CAD viewer, fitting calculations and static exports.
 
 During comparison, `vehicle-fade.ts` applies a light-pink display tint and a base vehicle opacity, including the
 wheel arches. See inside fading and click-through picking still apply to nearby panels and edges. Hiding the

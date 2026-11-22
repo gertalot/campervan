@@ -1,8 +1,8 @@
 {
   "key": "run:nv200-photo-20261120",
   "name": "nv200-photo-20261120",
-  "display_name": "NV200 \u2014 detailed colour scan",
-  "bytes": 101185721,
+  "display_name": "NV200 \u2014 250K colour scan",
+  "bytes": 5147077,
   "group_id": null,
   "group_name": null,
   "archived": false,
@@ -12,7 +12,7 @@
   "layers": [
     {
       "id": "mesh",
-      "label": "Detailed colour mesh",
+      "label": "Repaired doors \u00b7 249,842 triangles",
       "asset": "mesh.ply",
       "kind": "mesh"
     }
@@ -95,5 +95,10 @@
       ],
       "scale_fitting": false
     }
+  },
+  "geometry": {
+    "vertices": 126585,
+    "triangles": 249842,
+    "full_triangles": 4536713
   }
 }
