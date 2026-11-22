@@ -1,0 +1,1977 @@
+{
+  "thickness_mm": 6.0,
+  "mesh_size_mm": 35.0,
+  "structural_wood_mass_kg": 11.500936039413624,
+  "load_mass_kg": 80.00000000000003,
+  "quadratic_dofs": 268389,
+  "locked_interface_nodes": 558,
+  "stile_bearing_nodes": 78,
+  "anchors": [
+    {
+      "part": "Cabinet/Upper module/Frames/Rear front stile",
+      "top_lateral_nodes": 98,
+      "z": 1203.9379822908818
+    },
+    {
+      "part": "Cabinet/Upper module/Frames/Middle front stile",
+      "top_lateral_nodes": 52,
+      "z": 1256.4903370916109
+    },
+    {
+      "part": "Cabinet/Upper module/Frames/Cab-end front stile",
+      "top_lateral_nodes": 32,
+      "z": 1256.4903370916109
+    },
+    {
+      "part": "Cabinet/Upper module/Frames/Rear top relocated stile",
+      "top_lateral_nodes": 60,
+      "z": 1256.4903370916109
+    }
+  ],
+  "results": {
+    "gravity": {
+      "maximum_abs_component_mm": [
+        0.39885614914379514,
+        0.0498649375613823,
+        2.4181312463951388
+      ],
+      "applied_force_N": [
+        0.0,
+        0.0,
+        -784.8000000000003
+      ],
+      "reaction_force_N": [
+        -3.747850030322297e-09,
+        -1.3072565252514323e-09,
+        784.7999999982442
+      ],
+      "force_balance_N": [
+        -3.747850030322297e-09,
+        -1.3072565252514323e-09,
+        -1.7561205822858028e-09
+      ],
+      "contact_minimum_gap_mm": -5.204170427930421e-17,
+      "contact_maximum_gap_mm": 0.0033632350267007276,
+      "contact_compression_N": 201.7346315158504,
+      "contact_open_nodes": 21,
+      "contact_complementarity_Nmm": 6.164120052774044e-16,
+      "strain_work_Nmm": 166.49025128390008,
+      "free_residual_relative": 8.491966284850157e-10,
+      "shelves": [
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "absolute_down_mm": 2.4181312463951388,
+          "relative_sag_mm": 2.399086471868638,
+          "support_mean_displacement_z_mm": [
+            -0.009298403672907648,
+            -0.029992119987645966
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "absolute_down_mm": 0.3654048038137983,
+          "relative_sag_mm": 0.3493860950678207,
+          "support_mean_displacement_z_mm": [
+            -0.024205537066281643,
+            -0.007670889921950658
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "absolute_down_mm": 0.962084373629664,
+          "relative_sag_mm": 0.9420581961900638,
+          "support_mean_displacement_z_mm": [
+            -0.02867034041718554,
+            -0.011382014462014907
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "absolute_down_mm": 0.4269075297838255,
+          "relative_sag_mm": 0.40524083856365756,
+          "support_mean_displacement_z_mm": [
+            -0.011946944752896088,
+            -0.03227771322012889
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "absolute_down_mm": 0.3490291427333497,
+          "relative_sag_mm": 0.3269337421529533,
+          "support_mean_displacement_z_mm": [
+            -0.03154786360621766,
+            -0.012555487264859113
+          ]
+        }
+      ],
+      "lateral_increment_main_frame_max_abs_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lateral_increment_supporting_panels_max_abs_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part_peak_increment_mm": [
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 40mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 40mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 510mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 510mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 770mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 770mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear loading jamb",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end bridge upright",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Wheel-arch bridge",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage aft catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage fore catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage upper flap catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 1 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 2 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Lower cab-end backing",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 810mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 810mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear top relocated stile",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle rear upper shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Scribed ceiling filler",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end bottom backing",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear bottom backing",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end top backing",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear top backing",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    "across_van_0.5g": {
+      "maximum_abs_component_mm": [
+        1.7077129757997322,
+        0.06358419506823772,
+        2.414753131462257
+      ],
+      "applied_force_N": [
+        392.40000000000015,
+        0.0,
+        -784.8000000000003
+      ],
+      "reaction_force_N": [
+        -392.39999999894724,
+        5.142908321431605e-10,
+        784.7999999951976
+      ],
+      "force_balance_N": [
+        1.0529106475587469e-09,
+        5.142908321431605e-10,
+        -4.802700459549669e-09
+      ],
+      "contact_minimum_gap_mm": -9.71445146547012e-17,
+      "contact_maximum_gap_mm": 0.0023894778853537947,
+      "contact_compression_N": 362.6415762250526,
+      "contact_open_nodes": 15,
+      "contact_complementarity_Nmm": 1.8112398558149097e-15,
+      "strain_work_Nmm": 181.704836109913,
+      "free_residual_relative": 1.0019574632467503e-09,
+      "shelves": [
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "absolute_down_mm": 2.414753131462257,
+          "relative_sag_mm": 2.397479484530222,
+          "support_mean_displacement_z_mm": [
+            -0.00663441500178637,
+            -0.029223874266011318
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "absolute_down_mm": 0.3661661527338627,
+          "relative_sag_mm": 0.34959141894012435,
+          "support_mean_displacement_z_mm": [
+            -0.024897604355487445,
+            -0.008088197515336428
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "absolute_down_mm": 0.9584344769490944,
+          "relative_sag_mm": 0.938802634833454,
+          "support_mean_displacement_z_mm": [
+            -0.028171077576831637,
+            -0.011092606654449114
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "absolute_down_mm": 0.41662748299926716,
+          "relative_sag_mm": 0.3988104280626681,
+          "support_mean_displacement_z_mm": [
+            -0.004957994185604953,
+            -0.031855258194994455
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "absolute_down_mm": 0.3475198670292769,
+          "relative_sag_mm": 0.3258903735965742,
+          "support_mean_displacement_z_mm": [
+            -0.03121173644329666,
+            -0.011958599461494942
+          ]
+        }
+      ],
+      "lateral_increment_main_frame_max_abs_mm": [
+        0.09280170788675182,
+        0.01587223798405893,
+        0.021997092282045917
+      ],
+      "lateral_increment_supporting_panels_max_abs_mm": [
+        0.08571538824600262,
+        0.02464457962707388,
+        0.022051137684458752
+      ],
+      "part_peak_increment_mm": [
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.09280170788675182,
+            0.011389446307792232,
+            0.011455112048893103
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.04996286977186877,
+            0.011366369721289628,
+            0.0053426254649049515
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.02296661140600405,
+            0.01162695452510029,
+            0.0025216445313800007
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 40mm",
+          "max_abs_mm": [
+            0.00283325167405676,
+            0.00029804070082328614,
+            0.001141969382593783
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 40mm",
+          "max_abs_mm": [
+            0.0027590684641279877,
+            0.0003180206245003032,
+            0.001209764386628206
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 510mm",
+          "max_abs_mm": [
+            0.08827011932443561,
+            0.01172385036075974,
+            0.007018109534656194
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 510mm",
+          "max_abs_mm": [
+            0.04641527822024331,
+            0.011642045050191938,
+            0.0011956996621329766
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 770mm",
+          "max_abs_mm": [
+            0.08392193837005293,
+            0.008296284216005782,
+            0.012472660514621474
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 770mm",
+          "max_abs_mm": [
+            0.04637595405253016,
+            0.007901756843248732,
+            0.0053426254649049515
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear loading jamb",
+          "max_abs_mm": [
+            0.0855612131802489,
+            0.005883128832331101,
+            0.011574066502004213
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end bridge upright",
+          "max_abs_mm": [
+            0.01917564046564455,
+            0.005573561969984084,
+            0.0018565264191646863
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Wheel-arch bridge",
+          "max_abs_mm": [
+            0.07178943209026686,
+            0.005930734701646515,
+            0.005493940367515934
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.04861275711461656,
+            0.012051480939023352,
+            0.003615285501443931
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.01976219460698882,
+            0.012726606549738555,
+            0.0019997162156162023
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage aft catch mounting block",
+          "max_abs_mm": [
+            0.07961832868130439,
+            0.00986376912417758,
+            0.006748207021742068
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage fore catch mounting block",
+          "max_abs_mm": [
+            0.05439489771825705,
+            0.0097333307828922,
+            0.0024916761468755117
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage upper flap catch mounting block",
+          "max_abs_mm": [
+            0.06936503114138254,
+            0.0065561395921744465,
+            0.009791103730462755
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 1 catch mounting block",
+          "max_abs_mm": [
+            0.0245951918952104,
+            0.010223839676385961,
+            0.0009370513565055954
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 2 catch mounting block",
+          "max_abs_mm": [
+            0.037102059677006305,
+            0.0064091449772510625,
+            0.003372005835591406
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.047268864758291194,
+            0.012614495135147893,
+            0.005492211776052549
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.021704940064267896,
+            0.012942770583244018,
+            0.0014111958183550787
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.08549616251531757,
+            0.007244304945430463,
+            0.012409257091859364
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.04914001811438049,
+            0.012866259074325622,
+            0.006688833475102556
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.04757816973971776,
+            0.012655161161011034,
+            0.006192761023991578
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.021847479635956877,
+            0.012742203034507278,
+            0.0015427644066526944
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.048980169595423916,
+            0.01331346040831953,
+            0.011708565691895127
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.020760057378352136,
+            0.014482027024257752,
+            0.0053824496914311746
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.08571538824600262,
+            0.010205811364240359,
+            0.01395931162748677
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Lower cab-end backing",
+          "max_abs_mm": [
+            0.05495470707622726,
+            0.013918603110387751,
+            0.00602294155493938
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "max_abs_mm": [
+            0.08238492578318712,
+            0.013738548570868862,
+            0.013338276179996753
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "max_abs_mm": [
+            0.04752013461083421,
+            0.01296840824965835,
+            0.0033557283861361843
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "max_abs_mm": [
+            0.04644514989317646,
+            0.013379854497480472,
+            0.0063550992649566256
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.08231114525888286,
+            0.007281346186196695,
+            0.018585808058608398
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.0476584502140312,
+            0.007142295620429476,
+            0.012419556097771987
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.022546795677335533,
+            0.007218202336824172,
+            0.0048242026259637805
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 810mm",
+          "max_abs_mm": [
+            0.07966449125934154,
+            0.007537038083579464,
+            0.013865147984087904
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 810mm",
+          "max_abs_mm": [
+            0.04526171562661699,
+            0.007343446714938211,
+            0.005786916924751875
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.05139534676040576,
+            0.0030447409465311688,
+            0.016071744380916648
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.03274725796930758,
+            0.0018127410070004804,
+            0.009330639237452323
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.0043305043935613465,
+            0.0004895567454003616,
+            0.012894591720237367
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.004270064971638944,
+            0.0006345022787864335,
+            0.011636478486566612
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear top relocated stile",
+          "max_abs_mm": [
+            0.041904368379312586,
+            0.0020678038846041326,
+            0.015237643215334842
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper shelf cleat",
+          "max_abs_mm": [
+            0.05228391628041711,
+            0.007910588109286826,
+            0.021997092282045917
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle rear upper shelf cleat",
+          "max_abs_mm": [
+            0.034829217496884224,
+            0.012572603797735376,
+            0.008461494126605767
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.03368259053654886,
+            0.012522393646229838,
+            0.008351457867638867
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.016478062224878118,
+            0.013304323037033956,
+            0.0037755472475608457
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.04767542010814618,
+            0.0037788766538929775,
+            0.010911302941595445
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.001140220994695578,
+            0.0001610943188724808,
+            0.011417521389512103
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.027026917234060113,
+            0.003162985443589601,
+            0.0061401940642161895
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.0014161171426851022,
+            0.00044726320780467477,
+            0.007039934009221361
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.044244546233412514,
+            0.013081368002431516,
+            0.008120662786689829
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.02083402592554785,
+            0.013279068656374468,
+            0.003533807484664052
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.046166618369228425,
+            0.013156549423516538,
+            0.008262515124697972
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.03056372867360511,
+            0.012435778902747547,
+            0.008490316391955188
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.015194737383425305,
+            0.013304323037033956,
+            0.0038886122529142066
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.03166731271871912,
+            0.012395156481832058,
+            0.0086893708586494
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.08185547375355044,
+            0.01587223798405893,
+            0.014245049946622502
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.04780793681205059,
+            0.013056095387176342,
+            0.007386386422472274
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.04623997029288441,
+            0.013009518217419072,
+            0.007219382435892076
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.021618815259862267,
+            0.012810417072970221,
+            0.0024143195883172524
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Scribed ceiling filler",
+          "max_abs_mm": [
+            0.0011789288652496934,
+            0.00046140302035109753,
+            0.012729544527185513
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.04584346162505634,
+            0.013144755328414925,
+            0.010336373906070381
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.020345083158693923,
+            0.015756043232036207,
+            0.0043540115559331585
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.08059182802867937,
+            0.02464457962707388,
+            0.022051137684458752
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end bottom backing",
+          "max_abs_mm": [
+            0.05419325887987646,
+            0.014298137484550192,
+            0.009102407237321489
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear bottom backing",
+          "max_abs_mm": [
+            2.1065691249435274,
+            0.03146956151453408,
+            0.20936643382260978
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end top backing",
+          "max_abs_mm": [
+            0.030510699309956573,
+            0.013534452849332555,
+            0.009298846532277524
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear top backing",
+          "max_abs_mm": [
+            0.18032090732096742,
+            0.01563801863729598,
+            0.0666454940193811
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.045701599838226664,
+            0.012307352906592153,
+            0.023330334894654095
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.031219100113735743,
+            0.013304323037033956,
+            0.008701123527165025
+          ]
+        }
+      ]
+    },
+    "along_van_0.5g": {
+      "maximum_abs_component_mm": [
+        0.39720928367521924,
+        0.2885933959224369,
+        2.4294861772930765
+      ],
+      "applied_force_N": [
+        0.0,
+        392.40000000000015,
+        -784.8000000000003
+      ],
+      "reaction_force_N": [
+        -4.377248785658594e-09,
+        -392.3999999862155,
+        784.7999999936216
+      ],
+      "force_balance_N": [
+        -4.377248785658594e-09,
+        1.3784642760583665e-08,
+        -6.378741090884432e-09
+      ],
+      "contact_minimum_gap_mm": -6.548581121812447e-17,
+      "contact_maximum_gap_mm": 0.0038094176831584333,
+      "contact_compression_N": 221.59019768248316,
+      "contact_open_nodes": 19,
+      "contact_complementarity_Nmm": 1.1158527034222645e-15,
+      "strain_work_Nmm": 250.3018333543901,
+      "free_residual_relative": 1.299677513939355e-09,
+      "shelves": [
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "absolute_down_mm": 2.4294861772930765,
+          "relative_sag_mm": 2.405815945910031,
+          "support_mean_displacement_z_mm": [
+            -0.012574548702955296,
+            -0.03613315458295773
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "absolute_down_mm": 0.3655143151507781,
+          "relative_sag_mm": 0.34916422423185683,
+          "support_mean_displacement_z_mm": [
+            -0.028063801566260895,
+            -0.004406035124010522
+          ]
+        },
+        {
+          "shelf": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "absolute_down_mm": 0.9610648797993734,
+          "relative_sag_mm": 0.9419322493913,
+          "support_mean_displacement_z_mm": [
+            -0.03161035521537137,
+            -0.006654905600775329
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "absolute_down_mm": 0.4354236944721222,
+          "relative_sag_mm": 0.4093207140651793,
+          "support_mean_displacement_z_mm": [
+            -0.013626168613188784,
+            -0.039723883470483126
+          ]
+        },
+        {
+          "shelf": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "absolute_down_mm": 0.3529983249751044,
+          "relative_sag_mm": 0.33261702396025417,
+          "support_mean_displacement_z_mm": [
+            -0.03409590368232233,
+            -0.006539816499405457
+          ]
+        }
+      ],
+      "lateral_increment_main_frame_max_abs_mm": [
+        0.038360561894933906,
+        0.24092020543362805,
+        0.04174998431360775
+      ],
+      "lateral_increment_supporting_panels_max_abs_mm": [
+        0.03857424431510116,
+        0.24304996483597316,
+        0.025125270757685985
+      ],
+      "part_peak_increment_mm": [
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.038360561894933906,
+            0.23148217365763674,
+            0.01523100339039218
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.005338756770150233,
+            0.22971982590379905,
+            0.014673193952086976
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.015859371525471393,
+            0.23056080884279348,
+            0.016593348981976463
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 40mm",
+          "max_abs_mm": [
+            0.00045406619457911274,
+            0.000808710476510617,
+            0.0014683888107812273
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 40mm",
+          "max_abs_mm": [
+            0.0012065920805829102,
+            0.0007444477071150914,
+            0.001734534282416232
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 510mm",
+          "max_abs_mm": [
+            0.021765977232348174,
+            0.22344734899169302,
+            0.01897839579136026
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 510mm",
+          "max_abs_mm": [
+            0.012462887513741285,
+            0.22444877093678445,
+            0.009734124340154849
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear front rail at 770mm",
+          "max_abs_mm": [
+            0.03516325134676228,
+            0.22457654494696058,
+            0.007557658519534299
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end front rail at 770mm",
+          "max_abs_mm": [
+            0.014110366115113149,
+            0.22462420364360228,
+            0.002202008358383736
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear loading jamb",
+          "max_abs_mm": [
+            0.03829285034533058,
+            0.24092020543362805,
+            0.00946191376170623
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end bridge upright",
+          "max_abs_mm": [
+            0.013657499361931537,
+            0.23409447468905523,
+            0.013535543761015423
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Wheel-arch bridge",
+          "max_abs_mm": [
+            0.026490999981395993,
+            0.23481284678078773,
+            0.007622223368450198
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Middle cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.004417875184143076,
+            0.23972316182226702,
+            0.0057087179081658675
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower shelf cleat",
+          "max_abs_mm": [
+            0.014253002647014987,
+            0.24035530637083852,
+            0.005581862829666953
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage aft catch mounting block",
+          "max_abs_mm": [
+            0.011257966926527755,
+            0.22184513758105395,
+            0.017800537557420178
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage fore catch mounting block",
+          "max_abs_mm": [
+            0.007062002099781375,
+            0.22250464108594742,
+            0.005011810546274044
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Rear storage upper flap catch mounting block",
+          "max_abs_mm": [
+            0.018630383027600297,
+            0.22536225400948587,
+            0.004412029466387829
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 1 catch mounting block",
+          "max_abs_mm": [
+            0.012207869768775699,
+            0.22374337086608978,
+            0.011247957406291783
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Cab-end lower 2 catch mounting block",
+          "max_abs_mm": [
+            0.006891513754000428,
+            0.22483351476955798,
+            0.0009025860038290173
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.004830008112948567,
+            0.23982414445476097,
+            0.005262398010232462
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Backing glue cleats/Lower cab-end backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.015676685879289613,
+            0.24034428412911066,
+            0.006437859076024195
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.03822997979051543,
+            0.23943843957984365,
+            0.006855649234609224
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.004641421778607128,
+            0.23718126454652477,
+            0.009882045745567399
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.003585917135686326,
+            0.2371976891419626,
+            0.005622491637589079
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.015551549204208495,
+            0.23504984185154396,
+            0.007188249926521665
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.004796144639599353,
+            0.2415017776316168,
+            0.006555007556965753
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.01603618295949081,
+            0.24304996483597316,
+            0.009810661342386152
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.03857424431510116,
+            0.240513812554735,
+            0.00744127287002101
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Skin/Lower cab-end backing",
+          "max_abs_mm": [
+            0.015730240447314414,
+            0.24097057283909035,
+            0.007123482315523495
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Rear shelf at 770mm",
+          "max_abs_mm": [
+            0.037520929190329934,
+            0.2423595032082187,
+            0.02118068176653476
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 510mm",
+          "max_abs_mm": [
+            0.014353691529758721,
+            0.24044713530482337,
+            0.009704738796825187
+          ]
+        },
+        {
+          "part": "Cabinet/Lower module/Shelves/Cab-end shelf at 770mm",
+          "max_abs_mm": [
+            0.015574283951662363,
+            0.23447619119804872,
+            0.007583905221463377
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front stile",
+          "max_abs_mm": [
+            0.03776758308328072,
+            0.22150962982888503,
+            0.028700811412548422
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle front stile",
+          "max_abs_mm": [
+            0.006844814218541812,
+            0.22171699620305868,
+            0.024158287501364645
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front stile",
+          "max_abs_mm": [
+            0.018266460612939656,
+            0.22200592797408972,
+            0.022561084859696913
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 810mm",
+          "max_abs_mm": [
+            0.03504193611798348,
+            0.22169203682583083,
+            0.008371179521457307
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 810mm",
+          "max_abs_mm": [
+            0.014272503982605083,
+            0.22171074513222241,
+            0.0019173944171837157
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.027563705785762442,
+            0.1694113685450179,
+            0.027020374944584986
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1033.25mm",
+          "max_abs_mm": [
+            0.014204521279006403,
+            0.17160939081433405,
+            0.01927305140757286
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.002481502839055995,
+            0.008188806122557003,
+            0.017049871866086516
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end front rail at 1256.49mm",
+          "max_abs_mm": [
+            0.002681009039179067,
+            0.008747832125650529,
+            0.009085941485338445
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear top relocated stile",
+          "max_abs_mm": [
+            0.021325658280892452,
+            0.1596710651019147,
+            0.04174998431360775
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper shelf cleat",
+          "max_abs_mm": [
+            0.03112943161275545,
+            0.18786963985617575,
+            0.012881033726884317
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle rear upper shelf cleat",
+          "max_abs_mm": [
+            0.00680327289051827,
+            0.19488380539727354,
+            0.01145725856398407
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Middle cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.004351915495210276,
+            0.1951489702293531,
+            0.005900007030424842
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper shelf cleat",
+          "max_abs_mm": [
+            0.017612015867863918,
+            0.19859539552166108,
+            0.011057817369761413
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.022664797432642613,
+            0.16562077187322483,
+            0.019785991206541308
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Rear upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.0003776879334219431,
+            0.001564820228037743,
+            0.009564481855539007
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 1 catch mounting block",
+          "max_abs_mm": [
+            0.0061547642734671,
+            0.16524218449515904,
+            0.011550633866961812
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Cab-end upper 2 catch mounting block",
+          "max_abs_mm": [
+            0.0007073789047506497,
+            0.002130154846368313,
+            0.005834750419827329
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.005818440409327382,
+            0.22162289102351404,
+            0.005906592659775833
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end bottom backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.018071691744321546,
+            0.2187909646499805,
+            0.008171890641241407
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear bottom backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.006337984605731112,
+            0.22161788812986713,
+            0.009988735913724268
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.004371215037054961,
+            0.18753762916388977,
+            0.00653754593909725
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper cab-end top backing \u00b7 Cab-end glue cleat",
+          "max_abs_mm": [
+            0.017320618974469047,
+            0.19131270987030352,
+            0.009652277742917242
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Backing glue cleats/Upper rear top backing \u00b7 Middle glue cleat",
+          "max_abs_mm": [
+            0.008133091208553236,
+            0.18737618462176506,
+            0.008577021452914314
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Rear joining rail",
+          "max_abs_mm": [
+            0.03737974585659048,
+            0.23766107067893383,
+            0.0075611525358602934
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle rear joining rail",
+          "max_abs_mm": [
+            0.004757488700493409,
+            0.23040125658461783,
+            0.010282301100419437
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Middle cab-end joining rail",
+          "max_abs_mm": [
+            0.005660218510341583,
+            0.23037972347701732,
+            0.006186145152019512
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Module joint/Cab-end joining rail",
+          "max_abs_mm": [
+            0.017759820446423193,
+            0.2295078224817634,
+            0.008416296675591909
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Frames/Scribed ceiling filler",
+          "max_abs_mm": [
+            0.0015368923178842762,
+            0.007293921351705428,
+            0.025683985088360985
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Middle supporting panel",
+          "max_abs_mm": [
+            0.007280628311406691,
+            0.22693988429060996,
+            0.007163492162192385
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Cab-end supporting panel",
+          "max_abs_mm": [
+            0.0185359402932804,
+            0.22641899611253724,
+            0.02092438573700474
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Rear supporting panel",
+          "max_abs_mm": [
+            0.037436025596026774,
+            0.23700927988909398,
+            0.025125270757685985
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end bottom backing",
+          "max_abs_mm": [
+            0.024457795022207587,
+            0.22392444702029618,
+            0.008227785971481922
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear bottom backing",
+          "max_abs_mm": [
+            0.0223901685502661,
+            0.22502870679146908,
+            0.07438759021342717
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper cab-end top backing",
+          "max_abs_mm": [
+            0.017288203996197373,
+            0.19131270987030352,
+            0.009706885665128874
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Skin/Upper rear top backing",
+          "max_abs_mm": [
+            0.045073502814821975,
+            0.18746779987992304,
+            0.009537214205371305
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Rear shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.029011752185606362,
+            0.18840813059266387,
+            0.025850449863759048
+          ]
+        },
+        {
+          "part": "Cabinet/Upper module/Shelves/Cab-end shelf at 1033.25mm",
+          "max_abs_mm": [
+            0.017597190718197167,
+            0.19203614545645123,
+            0.019223439230596714
+          ]
+        }
+      ]
+    }
+  }
+}
