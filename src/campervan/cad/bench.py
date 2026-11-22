@@ -3,6 +3,7 @@
 from build123d import Color, Compound, Location, Part
 
 from campervan.cad.cushions import build_cushions
+from campervan.cad.cut_profiles import set_fitting_datums
 from campervan.cad.scan_scribing import scribe_assembly
 from campervan.cad.panels import panel
 from campervan.cad.sliding_bed import build_lid, long_bed_layout
@@ -22,6 +23,7 @@ def build_long_bench(p: Parameters) -> Compound:
         part = panel(*size)
         part.label, part.color = name, Color(0.88, 0.61, 0.25)
         part.location = Location(xyz)
+        set_fitting_datums(part, 2)
         parts.append(part)
 
     # The slotted plywood lid bears on the box rim.
@@ -33,6 +35,8 @@ def build_long_bench(p: Parameters) -> Compound:
             wall -= cutter.moved(Location((-1, start - rear_y, layout.box_top - depth)))
         wall.label, wall.color = name, Color(0.88, 0.61, 0.25)
         wall.location = Location((x, rear_y, 0))
+        # The box rim supports the lid; fitting the van must not alter its height.
+        set_fitting_datums(wall, 2)
         parts.append(wall)
     for name, y in (("Rear end panel", layout.rear_panel_y),
                     ("Centre support divider", (length - t) / 2), ("Cab-end panel", length - t)):

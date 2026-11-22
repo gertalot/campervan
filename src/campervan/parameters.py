@@ -220,7 +220,7 @@ class Parameters(BaseModel):
     )
 
     furniture_rear_gap_mm: float = Field(
-        default=100.0,
+        default=80.0,
         ge=0,
         title="Furniture gap to rear door",
         description="Furniture setback from the rear opening at the pillar; the opening centre bows farther aft.",

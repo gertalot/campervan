@@ -10,12 +10,15 @@ from campervan.cad.bed_lift import (
     LID_BOLT_XS, LID_COUNTERBORE_DEPTH, LID_COUNTERBORE_RADIUS, RAIL_WIDTH, lid_location, lift_mounts,
 )
 from campervan.cad.cross_bench_layout import LAGUN_BRACKET_WIDTH
+from campervan.cad.cut_profiles import set_fitting_datums
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
 WOOD = Color(0.87, 0.70, 0.43)
 FIXED_WOOD = Color(0.72, 0.52, 0.32)
 HINGE_SLAT_TRIM = 5.0
+# Registered rear-pillar chamfer, in near-wall construction/world X+Y coordinates.
+REAR_PILLAR_CORNER_SUM_MM = 214.0
 COMB_TOOTH_OVERHANG = 20.0
 BOX_RAIL_RESERVE = 20.0
 MOVING_FRAME_UPSTAND = 50.0
@@ -112,8 +115,7 @@ def long_bed_layout(p: Parameters) -> BedLayout:
     if any(end - start < SLAT_BRACKET_WIDTH + 2 * SLAT_BRACKET_CLEARANCE for start, end in slots):
         raise ValueError("Ventilation slots must be wide enough for the bracket rebates and clearance.")
     # Align the rectangular rear wall and longitudinal wall with the end of the lid's angled corner.
-    corner_cut = (p.bed_slat_rear_setback_mm + HINGE_SLAT_TRIM + p.frame_thickness_mm
-                  + ys[0] + p.slat_width_mm / 2)
+    corner_cut = REAR_PILLAR_CORNER_SUM_MM - p.bed_inward_offset_mm - rear - p.furniture_rear_gap_mm
     rear_panel_y = corner_cut
     return BedLayout(ys, travel, rear, front, box_front, moving_front, slat_bottom,
                      lid_rear, box_top, rear_panel_y, moving_support_length)
@@ -144,7 +146,7 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
     for i in range(1 if moving else 0, len(layout.slat_ys), 2):
         slat = Part([Solid.extrude(profile, (slat_length, 0, 0))])
         if not moving and i == 0:
-            slat -= rear_wall_corner_cutter(p.slat_width_mm / 2, p.slat_thickness_mm)
+            slat -= rear_wall_corner_cutter(layout.rear_panel_y - x - layout.slat_ys[0], p.slat_thickness_mm)
         if not moving:
             for _, mount_y, mirrored in lift_mounts(p.seat_length_mm, p.frame_thickness_mm, layout.rear_panel_y):
                 bolt_y = mount_y + (-RAIL_WIDTH / 2 if mirrored else RAIL_WIDTH / 2)
@@ -258,6 +260,7 @@ def build_lid(p: Parameters, layout: BedLayout) -> Compound:
     retainer = fillet(retainer.edges().filter_by(Axis.X).group_by(Axis.Z)[-1], SIDE_RAIL_END_RADIUS)
     retainer.label, retainer.color = "Wall-side cushion rail", Color(0.88, 0.61, 0.25)
     retainer.location = Location((0, corner_cut, p.frame_thickness_mm))
+    set_fitting_datums(retainer, 2)  # The upstand height is an assembly dimension.
     lid = Compound(
         label="Hinged lid",
         children=[

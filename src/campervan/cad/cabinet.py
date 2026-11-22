@@ -9,7 +9,7 @@ from campervan.cad.cabinet_doors import DOOR_COLOR, REBATE_WIDTH, build_cabinet_
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
 from campervan.cad.scan_scribing import scribe_assembly
-from campervan.cad.scan_scribe_data import CABINET_SCRIBE_FLOOR_Z_MM
+from campervan.cad.scan_scribe_data import CABINET_SCRIBE_FLOOR_Z_MM, CABINET_SCRIBE_REAR_Y_MM
 from campervan.cad.cabinet_upper import rear_face_clearance, rear_panel_clearance, rear_upper_post_y
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
@@ -20,8 +20,9 @@ SKIN = Color(0.91, 0.80, 0.62)
 
 
 def build_cabinet(p: Parameters) -> Compound:
-    if abs(p.floor_surface_z_mm - CABINET_SCRIBE_FLOOR_Z_MM) > 0.001:
-        raise ValueError("Regenerate the cabinet scan profiles for the changed finished-floor elevation.")
+    if (abs(p.floor_surface_z_mm - CABINET_SCRIBE_FLOOR_Z_MM) > 0.001
+            or abs(p.cabinet_rear_y_mm - CABINET_SCRIBE_REAR_Y_MM) > 0.001):
+        raise ValueError("Regenerate the cabinet scan profiles for the changed floor elevation or rear position.")
     layout = cabinet_layout(p)
     w, t, skin = p.cabinet_frame_width_mm, p.cabinet_frame_thickness_mm, p.cabinet_partition_thickness_mm
     shelf = p.cabinet_shelf_thickness_mm

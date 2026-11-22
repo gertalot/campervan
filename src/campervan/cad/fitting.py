@@ -14,8 +14,9 @@ REFERENCE = Path("data/scan-reference")
 
 
 class VehicleFitting:
-    def __init__(self, width: float):
+    def __init__(self, width: float, floor_z: float):
         self.width = width
+        self.floor_z = floor_z
         reference = json.loads((REFERENCE / "reference.json").read_text())
         pose = np.eye(4)
         pose[:3, :3] = reference["cad_reference"]["rotation"]
@@ -28,7 +29,7 @@ class VehicleFitting:
         xyz = vertices[triangles]
         normals = np.cross(xyz[:, 1] - xyz[:, 0], xyz[:, 2] - xyz[:, 0])
         horizontal = np.abs(normals[:, 2]) > 0.8 * np.linalg.norm(normals, axis=1)
-        floor = horizontal & (xyz[:, :, 2].max(axis=1) < 10)
+        floor = horizontal & (xyz[:, :, 2].max(axis=1) <= floor_z)
         # This hanging strap is removable, not a ceiling fitting boundary.
         strap = ((vertices[:, 0] > 1080) & (vertices[:, 0] < 1140)
                  & (vertices[:, 1] > 635) & (vertices[:, 1] < 677)
@@ -39,8 +40,10 @@ class VehicleFitting:
                                  o3d.core.Tensor(triangles.astype(np.uint32)))
 
     def edges(self, part: Shape, world: Location, axes: tuple[int, int, int], outline: list,
-              *, furniture: bool) -> tuple[dict[str, str], bool]:
+              *, furniture: bool, datum_axes: tuple[int, ...] = ()) -> tuple[dict[str, str], bool]:
         thin, across, along = axes
+        datum_sides = {side for axis, labels in ((along, ("left", "right")), (across, ("top", "bottom")))
+                       if axis in datum_axes for side in labels}
         box = Shape.cast(part.wrapped).located(Location()).bounding_box()
         low, high = np.array(tuple(box.min)), np.array(tuple(box.max))
         if not outline:
@@ -87,9 +90,13 @@ class VehicleFitting:
         # so a wall contact at a corner cannot mark its perpendicular floor/joint edge.
         near = ((np.linalg.norm(closest - points, axis=1) <= CONTACT_MM)
                 & ((directions * normals).sum(axis=1) < -0.5))
+        # Assembly datums constrain outer stock dimensions, not interior vehicle notches.
+        near &= np.array([side not in datum_sides for side in sides])
+        # Scan geometry below the finished floor cannot define a furniture fitting edge.
+        near &= closest[:, 2] > self.floor_z
         # Board bottoms resting on the assumed horizontal floor are datum edges,
         # even where noisy scan triangles rise just above the floor filter.
-        near &= ~((points[:, 2] <= 10) & (directions[:, 2] < -0.5))
+        near &= ~((points[:, 2] <= self.floor_z + 1e-5) & (directions[:, 2] < -0.5))
         fitting = {}
         for index in np.flatnonzero(near):
             if sides[index] is not None:

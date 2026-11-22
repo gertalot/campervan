@@ -6,7 +6,7 @@ from typing import Any
 from build123d import Location, Shape
 
 from campervan.cad.scan_scribing import scan_clearance_mm
-from campervan.cad.cut_profiles import cutting_axes, flat_profile
+from campervan.cad.cut_profiles import cutting_axes, fitting_datums, flat_profile
 from campervan.cad.fitting import VehicleFitting
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
@@ -62,7 +62,7 @@ def material_for(path: tuple[str, ...]) -> str:
 
 def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
     cuts = []
-    fitting = VehicleFitting(parameters.cargo_width_mm)
+    fitting = VehicleFitting(parameters.cargo_width_mm, parameters.floor_surface_z_mm)
 
     def visit(part: Shape[Any], path: tuple[str, ...], parent: Location) -> None:
         world = parent * part.location
@@ -126,6 +126,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 "cabinet-frames",
                 "cabinet-backing-cleats",
                 "floor-ribs",
+                "slats",
                 "frames",
                 "cabinet-partitions",
                 "shelves",
@@ -155,7 +156,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             ).strip()
         elif material != "unassigned":
             edges, template_fit = fitting.edges(
-                part, world, axes, profile.get("outline", []), furniture=path[1] != "Finished floor plywood"
+                part, world, axes, profile.get("outline", []), furniture=path[1] != "Finished floor plywood",
+                datum_axes=fitting_datums(part),
             )
             profile.update(fitting_edges=edges, template_fit=template_fit)
         if scribed:

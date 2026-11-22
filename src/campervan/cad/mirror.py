@@ -4,6 +4,8 @@ from typing import Any, cast
 
 from build123d import Compound, Location, Plane, Shape
 
+from campervan.cad.cut_profiles import copy_fitting_datums
+
 
 def mirror_assembly(source: Shape[Any]) -> Shape[Any]:
     """Keep named children and proper rotations; reflect each leaf's native geometry.
@@ -21,6 +23,7 @@ def mirror_assembly(source: Shape[Any]) -> Shape[Any]:
     position, angles = source.location.position, source.location.orientation
     mirrored.location = Location((-position.X, position.Y, position.Z), (angles.X, -angles.Y, -angles.Z))
     mirrored.label, mirrored.color = source.label, source.color
+    copy_fitting_datums(source, mirrored)
     return mirrored
 
 

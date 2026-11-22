@@ -148,14 +148,14 @@ with slight blending. Arch bases can differ from crowns and wall-side spans from
 construction coordinates. At the assembly boundary, `mirror.py` reflects every furniture leaf and local placement,
 then `model.py` places the furniture using `x_world = cargo_width - x_local` and
 `y_world = y_local + furniture_rear_gap_mm`. The cabinet is on the left, the long bench on the right, and all cross-bench,
-drawer, bracket and cushion geometry is mirrored with them. The shared rear setback defaults to 100mm from the opening at the pillars. The closed hatch has 130mm
-centreline clearance behind that bed edge.
+drawer, bracket and cushion geometry is mirrored with them. The shared rear setback is 80mm from the opening at the pillars after the 20mm rearward furniture refit.
+The closed hatch has 110mm centreline clearance behind that bed edge.
 
 The cabinet adds `cabinet_rear_inset_mm` to that shared setback; its fitting envelopes and roof landmarks use the
-same resulting `cabinet_rear_y_mm` datum. The current 10mm inset and 980mm cabinet length put its rear at Y110 and
-cab end at Y1090. The 550mm rear bay keeps the middle divider at Y660. Other furniture retains the shared setback.
+same resulting `cabinet_rear_y_mm` datum. The cabinet inset is zero, aligning its rear face with the bed sliding frame at Y80. Its 980mm length puts
+the cab end at Y1060; the 550mm rear bay keeps the middle divider at Y630. Other furniture retains the shared setback.
 
-Eleven wooden cabinet parts have additional square-edged scan scribes. `scan_scribe_data.py` records the
+Ten wooden cabinet parts have additional square-edged scan scribes. `scan_scribe_data.py` records the
 measured cut regions from the registered photographic scan at this placement; `scan_scribing.py` applies them
 after the original rebates and bores. Assembly placements are captured before reparenting children, preserving
 the hinge origins of the cabinet doors. The scan triangles spanning each complete stock thickness are projected and
@@ -167,7 +167,7 @@ The owner identified the hanging ceiling feature above the middle front stile as
 excluded from structural fitting, restoring the straight stile/rail tops and removing its cut from the divider.
 
 The upper front frame carries a separate scribed ceiling filler above its long top rail, between world Y325 and
-Y1090. It uses the cabinet-frame material and 40×18mm stock, with its bottom on the flat rail and its top following
+Y1060. It uses the cabinet-frame material and 40×18mm stock, with its bottom on the flat rail and its top following
 the plywood ceiling with at least 3mm nominal scan clearance. The plywood profile is continued across the removable
 strap. The existing rear roof-beam infill stays separate. The filler is included in the frame BOM and cutting outline.
 
@@ -185,8 +185,8 @@ The cabinet top therefore stays below the same roof while its overall height red
 moves 5mm in world coordinates; the lower levels and module joint move 10mm. Measured backing contours and shelf
 scribes have been regenerated at those new world heights with at least 3mm sampled clearance. The measured
 upper backing plane stays fixed; the lower plane moves about 1.31mm inboard to meet it at the new upper shelf,
-preserving both row angles and front/rear coplanarity. `CABINET_SCRIBE_FLOOR_Z_MM` records the elevation used
-for those cached measurements; changing it requires regenerating their scan profiles rather than reusing stale cuts.
+preserving both row angles and front/rear coplanarity. `CABINET_SCRIBE_FLOOR_Z_MM` and `CABINET_SCRIBE_REAR_Y_MM` record the elevation and registration used
+for those cached measurements; changing either requires regenerating the profiles rather than reusing stale cuts.
 The seated mannequin solves its feet and hip height in the floor frame, then returns to world coordinates; lying
 mannequins and live furniture/gear motion inherit their parents' floor placement. The camera stays unchanged.
 
@@ -321,6 +321,7 @@ Campervan
 │   │   ├── Wall-side frame
 │   │   ├── Aisle frame
 │   │   ├── Rear mounting frame
+│   │   ├── Front support frame
 │   │   └── Fixed slats
 │   └── Cushions
 │       └── Cross seat
@@ -489,22 +490,28 @@ Both slat sets extend 100mm wallward into the space freed by the removed station
 567mm long (X45–612 retracted), shortened by 10mm at the aisle end. Moving slats are 559mm (X45–604), butting
 against the frame's inner face. Both sets retain the 5mm wall-end trim and square ends.
 Both sets lose a further 18mm at the wall end for an 18 × 50mm cushion-retaining rail on top of the lid.
-The trimmed rail spans X22–40, Y68–1280 and Z372–422, matching the sliding frame's top height and leaving a 5mm gap
+The trimmed rail spans X22–40, Y88–1280 and Z372–422, matching the sliding frame's top height and leaving a 5mm gap
 before the slat ends. It belongs to `Hinged lid`, follows its motion, and uses frame plywood in the BOM.
-At the rear/wall corner, the first fixed slat has a 40 × 40mm, 45° corner cut, leaving 40mm of its 80mm end.
-The lid plywood follows that same cut plane (lid-local X + Y = 68mm at the saved dimensions).
-The wall-side rail has a square rear end at Y68 across its full 18mm thickness, avoiding a sharp angled point.
+At the rear/wall corner, the first fixed slat has a 60 × 60mm, 45° corner cut, leaving 20mm of its 80mm end.
+The lid plywood follows that same cut plane (lid-local X + Y = 88mm at the saved dimensions).
+The wall-side rail has a square rear end at Y88 across its full 18mm thickness, avoiding a sharp angled point.
 Both side rails have 10mm-radius top end corners, rounded through their 18mm thickness: four corners in total.
 `bed_slat_rear_setback_mm` is zero; extension travel is
 448mm to preserve the 1070mm bed width.
-The rear end panel spans local Y68–86, aligning its rear face with the end of the angled lid cut. The rear lift's
-upper rail follows at Y86–116. Central ventilation slots retain the complete Y68–116 rib (the first slot now starts
-at Y116), keeping its bolt seats solid. The original aisle-edge bracket rebates retain their nominal bounds.
-The wall-side longitudinal panel also starts at Y68, flush with the rear panel, and is 1212mm long.
+The rear end panel spans local Y88–106, aligning its rear face with the end of the angled lid cut. The rear lift's
+upper rail follows at Y106–136. Central ventilation slots retain the complete Y88–136 rib (the first slot now starts
+at Y136), keeping its bolt seats solid. The original aisle-edge bracket rebates retain their nominal bounds.
+The wall-side longitudinal panel also starts at Y88, flush with the rear panel, and is 1192mm long.
 At the current placement the rear panel spans world Y168–186, 81mm rearwards of its previous position. The scan
-clearance is checked against the actual pillar rather than the nominal rear-corner radius.
+clearance is checked against the actual pillar rather than the nominal rear-corner radius. The common pillar
+chamfer is vehicle-fixed at construction X+Y=214mm; moving the furniture changes its local depth and all attached
+support, hinge, retainer and access-hole datums together. Arch and seal contours retain their vehicle coordinates;
+the centre-divider cutter's thin Y band follows its new world Y711–729 position. Both benches move 20mm rearward,
+with cross-cushion rear Y1360. The cabinet moves by the same amount, leaving a 300mm corner gap. Floor, scan,
+solar bag, chairs and chilly bin remain fixed. The solar bag has 7mm to the nearest rear bench edge and 95mm to
+the inset rear panel. Stowed table world position stays explicit; the bench-mounted bracket follows the bench.
 Both longitudinal walls have two 40mm-wide, 40mm-deep top notches, with 5mm clearance on each side of the
-lift rails and 10mm extra depth over the previous cuts. They follow the linkage mounts at Y81–121 and Y1227–1267.
+lift rails and 10mm extra depth over the previous cuts. They follow the linkage mounts at Y101–141 and Y1227–1267.
 
 `bed_lift.py` builds two gas-assisted four-bar mechanisms on the end-panel inside faces, replacing the three
 schematic barrels. Published A600/C270/D340/E420 dimensions and photo-estimated pivots define a rigid-link
@@ -585,8 +592,10 @@ The frontend masks excluded assembly roots in the viewer without changing the sa
 Re-including removes that mask, restoring the previous eye settings; disabled eyes retain their state while excluded.
 
 `cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
-18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. A third 18mm rear-facing frame fits
-between their inner faces and retains its solid 92mm-wide aisle-side post; the Lagun mount has moved to the long box.
+18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. Matching rear and front 18mm frames
+fit between their inner faces, each with two legs using the same `member_width_mm` (60mm by default).
+The front frame finishes flush with the cab-facing ends of the side frames. The obsolete wider Lagun mounting post
+is removed; the table mount remains on the long box.
 At the default 400mm platform height,
 the frame tops are Z = 382; the 18mm slats bear directly on them. There is no divider, deck, sliding assembly,
 cab-end skin, hinged lid, brackets or stop plates.
@@ -595,7 +604,8 @@ cab-end skin, hinged lid, brackets or stop plates.
 arch-relative support position, following the shared `Parameters.cross_bench_support_x_mm` datum;
 the aisle frame occupies X = 852–870. Both run Y = 1280–1860. At the saved 1500mm cargo width and 1205mm arch gap,
 the rear mounting frame occupies X = 175.5–852, Y = 1280–1298 from floor to rail top, with an open-bottom rounded
-cutout and a 60mm wall-side leg. These are bench-local coordinates before the shared 24mm inward offset.
+cutout and two 60mm legs. Its matching front frame occupies Y = 1842–1860. These are bench-local coordinates
+before the shared 24mm inward offset.
 `cross_bench_layout.py` supplies the frame and table mounting datums. The removed rear skin's thickness parameter
 and material role are retired. Toilet/tray hardware and frame joints remain unmodelled; CAD does not establish load capacity.
 
@@ -606,7 +616,10 @@ extended cross bench's four moving rows. The first starts at Y = 1280; the last 
 stock width and cross-bench depth.
 The rearmost slat (nearest the long bench) is 50mm shorter at its aisle end: 1020mm at the default bed width.
 Its exposed rear/aisle corner has a 40mm plan radius at the default 80mm slat width, carried through the full
-18mm thickness. The other three slats remain full length; supporting frames and cushions retain their dimensions.
+18mm thickness. The two middle slats remain full length. The cab-end slat has a square wall end at construction
+X100, shortening it by 76mm to 994 × 80 × 18mm. This clears the registered front-pillar scan by at least 5mm across
+its full width and thickness, while retaining full bearing on the wall-side frame. Supporting frames and cushions
+retain their dimensions. The cut list records the shortened rectangular piece.
 The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
 Its conversion slider is removed. The former green backrests are removed; the long bench's taller orange backrest
 and blue seat now fill the complete sleeping width.
@@ -637,7 +650,10 @@ The backing glue cleats meet the horizontal shelf/rail faces with matching bevel
 Five 6mm shelves retain their levels. The lowest forward shelf follows platform + foam + mattress clearance;
 the middle shelf tops/interface are at storage height + frame width (770mm), and the upper level follows the
 available module height. Shelves butt behind the front frame and between the 6mm panels. Both ends of each shelf
-have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edges remain scribed to the van.
+have bearing on face-mounted cleats or joining-rail shelf seats. Their wall edges meet the backing planes.
+The two rear shelves use a short straight rear return followed by one straight angled pillar edge, replacing
+scan waviness while retaining at least the existing 3mm clearance. The upper rear shelf support is trimmed to
+the same plan profile. Lower module bolt lands and shelf fixing holes stay intact.
 There are no internal post cutouts. The front frame ties the panels together and stiffens the front shelf edge.
 
 The lower middle panel reaches the wall above the wheel-arch bridge, following the existing 3mm scan-clearance
@@ -665,7 +681,11 @@ have at least 3mm nominal scan clearance and use the existing cabinet-partition 
 uses `fitting.py` to sample the registered scan near plywood and timber boundaries in the construction pose.
 Only edges near sidewalls or ceiling receive the shared fitting allowance; the flat floor is excluded. Intentional
 slots, rebates and rounded corners alone never qualify. Interior vehicle notches retain rectangular fitting blanks
-without extending unrelated outer edges. Explicit per-piece margins override these defaults. Lower/upper modules
+without extending unrelated outer edges. Models can mark fixed local datum axes with `set_fitting_datums` in
+`cut_profiles.py`; mirroring and scan scribing preserve those declarations. They protect only outer stock edges,
+so internal wheel-arch/notch fitting remains active. Long-bench box heights and the cushion-rail upstand are such
+assembly datums. Scan points below the finished-floor height are excluded regardless of the board-edge direction.
+Explicit per-piece margins override these defaults. Lower/upper modules
 retain their floor-relative Z770/770.5 backing seam (world Z780/780.5), independently of the taller side-panel guide seam. Physical fit and backing
 fixings remain to be confirmed during the build.
 The bridge sits directly beneath the lowest forward shelf cleats,
@@ -1045,10 +1065,10 @@ purchase quantities require a cutting layout; roles selecting the same product m
 
 Bed box panels and cross-bench support frames use the selected 18mm plywood.
 Cabinet front frame, cleats, joining rails and catch blocks share 40 × 18mm pine; the bridge uses 90 × 18mm pine.
-The cabinet uses 6mm scribed supporting panels and 6mm door/shelf plywood. All three cross-bench frames share 18mm frame plywood.
+The cabinet uses 6mm scribed supporting panels and 6mm door/shelf plywood. All four cross-bench frames share 18mm frame plywood.
 
-The rear bay's top opening has a relocated 40 × 18mm stile at vehicle Y325 (local Y225 at the current
-100mm rear setback). Only its top flap narrows; the tier below and lower post retain their layout.
+The rear bay's top opening has a relocated 40 × 18mm stile at vehicle Y325 (cabinet-local Y245 at the current
+80mm shared rear setback and zero cabinet inset). Only its top flap narrows; the tier below and lower post retain their layout.
 A fixed 6mm inset panel closes the rear portion, with no interior divider or upper crosspiece.
 It uses the doors' face plane, perimeter reveal and edge treatment, with no hinges, catch or finger hole.
 Doors and the fixed panel overlap the through-openings by 8mm at the current 2mm reveal. The frame has

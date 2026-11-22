@@ -4,6 +4,7 @@ from typing import Any
 
 from build123d import Compound, Face, Location, Part, Shape, Solid, Wire
 
+from campervan.cad.cut_profiles import copy_fitting_datums
 from campervan.cad.scan_scribe_data import SCAN_SCRIBES, Loop, Scribe
 
 
@@ -65,6 +66,7 @@ def scribe_assembly(assembly: Compound, offset: tuple[float, float, float], *, i
         kept = max(attached, key=lambda piece: piece.volume)
         result = Part(kept.moved(world.inverse()).solids(), label=shape.label, color=shape.color)
         result.location = pose
+        copy_fitting_datums(shape, result)
         return result
 
     return Compound(children=visit(assembly, Location(), ()).children, label=assembly.label, color=assembly.color)

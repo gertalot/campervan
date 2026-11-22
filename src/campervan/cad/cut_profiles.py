@@ -1,8 +1,22 @@
 """Flat cutting silhouettes in each part's construction coordinates."""
 
-from typing import Any
+from typing import Any, cast
 
 from build123d import Location, Plane, Shape, Vector, Wire, section
+
+
+def set_fitting_datums(part: Shape[Any], *axes: int) -> None:
+    """Keep outer stock edges on these local axes at their assembly dimensions."""
+    setattr(part, "fitting_datum_axes", axes)
+
+
+def fitting_datums(part: Shape[Any]) -> tuple[int, ...]:
+    return cast(tuple[int, ...], getattr(part, "fitting_datum_axes", ()))
+
+
+def copy_fitting_datums(source: Shape[Any], target: Shape[Any]) -> None:
+    if axes := fitting_datums(source):
+        set_fitting_datums(target, *axes)
 
 
 def cutting_axes(part: Shape[Any], width: float | None = None,
