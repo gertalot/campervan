@@ -396,7 +396,7 @@
       "product-pinetrim-90-18-1800-18-90:straight": {
         "mode": "straight",
         "source": "1ee9cab8e6e25fb7fee10ccd474526f1e6ff2e35d052c090b0a07487a0d6307f",
-        "created": "2026-11-22T18:46:37.914600+00:00",
+        "created": "2026-11-22T20:42:59.275855+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -524,8 +524,8 @@
       },
       "product-pinetrim-18-18-1200-18-18:straight": {
         "mode": "straight",
-        "source": "2c06d162ba094cfb59802438ffa60cdbaf77992c20cfdcfa31a9b5de6ba71e6e",
-        "created": "2026-11-22T18:46:37.943990+00:00",
+        "source": "836f8974666c1506dfa039d27eabbdbc57d46e3ed0f8a1af0ae2c7ca150be319",
+        "created": "2026-11-22T21:04:23.015543+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -547,84 +547,6 @@
         "name": "Pinetrim untreated clear pine D4S · 18 × 18mm × 1.2m",
         "parts": [
           {
-            "path": "Cabinet / Lower module / Frames / Backing glue cleats / Lower cab-end backing · Middle glue cleat",
-            "material": "cabinet-backing-cleats",
-            "length": 222.82,
-            "width": 18.0,
-            "thickness": 18.0,
-            "outline": [
-              [
-                0.0,
-                18.0
-              ],
-              [
-                0.0,
-                0.0
-              ],
-              [
-                222.8179,
-                0.0
-              ],
-              [
-                222.8179,
-                18.0
-              ]
-            ],
-            "holes": [],
-            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Shelf cleats meet the backing plane; module joining rails keep their original shared ends. Backing glue cleats have bevelled ends at horizontal shelf/rail joints. Stock lengths include the long points; transfer bevels from CAD before assembly.",
-            "profile_axes": "Length = local Y; width = local X",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P093",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 222.82,
-            "blank_width": 18.0
-          },
-          {
-            "path": "Cabinet / Lower module / Frames / Backing glue cleats / Lower cab-end backing · Cab-end glue cleat",
-            "material": "cabinet-backing-cleats",
-            "length": 222.82,
-            "width": 18.0,
-            "thickness": 18.0,
-            "outline": [
-              [
-                0.0,
-                18.0
-              ],
-              [
-                0.0,
-                0.0
-              ],
-              [
-                222.8179,
-                0.0
-              ],
-              [
-                222.8179,
-                18.0
-              ]
-            ],
-            "holes": [],
-            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Shelf cleats meet the backing plane; module joining rails keep their original shared ends. Backing glue cleats have bevelled ends at horizontal shelf/rail joints. Stock lengths include the long points; transfer bevels from CAD before assembly.",
-            "profile_axes": "Length = local Y; width = local X",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P094",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 222.82,
-            "blank_width": 18.0
-          },
-          {
             "path": "Cabinet / Lower module / Doors / Rear storage aft / Pine hinge backing strip",
             "material": "cabinet-hinge-backing",
             "length": 426.0,
@@ -636,7 +558,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P115",
+            "id": "P116",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -658,7 +580,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P118",
+            "id": "P119",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -680,7 +602,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P121",
+            "id": "P122",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -702,7 +624,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P124",
+            "id": "P125",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -724,7 +646,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P127",
+            "id": "P128",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -763,7 +685,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P147",
+            "id": "P148",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -802,7 +724,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P148",
+            "id": "P149",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -841,7 +763,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P149",
+            "id": "P150",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -882,7 +804,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P150",
+            "id": "P151",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -943,7 +865,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P151",
+            "id": "P152",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -984,7 +906,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P152",
+            "id": "P153",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -1006,7 +928,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P169",
+            "id": "P170",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -1028,7 +950,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P172",
+            "id": "P173",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -1050,7 +972,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P175",
+            "id": "P176",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -1072,7 +994,7 @@
             "profile_axes": "",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P178",
+            "id": "P179",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -1094,7 +1016,7 @@
             },
             "parts": [
               {
-                "id": "P169",
+                "id": "P170",
                 "path": "Cabinet / Upper module / Doors / Rear upper 1 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1124,7 +1046,7 @@
                 "angle": 0
               },
               {
-                "id": "P121",
+                "id": "P122",
                 "path": "Cabinet / Lower module / Doors / Rear storage upper flap / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1154,7 +1076,7 @@
                 "angle": 0
               },
               {
-                "id": "P149",
+                "id": "P150",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper rear bottom backing · Middle glue cleat",
                 "outline": [
                   [
@@ -1223,7 +1145,7 @@
             },
             "parts": [
               {
-                "id": "P124",
+                "id": "P125",
                 "path": "Cabinet / Lower module / Doors / Cab-end lower 1 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1253,7 +1175,7 @@
                 "angle": 0
               },
               {
-                "id": "P118",
+                "id": "P119",
                 "path": "Cabinet / Lower module / Doors / Rear storage fore / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1283,7 +1205,7 @@
                 "angle": 0
               },
               {
-                "id": "P152",
+                "id": "P153",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper rear top backing · Middle glue cleat",
                 "outline": [
                   [
@@ -1364,7 +1286,7 @@
             },
             "parts": [
               {
-                "id": "P115",
+                "id": "P116",
                 "path": "Cabinet / Lower module / Doors / Rear storage aft / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1394,7 +1316,7 @@
                 "angle": 0
               },
               {
-                "id": "P127",
+                "id": "P128",
                 "path": "Cabinet / Lower module / Doors / Cab-end lower 2 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1424,7 +1346,7 @@
                 "angle": 0
               },
               {
-                "id": "P178",
+                "id": "P179",
                 "path": "Cabinet / Upper module / Doors / Cab-end upper 2 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1505,7 +1427,7 @@
             },
             "parts": [
               {
-                "id": "P175",
+                "id": "P176",
                 "path": "Cabinet / Upper module / Doors / Cab-end upper 1 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1535,7 +1457,7 @@
                 "angle": 0
               },
               {
-                "id": "P150",
+                "id": "P151",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper cab-end top backing · Middle glue cleat",
                 "outline": [
                   [
@@ -1565,7 +1487,7 @@
                 "angle": 0
               },
               {
-                "id": "P151",
+                "id": "P152",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper cab-end top backing · Cab-end glue cleat",
                 "outline": [
                   [
@@ -1615,7 +1537,7 @@
                 "angle": 0
               },
               {
-                "id": "P172",
+                "id": "P173",
                 "path": "Cabinet / Upper module / Doors / Rear upper 2 / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1696,89 +1618,29 @@
             },
             "parts": [
               {
-                "id": "P093",
-                "path": "Cabinet / Lower module / Frames / Backing glue cleats / Lower cab-end backing · Middle glue cleat",
-                "outline": [
-                  [
-                    0.0,
-                    18.0
-                  ],
-                  [
-                    0.0,
-                    0.0
-                  ],
-                  [
-                    222.8179,
-                    0.0
-                  ],
-                  [
-                    222.8179,
-                    18.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  0.0,
-                  0.0,
-                  222.82,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P094",
-                "path": "Cabinet / Lower module / Frames / Backing glue cleats / Lower cab-end backing · Cab-end glue cleat",
-                "outline": [
-                  [
-                    227.87,
-                    18.0
-                  ],
-                  [
-                    227.87,
-                    0.0
-                  ],
-                  [
-                    450.6879,
-                    0.0
-                  ],
-                  [
-                    450.6879,
-                    18.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  227.87,
-                  0.0,
-                  222.82,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P148",
+                "id": "P149",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper cab-end bottom backing · Cab-end glue cleat",
                 "outline": [
                   [
-                    453.69,
+                    0.0,
                     18.0
                   ],
                   [
-                    453.69,
+                    0.0,
                     0.0
                   ],
                   [
-                    633.5482,
+                    179.8582,
                     0.0
                   ],
                   [
-                    633.5482,
+                    179.8582,
                     18.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  453.69,
+                  0.0,
                   0.0,
                   179.86,
                   18.0
@@ -1786,29 +1648,29 @@
                 "angle": 0
               },
               {
-                "id": "P147",
+                "id": "P148",
                 "path": "Cabinet / Upper module / Frames / Backing glue cleats / Upper cab-end bottom backing · Middle glue cleat",
                 "outline": [
                   [
-                    636.55,
+                    182.86,
                     18.0
                   ],
                   [
-                    636.55,
+                    182.86,
                     0.0
                   ],
                   [
-                    816.4082,
+                    362.7182,
                     0.0
                   ],
                   [
-                    816.4082,
+                    362.7182,
                     18.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  636.55,
+                  182.86,
                   0.0,
                   179.86,
                   18.0
@@ -1818,41 +1680,23 @@
             ],
             "cuts": [
               [
-                224.87,
+                179.86,
                 0.0,
-                224.87,
+                179.86,
                 18.0
               ],
               [
-                450.69,
+                362.72,
                 0.0,
-                450.69,
-                18.0
-              ],
-              [
-                633.55,
-                0.0,
-                633.55,
-                18.0
-              ],
-              [
-                816.41,
-                0.0,
-                816.41,
-                18.0
-              ],
-              [
-                222.82,
-                0.0,
-                222.82,
+                362.72,
                 18.0
               ]
             ],
             "remnants": [
               [
-                819.41,
+                365.72,
                 0.0,
-                380.59,
+                834.28,
                 18.0
               ]
             ]
@@ -1860,8 +1704,8 @@
         ],
         "unplaced": [],
         "stock_area": 108000.0,
-        "blank_area": 97475.94,
-        "profile_area": 94775.6448,
+        "blank_area": 89454.42,
+        "profile_area": 86754.2004,
         "full_stock_count": 5,
         "offcut_count": 0,
         "estimated_cost": 30.85,
@@ -1872,19 +1716,19 @@
         "optimises_offcuts": false,
         "best_offcut": {
           "sheet": 4,
-          "x": 819.41,
+          "x": 365.72,
           "y": 0.0,
-          "length": 380.59,
+          "length": 834.28,
           "width": 18.0,
-          "area": 6850.62,
-          "perimeter_area_ratio": 0.11636610992873637
+          "area": 15017.039999999999,
+          "perimeter_area_ratio": 0.1135083878047871
         },
         "objective": "Fewest stock pieces"
       },
       "product-tigerply-18-18:straight": {
         "mode": "straight",
-        "source": "6c1df6d3373bf47f08b93d058d83440554339730bf1e5603bbc200ac96adedb5",
-        "created": "2026-11-22T18:46:45.116021+00:00",
+        "source": "38a16b3f58863f4d2b3c910adecb04deb00a20a5535bdc8c1f2830f113ba8bfb",
+        "created": "2026-11-22T21:04:28.898438+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -3691,7 +3535,7 @@
             "profile_axes": "Length = local Z; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P180",
+            "id": "P181",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -3858,7 +3702,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P181",
+            "id": "P182",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -4025,7 +3869,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P182",
+            "id": "P183",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -4145,7 +3989,7 @@
                 "angle": 0
               },
               {
-                "id": "P180",
+                "id": "P181",
                 "path": "Laptop table / Fixed mount / Bench mounting pad",
                 "outline": [
                   [
@@ -4349,7 +4193,7 @@
                 "angle": 0
               },
               {
-                "id": "P182",
+                "id": "P183",
                 "path": "Laptop table / Bench mount / Height adjustment / Arm orientation / Swivel arm / Tabletop rotation / Offset tabletop / Folding leaf / Folding tabletop leaf",
                 "outline": [
                   [
@@ -4507,7 +4351,7 @@
                 "angle": 0
               },
               {
-                "id": "P181",
+                "id": "P182",
                 "path": "Laptop table / Bench mount / Height adjustment / Arm orientation / Swivel arm / Tabletop rotation / Offset tabletop / Fixed tabletop leaf",
                 "outline": [
                   [
@@ -11864,8 +11708,8 @@
       },
       "product-tigerply-okoume-6-6:straight": {
         "mode": "straight",
-        "source": "72973afc260f849a354065b59c27113109ace527355433a9ad1d631d07d33f65",
-        "created": "2026-11-22T18:46:38.961435+00:00",
+        "source": "78a3187f24254ec0df5761e2e39dbb2c6c2edad0b483dbcd23cce93a87cc5b8a",
+        "created": "2026-11-22T21:04:23.489589+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -11890,72 +11734,72 @@
             "path": "Cabinet / Lower module / Skin / Middle supporting panel",
             "material": "cabinet-partitions",
             "length": 790.0,
-            "width": 336.94,
+            "width": 332.43,
             "thickness": 6.0,
             "outline": [
               [
-                464.5,
-                118.7392
+                510.5,
+                114.2312
               ],
               [
-                464.5,
+                510.5,
                 0.0
               ],
               [
-                464.8179,
-                0.0312
+                510.7729,
+                0.0267
               ],
               [
-                465.1357,
-                0.0623
+                511.0459,
+                0.0535
               ],
               [
-                465.7715,
-                0.1246
+                511.5918,
+                0.107
               ],
               [
-                467.043,
-                0.2492
+                512.6836,
+                0.214
               ],
               [
-                469.5859,
-                0.4984
+                514.8672,
+                0.428
               ],
               [
-                474.6719,
-                0.9968
+                519.2344,
+                0.856
               ],
               [
-                484.8438,
-                1.9937
+                527.9688,
+                1.7119
               ],
               [
-                505.1875,
-                3.9874
+                545.4375,
+                3.4239
               ],
               [
-                545.875,
-                7.9748
+                580.375,
+                6.8478
               ],
               [
-                627.25,
-                15.9495
-              ],
-              [
-                790.0,
-                31.899
+                650.25,
+                13.6955
               ],
               [
                 790.0,
-                336.937
+                27.391
+              ],
+              [
+                790.0,
+                332.429
               ],
               [
                 0.0,
-                336.937
+                332.429
               ],
               [
                 0.0,
-                118.7392
+                114.2312
               ]
             ],
             "holes": [],
@@ -11963,7 +11807,7 @@
             "profile_axes": "Length = local Z; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P107",
+            "id": "P108",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -11971,7 +11815,7 @@
               "bottom": 0
             },
             "blank_length": 790.0,
-            "blank_width": 336.94
+            "blank_width": 332.43
           },
           {
             "path": "Cabinet / Lower module / Skin / Cab-end supporting panel",
@@ -12796,7 +12640,7 @@
               "top": "Sidewall / wheel arch"
             },
             "template_fit": true,
-            "id": "P108",
+            "id": "P109",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -12890,7 +12734,7 @@
               "left": "Sidewall / wheel arch"
             },
             "template_fit": true,
-            "id": "P109",
+            "id": "P110",
             "fitting_margins": {
               "left": 50.0,
               "right": 0,
@@ -12931,7 +12775,7 @@
               "top": "Sidewall / wheel arch"
             },
             "template_fit": true,
-            "id": "P110",
+            "id": "P111",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -12949,52 +12793,12 @@
             "thickness": 6.0,
             "outline": [
               [
-                70.0,
-                0.0
+                504.0,
+                88.3002
               ],
               [
                 544.0,
-                0.0
-              ],
-              [
-                544.0,
-                0.2998
-              ],
-              [
-                544.0,
-                0.5996
-              ],
-              [
-                544.0,
-                1.1992
-              ],
-              [
-                544.0,
-                2.3984
-              ],
-              [
-                544.0,
-                4.7968
-              ],
-              [
-                544.0,
-                9.5937
-              ],
-              [
-                544.0,
-                19.1874
-              ],
-              [
-                544.0,
-                38.3748
-              ],
-              [
-                544.0,
-                76.7495
-              ],
-              [
-                544.0,
-                153.499
+                88.3002
               ],
               [
                 544.0,
@@ -13003,6 +12807,22 @@
               [
                 0.0,
                 306.998
+              ],
+              [
+                0.0,
+                88.3002
+              ],
+              [
+                40.0,
+                88.3002
+              ],
+              [
+                40.0,
+                70.3002
+              ],
+              [
+                0.0,
+                70.3002
               ],
               [
                 0.0,
@@ -13015,6 +12835,22 @@
               [
                 70.0,
                 0.0
+              ],
+              [
+                70.0,
+                0.0
+              ],
+              [
+                544.0,
+                0.0
+              ],
+              [
+                544.0,
+                70.3002
+              ],
+              [
+                504.0,
+                70.3002
               ]
             ],
             "holes": [
@@ -13257,7 +13093,7 @@
               "left": "Sidewall / wheel arch"
             },
             "template_fit": true,
-            "id": "P111",
+            "id": "P112",
             "fitting_margins": {
               "left": 50.0,
               "right": 0,
@@ -13328,6 +13164,22 @@
               ],
               [
                 418.0,
+                95.7802
+              ],
+              [
+                378.0,
+                95.7802
+              ],
+              [
+                378.0,
+                113.7802
+              ],
+              [
+                418.0,
+                113.7802
+              ],
+              [
+                418.0,
                 332.478
               ]
             ],
@@ -13336,7 +13188,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P112",
+            "id": "P113",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -13364,6 +13216,22 @@
               [
                 418.0,
                 0.0
+              ],
+              [
+                418.0,
+                70.3002
+              ],
+              [
+                378.0,
+                70.3002
+              ],
+              [
+                378.0,
+                88.3002
+              ],
+              [
+                418.0,
+                88.3002
               ],
               [
                 418.0,
@@ -13608,7 +13476,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P113",
+            "id": "P114",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -13914,7 +13782,7 @@
             "profile_axes": "Length = local Z; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P114",
+            "id": "P115",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -14220,7 +14088,7 @@
             "profile_axes": "Length = local Z; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P117",
+            "id": "P118",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -14526,7 +14394,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P120",
+            "id": "P121",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -14832,7 +14700,7 @@
             "profile_axes": "Length = local Z; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P123",
+            "id": "P124",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -15138,7 +15006,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P126",
+            "id": "P127",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -15267,7 +15135,7 @@
               "bottom": "Ceiling"
             },
             "template_fit": true,
-            "id": "P158",
+            "id": "P159",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -15768,7 +15636,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P159",
+            "id": "P160",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -16753,7 +16621,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P160",
+            "id": "P161",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -17075,7 +16943,7 @@
               "right": "Ceiling"
             },
             "template_fit": true,
-            "id": "P161",
+            "id": "P162",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -17114,7 +16982,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P162",
+            "id": "P163",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -17872,7 +17740,7 @@
               "bottom": "Ceiling"
             },
             "template_fit": true,
-            "id": "P163",
+            "id": "P164",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -18801,7 +18669,7 @@
               "bottom": "Ceiling"
             },
             "template_fit": true,
-            "id": "P164",
+            "id": "P165",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -20415,7 +20283,7 @@
               "bottom": "Ceiling"
             },
             "template_fit": true,
-            "id": "P165",
+            "id": "P166",
             "fitting_margins": {
               "left": 0,
               "right": 50.0,
@@ -20462,7 +20330,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": true,
-            "id": "P166",
+            "id": "P167",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -20503,7 +20371,7 @@
               "top": "Sidewall / wheel arch"
             },
             "template_fit": true,
-            "id": "P167",
+            "id": "P168",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -20809,7 +20677,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P168",
+            "id": "P169",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -21115,7 +20983,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P171",
+            "id": "P172",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -21421,7 +21289,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P174",
+            "id": "P175",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -21727,7 +21595,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P177",
+            "id": "P178",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -21749,72 +21617,72 @@
             },
             "parts": [
               {
-                "id": "P107",
+                "id": "P108",
                 "path": "Cabinet / Lower module / Skin / Middle supporting panel",
                 "outline": [
                   [
-                    464.5,
-                    118.7392
+                    510.5,
+                    114.2312
                   ],
                   [
-                    464.5,
+                    510.5,
                     0.0
                   ],
                   [
-                    464.8179,
-                    0.0312
+                    510.7729,
+                    0.0267
                   ],
                   [
-                    465.1357,
-                    0.0623
+                    511.0459,
+                    0.0535
                   ],
                   [
-                    465.7715,
-                    0.1246
+                    511.5918,
+                    0.107
                   ],
                   [
-                    467.043,
-                    0.2492
+                    512.6836,
+                    0.214
                   ],
                   [
-                    469.5859,
-                    0.4984
+                    514.8672,
+                    0.428
                   ],
                   [
-                    474.6719,
-                    0.9968
+                    519.2344,
+                    0.856
                   ],
                   [
-                    484.8438,
-                    1.9937
+                    527.9688,
+                    1.7119
                   ],
                   [
-                    505.1875,
-                    3.9874
+                    545.4375,
+                    3.4239
                   ],
                   [
-                    545.875,
-                    7.9748
+                    580.375,
+                    6.8478
                   ],
                   [
-                    627.25,
-                    15.9495
-                  ],
-                  [
-                    790.0,
-                    31.899
+                    650.25,
+                    13.6955
                   ],
                   [
                     790.0,
-                    336.937
+                    27.391
+                  ],
+                  [
+                    790.0,
+                    332.429
                   ],
                   [
                     0.0,
-                    336.937
+                    332.429
                   ],
                   [
                     0.0,
-                    118.7392
+                    114.2312
                   ]
                 ],
                 "holes": [],
@@ -21822,1231 +21690,1223 @@
                   0.0,
                   0.0,
                   790.0,
-                  336.94
+                  332.43
                 ],
                 "angle": 0
               },
               {
-                "id": "P108",
+                "id": "P109",
                 "path": "Cabinet / Lower module / Skin / Cab-end supporting panel",
                 "outline": [
                   [
                     480.0,
-                    389.94
+                    385.43
                   ],
                   [
                     518.7985,
-                    390.1494
+                    385.6394
                   ],
                   [
                     557.5924,
-                    390.777
+                    386.267
                   ],
                   [
                     596.3774,
-                    391.8233
+                    387.3133
                   ],
                   [
                     635.1487,
-                    393.2894
+                    388.7794
                   ],
                   [
                     673.9017,
-                    395.1782
+                    390.6682
                   ],
                   [
                     712.6316,
-                    397.4941
+                    392.9841
                   ],
                   [
                     751.3328,
-                    400.2431
+                    395.7331
                   ],
                   [
                     790.0,
-                    403.434
+                    398.924
                   ],
                   [
                     790.0,
-                    731.94
+                    727.43
                   ],
                   [
                     0.0,
-                    731.94
+                    727.43
                   ],
                   [
                     0.0,
-                    430.1467
+                    425.6367
                   ],
                   [
                     1.274,
-                    429.885
+                    425.375
                   ],
                   [
                     2.868,
-                    429.772
+                    425.262
                   ],
                   [
                     3.492,
-                    429.607
+                    425.097
                   ],
                   [
                     5.057,
-                    429.365
+                    424.855
                   ],
                   [
                     6.605,
-                    428.949
+                    424.439
                   ],
                   [
                     7.429,
-                    428.834
+                    424.324
                   ],
                   [
                     7.997,
-                    428.703
+                    424.193
                   ],
                   [
                     8.273,
-                    428.617
+                    424.107
                   ],
                   [
                     8.947,
-                    428.309
+                    423.799
                   ],
                   [
                     9.502,
-                    428.269
+                    423.759
                   ],
                   [
                     10.71,
-                    428.029
+                    423.519
                   ],
                   [
                     11.558,
-                    427.993
+                    423.483
                   ],
                   [
                     12.791,
-                    427.877
+                    423.367
                   ],
                   [
                     15.113,
-                    427.326
+                    422.816
                   ],
                   [
                     19.555,
-                    426.429
+                    421.919
                   ],
                   [
                     20.564,
-                    426.283
+                    421.773
                   ],
                   [
                     21.648,
-                    426.056
+                    421.546
                   ],
                   [
                     23.281,
-                    425.908
+                    421.398
                   ],
                   [
                     27.172,
-                    425.307
+                    420.797
                   ],
                   [
                     29.179,
-                    424.75
+                    420.24
                   ],
                   [
                     29.775,
-                    424.653
+                    420.143
                   ],
                   [
                     31.283,
-                    424.279
+                    419.769
                   ],
                   [
                     32.743,
-                    424.042
+                    419.532
                   ],
                   [
                     34.023,
-                    423.734
+                    419.224
                   ],
                   [
                     34.615,
-                    423.692
+                    419.182
                   ],
                   [
                     35.403,
-                    423.558
+                    419.048
                   ],
                   [
                     35.895,
-                    423.413
+                    418.903
                   ],
                   [
                     37.127,
-                    422.936
+                    418.426
                   ],
                   [
                     38.181,
-                    422.685
+                    418.175
                   ],
                   [
                     39.461,
-                    422.656
+                    418.146
                   ],
                   [
                     40.953,
-                    422.402
+                    417.892
                   ],
                   [
                     42.372,
-                    422.355
+                    417.845
                   ],
                   [
                     44.614,
-                    422.093
+                    417.583
                   ],
                   [
                     47.467,
-                    421.435
+                    416.925
                   ],
                   [
                     48.054,
-                    421.244
+                    416.734
                   ],
                   [
                     49.635,
-                    420.857
+                    416.347
                   ],
                   [
                     50.094,
-                    420.78
+                    416.27
                   ],
                   [
                     50.769,
-                    420.861
+                    416.351
                   ],
                   [
                     51.354,
-                    420.809
+                    416.299
                   ],
                   [
                     51.919,
-                    420.647
+                    416.137
                   ],
                   [
                     52.187,
-                    420.526
+                    416.016
                   ],
                   [
                     52.681,
-                    420.209
+                    415.699
                   ],
                   [
                     53.043,
-                    419.883
+                    415.373
                   ],
                   [
                     53.423,
-                    419.671
+                    415.161
                   ],
                   [
                     53.55,
-                    419.639
+                    415.129
                   ],
                   [
                     54.399,
-                    419.563
+                    415.053
                   ],
                   [
                     57.209,
-                    419.616
+                    415.106
                   ],
                   [
                     57.61,
-                    419.595
+                    415.085
                   ],
                   [
                     61.143,
-                    418.986
+                    414.476
                   ],
                   [
                     63.082,
-                    418.46
+                    413.95
                   ],
                   [
                     65.953,
-                    417.907
+                    413.397
                   ],
                   [
                     67.167,
-                    417.572
+                    413.062
                   ],
                   [
                     68.365,
-                    417.305
+                    412.795
                   ],
                   [
                     69.224,
-                    417.024
+                    412.514
                   ],
                   [
                     70.273,
-                    416.789
+                    412.279
                   ],
                   [
                     71.122,
-                    416.456
+                    411.946
                   ],
                   [
                     72.979,
-                    416.02
+                    411.51
                   ],
                   [
                     74.887,
-                    415.677
+                    411.167
                   ],
                   [
                     77.929,
-                    415.259
+                    410.749
                   ],
                   [
                     79.471,
-                    414.925
+                    410.415
                   ],
                   [
                     80.446,
-                    414.595
+                    410.085
                   ],
                   [
                     82.008,
-                    414.139
+                    409.629
                   ],
                   [
                     82.652,
-                    413.875
+                    409.365
                   ],
                   [
                     83.83,
-                    413.575
+                    409.065
                   ],
                   [
                     85.44,
-                    413.258
+                    408.748
                   ],
                   [
                     86.894,
-                    413.056
+                    408.546
                   ],
                   [
                     88.447,
-                    412.615
+                    408.105
                   ],
                   [
                     90.324,
-                    412.248
+                    407.738
                   ],
                   [
                     92.387,
-                    412.025
+                    407.515
                   ],
                   [
                     94.833,
-                    411.659
+                    407.149
                   ],
                   [
                     96.772,
-                    411.136
+                    406.626
                   ],
                   [
                     97.748,
-                    410.785
+                    406.275
                   ],
                   [
                     100.459,
-                    409.938
+                    405.428
                   ],
                   [
                     101.849,
-                    409.693
+                    405.183
                   ],
                   [
                     103.535,
-                    409.167
+                    404.657
                   ],
                   [
                     104.082,
-                    408.922
+                    404.412
                   ],
                   [
                     106.633,
-                    407.492
+                    402.982
                   ],
                   [
                     107.01,
-                    407.229
+                    402.719
                   ],
                   [
                     107.619,
-                    406.95
+                    402.44
                   ],
                   [
                     108.685,
-                    406.379
+                    401.869
                   ],
                   [
                     108.945,
-                    406.186
+                    401.676
                   ],
                   [
                     109.563,
-                    405.608
+                    401.098
                   ],
                   [
                     109.956,
-                    405.167
+                    400.657
                   ],
                   [
                     110.257,
-                    404.659
+                    400.149
                   ],
                   [
                     110.565,
-                    403.831
+                    399.321
                   ],
                   [
                     110.881,
-                    403.19
+                    398.68
                   ],
                   [
                     111.401,
-                    401.883
+                    397.373
                   ],
                   [
                     111.812,
-                    400.994
+                    396.484
                   ],
                   [
                     113.482,
-                    399.453
+                    394.943
                   ],
                   [
                     114.594,
-                    398.104
+                    393.594
                   ],
                   [
                     114.986,
-                    397.549
+                    393.039
                   ],
                   [
                     115.302,
-                    396.955
+                    392.445
                   ],
                   [
                     116.036,
-                    395.082
+                    390.572
                   ],
                   [
                     116.845,
-                    391.816
+                    387.306
                   ],
                   [
                     117.06,
-                    390.39
+                    385.88
                   ],
                   [
                     117.0793,
-                    389.94
+                    385.43
                   ],
                   [
                     126.4137,
-                    389.94
+                    385.43
                   ],
                   [
                     126.797,
-                    390.012
+                    385.502
                   ],
                   [
                     128.023,
-                    390.187
+                    385.677
                   ],
                   [
                     129.717,
-                    390.778
+                    386.268
                   ],
                   [
                     130.741,
-                    390.986
+                    386.476
                   ],
                   [
                     131.322,
-                    391.024
+                    386.514
                   ],
                   [
                     132.71,
-                    390.862
+                    386.352
                   ],
                   [
                     133.775,
-                    390.634
+                    386.124
                   ],
                   [
                     135.186,
-                    390.238
+                    385.728
                   ],
                   [
                     135.848,
-                    390.317
+                    385.807
                   ],
                   [
                     139.409,
-                    390.321
+                    385.811
                   ],
                   [
                     139.96,
-                    390.354
+                    385.844
                   ],
                   [
                     141.516,
-                    390.265
+                    385.755
                   ],
                   [
                     144.054,
-                    390.277
+                    385.767
                   ],
                   [
                     146.455,
-                    390.493
+                    385.983
                   ],
                   [
                     148.605,
-                    390.412
+                    385.902
                   ],
                   [
                     150.292,
-                    390.048
+                    385.538
                   ],
                   [
                     153.55,
-                    390.943
+                    386.433
                   ],
                   [
                     154.066,
-                    391.039
+                    386.529
                   ],
                   [
                     156.053,
-                    391.216
+                    386.706
                   ],
                   [
                     157.039,
-                    391.124
+                    386.614
                   ],
                   [
                     157.87,
-                    391.135
+                    386.625
                   ],
                   [
                     158.945,
-                    390.924
+                    386.414
                   ],
                   [
                     159.432,
-                    391.01
+                    386.5
                   ],
                   [
                     160.005,
-                    391.019
+                    386.509
                   ],
                   [
                     161.902,
-                    390.701
+                    386.191
                   ],
                   [
                     162.798,
-                    390.468
+                    385.958
                   ],
                   [
                     163.581,
-                    390.41
+                    385.9
                   ],
                   [
                     166.358,
-                    390.379
+                    385.869
                   ],
                   [
                     169.005,
-                    390.486
+                    385.976
                   ],
                   [
                     171.76,
-                    390.443
+                    385.933
                   ],
                   [
                     172.431,
-                    390.35
+                    385.84
                   ],
                   [
                     173.764,
-                    390.031
+                    385.521
                   ],
                   [
                     174.367,
-                    389.962
+                    385.452
                   ],
                   [
                     174.4649,
-                    389.94
+                    385.43
                   ],
                   [
                     186.8605,
-                    389.94
+                    385.43
                   ],
                   [
                     187.281,
-                    389.988
+                    385.478
                   ],
                   [
                     187.571,
-                    389.983
+                    385.473
                   ],
                   [
                     187.8322,
-                    389.94
+                    385.43
                   ],
                   [
                     208.3914,
-                    389.94
+                    385.43
                   ],
                   [
                     208.732,
-                    390.077
+                    385.567
                   ],
                   [
                     209.294,
-                    390.188
+                    385.678
                   ],
                   [
                     209.581,
-                    390.203
+                    385.693
                   ],
                   [
                     210.152,
-                    390.153
+                    385.643
                   ],
                   [
                     210.704,
-                    389.996
+                    385.486
                   ],
                   [
                     210.8158,
-                    389.94
+                    385.43
                   ],
                   [
                     399.7015,
-                    389.94
+                    385.43
                   ],
                   [
                     400.068,
-                    389.991
+                    385.481
                   ],
                   [
                     401.754,
-                    390.401
+                    385.891
                   ],
                   [
                     403.943,
-                    391.127
+                    386.617
                   ],
                   [
                     405.835,
-                    391.521
+                    387.011
                   ],
                   [
                     406.611,
-                    391.538
+                    387.028
                   ],
                   [
                     407.263,
-                    391.466
+                    386.956
                   ],
                   [
                     408.273,
-                    391.244
+                    386.734
                   ],
                   [
                     409.345,
-                    391.077
+                    386.567
                   ],
                   [
                     410.076,
-                    390.804
+                    386.294
                   ],
                   [
                     410.948,
-                    390.666
+                    386.156
                   ],
                   [
                     413.029,
-                    390.092
+                    385.582
                   ],
                   [
                     413.3472,
-                    389.94
+                    385.43
                   ],
                   [
                     425.2421,
-                    389.94
+                    385.43
                   ],
                   [
                     425.308,
-                    389.996
+                    385.486
                   ],
                   [
                     425.807,
-                    390.283
+                    385.773
                   ],
                   [
                     426.351,
-                    390.472
+                    385.962
                   ],
                   [
                     428.243,
-                    390.926
+                    386.416
                   ],
                   [
                     429.723,
-                    391.125
+                    386.615
                   ],
                   [
                     430.35,
-                    391.137
+                    386.627
                   ],
                   [
                     431.395,
-                    390.956
+                    386.446
                   ],
                   [
                     432.35,
-                    390.722
+                    386.212
                   ],
                   [
                     433.045,
-                    390.481
+                    385.971
                   ],
                   [
                     434.375,
-                    390.673
+                    386.163
                   ],
                   [
                     435.894,
-                    390.737
+                    386.227
                   ],
                   [
                     436.465,
-                    390.886
+                    386.376
                   ],
                   [
                     437.025,
-                    390.938
+                    386.428
                   ],
                   [
                     437.854,
-                    390.875
+                    386.365
                   ],
                   [
                     438.503,
-                    390.908
+                    386.398
                   ],
                   [
                     439.123,
-                    390.812
+                    386.302
                   ],
                   [
                     440.034,
-                    390.764
+                    386.254
                   ],
                   [
                     441.253,
-                    390.86
+                    386.35
                   ],
                   [
                     441.93,
-                    391.09
+                    386.58
                   ],
                   [
                     442.757,
-                    391.21
+                    386.7
                   ],
                   [
                     444.155,
-                    391.167
+                    386.657
                   ],
                   [
                     444.597,
-                    391.072
+                    386.562
                   ],
                   [
                     445.538,
-                    390.959
+                    386.449
                   ],
                   [
                     445.886,
-                    390.861
+                    386.351
                   ],
                   [
                     446.535,
-                    390.573
+                    386.063
                   ],
                   [
                     447.3757,
-                    389.94
+                    385.43
                   ],
                   [
                     460.4363,
-                    389.94
+                    385.43
                   ],
                   [
                     460.907,
-                    390.075
+                    385.565
                   ],
                   [
                     461.956,
-                    390.216
+                    385.706
                   ],
                   [
                     462.508,
-                    390.345
+                    385.835
                   ],
                   [
                     463.636,
-                    390.492
+                    385.982
                   ],
                   [
                     464.251,
-                    390.455
+                    385.945
                   ],
                   [
                     465.435,
-                    390.247
+                    385.737
                   ],
                   [
                     466.4754,
-                    389.94
+                    385.43
                   ]
                 ],
                 "holes": [],
                 "blank": [
                   0.0,
-                  339.94,
+                  335.43,
                   790.0,
                   392.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P111",
+                "id": "P112",
                 "path": "Cabinet / Lower module / Shelves / Rear shelf at 770mm",
                 "outline": [
                   [
-                    120.0,
-                    734.94
+                    554.0,
+                    818.7302
                   ],
                   [
                     594.0,
-                    734.94
+                    818.7302
                   ],
                   [
                     594.0,
-                    735.2398
-                  ],
-                  [
-                    594.0,
-                    735.5396
-                  ],
-                  [
-                    594.0,
-                    736.1392
-                  ],
-                  [
-                    594.0,
-                    737.3384
-                  ],
-                  [
-                    594.0,
-                    739.7368
-                  ],
-                  [
-                    594.0,
-                    744.5337
-                  ],
-                  [
-                    594.0,
-                    754.1274
-                  ],
-                  [
-                    594.0,
-                    773.3148
-                  ],
-                  [
-                    594.0,
-                    811.6895
-                  ],
-                  [
-                    594.0,
-                    888.439
-                  ],
-                  [
-                    594.0,
-                    1041.938
+                    1037.428
                   ],
                   [
                     50.0,
-                    1041.938
+                    1037.428
                   ],
                   [
                     50.0,
-                    790.738
+                    818.7302
+                  ],
+                  [
+                    90.0,
+                    818.7302
+                  ],
+                  [
+                    90.0,
+                    800.7302
+                  ],
+                  [
+                    50.0,
+                    800.7302
+                  ],
+                  [
+                    50.0,
+                    786.228
                   ],
                   [
                     60.0,
-                    790.738
+                    786.228
                   ],
                   [
                     120.0,
-                    734.94
+                    730.43
+                  ],
+                  [
+                    120.0,
+                    730.43
+                  ],
+                  [
+                    594.0,
+                    730.43
+                  ],
+                  [
+                    594.0,
+                    800.7302
+                  ],
+                  [
+                    554.0,
+                    800.7302
                   ]
                 ],
                 "holes": [
                   [
                     [
                       59.9707,
-                      998.8364
+                      994.3264
                     ],
                     [
                       60.8527,
-                      999.2678
+                      994.7578
                     ],
                     [
                       61.8658,
-                      1000.4052
+                      995.8952
                     ],
                     [
                       62.2495,
-                      1001.8792
+                      997.3692
                     ],
                     [
                       61.9194,
-                      1003.3661
+                      998.8561
                     ],
                     [
                       60.9482,
-                      1004.5394
+                      1000.0294
                     ],
                     [
                       59.5491,
-                      1005.1413
+                      1000.6313
                     ],
                     [
                       58.0293,
-                      1005.0397
+                      1000.5297
                     ],
                     [
                       56.7228,
-                      1004.2568
+                      999.7468
                     ],
                     [
                       55.9164,
-                      1002.9647
+                      998.4547
                     ],
                     [
                       55.7873,
-                      1001.4471
+                      996.9371
                     ],
                     [
                       56.3638,
-                      1000.0373
+                      995.5273
                     ],
                     [
                       57.5193,
-                      999.0449
+                      994.5349
                     ],
                     [
                       59.0,
-                      998.688
+                      994.178
                     ]
                   ],
                   [
                     [
                       59.9707,
-                      842.9516
+                      838.4416
                     ],
                     [
                       60.8527,
-                      843.3831
+                      838.8731
                     ],
                     [
                       61.8658,
-                      844.5204
+                      840.0104
                     ],
                     [
                       62.2495,
-                      845.9944
+                      841.4844
                     ],
                     [
                       61.9194,
-                      847.4813
+                      842.9713
                     ],
                     [
                       60.9482,
-                      848.6546
+                      844.1446
                     ],
                     [
                       59.5491,
-                      849.2565
+                      844.7465
                     ],
                     [
                       58.0293,
-                      849.1549
+                      844.6449
                     ],
                     [
                       56.7228,
-                      848.3721
+                      843.8621
                     ],
                     [
                       55.9164,
-                      847.0799
+                      842.5699
                     ],
                     [
                       55.7873,
-                      845.5623
+                      841.0523
                     ],
                     [
                       56.3638,
-                      844.1525
+                      839.6425
                     ],
                     [
                       57.5193,
-                      843.1602
+                      838.6502
                     ],
                     [
                       59.0,
-                      842.8033
+                      838.2933
                     ]
                   ],
                   [
                     [
                       585.9707,
-                      998.8364
+                      994.3264
                     ],
                     [
                       586.8527,
-                      999.2678
+                      994.7578
                     ],
                     [
                       587.8658,
-                      1000.4052
+                      995.8952
                     ],
                     [
                       588.2495,
-                      1001.8792
+                      997.3692
                     ],
                     [
                       587.9194,
-                      1003.3661
+                      998.8561
                     ],
                     [
                       586.9482,
-                      1004.5394
+                      1000.0294
                     ],
                     [
                       585.5491,
-                      1005.1413
+                      1000.6313
                     ],
                     [
                       584.0293,
-                      1005.0397
+                      1000.5297
                     ],
                     [
                       582.7228,
-                      1004.2568
+                      999.7468
                     ],
                     [
                       581.9164,
-                      1002.9647
+                      998.4547
                     ],
                     [
                       581.7873,
-                      1001.4471
+                      996.9371
                     ],
                     [
                       582.3638,
-                      1000.0373
+                      995.5273
                     ],
                     [
                       583.5193,
-                      999.0449
+                      994.5349
                     ],
                     [
                       585.0,
-                      998.688
+                      994.178
                     ]
                   ],
                   [
                     [
                       585.9707,
-                      776.829
+                      772.319
                     ],
                     [
                       586.8527,
-                      777.2605
+                      772.7505
                     ],
                     [
                       587.8658,
-                      778.3978
+                      773.8878
                     ],
                     [
                       588.2495,
-                      779.8718
+                      775.3618
                     ],
                     [
                       587.9194,
-                      781.3588
+                      776.8488
                     ],
                     [
                       586.9482,
-                      782.5321
+                      778.0221
                     ],
                     [
                       585.5491,
-                      783.134
+                      778.624
                     ],
                     [
                       584.0293,
-                      783.0324
+                      778.5224
                     ],
                     [
                       582.7228,
-                      782.2495
+                      777.7395
                     ],
                     [
                       581.9164,
-                      780.9574
+                      776.4474
                     ],
                     [
                       581.7873,
-                      779.4397
+                      774.9297
                     ],
                     [
                       582.3638,
-                      778.0299
+                      773.5199
                     ],
                     [
                       583.5193,
-                      777.0376
+                      772.5276
                     ],
                     [
                       585.0,
-                      776.6807
+                      772.1707
                     ]
                   ]
                 ],
                 "blank": [
                   0.0,
-                  734.94,
+                  730.43,
                   594.0,
                   307.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P109",
+                "id": "P110",
                 "path": "Cabinet / Lower module / Skin / Rear supporting panel",
                 "outline": [
                   [
                     302.9253,
-                    1044.94
+                    1040.43
                   ],
                   [
                     302.9253,
-                    1104.94
+                    1100.43
                   ],
                   [
                     63.0054,
-                    1104.94
+                    1100.43
                   ],
                   [
                     59.3505,
-                    1088.8747
+                    1084.3647
                   ],
                   [
                     55.8168,
-                    1072.7847
+                    1068.2747
                   ],
                   [
                     55.9403,
-                    1072.482
+                    1067.972
                   ],
                   [
                     56.0853,
-                    1071.675
+                    1067.165
                   ],
                   [
                     55.9783,
-                    1068.7
+                    1064.19
                   ],
                   [
                     55.9523,
-                    1068.397
+                    1063.887
                   ],
                   [
                     55.8113,
-                    1067.806
+                    1063.296
                   ],
                   [
                     55.5563,
-                    1067.255
+                    1062.745
                   ],
                   [
                     55.1623,
-                    1066.587
+                    1062.077
                   ],
                   [
                     54.5293,
-                    1064.556
+                    1060.046
                   ],
                   [
                     54.3443,
-                    1064.098
+                    1059.588
                   ],
                   [
                     53.7243,
-                    1062.858
+                    1058.348
                   ],
                   [
                     53.687,
-                    1062.7977
+                    1058.2877
                   ],
                   [
                     50.0,
-                    1044.94
+                    1040.43
                   ]
                 ],
                 "holes": [],
                 "blank": [
                   0.0,
-                  1044.94,
+                  1040.43,
                   302.93,
                   110.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P160",
+                "id": "P161",
                 "path": "Cabinet / Upper module / Skin / Cab-end supporting panel",
                 "outline": [
                   [
@@ -24020,7 +23880,7 @@
                 "angle": 0
               },
               {
-                "id": "P123",
+                "id": "P124",
                 "path": "Cabinet / Lower module / Doors / Cab-end lower 1 / Plywood door",
                 "outline": [
                   [
@@ -24317,7 +24177,7 @@
                 "angle": 0
               },
               {
-                "id": "P159",
+                "id": "P160",
                 "path": "Cabinet / Upper module / Skin / Middle supporting panel",
                 "outline": [
                   [
@@ -24807,7 +24667,7 @@
                 "angle": 0
               },
               {
-                "id": "P163",
+                "id": "P164",
                 "path": "Cabinet / Upper module / Skin / Upper rear bottom backing",
                 "outline": [
                   [
@@ -25553,7 +25413,7 @@
                 "angle": 0
               },
               {
-                "id": "P166",
+                "id": "P167",
                 "path": "Cabinet / Upper module / Shelves / Rear shelf at 1033.25mm",
                 "outline": [
                   [
@@ -25591,7 +25451,7 @@
                 "angle": 0
               },
               {
-                "id": "P165",
+                "id": "P166",
                 "path": "Cabinet / Upper module / Skin / Upper rear top backing",
                 "outline": [
                   [
@@ -27193,7 +27053,7 @@
                 "angle": 0
               },
               {
-                "id": "P161",
+                "id": "P162",
                 "path": "Cabinet / Upper module / Skin / Rear supporting panel",
                 "outline": [
                   [
@@ -27503,7 +27363,7 @@
                 "angle": 0
               },
               {
-                "id": "P112",
+                "id": "P113",
                 "path": "Cabinet / Lower module / Shelves / Cab-end shelf at 510mm",
                 "outline": [
                   [
@@ -27560,6 +27420,22 @@
                   ],
                   [
                     2285.71,
+                    95.7802
+                  ],
+                  [
+                    2245.71,
+                    95.7802
+                  ],
+                  [
+                    2245.71,
+                    113.7802
+                  ],
+                  [
+                    2285.71,
+                    113.7802
+                  ],
+                  [
+                    2285.71,
                     332.478
                   ]
                 ],
@@ -27573,7 +27449,7 @@
                 "angle": 0
               },
               {
-                "id": "P167",
+                "id": "P168",
                 "path": "Cabinet / Upper module / Shelves / Cab-end shelf at 1033.25mm",
                 "outline": [
                   [
@@ -27603,7 +27479,7 @@
                 "angle": 0
               },
               {
-                "id": "P110",
+                "id": "P111",
                 "path": "Cabinet / Lower module / Skin / Lower cab-end backing",
                 "outline": [
                   [
@@ -27633,7 +27509,7 @@
                 "angle": 0
               },
               {
-                "id": "P177",
+                "id": "P178",
                 "path": "Cabinet / Upper module / Doors / Cab-end upper 2 / Plywood door",
                 "outline": [
                   [
@@ -27957,39 +27833,39 @@
               ],
               [
                 0.0,
-                336.94,
+                332.43,
                 790.0,
-                336.94
+                332.43
               ],
               [
                 0.0,
-                731.94,
+                727.43,
                 790.0,
-                731.94
+                727.43
               ],
               [
                 0.0,
-                1041.94,
+                1037.43,
                 790.0,
-                1041.94
+                1037.43
               ],
               [
                 0.0,
-                1154.94,
+                1150.43,
                 790.0,
-                1154.94
+                1150.43
               ],
               [
                 594.0,
-                734.94,
+                730.43,
                 594.0,
-                1041.94
+                1037.43
               ],
               [
                 302.93,
-                1044.94,
+                1040.43,
                 302.93,
-                1154.94
+                1150.43
               ],
               [
                 793.0,
@@ -28097,21 +27973,21 @@
             "remnants": [
               [
                 597.0,
-                734.94,
+                730.43,
                 193.0,
                 307.0
               ],
               [
                 305.93,
-                1044.94,
+                1040.43,
                 484.07,
                 110.0
               ],
               [
                 0.0,
-                1157.94,
+                1153.43,
                 790.0,
-                42.06
+                46.57
               ],
               [
                 1317.04,
@@ -28186,7 +28062,7 @@
             },
             "parts": [
               {
-                "id": "P113",
+                "id": "P114",
                 "path": "Cabinet / Lower module / Shelves / Cab-end shelf at 770mm",
                 "outline": [
                   [
@@ -28200,6 +28076,22 @@
                   [
                     418.0,
                     0.0
+                  ],
+                  [
+                    418.0,
+                    70.3002
+                  ],
+                  [
+                    378.0,
+                    70.3002
+                  ],
+                  [
+                    378.0,
+                    88.3002
+                  ],
+                  [
+                    418.0,
+                    88.3002
                   ],
                   [
                     418.0,
@@ -28449,7 +28341,7 @@
                 "angle": 0
               },
               {
-                "id": "P164",
+                "id": "P165",
                 "path": "Cabinet / Upper module / Skin / Upper cab-end top backing",
                 "outline": [
                   [
@@ -29367,7 +29259,7 @@
                 "angle": 0
               },
               {
-                "id": "P162",
+                "id": "P163",
                 "path": "Cabinet / Upper module / Skin / Upper cab-end bottom backing",
                 "outline": [
                   [
@@ -29397,7 +29289,7 @@
                 "angle": 0
               },
               {
-                "id": "P126",
+                "id": "P127",
                 "path": "Cabinet / Lower module / Doors / Cab-end lower 2 / Plywood door",
                 "outline": [
                   [
@@ -29694,7 +29586,7 @@
                 "angle": 0
               },
               {
-                "id": "P120",
+                "id": "P121",
                 "path": "Cabinet / Lower module / Doors / Rear storage upper flap / Plywood door",
                 "outline": [
                   [
@@ -29991,7 +29883,7 @@
                 "angle": 0
               },
               {
-                "id": "P117",
+                "id": "P118",
                 "path": "Cabinet / Lower module / Doors / Rear storage fore / Plywood door",
                 "outline": [
                   [
@@ -30288,7 +30180,7 @@
                 "angle": 0
               },
               {
-                "id": "P114",
+                "id": "P115",
                 "path": "Cabinet / Lower module / Doors / Rear storage aft / Plywood door",
                 "outline": [
                   [
@@ -30585,7 +30477,7 @@
                 "angle": 0
               },
               {
-                "id": "P168",
+                "id": "P169",
                 "path": "Cabinet / Upper module / Doors / Rear upper 1 / Plywood door",
                 "outline": [
                   [
@@ -30882,7 +30774,7 @@
                 "angle": 0
               },
               {
-                "id": "P174",
+                "id": "P175",
                 "path": "Cabinet / Upper module / Doors / Cab-end upper 1 / Plywood door",
                 "outline": [
                   [
@@ -31179,7 +31071,7 @@
                 "angle": 0
               },
               {
-                "id": "P158",
+                "id": "P159",
                 "path": "Cabinet / Upper module / Skin / Rear top removable infill",
                 "outline": [
                   [
@@ -31297,7 +31189,7 @@
                 "angle": 0
               },
               {
-                "id": "P171",
+                "id": "P172",
                 "path": "Cabinet / Upper module / Doors / Rear upper 2 / Plywood door",
                 "outline": [
                   [
@@ -31771,8 +31663,8 @@
         ],
         "unplaced": [],
         "stock_area": 5760000.0,
-        "blank_area": 3423491.7579,
-        "profile_area": 2962083.9517776803,
+        "blank_area": 3419928.8579,
+        "profile_area": 2953845.6331089353,
         "full_stock_count": 2,
         "offcut_count": 0,
         "estimated_cost": 107.54,

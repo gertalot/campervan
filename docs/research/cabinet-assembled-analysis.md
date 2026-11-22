@@ -1,5 +1,7 @@
 # Assembled cabinet: 6mm versus 3mm skins and backings
 
+These results describe the lower cabinet before the copied wall-side box frame added on 23 November 2026.
+
 Calculated 22 November 2026 from the current CAD, including the rearward furniture refit and raised floor. This
 supersedes the isolated-shelf calculations for assessing assembled-cabinet movement. The CAD design and selected
 materials were not changed.

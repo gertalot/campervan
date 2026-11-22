@@ -8,6 +8,7 @@ from campervan.cad.cabinet_backing import backing_glue_cleats, build_backing
 from campervan.cad.cabinet_doors import DOOR_COLOR, REBATE_WIDTH, build_cabinet_doors, cabinet_door_module, panel_rebate
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
+from campervan.cad.cut_profiles import set_fitting_datums
 from campervan.cad.scan_scribing import scribe_assembly
 from campervan.cad.scan_scribe_data import CABINET_SCRIBE_FLOOR_Z_MM, CABINET_SCRIBE_REAR_Y_MM
 from campervan.cad.cabinet_upper import rear_face_clearance, rear_panel_clearance, rear_upper_post_y
@@ -37,9 +38,8 @@ def build_cabinet(p: Parameters) -> Compound:
     timber: list[tuple[str, Part]] = []
     posts: list[Part] = []
     joint_rails: list[tuple[str, Part]] = []
-    bridge_top = layout.first - shelf - w
-    if FURNITURE_FIT_ENABLED and bridge_top - p.cabinet_bridge_height_mm < p.arch_height_mm + 3:
-        raise ValueError("The wheel-arch bridge beneath the lower shelf cleats must clear the wheel arch.")
+    if FURNITURE_FIT_ENABLED and layout.first - w < p.arch_height_mm + 3:
+        raise ValueError("The copied wall-side rail must clear the wheel arch.")
 
     def fit(part: Part) -> Part:
         pose = part.location
@@ -195,24 +195,35 @@ def build_cabinet(p: Parameters) -> Compound:
     infill.location = pose
     add(infill, "Upper module", "Skin", fitted=False)
 
-    # Wall-side end uprights give the bridge timber attachments at both ends.
-    # The rear jamb preserves the loading opening; the cab-end upright stops under its shelf cleat.
-    bridge_inner = layout.lower_back - p.cabinet_bridge_thickness_mm
-    jamb_inner = layout.lower_back - w
-    if FURNITURE_FIT_ENABLED and jamb_inner - (layout.front + t) < 230:
+    # Copy the aisle frame inside the unchanged end skins. The arch opening has no bottom rail
+    # or floor-standing centre stile; the centre stile bears on the rail at the first shelf level.
+    wall_inner = layout.lower_back - t
+    if FURNITURE_FIT_ENABLED and wall_inner - (layout.front + t) < 230:
         raise ValueError("Cabinet rear opening must retain 230mm clear width.")
-    jamb = panel(w, t, p.cabinet_rear_storage_height_mm)
-    jamb.label, jamb.color = "Rear loading jamb", WOOD
-    jamb.location = Location((jamb_inner, skin, 0))
-    add(jamb, "Lower module", "Frames")
-    cab_end_upright = panel(w, t, bridge_top)
-    cab_end_upright.label, cab_end_upright.color = "Cab-end bridge upright", WOOD
-    cab_end_upright.location = Location((jamb_inner, length - skin - t, 0))
-    add(cab_end_upright, "Lower module", "Frames")
-    bridge = panel(length - skin - t - (skin + t), p.cabinet_bridge_thickness_mm, p.cabinet_bridge_height_mm)
-    bridge.label, bridge.color = "Wheel-arch bridge", WOOD
-    bridge.location = Location((layout.lower_back, skin + t, bridge_top - p.cabinet_bridge_height_mm), (0, 0, 90))
-    add(bridge, "Lower module", "Frames")
+    wall_labels = set()
+    for name, y, bottom, top in (
+        ("Rear wall stile", skin, 0.0, layout.split),
+        ("Cab-end wall stile", length - skin - w, 0.0, layout.split),
+        ("Middle wall stile", middle - w, layout.first, layout.split),
+    ):
+        part = panel(w, t, top - bottom)
+        part.label, part.color = name, WOOD
+        part.location = Location((layout.lower_back, y, bottom), (0, 0, 90))
+        # This repeats the existing wall datum. Do not cut the copied legs with the coarse arch box.
+        part = add(part, "Lower module", "Frames", fitted=False)
+        wall_labels.add(name)
+        posts.append(part)
+    for name, start, end, level in (
+        ("Wall rail", skin + w, length - skin - w, layout.first),
+        ("Rear wall top rail", skin + w, middle - w, layout.split),
+        ("Cab-end wall top rail", middle + skin, length - skin - w, layout.split),
+    ):
+        part = panel(end - start, t, w)
+        part.label, part.color = name, WOOD
+        part.location = Location((layout.lower_back, start, level - w), (0, 0, 90))
+        part = add(part, "Lower module", "Frames", fitted=False)
+        timber.append(("Lower module", part))
+        wall_labels.add(part.label)
 
     sides = (
         ("Rear", skin, 0.0),
@@ -226,12 +237,12 @@ def build_cabinet(p: Parameters) -> Compound:
             rail = cleat(f"{name} joining rail", y, bottom, bottom + w, owner, end=end)
             joint_rails.append((owner, rail))
         if name in {"Middle cab-end", "Cab-end"}:
-            bottom = layout.first - shelf - w
+            bottom = layout.first - w
             cleat(
                 f"{name} lower shelf cleat",
                 y,
                 bottom,
-                layout.first - shelf,
+                layout.first,
                 "Lower module",
             )
         bottom = layout.upper - shelf - w
@@ -258,10 +269,10 @@ def build_cabinet(p: Parameters) -> Compound:
             part.location = Location((layout.front + t, y, lo))
             if name == "Middle" and module == "Lower module":
                 gap = p.cabinet_module_clearance_mm
-                # Open the bridge slot to the wall and floor: straight cuts, with no dangling lower tail.
+                # Keep the open divider relief flush with the newly raised wall-side rail.
                 clearance = panel(
-                    p.cargo_width_mm - bridge_inner + gap + t, skin + 2, bridge_top + gap + 1
-                ).moved(Location((bridge_inner - gap, y - 1, -1)))
+                    p.cargo_width_mm - wall_inner + gap + t, skin + 2, layout.first + gap + 1
+                ).moved(Location((wall_inner - gap, y - 1, -1)))
                 part = cut(part, clearance)
             add(part, module, "Skin")
     rear_guide_top = layout.split + p.cabinet_module_guide_height_mm
@@ -347,6 +358,24 @@ def build_cabinet(p: Parameters) -> Compound:
                     group[next(i for i, item in enumerate(group) if item is rail)] = replacement
                     timber[index] = (owner, replacement)
 
+    # Join the copied wall frame to the existing transverse rails with half-lapped crossings.
+    # The lower half remains in the wall member; the upper half remains in the transverse rail.
+    frames = modules["Lower module"]["Frames"]
+    for i, cross in enumerate(frames):
+        if not (cross.label.endswith("joining rail") or cross.label.endswith("lower shelf cleat")):
+            continue
+        level = layout.split if cross.label.endswith("joining rail") else layout.first
+        upper_half = panel(p.cargo_width_mm + 2, length + 2, w / 2 + 1).moved(
+            Location((0, -1, level - w / 2)))
+        for j, wall in enumerate(frames):
+            if wall.label not in wall_labels:
+                continue
+            overlap = wall & cross
+            if overlap is not None and overlap.solids():
+                frames[j] = cut(wall, overlap & upper_half)
+                cross = cut(cross, overlap - upper_half)
+        frames[i] = cross
+
     # Rebates are cut at the closed pose, independently of the doors' current angles.
     for groups in modules.values():
         frames = groups["Frames"]
@@ -382,7 +411,7 @@ def build_cabinet(p: Parameters) -> Compound:
             )
     bores.extend(door_parts.frame_holes)
 
-    for parts in modules.values():
+    for module, parts in modules.items():
         group = parts["Frames"]
         for index, part in enumerate(group):
             if part.children:
@@ -394,14 +423,18 @@ def build_cabinet(p: Parameters) -> Compound:
                     a < d + 1e-6 and c < b + 1e-6 for a, b, c, d in zip(box.min, box.max, bb.min, bb.max, strict=True)
                 ):
                     part = cut(part, bore)
+            if module == "Lower module" and part.label.endswith("lower shelf cleat"):
+                # The 40mm rail depth is fixed by the frame levels; only its wall-facing end is scribed.
+                set_fitting_datums(part, 2)
             group[index] = part
 
     glue_cleats = backing_glue_cleats(p, layout.first, layout.split, layout.upper)
     for module, groups in modules.items():
-        cleats = [cleat for owner, cleat in glue_cleats if owner == module]
+        cleats = [cleat for owner, cleat in glue_cleats if owner == module and module == "Upper module"]
         for cleat in cleats:
             cleat.color = WOOD
-        groups["Frames"].append(Compound(label="Backing glue cleats", children=cleats))
+        if cleats:
+            groups["Frames"].append(Compound(label="Backing glue cleats", children=cleats))
 
     for module, groups in modules.items():
         labels = {rail.label for owner, rail in joint_rails if owner == module}

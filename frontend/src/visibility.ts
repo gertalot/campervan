@@ -3,6 +3,8 @@ const categories: Record<string, string[]> = {
   wheelArches: ['/Campervan/Vehicle references/Wheel arches'],
   woodenFloor: ['/Campervan/Finished floor plywood'],
   cabinet: ['/Campervan/Cabinet'],
+  topCabinet: ['/Campervan/Cabinet/Upper module'],
+  bottomCabinet: ['/Campervan/Cabinet/Lower module'],
   cabinetShelves: ['/Campervan/Cabinet/Lower module/Shelves', '/Campervan/Cabinet/Upper module/Shelves'],
   cabinetDoors: ['/Campervan/Cabinet/Lower module/Doors', '/Campervan/Cabinet/Upper module/Doors'],
   cabinetSkin: ['/Campervan/Cabinet/Lower module/Skin', '/Campervan/Cabinet/Upper module/Skin'],
@@ -106,7 +108,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   function change(paths: string[], visible: boolean) {
     for (const path of paths) {
       for (const existing of Object.keys(rules)) {
-        const independent = independentRoots.some(root => root.startsWith(`${path}/`)
+        const independent = [...independentPaths].some(root => root.startsWith(`${path}/`)
           && (existing === root || existing.startsWith(`${root}/`)));
         const excluded = excludedRoots.some(root => existing === root || existing.startsWith(`${root}/`));
         if (existing.startsWith(`${path}/`) && !independentPaths.has(existing) && !independent && !excluded) {

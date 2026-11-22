@@ -624,24 +624,30 @@ Its conversion slider is removed. The former green backrests are removed; the lo
 and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
-`cabinet.py` builds a panel-and-cleat cabinet in two modules. Both retain Frames, Skin, Shelves and Doors
+`cabinet.py` builds two modules, with a copied box frame in the lower cabinet. Both retain Frames, Skin, Shelves and Doors
 visibility groups. Skin now contains supporting 6mm Tigerply Okoume end panels and the centre divider, using the
 existing Bunnings product. It is not 3mm cladding over a separate timber skeleton. The front frame, shelf cleats,
-joining rails and hardware blocks use the existing 40 × 18mm pine. The arch bridge remains 90 × 18mm pine.
+joining rails and hardware blocks use the existing 40 × 18mm pine. The lower wall frame now copies that same
+40 × 18mm stock; the old 90 × 18mm arch beam is removed.
 The 6mm supporting-panel choice was approved on 17 November 2026 after comparing gravity compression and
 panel bending at an assumed 12kg per shelf. Existing cleats and framing remain; the comparison is not a verified
 cabinet load rating or a capacity check of its joints and vehicle attachments.
 
 Middle and cab-end panels have full-depth, jigsaw-scribed profiles against the actual side, pillars and finished
-ceiling. The rear upper panel follows the same contour and extends down to Z730. The lower rear timber jamb has
-no plywood facing or bottom sill. Its original chair-loading target was 230 × 730mm; narrowing the cabinet
-reduces the clear width, and this target is not enforced while furniture-clearance checking is disabled. There are no rear
-ladders, raked rear posts, return frames or uprights inside shelf bays. No full wall-facing back or top is added.
+ceiling. The rear upper panel follows the same contour and extends down to Z730. The lower rear loading opening
+has no plywood facing or bottom sill. Its original chair-loading target was 230 × 730mm; narrowing the cabinet
+reduces the clear width, and this target is not enforced while furniture-clearance checking is disabled. The lower
+wall frame repeats the aisle-side box layout inside the fixed skins: two straight floor-standing end stiles,
+a continuous rail at Z470–510, two top rails at Z730–770 and a centre stile above the raised rail. The top
+rails meet the centre stile/divider without crossing the plywood. The lower wall
+bottom rails and centre leg are omitted over the wheel arch. The frame uses its existing wall-side datum,
+without changing the cabinet placement, outer skins, backing planes, door openings or shelf levels. The centre
+stile sits beside the centre lining; transverse crossings have half-laps. No floor sill blocks rear loading.
 The van closes the wall-facing back. Front edges of supporting panels butt behind the front frame; no skin
 landing grooves are needed. Fix panel faces into the adjoining timber, not screws into thin plywood edges.
 
 `cabinet_layout.py` supplies the real fitting volumes and shelf/door datums. Its lower-back datum locates only the
-end uprights and arch bridge; it does not truncate the plywood or prescribe another back frame. `scribed_sheet`
+copied wall frame; it does not truncate the fitted plywood profiles. `scribed_sheet`
 intersects face/mid-plane templates and extrudes one constant-thickness outline. Shelf cleats are fitted individually to the backing envelope with bevelled wall ends. Module joining rails
 retain their original common square-ended footprint across both halves, preserving their bolt positions.
 The backing glue cleats meet the horizontal shelf/rail faces with matching bevels rather than edge-only contact.
@@ -658,7 +664,7 @@ There are no internal post cutouts. The front frame ties the panels together and
 The lower middle panel reaches the wall above the wheel-arch bridge, following the existing 3mm scan-clearance
 scribe. An open rectangular cut replaces the enclosed bridge slot and removes the lower wall-side tail. Its
 horizontal edge follows the beam top and its aisle-side edge runs straight down to the floor, retaining the
-module fitting clearance around the beam. The beam itself is unchanged.
+module fitting clearance around the beam. That straight relief now follows the replacement rail’s Z510 top.
 
 Five flat 6mm backing sheets close the four upper cupboards and the lower cab-end upper cupboard. All backs run
 parallel to Y, with no rotation around Z. The front/rear top pair share one lean about Y; the front/rear bottom pair
@@ -673,7 +679,9 @@ no arbitrary stops halfway across either bay. The wheel-arch and chair bays rema
 joining-rail shelf seats follow the shelf outline. Pillar regions beyond the rear backing edge retain their contours.
 18 × 18mm pine glue cleats follow the inside face of each backing at its middle/cab-end skin joints. Rear
 backs stop at the pillar, so only their middle edges receive cleats. Cleat ends are bevelled at the horizontal shelf/rail planes. Shelf-support ends follow the backing planes;
-module joining rails retain their shared original end positions. Pieces stop at upper-skin guide gaps; glue joins stay within each detachable module. The dedicated backing-cleat role
+module joining rails retain their shared original end positions. The lower module’s two slanted 18 × 18mm
+backing cleats are removed pending the next backing-support decision; the upper module retains its cleats.
+Pieces stop at upper-skin guide gaps; glue joins stay within each detachable module. The dedicated backing-cleat role
 shares the existing 18 × 18mm pine product and stock layout with the door hinge backing strips.
 The outer end panels retain their contoured outlines. The measured flat-sheet profiles in `scan_scribe_data.py`
 have at least 3mm nominal scan clearance and use the existing cabinet-partition plywood material. The cutting pipeline
@@ -735,7 +743,12 @@ vehicle anchorage remain to detail. Pine backing strips follow the moving doors 
 The Visibility section provides independent Cabinet shelves, Cabinet doors, Cabinet skin and Cabinet frames
 checkboxes, each covering both modules. Hinges follow Doors, including their stationary leaves. These are local
 viewer controls and require no server roundtrip or regeneration. Their saved preferences survive hiding/showing
-the whole cabinet. Parameter-group eye buttons use the same actual component paths.
+the whole cabinet. Top cabinet and Bottom cabinet use the same checkbox mechanism to control Upper module and
+Lower module respectively. They mask the complete module without clearing its category filters or individual
+component-eye choices; restoring either module restores those choices. The Cabinet checkbox still gates both.
+The controls retain the existing native labelled-checkbox pattern, following
+[WAI's label guidance](https://www.w3.org/WAI/tutorials/forms/labels/).
+Parameter-group eye buttons use the same actual component paths.
 
 Loading an old project replaces the cabinet's obsolete 3mm skin selection with the existing 9mm Bunnings product
 and discards retired cabinet ledge, overlay and module-section fields. The cut list uses the timber stock sections,
