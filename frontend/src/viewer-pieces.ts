@@ -40,8 +40,8 @@ const cadPath = (path: string) => '/Campervan/' + path.split(' / ').join('/');
 export function createViewerPieces(container: HTMLElement, getViewer: () => PieceViewer | undefined,
   cancelCamera: () => void, saveCamera: () => void) {
   const menu = createPlanDropdown();
-  let link: Link | undefined, selected: string | null = null;
-  let removeHighlight: (() => void) | undefined;
+  let link: Link | undefined;
+  const selected = new Map<string, () => void>();
   let down: { x: number; y: number; camera: string } | undefined;
   let extraCommands = (): PlanMenuItem[] => [];
   const tools = document.createElement('span'); tools.className = 'cad-piece-controls';
@@ -62,15 +62,27 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   showButton.disabled = true;
   const clearButton = iconButton(commands()[1],
     '<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><path d="m8 8 8 8m0-8-8 8"/>');
+  const menuButton = iconButton({ label: 'Piece actions', group: 'piece', shortcut: 'Shift+F10',
+    ariaShortcut: 'Shift+F10', run: () => openMenu() },
+    '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>');
+  menuButton.setAttribute('aria-haspopup', 'menu');
+  menuButton.setAttribute('aria-expanded', 'false');
+  const selectionHint = 'Click a piece to select or deselect it. Shift-click to add or remove individual pieces.';
+  menuButton.title += '. ' + selectionHint;
+  menuButton.parentElement!.parentElement!.dataset.tooltip = menuButton.title;
+  container.setAttribute('aria-description', selectionHint);
   container.tabIndex = 0;
 
   function clear() {
-    select(null);
+    selectOnly(null);
     const viewer = getViewer();
     if (viewer?.ready) { viewer.clearSelection(); viewer.removeLastBbox(); viewer.update(true, false); }
   }
-  function navigate() {
-    if (!hasActiveTool(getViewer()) && selected && link?.has(cutPath(selected))) link.show(cutPath(selected));
+  function onlyPiece(): string | undefined {
+    return selected.size === 1 ? selected.keys().next().value : undefined;
+  }
+  function navigate(path = onlyPiece()) {
+    if (!hasActiveTool(getViewer()) && path && link?.has(cutPath(path))) link.show(cutPath(path));
   }
   function frame(box: Box3, direction?: Vector3) {
     const viewer = getViewer();
@@ -121,20 +133,23 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     return { label: 'Reset view', group: 'camera', shortcut: 'R', ariaShortcut: 'R',
       enabled: Boolean(getViewer()?.ready) && !hasActiveTool(getViewer()), run: resetView };
   }
-  function commands(): PlanMenuItem[] {
+  function commands(target?: string): PlanMenuItem[] {
+    const path = target ?? onlyPiece();
     return [
       { label: 'Show in cut list', group: 'piece', shortcut: 'Double-click',
-        enabled: !hasActiveTool(getViewer()) && Boolean(selected && link?.has(cutPath(selected))), run: navigate },
+        enabled: !hasActiveTool(getViewer()) && Boolean(path && link?.has(cutPath(path))), run: () => navigate(target) },
       { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape',
         enabled: !hasActiveTool(getViewer()), run: () => { if (!hasActiveTool(getViewer())) clear(); } },
+      { label: path && selected.has(path) ? 'Remove piece from selection' : 'Add piece to selection',
+        group: 'selection', shortcut: 'Shift-click', enabled: Boolean(path), run: () => { if (path) toggle(path, true); } },
       resetCommand(),
       ...extraCommands(),
     ];
   }
-  function openMenu(x?: number, y?: number) {
+  function openMenu(event?: MouseEvent) {
     if (hasActiveTool(getViewer())) return;
-    const rect = showButton.getBoundingClientRect();
-    menu.open({ label: 'Piece actions', items: commands(), x: x ?? rect.left, y: y ?? rect.bottom,
+    menu.open({ label: 'Piece actions', items: commands(event ? pick(event) ?? undefined : onlyPiece()),
+      trigger: event ? undefined : menuButton, x: event?.clientX, y: event?.clientY,
       returnFocus: () => container.focus({ preventScroll: true }) });
   }
   function canvasEvent(event: Event) { return event.target instanceof HTMLCanvasElement; }
@@ -146,23 +161,44 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     const hit = viewer.idPicker.pickAt(event.clientX - rect.left, event.clientY - rect.top);
     return hit ? hit.info.solidPath ?? hit.info.path.replace(/\/(faces|edges|vertices)\/[^/]+$/, '') : null;
   }
-  function select(path: string | null) {
-    if (selected !== path) {
-      removeHighlight?.(); selected = path;
-      const viewer = getViewer();
-      if (viewer?.ready) {
-        const group = path ? viewer.rendered.nestedGroup.groups[path] : undefined;
-        if (group && path) highlight(viewer, group, path);
-        viewer.update(true, false);
+  function setSelection(paths: Set<string>) {
+    if (paths.size === selected.size && [...paths].every(path => selected.has(path))) {
+      updateControls();
+      return;
+    }
+    const viewer = getViewer();
+    for (const [path, remove] of selected) {
+      if (paths.has(path)) continue;
+      remove();
+      selected.delete(path);
+    }
+    if (viewer?.ready) {
+      for (const path of paths) {
+        if (selected.has(path)) continue;
+        const group = viewer.rendered.nestedGroup.groups[path];
+        if (group) selected.set(path, highlight(viewer, group, path));
       }
+      viewer.update(true, false);
     }
     updateControls();
   }
+  function selectOnly(path: string | null) {
+    setSelection(new Set(path ? [path] : []));
+  }
+  function toggle(path: string, additive: boolean) {
+    const paths = new Set(selected.keys());
+    if (!paths.delete(path)) {
+      if (!additive) paths.clear();
+      paths.add(path);
+    }
+    setSelection(paths);
+  }
   function updateControls() {
     const measuring = hasActiveTool(getViewer());
-    showButton.disabled = measuring || !selected || !link?.has(cutPath(selected));
-    clearButton.disabled = measuring;
-    const label = !showButton.disabled ? `Show ${selected!.split('/').at(-1)} in cut list › Double-click`
+    const path = onlyPiece();
+    showButton.disabled = measuring || !path || !link?.has(cutPath(path));
+    clearButton.disabled = menuButton.disabled = measuring;
+    const label = !showButton.disabled ? `Show ${path!.split('/').at(-1)} in cut list › Double-click`
       : measuring ? 'Show in cut list › Finish measuring first'
       : 'Show in cut list › Select a wood piece, or double-click one';
     showButton.title = label; showButton.parentElement!.parentElement!.dataset.tooltip = label;
@@ -173,12 +209,11 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (shown) viewer.setStates({ [path]: shown });
     const colour = getComputedStyle(container).getPropertyValue('--piece-selection-colour').trim();
     const removeOverlay = highlightPiece(group, colour);
-    removeHighlight = () => {
+    return () => {
       removeOverlay();
       if (previous && JSON.stringify(viewer.getStates()[path]) === JSON.stringify(shown)) {
         viewer.setStates({ [path]: previous });
       }
-      removeHighlight = undefined;
     };
   }
   container.addEventListener('pointerdown', event => {
@@ -192,20 +227,21 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 4
       || start.camera !== JSON.stringify(getViewer()?.getCameraPosition())) return;
     const path = pick(event);
-    if (path) select(path); else clear();
+    if (path) toggle(path, event.shiftKey);
+    else if (!event.shiftKey) clear();
   });
   container.addEventListener('dblclick', event => {
-    if (!canvasEvent(event)) return;
+    if (hasActiveTool(getViewer()) || !canvasEvent(event)) return;
     // Reserve all canvas double-clicks: the renderer otherwise uses modifiers to hide/isolate parts.
     event.preventDefault(); event.stopImmediatePropagation();
-    if (hasActiveTool(getViewer()) || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-    select(pick(event));
-    if (selected) navigate(); else clear();
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const path = pick(event);
+    if (path && link?.has(cutPath(path))) { selectOnly(path); navigate(path); }
   }, true);
   container.addEventListener('contextmenu', event => {
     if (hasActiveTool(getViewer()) || !canvasEvent(event)) return;
-    event.preventDefault(); select(pick(event)); openMenu(event.clientX, event.clientY);
-  });
+    event.preventDefault(); openMenu(event);
+  }, true);
   container.addEventListener('keydown', event => {
     if (hasActiveTool(getViewer())) return;
     if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable=true]')) return;
@@ -221,7 +257,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   }, true);
   document.addEventListener('keydown', event => {
     if (hasActiveTool(getViewer()) || event.key !== 'Escape' || event.defaultPrevented
-      || container.closest('[inert]') || !selected) return;
+      || container.closest('[inert]') || !selected.size) return;
     if ((event.target as Element).closest('[role="menu"]')) return;
     event.preventDefault(); clear();
   }, true);
@@ -231,7 +267,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     toolChanged() {
       down = undefined; menu.close();
       // Remove only our overlay: clear() would also reset the measurement endpoints.
-      if (hasActiveTool(getViewer())) select(null);
+      if (hasActiveTool(getViewer())) selectOnly(null);
       else updateControls();
     },
     setLink(value: Link) { link = value; },
@@ -270,14 +306,14 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
       if (target && target.distanceToSquared(ray.ray.origin) >= 1) return target.toArray();
       return ray.ray.at(Math.max(1, box.getSize(new Vector3()).length() / 2), new Vector3()).toArray();
     },
-    attach() { select(null); container.querySelector('.tcv_cad_toolbar')!.append(tools); },
+    attach() { selectOnly(null); container.querySelector('.tcv_cad_toolbar')!.append(tools); },
     clear,
     focus(path: string) {
       const viewer = getViewer();
       if (hasActiveTool(viewer)) return false;
       const group = viewer?.ready ? viewer.rendered.nestedGroup.groups[cadPath(path)] : undefined;
       if (!viewer || !group) return false;
-      clear(); cancelCamera(); select(cadPath(path));
+      clear(); cancelCamera(); selectOnly(cadPath(path));
       group.updateWorldMatrix(true, true);
       const box = new Box3().setFromObject(group), centre = box.getCenter(new Vector3()), size = box.getSize(new Vector3());
       const model = new Box3().setFromObject(viewer.rendered.nestedGroup.groups['/Campervan']);
