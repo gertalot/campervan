@@ -624,6 +624,61 @@ Its conversion slider is removed. The former green backrests are removed; the lo
 and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
+`cabinet.py` now builds only the new lower timber carcass: a rear bay, a shallow front bottom bay and two
+full-depth front bays as one unit.
+The upper cabinet remains absent. The lower cabinet includes shelves, three front doors and a fixed cover
+for cabinet 3; other skins and the catch/stay hardware are still to design.
+The original fitted envelope, dimensions and construction parameters remain in
+[`data/cabinet-reference`](../data/cabinet-reference/README.md).
+
+The new frame uses the existing 40 × 18mm pine, aisle face and 980mm overall-length allowance, with
+6mm end-skin space at each end. Matching aisle/wall post stations share a central post. The shallow wall
+frame clears the actual wheel arch at construction X1343; its clear rear entry is 207mm wide and 730mm high,
+without a bottom or intermediate transverse rail at the loading end. This is about 12mm narrower than the
+previous entry, because the new middle post and low rails must clear the arch rather than crossing it.
+The two deeper front compartments share a vertical wall frame at construction X1445, 20mm farther wallward
+than the initial frame. Clipping the registered scan to the full frame/backing region found the nearest wall
+at X1454.492. A future 6mm backing outside the frame retains at least 3mm clearance; overall depth stays
+within the saved X1460 exterior limit.
+Square reinforced butt joints connect rails to posts; use glue and dowels or screws, with drilling to be detailed.
+
+The lowest deep-compartment frame level is Z317: its 40mm bottom rails start at Z277, at least 3mm above
+the measured arch crown (rounded up to Z274 above the floor). Both compartments above this extend to the
+deep wall frame. The extra level retains the original mattress-access door datum at Z510; the module interface
+remains Z770. Centre transverse rails are centred on their posts; end transverse rails are flush with the
+outside post faces for the end skins. The tall rear bay has only bottom and top longitudinal rails, with no
+intermediate rails across its aisle or wall face. 18 × 18mm pine ledgers support all four edges of the three
+front shelf levels (Z317, Z510 and Z770) and the rear top shelf (Z770). Their tops sit 6mm below the future
+plywood surfaces. Long ledgers extend to the transverse frame faces, closing their corners against the
+side ledgers: 394mm long in front and 520mm at the rear. Each middle side support is two straight,
+square-ended pieces stopping at the retained upright; no ledger notches are needed. This leaves the small
+7mm recess behind the post at Z510 and Z770 without a timber bridge. The lowest cab-end side support also
+splits around its post; 20 ledger pieces are modelled in total. The rear loading opening remains clear.
+The internal shallow wall rail below the lowest deep shelf is lowered 6mm to Z311, allowing the sheet to
+pass above it. Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
+Four 6mm plywood panels now sit flush on the ledgers: three front shelves at Z317/Z510/Z770 and a rear
+top at Z770. Front blanks are 309 × 394mm, with an 18 × 11mm middle-post edge cutout; the lowest also has
+an 18 × 22mm cab-end post cutout. The rear top is a 207 × 520mm rectangle. Panels fit inside the framing
+and are not sandwiched between members. Cabinet shelves visibility controls the Lower module / Shelves group. Ledger cuts share the existing 18 × 18mm pine stock through their shelf-ledger role.
+Future wall-side infill must remain flush with or inboard of the shallow frame to retain arch clearance.
+The existing Cabinet / Lower module / Frames visibility and timber-cutting paths are reused.
+The frame is a construction layout, not a load rating; panels and vehicle attachments are still to design.
+
+The cabinet 3 fixed cover and three front doors share Lower module / Doors, so Cabinet doors controls all
+front closures. The fixed cover still uses the supporting-panel plywood material in the BOM. All are 6mm
+plywood, flush with the aisle face. Front-frame
+rebates are 10mm wide and 6mm deep, leaving 12mm of timber behind. With 2mm perimeter clearance, panels
+overlap each rebated opening edge by 8mm. Fixed cover rebates run on all four edges; doors retain an
+unrebated hinge edge. The fixed cover is 503 × 706mm; front panels are 367 × 253mm (side-hinged bottom),
+377 × 159mm (middle flap) and 377 × 226mm (above-bed flap). Moving doors retain the existing 30mm finger
+holes and 18 × 18mm glued pine hinge backing. Piano hinges use the existing nominal 27mm section;
+actual screw patterns, leaf thickness and mortises still need checking against the physical hardware.
+The existing rebate and piano-hinge mechanisms are reused; retired rear-door controls are removed.
+The middle and above-bed flaps have separate controls. Catches and flap stays remain unmodelled: the
+previous catch-block placement conflicts with the new shelf ledgers, so it was not carried into this frame.
+
+The following describes the checkpointed cabinet, not the active assembly.
+
 `cabinet.py` builds two modules, with a copied box frame in the lower cabinet. Both retain Frames, Skin, Shelves and Doors
 visibility groups. Skin now contains supporting 6mm Tigerply Okoume end panels and the centre divider, using the
 existing Bunnings product. It is not 3mm cladding over a separate timber skeleton. The front frame, shelf cleats,
@@ -854,6 +909,13 @@ retains native label activation and Space-key toggling, following the
 [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
+
+Clicking an unselected CAD piece highlights it in magenta and clears any other highlights. Clicking a selected
+piece removes its highlight. Shift-click adds or removes one piece while keeping the others selected. An empty
+click or Escape clears the selection. Double-clicking a wooden piece opens its cut-list entry.
+The **Piece actions** menu shows the gestures and supports adding or removing the piece under a right-click.
+Selection happens on click release so a drag can move the camera or the piece without changing the selection.
+See [W3C's pointer cancellation guidance](https://www.w3.org/WAI/WCAG22/Understanding/pointer-cancellation.html).
 
 Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece picker. Unmodified primary drags on
 the moving bed slats/legs, storage lid, cabinet doors and mounted tabletop leaves take precedence over camera orbit.

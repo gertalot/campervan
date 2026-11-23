@@ -55,6 +55,9 @@ RETIRED_PARAMETERS = frozenset(
         "table_stowed_arm_deg",
         "cabinet_upper_doors_open_percent",
         "cabinet_storage_doors_open_percent",
+        "cabinet_storage_aft_open_percent",
+        "cabinet_storage_fore_open_percent",
+        "cabinet_storage_upper_doors_open_percent",
         "cabinet_door_overlap_mm",
         "cabinet_back_thickness_mm",
         "cabinet_frame_step_height_mm",
@@ -1160,21 +1163,11 @@ class Parameters(BaseModel):
         description="Open the bottom front compartment independently of the door above the mattress.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
-    cabinet_storage_aft_open_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Aft door",
-        description="Swing the rearward bottom-storage door outward on its own hinge.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Bottom storage"], "control": "position"},
-    )
-    cabinet_storage_fore_open_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Fore door",
-        description="Swing the forward bottom-storage door outward on its own hinge.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Bottom storage"], "control": "position"},
+    cabinet_front_middle_door_open_percent: float = Field(
+        default=0.0, ge=0, le=100,
+        title="Cab-end middle flap",
+        description="Lower the front flap between the wheel-arch shelf and mattress-height shelf.",
+        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
     cabinet_front_upper_door_open_percent: float = Field(
         default=0.0,
@@ -1184,15 +1177,6 @@ class Parameters(BaseModel):
         description="Open the raised front compartment while the bed is made up, independently of the bottom door.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
-    cabinet_storage_upper_doors_open_percent: float = Field(
-        default=0.0,
-        ge=0,
-        le=100,
-        title="Rear above-bed flap",
-        description="Lower the full-width rear storage flap above the mattress.",
-        json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
-    )
-
     cabinet_ceiling_gap_mm: float = Field(
         default=5.0,
         ge=0,
@@ -1502,10 +1486,6 @@ class Parameters(BaseModel):
                         "cabinet_cab_end_upper_1_open_percent",
                         "cabinet_cab_end_upper_2_open_percent",
                     ),
-                ),
-                (
-                    "cabinet_storage_doors_open_percent",
-                    ("cabinet_storage_aft_open_percent", "cabinet_storage_fore_open_percent"),
                 ),
             ):
                 if legacy in data:

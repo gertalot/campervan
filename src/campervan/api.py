@@ -61,10 +61,8 @@ class Positions(BaseModel):
     cabinet_cab_end_upper_1_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_cab_end_upper_2_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_lower_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    cabinet_storage_aft_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    cabinet_storage_fore_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cabinet_front_middle_door_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     cabinet_front_upper_door_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-    cabinet_storage_upper_doors_open_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     solar_bag_x_mm: float = 750
     solar_bag_y_mm: float = 45
     solar_bag_z_mm: float = 0

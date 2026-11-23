@@ -35,6 +35,10 @@ def material_for(path: tuple[str, ...]) -> str:
     if "Module fasteners" in path:
         return "cabinet-module-fasteners"
     if "Cabinet" in path:
+        if name == "cabinet 3 fixed cover":
+            return "cabinet-partitions"
+        if "Shelf ledges" in path:
+            return "cabinet-shelf-ledges"
         if "Backing glue cleats" in path:
             return "cabinet-backing-cleats"
         if name == "pine hinge backing strip":
@@ -92,14 +96,15 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         scribed = clearance is not None
         profile: dict[str, Any] = {}
         axes = cutting_axes(part)
-        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing", "cabinet-backing-cleats", "floor-ribs"}:
+        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing",
+                        "cabinet-backing-cleats", "cabinet-shelf-ledges", "floor-ribs"}:
             if material == "cabinet-frames":
                 width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
             elif material == "cabinet-bridge":
                 width, thickness = parameters.cabinet_bridge_height_mm, parameters.cabinet_bridge_thickness_mm
             elif material == "floor-ribs":
                 width, thickness = parameters.floor_rib_width_mm, parameters.floor_rib_thickness_mm
-            elif material in {"cabinet-hinge-backing", "cabinet-backing-cleats"}:
+            elif material in {"cabinet-hinge-backing", "cabinet-backing-cleats", "cabinet-shelf-ledges"}:
                 width, thickness = 18.0, 18.0
             else:
                 width, thickness = parameters.slat_width_mm, parameters.slat_thickness_mm
@@ -125,6 +130,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 "floor-insulation",
                 "cabinet-frames",
                 "cabinet-backing-cleats",
+                "cabinet-shelf-ledges",
                 "floor-ribs",
                 "slats",
                 "frames",
@@ -143,11 +149,17 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                     "profile_note": f"Rectangle only: CAD outline extraction failed ({error}). "
                     "Transfer the profile before cutting."
                 }
-        if material in {"cabinet-frames", "cabinet-backing-cleats"}:
+        if material == "cabinet-frames":
             profile["profile_note"] = (
-                f"{profile.get('profile_note', '')} Shelf cleats meet the backing plane; module joining rails keep their original shared ends. Backing glue cleats have "
-                "bevelled ends at horizontal shelf/rail joints. Stock lengths include the long points; "
-                "transfer bevels from CAD before assembly."
+                f"{profile.get('profile_note', '')} Square-ended frame stock; glue and reinforce rail-to-post butt "
+                "joints with dowels or screws. Front panel rebates are 10mm wide and one plywood thickness deep; "
+                "door hinge edges remain unrebated. Shelf panels fit flush on separate face-mounted ledgers. "
+                "Joint drilling and vehicle attachments remain to detail."
+            ).strip()
+        elif material == "cabinet-backing-cleats":
+            profile["profile_note"] = (
+                f"{profile.get('profile_note', '')} Backing glue cleats have bevelled ends at horizontal "
+                "shelf/rail joints. Stock lengths include the long points; transfer bevels from CAD before assembly."
             ).strip()
         if material in {"floor-ribs", "floor-insulation"}:
             profile["profile_note"] = (

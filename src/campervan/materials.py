@@ -161,7 +161,7 @@ ROLES.extend(
             name="Cabinet catch-keeper through-bolts",
             kind="hardware",
             fields={},
-            quantity=18,
+            quantity=None,
             default_product_id="zenith-m3-12-ss316-8",
             note="M3 × 12 round-head bolt and nut sets: two for each of the nine catch keepers. "
             "Washers separate. Confirm head/hole fit on physical hardware.",
@@ -171,7 +171,7 @@ ROLES.extend(
             name="Cabinet hardware backing washers",
             kind="hardware",
             fields={},
-            quantity=18,
+            quantity=None,
             default_product_id="zenith-m3-flat-washer-ss316-35",
             note="M3 flat backing washers, nominal 8mm outside diameter: 18 catch keeper fixings. "
             "Confirm bearing faces and fit on the physical hardware.",
@@ -181,7 +181,7 @@ ROLES.extend(
             name="Cabinet catch-block assembly screws",
             kind="hardware",
             fields={},
-            quantity=18,
+            quantity=None,
             default_product_id="zenith-6g-40-100",
             note="Two 6g × 40mm screws through the front header into each square-cut catch block. "
             "Glue the broad mating faces, predrill and countersink. Catch base screws come with the catches.",
@@ -226,22 +226,28 @@ ROLES.extend(
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
             default_product_id="tigerply-okoume-6",
-            note="Nine 6mm inset doors sharing sheets with the shelves. "
-            "Six drop-down flaps, one front door and the bottom storage pair. Piano hinges fix into pine-backed edges.",
+            note="Three 6mm inset front doors sharing sheets with the shelves: one side-hinged door and two flaps. "
+            "Piano hinges fix into pine-backed edges. Cabinet 3 has a fixed cover using the supporting-panel role.",
         ),
         MaterialRole(
             id="cabinet-hinges",
             name="Cabinet door hinges",
             kind="hardware",
             fields={},
-            quantity=9,
+            quantity=3,
             default_product_id="taskmaster-piano-610-27-ss",
             note="One 610 × 27mm stainless piano-hinge length per door, trimmed to the backing strip. "
             "Mounting screws are included with the hinges, as shown in the product photo. "
-            "Allow approximately 180 screws across the nine trimmed hinges, included in the hinge price; "
-            "no separate screw purchase. Supplied screw size and count are not published. "
+            "Supplied screw size and count are not published. "
             "Leaves hidden on the unrebated door/jamb edges. Leaf thickness, pin, gap, mortices and "
             "fixing holes are provisional until checked against the physical hinge.",
+        ),
+        MaterialRole(
+            id="cabinet-shelf-ledges", name="Cabinet shelf ledgers", kind="timber", fields={},
+            default_product_id="pinetrim-18-18-1200",
+            note="18 × 18mm pine glued and screwed to the inside faces of the shelf-level frame rails. "
+            "Ledger tops sit one plywood thickness below the finished shelf surface. "
+            "Keep screws clear of the frame-joint dowel holes.",
         ),
         MaterialRole(
             id="cabinet-backing-cleats", name="Cabinet backing glue cleats", kind="timber", fields={},
@@ -277,7 +283,7 @@ ROLES.extend(
             name="Drop-down door chain restraints",
             kind="hardware",
             fields={},
-            quantity=2,
+            quantity=None,
             default_product_id="pinnacle-double-jack-2",
             note=(
                 "Two 3m packs for twelve short restraints: two per drop-down door. "

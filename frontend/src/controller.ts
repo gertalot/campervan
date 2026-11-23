@@ -35,13 +35,14 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     for (const [old, names] of Object.entries({
       cabinet_upper_doors_open_percent: ['cabinet_rear_upper_1_open_percent', 'cabinet_rear_upper_2_open_percent',
         'cabinet_cab_end_upper_1_open_percent', 'cabinet_cab_end_upper_2_open_percent'],
-      cabinet_storage_doors_open_percent: ['cabinet_storage_aft_open_percent', 'cabinet_storage_fore_open_percent'],
     })) {
       if (positions[old] !== undefined) for (const name of names) positions[name] ??= positions[old];
       delete positions[old];
     }
   }
   migrateDoorPositions();
+  for (const name of ['cabinet_storage_doors_open_percent', 'cabinet_storage_aft_open_percent',
+    'cabinet_storage_fore_open_percent', 'cabinet_storage_upper_doors_open_percent']) delete positions[name];
 
   function candidate(patch: Parameters) {
     const next = { ...positions, ...patch };
