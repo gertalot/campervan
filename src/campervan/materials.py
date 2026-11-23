@@ -161,9 +161,9 @@ ROLES.extend(
             name="Cabinet catch-keeper through-bolts",
             kind="hardware",
             fields={},
-            quantity=None,
+            quantity=6,
             default_product_id="zenith-m3-12-ss316-8",
-            note="M3 × 12 round-head bolt and nut sets: two for each of the nine catch keepers. "
+            note="M3 × 12 round-head bolt and nut sets: two per keeper, six for the three front doors. "
             "Washers separate. Confirm head/hole fit on physical hardware.",
         ),
         MaterialRole(
@@ -171,9 +171,9 @@ ROLES.extend(
             name="Cabinet hardware backing washers",
             kind="hardware",
             fields={},
-            quantity=None,
+            quantity=6,
             default_product_id="zenith-m3-flat-washer-ss316-35",
-            note="M3 flat backing washers, nominal 8mm outside diameter: 18 catch keeper fixings. "
+            note="M3 flat backing washers, nominal 8mm outside diameter: six catch keeper fixings. "
             "Confirm bearing faces and fit on the physical hardware.",
         ),
         MaterialRole(
@@ -181,9 +181,9 @@ ROLES.extend(
             name="Cabinet catch-block assembly screws",
             kind="hardware",
             fields={},
-            quantity=None,
+            quantity=6,
             default_product_id="zenith-6g-40-100",
-            note="Two 6g × 40mm screws through the front header into each square-cut catch block. "
+            note="Two 6g × 40mm screws through the free-side upright into each 40 × 18mm catch mounting block. "
             "Glue the broad mating faces, predrill and countersink. Catch base screws come with the catches.",
         ),
         MaterialRole(
@@ -272,7 +272,7 @@ ROLES.extend(
             fields={},
             default_product_id="taskmaster-roller-4",
             note=(
-                "One double roller catch with keeper per door; nine sets need three four-packs. "
+                "One double roller catch with keeper per front door; three sets need one four-pack. "
                 "30mm finger holes have eased rims. CAD catch envelopes are estimates: align the physical "
                 "keepers and rollers before drilling. Check supplied screw lengths against thin plywood; "
                 "use short screws or through-fixings. Roller catches have no verified vehicle holding rating. "

@@ -4,7 +4,9 @@ from dataclasses import dataclass
 
 from build123d import Align, Axis, Color, Compound, Cylinder, GeomType, Location, Part, fillet
 
+from campervan.cad.cabinet_catches import MOUNT_HEIGHT, DoorCatch, build_door_catch
 from campervan.cad.cabinet_piano import BACKING_SIZE, END_CLEARANCE, HINGE_PROJECTION, piano_leaves
+from campervan.cad.cabinet_layout import cabinet_front
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 
@@ -24,18 +26,20 @@ class DoorBuild:
     door: Compound
     fixed: Part
     rebate: Part
+    catch: DoorCatch
 
 
 @dataclass
 class CabinetDoors:
     assembly: Compound
-    rebates: list[Part]
+    frame_cuts: list[Part]
+    mounts: list[Part]
 
 
 def panel_rebate(p: Parameters, start: float, bottom: float, width: float, height: float) -> Part:
     """Closed-panel pocket, with the same reveal on every framed edge."""
     gap = p.cabinet_door_gap_mm
-    face = p.bed_width_mm + p.bed_inward_offset_mm + 6
+    face = cabinet_front(p)
     if p.cabinet_door_thickness_mm >= p.cabinet_frame_thickness_mm:
         raise ValueError("Cabinet panel rebates must leave timber behind the panels.")
     pocket = panel(width + 2 * gap, p.cabinet_door_thickness_mm, height + 2 * gap)
@@ -47,7 +51,7 @@ def _hinged_door(
     p: Parameters, label: str, start: float, bottom: float, width: float, height: float, angle: float,
     *, flap: bool = False,
 ) -> DoorBuild:
-    face = p.bed_width_mm + p.bed_inward_offset_mm + 6
+    face = cabinet_front(p)
     reveal, thickness = p.cabinet_door_gap_mm, p.cabinet_door_thickness_mm
     pin_x = face - HINGE_PROJECTION
     pin_y = start - reveal / 2
@@ -83,11 +87,17 @@ def _hinged_door(
     fixed_leaf, moving_leaf = piano_leaves(hinge_length, reveal, hinge_pose)
     fixed_leaf.label = f"{label} piano hinge fixed leaf (nominal section)"
     moving_leaf.location = origin.inverse() * hinge_pose
+    catch_height = bottom + height - (REBATE_WIDTH - reveal) - MOUNT_HEIGHT / 2 if flap else bottom + height / 2
+    catch = build_door_catch(p, label, start + width + reveal, catch_height)
+    for hole in catch.door_holes:
+        wood -= hole.moved(wood_pose.inverse())
+    catch.keeper.location = origin.inverse()
+    catch.fixings.location = origin.inverse()
     wood.label, wood.color = "Plywood door", DOOR_COLOR
     wood.location = origin.inverse() * wood_pose
-    door = Compound(label=label, children=[wood, backing, Compound(label="Hinges", children=[moving_leaf])])
+    door = Compound(label=label, children=[wood, backing, catch.keeper, catch.fixings, Compound(label="Hinges", children=[moving_leaf])])
     door.location = origin * Location((0, 0, 0), (0, -angle, 0) if flap else (0, 0, angle))
-    return DoorBuild(door, fixed_leaf, panel_rebate(p, start, bottom, width, height))
+    return DoorBuild(door, fixed_leaf, panel_rebate(p, start, bottom, width, height), catch)
 
 
 def build_cabinet_doors(
@@ -98,7 +108,7 @@ def build_cabinet_doors(
 ) -> CabinetDoors:
     gap, rebate = p.cabinet_door_gap_mm, REBATE_WIDTH
     start, end = bay_spans[1]
-    doors, hinges, rebates = [], [], []
+    doors, hinges, frame_cuts, mounts, catches = [], [], [], [], []
     for (parameter, label, flap), (bottom, top) in zip(DOOR_CONTROLS, opening_heights, strict=True):
         left = start - rebate + gap + (0 if flap else rebate)
         low = bottom - rebate + gap + (rebate if flap else 0)
@@ -107,8 +117,11 @@ def build_cabinet_doors(
         built = _hinged_door(p, label, left, low, width, height, getattr(p, parameter) * 0.9, flap=flap)
         doors.append(built.door)
         hinges.append(built.fixed)
-        rebates.append(built.rebate)
-    doors.append(Compound(label="Fixed hardware", children=[Compound(label="Hinges", children=hinges)]))
+        frame_cuts.extend([built.rebate, *built.catch.frame_cuts])
+        mounts.append(built.catch.mount)
+        catches.append(built.catch.body)
+    doors.append(Compound(label="Fixed hardware", children=[Compound(label="Hinges", children=hinges),
+                                                              Compound(label="Roller catch bodies", children=catches)]))
 
     start, end = bay_spans[0]
     bottom, top = rear_opening
@@ -117,10 +130,10 @@ def build_cabinet_doors(
     cover = panel(width, p.cabinet_partition_thickness_mm, height)
     cover = fillet(cover.edges().filter_by(Axis.Y), p.cabinet_door_corner_radius_mm)
     cover.label, cover.color = "Cabinet 3 fixed cover", DOOR_COLOR
-    face = p.bed_width_mm + p.bed_inward_offset_mm + 6
+    face = cabinet_front(p)
     cover.location = Location((face + p.cabinet_partition_thickness_mm, left, low), (0, 0, 90))
-    rebates.append(panel_rebate(p, left, low, width, height))
-    return CabinetDoors(Compound(label="Doors", children=[*doors, cover]), rebates)
+    frame_cuts.append(panel_rebate(p, left, low, width, height))
+    return CabinetDoors(Compound(label="Doors", children=[*doors, cover]), frame_cuts, mounts)
 
 
 def cabinet_door_motions(p: Parameters) -> dict[str, object]:

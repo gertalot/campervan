@@ -7,6 +7,8 @@ from build123d import Color, Compound, Face, Location, Part, Solid, Wire
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 
+FLOOR_BASE_WIDTH_MM = 1200.0
+
 
 def rib_frame(outline: list[tuple[float, float]], centre: float, seam: float,
               length: float, p: Parameters) -> Compound:
@@ -42,7 +44,7 @@ def rib_frame(outline: list[tuple[float, float]], centre: float, seam: float,
         member.location = Location((centre + a[0], a[1], bottom), (0, 0, degrees(atan2(dy, dx))))
         members.append(member)
 
-    half_core = 600.0
+    half_core = FLOOR_BASE_WIDTH_MM / 2
     if 4 * width >= 2 * half_core or 2 * width >= min(seam, length - seam):
         raise ValueError("Floor ribs must leave three clear spans and room beside the panel seam.")
     left = centre - half_core
@@ -73,7 +75,7 @@ def build_floor_plywood(p: Parameters) -> Compound:
     """Owner's two existing panels; stepped door-wing contours are provisional photo estimates."""
     centre = p.cargo_width_mm / 2
     rear_length, front_length = 830.0, 1200.0
-    half_width, wing = 600.0, 725.0
+    half_width, wing = FLOOR_BASE_WIDTH_MM / 2, 725.0
     rear_outline = [(-half_width, 0), (half_width, 0),
                     (half_width, rear_length), (-half_width, rear_length)]
     # Front piece is reversed end-for-end from the photograph: two rear steps, one front chamfer.

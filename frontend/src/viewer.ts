@@ -138,15 +138,6 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     if (render) viewer.update(true, false);
   }
 
-  function cushionRails() {
-    const groups = viewer!.rendered.nestedGroup.groups;
-    const lid = '/Campervan/Long bench/Hinged lid';
-    return [
-      `${lid}/Wall-side cushion rail`,
-      `${lid}/Sliding bed/Sliding assembly/Moving front slat support/Moving support frame`,
-    ].flatMap(path => groups[path] ? [groups[path] as unknown as Object3D] : []);
-  }
-
   function renderFoam() {
     if (!viewer?.ready) return;
     (viewer as unknown as PieceViewer).idPicker?.setDirty();
@@ -162,7 +153,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     const back = groups['/Campervan/Long bench/Cushions/Wall backrest/Foam/Core'] as unknown as Object3D;
     const crossSeat = groups['/Campervan/Cross bench/Cushions/Cross seat/Foam/Core'] as unknown as Object3D;
     if (!seat || !back || !crossSeat) return;
-    seatCushion ??= createCushionFoam(seat, back, crossSeat, cushionRails(), renderFoam,
+    seatCushion ??= createCushionFoam(seat, back, crossSeat, renderFoam,
       operation => layoutMirror.inOriginalCoordinates(operation));
     if ((positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0) > 0) {
       seatCushion.deform(null, positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0);

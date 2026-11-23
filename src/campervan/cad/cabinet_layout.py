@@ -7,6 +7,7 @@ from build123d import Edge, Face, Location, Part, Plane, Side, Solid, Wire
 from campervan.cad.body import body_section, ceiling_height, ceiling_space, interior_limits
 from campervan.cad.cabinet_backing import fit_to_backings
 from campervan.cad.panels import panel
+from campervan.cad.sliding_bed import long_bed_layout
 from campervan.parameters import Parameters
 from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
@@ -57,9 +58,14 @@ class CabinetLayout:
     backed_plywood_room: Part
 
 
+def cabinet_front(p: Parameters) -> float:
+    """Align the cabinet face with the extended bed rail in construction coordinates."""
+    return long_bed_layout(p).extended_front + p.bed_inward_offset_mm
+
+
 def cabinet_layout(p: Parameters) -> CabinetLayout:
     w, t, skin = p.cabinet_frame_width_mm, p.cabinet_frame_thickness_mm, p.cabinet_partition_thickness_mm
-    front = p.bed_width_mm + p.bed_inward_offset_mm + 6.0  # Follow the bed's shifted outer edge.
+    front = cabinet_front(p)
     curve = cabinet_back_profile(p, p.cabinet_back_clearance_mm)
     # A square-topped frame fits below the lowest wall-side ceiling. Skins supply the scribed trim.
     skin_top = ceiling_height(p, front + t, p.ceiling_ply_thickness_mm + p.cabinet_ceiling_gap_mm) - p.floor_surface_z_mm

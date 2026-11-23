@@ -496,7 +496,7 @@ The lid plywood follows that same cut plane (lid-local X + Y = 88mm at the saved
 The wall-side rail has a square rear end at Y88 across its full 18mm thickness, avoiding a sharp angled point.
 Both side rails have 10mm-radius top end corners, rounded through their 18mm thickness: four corners in total.
 `bed_slat_rear_setback_mm` is zero; extension travel is
-448mm to preserve the 1070mm bed width.
+470mm: the outside rail faces span X22–1092, giving 1070mm overall and 1034mm between their 18mm faces.
 The rear end panel spans local Y88–106, aligning its rear face with the end of the angled lid cut. The rear lift's
 upper rail follows at Y106–136. Central ventilation slots retain the complete Y88–136 rib (the first slot now starts
 at Y136), keeping its bolt seats solid. The original aisle-edge bracket rebates retain their nominal bounds.
@@ -590,7 +590,7 @@ draft-preserving refresh and polling. Current complete layouts are reused; uncha
 The frontend masks excluded assembly roots in the viewer without changing the saved leaf-visibility rules.
 Re-including removes that mask, restoring the previous eye settings; disabled eyes retain their state while excluded.
 
-`cross_bench.py` builds a fixed full-width platform at X = 0–1070, Y = 1280–1860 by default. Two fore/aft
+`cross_bench.py` builds a fixed full-width platform at X = 22–1092, Y = 1280–1860 by default. Two fore/aft
 18mm plywood frames have open-bottom rounded cutouts, 60mm legs and top rails. Matching rear and front 18mm frames
 fit between their inner faces, each with two legs using the same `member_width_mm` (60mm by default).
 The front frame finishes flush with the cab-facing ends of the side frames. The obsolete wider Lagun mounting post
@@ -632,10 +632,16 @@ The original fitted envelope, dimensions and construction parameters remain in
 [`data/cabinet-reference`](../data/cabinet-reference/README.md).
 
 The new frame uses the existing 40 × 18mm pine, aisle face and 980mm overall-length allowance, with
-6mm end-skin space at each end. Matching aisle/wall post stations share a central post. The shallow wall
-frame clears the actual wheel arch at construction X1343; its clear rear entry is 207mm wide and 730mm high,
-without a bottom or intermediate transverse rail at the loading end. This is about 12mm narrower than the
-previous entry, because the new middle post and low rails must clear the arch rather than crossing it.
+6mm end-skin space at the cab end. The rear frame is flush with the bed, with no outside rear-skin allowance.
+The lower cabinet rear frame starts at local Y0, flush with the bed rear datum. The former 6mm rear
+frame inset is removed; rear rails, shelf ledgers, top shelf and fixed cover extend accordingly. The centre
+frame and cab-end position remain unchanged.
+Matching aisle/wall post stations share a central post. The shallow wall
+frame's wall-facing edge is aligned to the measured 1200mm floor edge at construction X1350 (display X150).
+The aisle face is at construction X1116, aligned with the fully extended bed. The clear rear entry/top
+shelf depth is 198mm; entry height remains 730mm. The actual
+floor's known fit is the alignment datum. The remaining few-millimetre scan interference is recorded rather
+than used to thin the framing; 3mm scanned clearance is not claimed for these lower wall members.
 The two deeper front compartments share a vertical wall frame at construction X1445, 20mm farther wallward
 than the initial frame. Clipping the registered scan to the full frame/backing region found the nearest wall
 at X1454.492. A future 6mm backing outside the frame retains at least 3mm clearance; overall depth stays
@@ -657,10 +663,10 @@ splits around its post; 20 ledger pieces are modelled in total. The rear loading
 The internal shallow wall rail below the lowest deep shelf is lowered 6mm to Z311, allowing the sheet to
 pass above it. Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
 Four 6mm plywood panels now sit flush on the ledgers: three front shelves at Z317/Z510/Z770 and a rear
-top at Z770. Front blanks are 309 × 394mm, with an 18 × 11mm middle-post edge cutout; the lowest also has
-an 18 × 22mm cab-end post cutout. The rear top is a 207 × 520mm rectangle. Panels fit inside the framing
+top at Z770. Front blanks are 293 × 394mm, with an 18 × 11mm middle-post edge cutout; the lowest also has
+an 18 × 22mm cab-end post cutout. The rear top is a 198 × 526mm rectangle. Panels fit inside the framing
 and are not sandwiched between members. Cabinet shelves visibility controls the Lower module / Shelves group. Ledger cuts share the existing 18 × 18mm pine stock through their shelf-ledger role.
-Future wall-side infill must remain flush with or inboard of the shallow frame to retain arch clearance.
+Future wall-side infill must stay flush with or inboard of the shallow frame to preserve the measured floor-width envelope.
 The existing Cabinet / Lower module / Frames visibility and timber-cutting paths are reused.
 The frame is a construction layout, not a load rating; panels and vehicle attachments are still to design.
 
@@ -669,13 +675,21 @@ front closures. The fixed cover still uses the supporting-panel plywood material
 plywood, flush with the aisle face. Front-frame
 rebates are 10mm wide and 6mm deep, leaving 12mm of timber behind. With 2mm perimeter clearance, panels
 overlap each rebated opening edge by 8mm. Fixed cover rebates run on all four edges; doors retain an
-unrebated hinge edge. The fixed cover is 503 × 706mm; front panels are 367 × 253mm (side-hinged bottom),
+unrebated hinge edge. The fixed cover is 509 × 706mm; front panels are 367 × 253mm (side-hinged bottom),
 377 × 159mm (middle flap) and 377 × 226mm (above-bed flap). Moving doors retain the existing 30mm finger
 holes and 18 × 18mm glued pine hinge backing. Piano hinges use the existing nominal 27mm section;
 actual screw patterns, leaf thickness and mortises still need checking against the physical hardware.
 The existing rebate and piano-hinge mechanisms are reused; retired rear-door controls are removed.
-The middle and above-bed flaps have separate controls. Catches and flap stays remain unmodelled: the
-previous catch-block placement conflicts with the new shelf ledgers, so it was not carried into this frame.
+The middle and above-bed flaps have separate controls. Each of the three doors now has a Taskmaster
+double roller catch on a 30mm length of 40 × 18mm pine behind the free-side upright. The 30mm projection
+supports the nominal 25mm-deep base and retains 8mm beyond the frame-screw tips. The base is mounted
+vertically, clearing the shelf ledgers; flap catches sit near their free top edges. Two 6g × 40mm screws
+and glue attach each block to the unreduced frame band, with flush countersunk heads. The keeper is
+through-bolted to the 6mm door with two M3 × 12mm bolts, nuts and backing washers. Local rear-lip relief
+clears the keeper without changing the front rebate outline. Mounts are in Frames; fixed catch bodies and
+moving keepers follow Cabinet doors. The BOM counts three sets (one four-pack), six keeper bolts/washers
+and six block screws; catch-base screws come with the product. Geometry and drill patterns remain nominal
+until checked against the physical catches; no retention-force rating is established. Flap stays remain to design.
 
 The following describes the checkpointed cabinet, not the active assembly.
 
@@ -769,10 +783,11 @@ starts above the chair-loading opening and rises 20mm past the joint; the upper 
 Both rear pieces retain the same measured wall contour. Keep every detachable mating
 surface unglued. Module rails and fasteners remain in the Module joint subgroup under Frames.
 
-The cabinet front face follows `bed_width_mm + bed_inward_offset_mm + 6mm` in both its frame layout and door
+The cabinet front face follows the extended bed rail plus `bed_inward_offset_mm`, with no additional gap, shared through
+`cabinet_front`, in both its frame layout and door
 construction. With the accepted 24mm bed offset, its front moves 24mm towards the wall, reducing cabinet depth
 while keeping the wall-side scribed profile. Panels, shelves, front framing, doors and their hardware follow the
-same face position. This restores the previous 6mm nominal wood-face gap; hinge barrels consume approximately
+same face position. The current cabinet face is flush with the extended bed; hinge barrels project approximately
 5.7mm of it where their heights and fore–aft positions overlap the bed. The rear jamb continues to use the fitted
 wall limit rather than moving outwards to preserve the former 230mm opening.
 
@@ -844,8 +859,12 @@ to be reconciled. This discrepancy is not evidence that the real bag needs more 
 The long seat is 600 × 1280; the fixed cross seat is 1070 × 580.
 The orange backrest is 470 × 1280, retaining its seated bottom elevation and 100mm thickness. Its height follows
 the difference between sleeping width and long-seat width. The former two green backrests are removed.
-At full conversion, orange fills X = 0–470 and the long seat X = 470–1070, meeting without overlap or a gap.
-Both Cushions groups retain their existing +7mm X offset.
+At full conversion, nominal orange fills X22–492 and the long seat X492–1092, meeting without a gap.
+Both Cushions groups use the wall-side rail datum X22, centring the nominal 1070mm mattress on the rails.
+The cross-bench slats and frames share that datum; the frontmost slat still stops at vehicle X100.
+The long-bed extension is 22mm wider than before. The cabinet aisle face is consequently 16mm wallward from the former narrow-bed design
+(the initial 6mm bed gap was removed, widening the cabinet by 6mm),
+with its wall-side frame fixed; shelf and cross-rail depths follow the reduced cabinet depth.
 The long-bench slider moves the long seat and orange backrest; the cross seat remains flat and stationary.
 Each cushion is a centred native box in its own located Compound.
 Cushions hold until 40%; by 80% the seat has shifted and the backrest has turned above the seats;
@@ -854,9 +873,11 @@ This previews manual repositioning; real cushion fit and intermediate handling r
 Storage-lid tracks act on a `Foam` assembly parent, while conversion tracks retain the cushion parent groups.
 The `Foam / Core` mesh keeps OCP's native box-centring offset untouched; this offset must not be replaced by
 absolute storage tracks, even at the closed pose. Deformation reads the core mesh, while pillow bounds use its parent.
-The blue child uses the lid delta conjugated through its closed cushion pose, including the 7mm wall offset.
-`cushion-foam.ts` performs one direct geometry update per pose. Blue keeps its slab shape and is uniformly
-compressed in width between the two rails, with 1mm side clearance. During storage opening it follows the lid
+The blue child uses the lid delta conjugated through its closed cushion pose, including the shared wall-side rail offset.
+`cushion-foam.ts` performs one direct geometry update per pose. Blue and orange retain their full manufactured widths in the viewer: 600mm and 470mm. At full conversion,
+these form a centred 1070mm mattress, intentionally overlapping each 18mm retaining rail. No rail-based
+width scaling or clipping is applied. These dimensions are the foam cut sizes, not upholstery patterns or
+seam allowances. During storage opening it follows the lid
 and loses at most 3mm of thickness. Orange remains upright, rises as a whole, and compresses at most 3mm at
 its lower edge. Every orange vertex is constrained above blue's planar upper surface with 0.5mm clearance;
 the linear half-space condition also separates the triangle interiors. No gravity, velocities, material solver,

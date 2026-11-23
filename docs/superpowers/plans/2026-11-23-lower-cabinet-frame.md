@@ -121,3 +121,33 @@ against rebated frame, shelves and fixed cover with no solid collisions. Above-b
 fully extended nominal foam: no sampled collisions, minimum12mm gap. Existing app published revision2
 and its matching cut list with three doors, three18mm backing strips and the fixed cover. These checks
 exclude actual hinge screw patterns and soft furnishings beyond the nominal foam geometry.
+
+## Door roller catches
+
+Use the existing Taskmaster catch product and earlier nominal hardware sections, rotated for side mounting.
+Place 40×18×40mm pine blocks behind the free upright at X1118–1158,Y944–962. Bottom-door centre Z158.5;
+flap centres Z450/710 put block tops flush below the cross rails. Two countersunk6g×40 frame fixings and
+glue attach each block. Two M3×12 bolts and backing washers attach each moving keeper. Local back-lip
+relief clears the keeper; no ledger notches or door/front outline changes. Blocks follow Frames, fixed
+catch bodies follow Doors, and each keeper/fixing assembly follows its moving door. Physical catch size,
+drill patterns and holding force remain unverified; flap stays are not part of this step.
+
+Catch authoring checks: all104 native leaves valid, no static timber overlaps. Moving panels, backing
+strips and keepers checked at0,5,15,30,45,60,75,90° against the frame, shelves and blocks: no collisions.
+Plywood/backing clear the fixed catch bodies; the above-bed assembly clears nominal extended-bed foam.
+Existing app published matching model/cut revision2, with three catch sets and three40×18×40mm blocks;
+keeper bolts, washers and block screws each total six. These are geometry checks, not retention testing.
+## Shorter catch mounting blocks
+
+Reduce the mounting-block projection from40 to30mm, retaining the40×18mm stock section and all fixing
+positions. The nominal25mm base retains5mm backing margin; frame screws embed22mm into the block,
+leaving8mm beyond their tips. Native geometry remains one valid solid; the cut length is30mm.
+
+## Align the shallow wall frame with the physical floor
+
+Gert confirmed the real1200mm floor fits between the wheel arches. Use that physical datum for the shallow
+wall frame: nativeX1350/displayX150, a7mm move wallward, with aisleX1100, deepwallX1445 and heights unchanged.
+Share FLOOR_BASE_WIDTH_MM from the existing floor builder; dependent rails, ledgers and shelf cutouts follow
+the datum. Rear clear width/top shelf depth becomes214mm. Keep full timber sections; do not introduce an
+arch notch based on a few millimetres of scan disagreement. Three-millimetre scan clearance is not claimed
+for the affected lower members; higher-up fit remains to confirm against the vehicle.

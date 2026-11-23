@@ -1,4 +1,4 @@
-import { Box3, Vector3, type Mesh, type Object3D, type SkinnedMesh } from 'three';
+import { Box3, Vector3, type Object3D, type SkinnedMesh } from 'three';
 import { createFoamSkin } from './foam-surface';
 
 /** Preserve the existing seated-preview dent; it is independent of lid fitting. */
@@ -42,7 +42,7 @@ function seatedDent(human: Object3D | null, seat: Box3) {
 }
 
 /** One direct geometry update per pose. No physics, gravity, inertia or settling. */
-export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Object3D, rails: Object3D[],
+export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Object3D,
   onChange: () => void, inCoordinates: (operation: () => void) => void) {
   const blue = createFoamSkin(seat), orange = createFoamSkin(back);
   const cross = createFoamSkin(crossSeat);
@@ -53,24 +53,14 @@ export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Obj
     blue.mesh.updateWorldMatrix(true, false); orange.mesh.updateWorldMatrix(true, false);
     const blueWorld = blue.mesh.matrixWorld.clone(), blueInverse = blueWorld.clone().invert();
     const orangeWorld = orange.mesh.matrixWorld.clone(), orangeInverse = orangeWorld.clone().invert();
+    // Display the manufactured foam width, including its intentional overlap with the rails.
     const nominal = blue.localBounds;
-    let left = nominal.min.x, right = nominal.max.x;
-    for (const rail of rails) {
-      const mesh = (rail as Object3D & { front?: Mesh }).front;
-      if (!mesh) continue;
-      mesh.updateWorldMatrix(true, false); mesh.geometry.computeBoundingBox();
-      const box = mesh.geometry.boundingBox!.clone().applyMatrix4(blueInverse.clone().multiply(mesh.matrixWorld));
-      const middle = (nominal.min.x + nominal.max.x) / 2;
-      if (box.max.x > nominal.min.x && box.max.x < middle) left = Math.max(left, box.max.x + 1);
-      if (box.min.x < nominal.max.x && box.min.x > middle) right = Math.min(right, box.min.x - 1);
-    }
-    const width = Math.max(1, right - left);
+    const left = nominal.min.x, right = nominal.max.x;
     const squeeze = 3 * Math.max(0, Math.min(1, lidPercent / 100));
     const height = size.z - squeeze;
     const dent = seatedDent(human, blue.bounds());
     blue.draw(point => {
       const throughFoam = (point.z - nominal.min.z) / size.z;
-      point.x = left + (point.x - nominal.min.x) / size.x * width;
       point.z = nominal.min.z + throughFoam * height;
       point.applyMatrix4(blueWorld);
       point.z -= dent(point) * throughFoam;

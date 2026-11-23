@@ -5,6 +5,7 @@ from build123d import Axis, Color, Compound, Location, fillet
 from campervan.cad.cushions import build_cushions
 from campervan.cad.cross_bench_layout import cross_bench_layout
 from campervan.cad.panels import frame_panel, panel
+from campervan.cad.sliding_bed import long_bed_layout
 from campervan.parameters import Parameters
 
 
@@ -14,6 +15,7 @@ FRONT_PILLAR_SLAT_END_X_MM = 100.0
 
 def build_cross_bench(p: Parameters) -> Compound:
     width = p.bed_width_mm
+    wall_edge = long_bed_layout(p).lid_rear
     layout = cross_bench_layout(p)
     rear, length, height = layout.rear, layout.length, layout.height
     thickness = p.frame_thickness_mm
@@ -41,7 +43,7 @@ def build_cross_bench(p: Parameters) -> Compound:
         raise ValueError("Cross bench needs room for four full-width slats and ventilation gaps.")
     slats = []
     for i in range(count):
-        wall_trim = FRONT_PILLAR_SLAT_END_X_MM - p.bed_inward_offset_mm if i == count - 1 else 0.0
+        wall_trim = FRONT_PILLAR_SLAT_END_X_MM - p.bed_inward_offset_mm - wall_edge if i == count - 1 else 0.0
         slat_length = width - (50 if i == 0 else wall_trim)
         slat = panel(slat_length, p.slat_width_mm, p.slat_thickness_mm)
         if i == 0:
@@ -55,5 +57,6 @@ def build_cross_bench(p: Parameters) -> Compound:
     parts.append(Compound(label="Fixed slats", children=slats))
     return Compound(
         label="Cross bench",
-        children=[Compound(label="Fixed frame", children=parts), build_cushions(p, "Cross bench")],
+        children=[Compound(label="Fixed frame", children=parts).moved(Location((wall_edge, 0, 0))),
+                  build_cushions(p, "Cross bench")],
     )

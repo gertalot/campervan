@@ -12,7 +12,6 @@ from campervan.parameters import Parameters
 
 Vector3 = tuple[float, float, float]
 Pose = tuple[float, Vector3, Vector3]
-CUSHION_WALL_GAP = 7.0
 
 
 @dataclass(frozen=True)
@@ -134,17 +133,17 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
     pillow = Box(600, 400, 200)
     pillow.label, pillow.color = "Pillow", Color(0.22, 0.22, 0.22)
     pieces.append(Compound(label="Rear pillow" if bench == "Long bench" else "Front pillow", children=[pillow]))
-    # Keep wall clearance on the parent so CAD poses and live child motion share the offset.
+    # Centre full-size foam on the rail-to-rail span, intentionally overlapping both rails.
     cushions = Compound(label="Cushions", children=pieces)
-    cushions.location = Location((CUSHION_WALL_GAP, 0, 0))
+    cushions.location = Location((long_bed_layout(p).lid_rear, 0, 0))
     return cushions
 
 
 def lid_cushion_locations(p: Parameters, percent: float) -> dict[str, Location]:
     """Foam-child poses keep storage lifting independent of parent conversion poses.
 
-    The blue seat follows the linkage. The browser directly fits it between
-    the rails and raises the upright backrest above its top plane, with only
+    The blue seat follows the linkage. The browser preserves its manufactured width
+    and raises the upright backrest above its top plane, with only
     slight visual compression. There is no settling or material simulation.
     """
     layout = long_bed_layout(p)
@@ -152,7 +151,7 @@ def lid_cushion_locations(p: Parameters, percent: float) -> dict[str, Location]:
     closed = lid_location(layout.lid_rear, layout.box_top, 0)
     delta = opened * closed.inverse()
     seat, back = cushion_layout(p, "Long bench")
-    offset = Location((CUSHION_WALL_GAP, 0, 0))
+    offset = Location((layout.lid_rear, 0, 0))
     seat_base = offset * seat.location(0)
     return {
         seat.label: seat_base.inverse() * delta * seat_base,

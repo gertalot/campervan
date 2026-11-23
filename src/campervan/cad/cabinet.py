@@ -5,15 +5,13 @@ from build123d import Color, Compound, Location, Part
 from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_doors import build_cabinet_doors
 from campervan.cad.cut_profiles import copy_fitting_datums, set_fitting_datums
+from campervan.cad.floor import FLOOR_BASE_WIDTH_MM
 from campervan.cad.panels import panel
 from campervan.cad.scan_scribe_data import CABINET_SCRIBE_FLOOR_Z_MM, CABINET_SCRIBE_REAR_Y_MM
 from campervan.parameters import Parameters
 
 WOOD = Color(0.84, 0.64, 0.39)
 PLYWOOD = Color(0.91, 0.80, 0.62)
-# The registered arch reaches X1346.640. Keep straight framing at least 3mm inboard.
-# This new floor-standing frame crosses areas the former high wall rails did not occupy.
-ARCH_FRAME_OUTER_X_MM = 1343.0
 # Highest registered crown in the cab-end arch band: world Z283.485mm, rounded up.
 ARCH_CROWN_WORLD_Z_MM = 284.0
 # Nearest wall in the complete deep-frame/backing region: X1454.492.
@@ -30,9 +28,12 @@ def build_cabinet(p: Parameters) -> Compound:
     first, split = layout.first, layout.split
     # Keep the complete 40mm bottom rail above the crown; preserve the old mattress door level separately.
     arch_level = max(p.arch_height_mm, ARCH_CROWN_WORLD_Z_MM) - p.floor_surface_z_mm + 3 + w
-    aisle, shallow = layout.front, min(layout.lower_back, ARCH_FRAME_OUTER_X_MM)
+    # The owner's 1200mm floor physically fits between the arches; align the frame to its edge.
+    aisle, shallow = layout.front, (p.cargo_width_mm + FLOOR_BASE_WIDTH_MM) / 2
     deep = DEEP_FRAME_OUTER_X_MM
-    rear, middle, cab = skin, p.cabinet_rear_bay_length_mm + skin / 2 - w / 2, p.cabinet_length_mm - skin - w
+    rear = 0.0  # Rear frame face is flush with the bed rear datum.
+    middle = p.cabinet_rear_bay_length_mm + skin / 2 - w / 2
+    cab = p.cabinet_length_mm - skin - w
     if not rear + w < middle < middle + w < cab or deep - shallow <= 2 * t:
         raise ValueError("Lower cabinet needs two clear bays and room for the wall-side depth extension.")
     if not w < arch_level < first - w:
@@ -142,7 +143,8 @@ def build_cabinet(p: Parameters) -> Compound:
         p, ((rear + w, middle), (middle + w, cab)),
         ((w, arch_level - w), (arch_level, first - w), (first, split - w)), (w, split - w),
     )
-    rebate_cutters = Compound(door_parts.rebates)
+    parts.append(Compound(label="Catch mounting blocks", children=door_parts.mounts))
+    rebate_cutters = Compound(door_parts.frame_cuts)
     for index, part in enumerate(parts):
         if part.children:
             continue

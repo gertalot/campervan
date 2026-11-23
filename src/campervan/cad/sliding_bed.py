@@ -48,6 +48,11 @@ class BedLayout:
     rear_panel_y: float
     moving_support_length: float
 
+    @property
+    def extended_front(self) -> float:
+        """Outside face of the extended rail, measured from the same datum as the wall rail."""
+        return self.front + self.travel
+
 
 def lid_slots(p: Parameters, slat_ys: tuple[float, ...]) -> tuple[tuple[float, float], ...]:
     """Shared transverse slot bounds for cutting the lid and placing its supports."""
@@ -70,7 +75,7 @@ def long_bed_layout(p: Parameters) -> BedLayout:
     moving_front = front - p.frame_thickness_mm
     # Retain the existing box-wall position while aligning the parts above it.
     box_front = p.long_bench_width_mm + p.frame_thickness_mm - BOX_RAIL_RESERVE
-    travel = p.bed_width_mm - front
+    travel = rear + p.bed_width_mm - front
     count = floor((p.seat_length_mm + gap) / (p.slat_width_mm + gap))
     if count % 2 == 0:
         count -= 1
