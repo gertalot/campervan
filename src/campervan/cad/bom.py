@@ -73,6 +73,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
+        if part.label == "Rear pillar panel (preview)":
+            return  # Pillar panel fit study, pending a construction decision.
         if "Lid hinges" in path:
             return  # Whole purchased items use explicit role quantities, not component envelopes.
         if "Laptop table" in path and "Stowed" in path:
@@ -149,13 +151,17 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                     "profile_note": f"Rectangle only: CAD outline extraction failed ({error}). "
                     "Transfer the profile before cutting."
                 }
-        if material == "cabinet-frames":
+        if material == "cabinet-frames" and "Lower module" in path:
             profile["profile_note"] = (
                 f"{profile.get('profile_note', '')} Square-ended frame stock; glue and reinforce rail-to-post butt "
                 "joints with dowels or screws. Front panel rebates are 10mm wide and one plywood thickness deep; "
                 "door hinge edges remain unrebated. Shelf panels fit flush on separate face-mounted ledgers. "
                 "Joint drilling and vehicle attachments remain to detail."
             ).strip()
+        elif "Upper module" in path and part.label.endswith((" step cross rail", " shallow wall rail")):
+            profile["profile_note"] += f" Rip stock to {size.Z:g}mm high for the flush shelf seat."
+        elif part.label == "Box 6 step deep wall post":
+            profile["profile_note"] += " Fit one full-length bevel to the cupboard face of the pillar panel."
         elif material == "cabinet-backing-cleats":
             profile["profile_note"] = (
                 f"{profile.get('profile_note', '')} Backing glue cleats have bevelled ends at horizontal "

@@ -124,7 +124,7 @@
     "bed_lid_strip_width_mm": 100.0,
     "bed_lid_open_percent": 0.0,
     "bed_moving_rail_height_mm": 50.0,
-    "bed_extension_percent": 100.0,
+    "bed_extension_percent": 0.0,
     "cross_bench_overhang_mm": 200.0,
     "foam_thickness_mm": 100.0,
     "cabinet_frame_thickness_mm": 18.0,
@@ -528,8 +528,8 @@
       },
       "product-pinetrim-18-18-1200-18-18:straight": {
         "mode": "straight",
-        "source": "5ed096ae5424c0075463fca0a643e33fc2198d328b1e8afc184ad9e8aea2cc51",
-        "created": "2026-11-23T02:32:07.358290+00:00",
+        "source": "6e2b087641dd8a1ddd4166b65efef5e2723d067b55e4f466a826f472342a3bbd",
+        "created": "2026-11-23T09:39:04.022324+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -579,7 +579,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P108",
+            "id": "P111",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -618,7 +618,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P109",
+            "id": "P112",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -657,7 +657,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P110",
+            "id": "P113",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -696,7 +696,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P111",
+            "id": "P114",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -735,7 +735,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P112",
+            "id": "P115",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -774,7 +774,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P113",
+            "id": "P116",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -813,7 +813,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P114",
+            "id": "P117",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -852,7 +852,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P115",
+            "id": "P118",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -891,7 +891,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P116",
+            "id": "P119",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -930,7 +930,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P117",
+            "id": "P120",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -969,7 +969,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P118",
+            "id": "P121",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -980,18 +980,84 @@
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Aisle ledger",
+            "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Pine hinge backing strip",
+            "material": "cabinet-hinge-backing",
+            "length": 233.0,
+            "width": 18.0,
+            "thickness": 18.0,
+            "outline": [],
+            "holes": [],
+            "profile_note": "",
+            "profile_axes": "",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P125",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 233.0,
+            "blank_width": 18.0
+          },
+          {
+            "path": "Cabinet / Lower module / Doors / Cab-end middle flap / Pine hinge backing strip",
+            "material": "cabinet-hinge-backing",
+            "length": 357.0,
+            "width": 18.0,
+            "thickness": 18.0,
+            "outline": [],
+            "holes": [],
+            "profile_note": "",
+            "profile_axes": "",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P128",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 357.0,
+            "blank_width": 18.0
+          },
+          {
+            "path": "Cabinet / Lower module / Doors / Cab-end above-bed flap / Pine hinge backing strip",
+            "material": "cabinet-hinge-backing",
+            "length": 357.0,
+            "width": 18.0,
+            "thickness": 18.0,
+            "outline": [],
+            "holes": [],
+            "profile_note": "",
+            "profile_axes": "",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P131",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 357.0,
+            "blank_width": 18.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor shallow panel · Aisle ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 394.0,
+            "length": 113.02,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                394.0,
+                113.0203,
                 0.0
               ],
               [
-                394.0,
+                113.0203,
                 18.0
               ],
               [
@@ -1008,29 +1074,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P119",
+            "id": "P151",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 394.0,
+            "blank_length": 113.02,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Wall ledger",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor shallow panel · Rear side ledger 1",
             "material": "cabinet-shelf-ledges",
-            "length": 394.0,
+            "length": 150.0,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                394.0,
+                150.0,
                 0.0
               ],
               [
-                394.0,
+                150.0,
                 18.0
               ],
               [
@@ -1047,29 +1113,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P120",
+            "id": "P152",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 394.0,
+            "blank_length": 150.0,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Middle side ledger 1",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Aisle ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 180.0,
+            "length": 394.98,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                180.0,
+                394.9797,
                 0.0
               ],
               [
-                180.0,
+                394.9797,
                 18.0
               ],
               [
@@ -1086,29 +1152,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P121",
+            "id": "P153",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 180.0,
+            "blank_length": 394.98,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Middle side ledger 2",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Wall ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 59.0,
+            "length": 394.98,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                59.0,
+                394.9797,
                 0.0
               ],
               [
-                59.0,
+                394.9797,
                 18.0
               ],
               [
@@ -1125,18 +1191,18 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P122",
+            "id": "P154",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 59.0,
+            "blank_length": 394.98,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Cab-end side ledger 1",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Middle side ledger 1",
             "material": "cabinet-shelf-ledges",
             "length": 257.0,
             "width": 18.0,
@@ -1164,7 +1230,7 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P123",
+            "id": "P155",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -1175,18 +1241,18 @@
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Aisle ledger",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf shallow panel · Aisle ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 526.0,
+            "length": 186.69,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                526.0,
+                186.6912,
                 0.0
               ],
               [
-                526.0,
+                186.6912,
                 18.0
               ],
               [
@@ -1203,29 +1269,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P124",
+            "id": "P156",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 526.0,
+            "blank_length": 186.69,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Wall ledger",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf shallow panel · Rear side ledger 1",
             "material": "cabinet-shelf-ledges",
-            "length": 526.0,
+            "length": 150.0,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                526.0,
+                150.0,
                 0.0
               ],
               [
-                526.0,
+                150.0,
                 18.0
               ],
               [
@@ -1242,29 +1308,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P125",
+            "id": "P157",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 526.0,
+            "blank_length": 150.0,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Rear side ledger 1",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Aisle ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 162.0,
+            "length": 321.31,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                162.0,
+                321.3088,
                 0.0
               ],
               [
-                162.0,
+                321.3088,
                 18.0
               ],
               [
@@ -1281,29 +1347,29 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P126",
+            "id": "P158",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 162.0,
+            "blank_length": 321.31,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Middle side ledger 1",
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Wall ledger",
             "material": "cabinet-shelf-ledges",
-            "length": 162.0,
+            "length": 321.31,
             "width": 18.0,
             "thickness": 18.0,
             "outline": [
               [
-                162.0,
+                321.3088,
                 0.0
               ],
               [
-                162.0,
+                321.3088,
                 18.0
               ],
               [
@@ -1320,80 +1386,53 @@
             "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P127",
+            "id": "P159",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 162.0,
+            "blank_length": 321.31,
             "blank_width": 18.0
           },
           {
-            "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Pine hinge backing strip",
-            "material": "cabinet-hinge-backing",
-            "length": 233.0,
+            "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Middle side ledger 1",
+            "material": "cabinet-shelf-ledges",
+            "length": 257.0,
             "width": 18.0,
             "thickness": 18.0,
-            "outline": [],
+            "outline": [
+              [
+                257.0,
+                0.0
+              ],
+              [
+                257.0,
+                18.0
+              ],
+              [
+                0.0,
+                18.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
             "holes": [],
-            "profile_note": "",
-            "profile_axes": "",
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P136",
+            "id": "P160",
             "fitting_margins": {
               "left": 0,
               "right": 0,
               "top": 0,
               "bottom": 0
             },
-            "blank_length": 233.0,
-            "blank_width": 18.0
-          },
-          {
-            "path": "Cabinet / Lower module / Doors / Cab-end middle flap / Pine hinge backing strip",
-            "material": "cabinet-hinge-backing",
-            "length": 357.0,
-            "width": 18.0,
-            "thickness": 18.0,
-            "outline": [],
-            "holes": [],
-            "profile_note": "",
-            "profile_axes": "",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P139",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 357.0,
-            "blank_width": 18.0
-          },
-          {
-            "path": "Cabinet / Lower module / Doors / Cab-end above-bed flap / Pine hinge backing strip",
-            "material": "cabinet-hinge-backing",
-            "length": 357.0,
-            "width": 18.0,
-            "thickness": 18.0,
-            "outline": [],
-            "holes": [],
-            "profile_note": "",
-            "profile_axes": "",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P142",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 357.0,
+            "blank_length": 257.0,
             "blank_width": 18.0
           }
         ],
@@ -1408,15 +1447,15 @@
             },
             "parts": [
               {
-                "id": "P125",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Wall ledger",
+                "id": "P154",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Wall ledger",
                 "outline": [
                   [
-                    526.0,
+                    394.9797,
                     0.0
                   ],
                   [
-                    526.0,
+                    394.9797,
                     18.0
                   ],
                   [
@@ -1432,230 +1471,65 @@
                 "blank": [
                   0.0,
                   0.0,
-                  526.0,
+                  394.98,
                   18.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P124",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Aisle ledger",
+                "id": "P153",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Aisle ledger",
                 "outline": [
                   [
-                    1055.0,
+                    792.9797,
                     0.0
                   ],
                   [
-                    1055.0,
+                    792.9797,
                     18.0
                   ],
                   [
-                    529.0,
+                    398.0,
                     18.0
                   ],
                   [
-                    529.0,
+                    398.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  529.0,
+                  398.0,
                   0.0,
-                  526.0,
+                  394.98,
                   18.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P122",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Middle side ledger 2",
-                "outline": [
-                  [
-                    1117.0,
-                    0.0
-                  ],
-                  [
-                    1117.0,
-                    18.0
-                  ],
-                  [
-                    1058.0,
-                    18.0
-                  ],
-                  [
-                    1058.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1058.0,
-                  0.0,
-                  59.0,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P117",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Middle side ledger 2",
-                "outline": [
-                  [
-                    1179.0,
-                    0.0
-                  ],
-                  [
-                    1179.0,
-                    18.0
-                  ],
-                  [
-                    1120.0,
-                    18.0
-                  ],
-                  [
-                    1120.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1120.0,
-                  0.0,
-                  59.0,
-                  18.0
-                ],
-                "angle": 0
-              }
-            ],
-            "cuts": [
-              [
-                526.0,
-                0.0,
-                526.0,
-                18.0
-              ],
-              [
-                1055.0,
-                0.0,
-                1055.0,
-                18.0
-              ],
-              [
-                1117.0,
-                0.0,
-                1117.0,
-                18.0
-              ],
-              [
-                1179.0,
-                0.0,
-                1179.0,
-                18.0
-              ]
-            ],
-            "remnants": [
-              [
-                1182.0,
-                0.0,
-                18.0,
-                18.0
-              ]
-            ]
-          },
-          {
-            "stock": {
-              "name": "Timber length",
-              "length": 1200.0,
-              "width": 18.0,
-              "copies": 0,
-              "offcut": false
-            },
-            "parts": [
-              {
-                "id": "P120",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Wall ledger",
-                "outline": [
-                  [
-                    394.0,
-                    0.0
-                  ],
-                  [
-                    394.0,
-                    18.0
-                  ],
-                  [
-                    0.0,
-                    18.0
-                  ],
-                  [
-                    0.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  0.0,
-                  0.0,
-                  394.0,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P119",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Aisle ledger",
-                "outline": [
-                  [
-                    791.0,
-                    0.0
-                  ],
-                  [
-                    791.0,
-                    18.0
-                  ],
-                  [
-                    397.0,
-                    18.0
-                  ],
-                  [
-                    397.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  397.0,
-                  0.0,
-                  394.0,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P115",
+                "id": "P118",
                 "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Wall ledger",
                 "outline": [
                   [
-                    1188.0,
+                    1190.0,
                     0.0
                   ],
                   [
-                    1188.0,
+                    1190.0,
                     18.0
                   ],
                   [
-                    794.0,
+                    796.0,
                     18.0
                   ],
                   [
-                    794.0,
+                    796.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  794.0,
+                  796.0,
                   0.0,
                   394.0,
                   18.0
@@ -1665,29 +1539,41 @@
             ],
             "cuts": [
               [
-                394.0,
+                395.0,
                 0.0,
-                394.0,
+                395.0,
                 18.0
               ],
               [
-                791.0,
+                793.0,
                 0.0,
-                791.0,
+                793.0,
                 18.0
               ],
               [
-                1188.0,
+                1190.0,
                 0.0,
-                1188.0,
+                1190.0,
+                18.0
+              ],
+              [
+                394.98,
+                0.0,
+                394.98,
+                18.0
+              ],
+              [
+                792.98,
+                0.0,
+                792.98,
                 18.0
               ]
             ],
             "remnants": [
               [
-                1191.0,
+                1193.0,
                 0.0,
-                9.0,
+                7.0,
                 18.0
               ]
             ]
@@ -1702,7 +1588,7 @@
             },
             "parts": [
               {
-                "id": "P114",
+                "id": "P117",
                 "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Aisle ledger",
                 "outline": [
                   [
@@ -1732,7 +1618,7 @@
                 "angle": 0
               },
               {
-                "id": "P109",
+                "id": "P112",
                 "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Wall ledger",
                 "outline": [
                   [
@@ -1762,7 +1648,7 @@
                 "angle": 0
               },
               {
-                "id": "P108",
+                "id": "P111",
                 "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Aisle ledger",
                 "outline": [
                   [
@@ -1831,7 +1717,7 @@
             },
             "parts": [
               {
-                "id": "P142",
+                "id": "P131",
                 "path": "Cabinet / Lower module / Doors / Cab-end above-bed flap / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1861,7 +1747,7 @@
                 "angle": 0
               },
               {
-                "id": "P139",
+                "id": "P128",
                 "path": "Cabinet / Lower module / Doors / Cab-end middle flap / Pine hinge backing strip",
                 "outline": [
                   [
@@ -1891,15 +1777,15 @@
                 "angle": 0
               },
               {
-                "id": "P123",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Cab-end side ledger 1",
+                "id": "P159",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Wall ledger",
                 "outline": [
                   [
-                    977.0,
+                    1041.3088,
                     0.0
                   ],
                   [
-                    977.0,
+                    1041.3088,
                     18.0
                   ],
                   [
@@ -1915,37 +1801,37 @@
                 "blank": [
                   720.0,
                   0.0,
-                  257.0,
+                  321.31,
                   18.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P110",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Middle side ledger 1",
+                "id": "P157",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf shallow panel · Rear side ledger 1",
                 "outline": [
                   [
-                    1160.0,
+                    1194.31,
                     0.0
                   ],
                   [
-                    1160.0,
+                    1194.31,
                     18.0
                   ],
                   [
-                    980.0,
+                    1044.31,
                     18.0
                   ],
                   [
-                    980.0,
+                    1044.31,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  980.0,
+                  1044.31,
                   0.0,
-                  180.0,
+                  150.0,
                   18.0
                 ],
                 "angle": 0
@@ -1965,29 +1851,23 @@
                 18.0
               ],
               [
-                977.0,
+                1041.31,
                 0.0,
-                977.0,
+                1041.31,
                 18.0
               ],
               [
-                1161.0,
+                1194.31,
                 0.0,
-                1161.0,
-                18.0
-              ],
-              [
-                1160.0,
-                0.0,
-                1160.0,
+                1194.31,
                 18.0
               ]
             ],
             "remnants": [
               [
-                1164.0,
+                1197.31,
                 0.0,
-                36.0,
+                2.69,
                 18.0
               ]
             ]
@@ -2002,15 +1882,15 @@
             },
             "parts": [
               {
-                "id": "P118",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Cab-end side ledger 1",
+                "id": "P158",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Aisle ledger",
                 "outline": [
                   [
-                    257.0,
+                    321.3088,
                     0.0
                   ],
                   [
-                    257.0,
+                    321.3088,
                     18.0
                   ],
                   [
@@ -2025,6 +1905,36 @@
                 "holes": [],
                 "blank": [
                   0.0,
+                  0.0,
+                  321.31,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P160",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf deep panel · Middle side ledger 1",
+                "outline": [
+                  [
+                    581.31,
+                    0.0
+                  ],
+                  [
+                    581.31,
+                    18.0
+                  ],
+                  [
+                    324.31,
+                    18.0
+                  ],
+                  [
+                    324.31,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  324.31,
                   0.0,
                   257.0,
                   18.0
@@ -2032,29 +1942,170 @@
                 "angle": 0
               },
               {
-                "id": "P136",
-                "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Pine hinge backing strip",
+                "id": "P155",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor deep panel · Middle side ledger 1",
                 "outline": [
                   [
-                    260.0,
+                    841.31,
                     0.0
                   ],
                   [
-                    493.0,
-                    0.0
-                  ],
-                  [
-                    493.0,
+                    841.31,
                     18.0
                   ],
                   [
-                    260.0,
+                    584.31,
+                    18.0
+                  ],
+                  [
+                    584.31,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  584.31,
+                  0.0,
+                  257.0,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P121",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Cab-end side ledger 1",
+                "outline": [
+                  [
+                    1101.31,
+                    0.0
+                  ],
+                  [
+                    1101.31,
+                    18.0
+                  ],
+                  [
+                    844.31,
+                    18.0
+                  ],
+                  [
+                    844.31,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  844.31,
+                  0.0,
+                  257.0,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P120",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Middle side ledger 2",
+                "outline": [
+                  [
+                    1163.31,
+                    0.0
+                  ],
+                  [
+                    1163.31,
+                    18.0
+                  ],
+                  [
+                    1104.31,
+                    18.0
+                  ],
+                  [
+                    1104.31,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1104.31,
+                  0.0,
+                  59.0,
+                  18.0
+                ],
+                "angle": 0
+              }
+            ],
+            "cuts": [
+              [
+                321.31,
+                0.0,
+                321.31,
+                18.0
+              ],
+              [
+                581.31,
+                0.0,
+                581.31,
+                18.0
+              ],
+              [
+                841.31,
+                0.0,
+                841.31,
+                18.0
+              ],
+              [
+                1101.31,
+                0.0,
+                1101.31,
+                18.0
+              ],
+              [
+                1163.31,
+                0.0,
+                1163.31,
+                18.0
+              ]
+            ],
+            "remnants": [
+              [
+                1166.31,
+                0.0,
+                33.69,
+                18.0
+              ]
+            ]
+          },
+          {
+            "stock": {
+              "name": "Timber length",
+              "length": 1200.0,
+              "width": 18.0,
+              "copies": 0,
+              "offcut": false
+            },
+            "parts": [
+              {
+                "id": "P125",
+                "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Pine hinge backing strip",
+                "outline": [
+                  [
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    233.0,
+                    0.0
+                  ],
+                  [
+                    233.0,
+                    18.0
+                  ],
+                  [
+                    0.0,
                     18.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  260.0,
+                  0.0,
                   0.0,
                   233.0,
                   18.0
@@ -2062,149 +2113,179 @@
                 "angle": 0
               },
               {
-                "id": "P121",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 770mm shelf · Middle side ledger 1",
+                "id": "P156",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 upper shelf shallow panel · Aisle ledger",
                 "outline": [
                   [
-                    677.0,
+                    422.6912,
                     0.0
                   ],
                   [
-                    677.0,
+                    422.6912,
                     18.0
                   ],
                   [
-                    497.0,
+                    236.0,
                     18.0
                   ],
                   [
-                    497.0,
+                    236.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  497.0,
+                  236.0,
                   0.0,
-                  180.0,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P116",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Middle side ledger 1",
-                "outline": [
-                  [
-                    860.0,
-                    0.0
-                  ],
-                  [
-                    860.0,
-                    18.0
-                  ],
-                  [
-                    680.0,
-                    18.0
-                  ],
-                  [
-                    680.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  680.0,
-                  0.0,
-                  180.0,
-                  18.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P112",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Cab-end side ledger 1",
-                "outline": [
-                  [
-                    1043.0,
-                    0.0
-                  ],
-                  [
-                    1043.0,
-                    18.0
-                  ],
-                  [
-                    863.0,
-                    18.0
-                  ],
-                  [
-                    863.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  863.0,
-                  0.0,
-                  180.0,
+                  186.69,
                   18.0
                 ],
                 "angle": 0
               },
               {
                 "id": "P113",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Cab-end side ledger 2",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Middle side ledger 1",
                 "outline": [
                   [
-                    1105.0,
+                    605.71,
                     0.0
                   ],
                   [
-                    1105.0,
+                    605.71,
                     18.0
                   ],
                   [
-                    1046.0,
+                    425.71,
                     18.0
                   ],
                   [
-                    1046.0,
+                    425.71,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  1046.0,
+                  425.71,
                   0.0,
-                  59.0,
+                  180.0,
                   18.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P111",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Middle side ledger 2",
+                "id": "P115",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Cab-end side ledger 1",
                 "outline": [
                   [
-                    1167.0,
+                    789.4,
                     0.0
                   ],
                   [
-                    1167.0,
+                    789.4,
                     18.0
                   ],
                   [
-                    1108.0,
+                    609.4,
                     18.0
                   ],
                   [
-                    1108.0,
+                    609.4,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  1108.0,
+                  609.4,
+                  0.0,
+                  180.0,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P119",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 510mm shelf · Middle side ledger 1",
+                "outline": [
+                  [
+                    972.69,
+                    0.0
+                  ],
+                  [
+                    972.69,
+                    18.0
+                  ],
+                  [
+                    792.69,
+                    18.0
+                  ],
+                  [
+                    792.69,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  792.69,
+                  0.0,
+                  180.0,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P152",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor shallow panel · Rear side ledger 1",
+                "outline": [
+                  [
+                    1125.69,
+                    0.0
+                  ],
+                  [
+                    1125.69,
+                    18.0
+                  ],
+                  [
+                    975.69,
+                    18.0
+                  ],
+                  [
+                    975.69,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  975.69,
+                  0.0,
+                  150.0,
+                  18.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P116",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Cab-end side ledger 2",
+                "outline": [
+                  [
+                    1187.69,
+                    0.0
+                  ],
+                  [
+                    1187.69,
+                    18.0
+                  ],
+                  [
+                    1128.69,
+                    18.0
+                  ],
+                  [
+                    1128.69,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1128.69,
                   0.0,
                   59.0,
                   18.0
@@ -2214,59 +2295,71 @@
             ],
             "cuts": [
               [
-                257.0,
+                233.0,
                 0.0,
-                257.0,
+                233.0,
                 18.0
               ],
               [
-                494.0,
+                422.71,
                 0.0,
-                494.0,
+                422.71,
                 18.0
               ],
               [
-                677.0,
+                606.4,
                 0.0,
-                677.0,
+                606.4,
                 18.0
               ],
               [
-                860.0,
+                789.69,
                 0.0,
-                860.0,
+                789.69,
                 18.0
               ],
               [
-                1043.0,
+                972.69,
                 0.0,
-                1043.0,
+                972.69,
                 18.0
               ],
               [
-                1105.0,
+                1125.69,
                 0.0,
-                1105.0,
+                1125.69,
                 18.0
               ],
               [
-                1167.0,
+                1187.69,
                 0.0,
-                1167.0,
+                1187.69,
                 18.0
               ],
               [
-                493.0,
+                422.69,
                 0.0,
-                493.0,
+                422.69,
+                18.0
+              ],
+              [
+                605.71,
+                0.0,
+                605.71,
+                18.0
+              ],
+              [
+                789.4,
+                0.0,
+                789.4,
                 18.0
               ]
             ],
             "remnants": [
               [
-                1170.0,
+                1190.69,
                 0.0,
-                30.0,
+                9.31,
                 18.0
               ]
             ]
@@ -2281,15 +2374,15 @@
             },
             "parts": [
               {
-                "id": "P126",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Rear side ledger 1",
+                "id": "P151",
+                "path": "Cabinet / Upper module / Frames / Shelf ledges / Box 6 floor shallow panel · Aisle ledger",
                 "outline": [
                   [
-                    162.0,
+                    113.0203,
                     0.0
                   ],
                   [
-                    162.0,
+                    113.0203,
                     18.0
                   ],
                   [
@@ -2305,37 +2398,37 @@
                 "blank": [
                   0.0,
                   0.0,
-                  162.0,
+                  113.02,
                   18.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P127",
-                "path": "Cabinet / Lower module / Frames / Shelf ledges / Rear 770mm shelf · Middle side ledger 1",
+                "id": "P114",
+                "path": "Cabinet / Lower module / Frames / Shelf ledges / Cab-end 317mm shelf · Middle side ledger 2",
                 "outline": [
                   [
-                    328.0,
+                    175.02,
                     0.0
                   ],
                   [
-                    328.0,
+                    175.02,
                     18.0
                   ],
                   [
-                    166.0,
+                    116.02,
                     18.0
                   ],
                   [
-                    166.0,
+                    116.02,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  166.0,
+                  116.02,
                   0.0,
-                  162.0,
+                  59.0,
                   18.0
                 ],
                 "angle": 0
@@ -2343,29 +2436,23 @@
             ],
             "cuts": [
               [
-                163.0,
+                113.02,
                 0.0,
-                163.0,
+                113.02,
                 18.0
               ],
               [
-                328.0,
+                175.02,
                 0.0,
-                328.0,
-                18.0
-              ],
-              [
-                162.0,
-                0.0,
-                162.0,
+                175.02,
                 18.0
               ]
             ],
             "remnants": [
               [
-                331.0,
+                178.02,
                 0.0,
-                869.0,
+                1021.98,
                 18.0
               ]
             ]
@@ -2373,8 +2460,8 @@
         ],
         "unplaced": [],
         "stock_area": 129600.0,
-        "blank_area": 110826.0,
-        "profile_area": 110826.0,
+        "blank_area": 108779.22,
+        "profile_area": 108779.193,
         "full_stock_count": 6,
         "offcut_count": 0,
         "estimated_cost": 37.019999999999996,
@@ -2385,19 +2472,19 @@
         "optimises_offcuts": false,
         "best_offcut": {
           "sheet": 5,
-          "x": 331.0,
+          "x": 178.02,
           "y": 0.0,
-          "length": 869.0,
+          "length": 1021.98,
           "width": 18.0,
-          "area": 15642.0,
-          "perimeter_area_ratio": 0.11341260708349316
+          "area": 18395.64,
+          "perimeter_area_ratio": 0.11306809657070915
         },
         "objective": "Fewest stock pieces"
       },
       "product-tigerply-18-18:straight": {
         "mode": "straight",
-        "source": "222e870ce726a27540524d796f8cb6598fab06f00c197ba48f3ab71e57781117",
-        "created": "2026-11-23T01:06:27.979294+00:00",
+        "source": "2c6898fee9a7a7b8add81a31c27dd816f95a58586178aff0fcc7cdb3d6d4ae73",
+        "created": "2026-11-23T09:39:08.680674+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -4204,7 +4291,7 @@
             "profile_axes": "Length = local Z; width = local Y",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P145",
+            "id": "P163",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -4371,7 +4458,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P146",
+            "id": "P164",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -4538,7 +4625,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P147",
+            "id": "P165",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -4658,7 +4745,7 @@
                 "angle": 0
               },
               {
-                "id": "P145",
+                "id": "P163",
                 "path": "Laptop table / Fixed mount / Bench mounting pad",
                 "outline": [
                   [
@@ -4862,7 +4949,7 @@
                 "angle": 0
               },
               {
-                "id": "P147",
+                "id": "P165",
                 "path": "Laptop table / Bench mount / Height adjustment / Arm orientation / Swivel arm / Tabletop rotation / Offset tabletop / Folding leaf / Folding tabletop leaf",
                 "outline": [
                   [
@@ -5020,7 +5107,7 @@
                 "angle": 0
               },
               {
-                "id": "P146",
+                "id": "P164",
                 "path": "Laptop table / Bench mount / Height adjustment / Arm orientation / Swivel arm / Tabletop rotation / Offset tabletop / Fixed tabletop leaf",
                 "outline": [
                   [
@@ -6829,8 +6916,8 @@
       },
       "product-pinetrim-40-18-1800-18-40:straight": {
         "mode": "straight",
-        "source": "a050a95ea63394a4402f16ee144ea661458c9dd68a7d35148afe5f8dd9452178",
-        "created": "2026-11-23T02:32:07.499030+00:00",
+        "source": "68f6c7e026d7b138e10e64b8a4d11b707f310f1f9eec8890359ec6fbffd1b7cf",
+        "created": "2026-11-23T09:39:04.229723+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -8507,7 +8594,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P128",
+            "id": "P108",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -8546,7 +8633,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P129",
+            "id": "P109",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -8585,7 +8672,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P130",
+            "id": "P110",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -8593,6 +8680,709 @@
               "bottom": 0
             },
             "blank_length": 30.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 rear aisle post",
+            "material": "cabinet-frames",
+            "length": 263.25,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                263.2452,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                263.2452,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Z; width = local X",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P134",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 263.25,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 rear wall post",
+            "material": "cabinet-frames",
+            "length": 263.25,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                263.2452,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                263.2452,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Z; width = local X",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P135",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 263.25,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 middle aisle post",
+            "material": "cabinet-frames",
+            "length": 263.25,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                263.2452,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                263.2452,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Z; width = local X",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P136",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 263.25,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 middle wall post",
+            "material": "cabinet-frames",
+            "length": 263.25,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                263.2452,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                263.2452,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Z; width = local X",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P137",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 263.25,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 step deep wall post",
+            "material": "cabinet-frames",
+            "length": 290.41,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                13.1999,
+                39.9998
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                0.2707,
+                0.0
+              ],
+              [
+                0.5414,
+                0.0
+              ],
+              [
+                1.0828,
+                0.0
+              ],
+              [
+                2.1657,
+                0.0
+              ],
+              [
+                4.3314,
+                0.0
+              ],
+              [
+                8.6628,
+                0.0
+              ],
+              [
+                17.3255,
+                0.0
+              ],
+              [
+                34.6511,
+                0.0
+              ],
+              [
+                69.3021,
+                0.0
+              ],
+              [
+                138.6043,
+                0.0
+              ],
+              [
+                277.2085,
+                0.0
+              ],
+              [
+                290.4085,
+                39.9998
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Fit one full-length bevel to the cupboard face of the pillar panel.",
+            "profile_axes": "Length = local Z; width = local Y",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P138",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 290.41,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor rear rail",
+            "material": "cabinet-frames",
+            "length": 168.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                168.0,
+                0.0
+              ],
+              [
+                168.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P139",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 168.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor step cross rail",
+            "material": "cabinet-frames",
+            "length": 293.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                293.0,
+                0.0
+              ],
+              [
+                293.0,
+                34.0
+              ],
+              [
+                0.0,
+                34.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Rip stock to 34mm high for the flush shelf seat.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P140",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 293.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor middle rail",
+            "material": "cabinet-frames",
+            "length": 293.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                293.0,
+                0.0
+              ],
+              [
+                293.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P141",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 293.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor aisle rail",
+            "material": "cabinet-frames",
+            "length": 493.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                493.0,
+                0.0
+              ],
+              [
+                493.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P142",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 493.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor shallow wall rail",
+            "material": "cabinet-frames",
+            "length": 91.02,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                91.0203,
+                0.0
+              ],
+              [
+                91.0203,
+                34.0
+              ],
+              [
+                0.0,
+                34.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Rip stock to 34mm high for the flush shelf seat.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P143",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 91.02,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 floor deep wall rail",
+            "material": "cabinet-frames",
+            "length": 397.18,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                397.1797,
+                0.0
+              ],
+              [
+                383.9797,
+                40.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P144",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 397.18,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf rear rail",
+            "material": "cabinet-frames",
+            "length": 168.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                168.0,
+                0.0
+              ],
+              [
+                168.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P145",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 168.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf step cross rail",
+            "material": "cabinet-frames",
+            "length": 293.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                293.0,
+                0.0
+              ],
+              [
+                293.0,
+                34.0
+              ],
+              [
+                0.0,
+                34.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Rip stock to 34mm high for the flush shelf seat.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P146",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 293.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf middle rail",
+            "material": "cabinet-frames",
+            "length": 293.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                293.0,
+                0.0
+              ],
+              [
+                293.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P147",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 293.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf aisle rail",
+            "material": "cabinet-frames",
+            "length": 493.0,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                493.0,
+                0.0
+              ],
+              [
+                493.0,
+                40.0
+              ],
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P148",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 493.0,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf shallow wall rail",
+            "material": "cabinet-frames",
+            "length": 164.69,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                164.6912,
+                0.0
+              ],
+              [
+                164.6912,
+                34.0
+              ],
+              [
+                0.0,
+                34.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations. Rip stock to 34mm high for the flush shelf seat.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P149",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 164.69,
+            "blank_width": 40.0
+          },
+          {
+            "path": "Cabinet / Upper module / Frames / Box 6 upper shelf deep wall rail",
+            "material": "cabinet-frames",
+            "length": 323.51,
+            "width": 40.0,
+            "thickness": 18.0,
+            "outline": [
+              [
+                0.0,
+                40.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                323.5088,
+                0.0
+              ],
+              [
+                310.3088,
+                40.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local X; width = local Z",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P150",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 323.51,
             "blank_width": 40.0
           }
         ],
@@ -8998,7 +9788,7 @@
                 "angle": 0
               },
               {
-                "id": "P130",
+                "id": "P110",
                 "path": "Cabinet / Lower module / Frames / Catch mounting blocks / Cab-end above-bed flap catch mounting block",
                 "outline": [
                   [
@@ -9163,7 +9953,7 @@
                 "angle": 0
               },
               {
-                "id": "P129",
+                "id": "P109",
                 "path": "Cabinet / Lower module / Frames / Catch mounting blocks / Cab-end middle flap catch mounting block",
                 "outline": [
                   [
@@ -9268,23 +10058,23 @@
                 "angle": 0
               },
               {
-                "id": "P104",
-                "path": "Cabinet / Lower module / Frames / Cab-end deep wall post",
+                "id": "P148",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf aisle rail",
                 "outline": [
                   [
                     1266.0,
-                    40.0
-                  ],
-                  [
-                    773.0,
-                    40.0
-                  ],
-                  [
-                    773.0,
                     0.0
                   ],
                   [
                     1266.0,
+                    40.0
+                  ],
+                  [
+                    773.0,
+                    40.0
+                  ],
+                  [
+                    773.0,
                     0.0
                   ]
                 ],
@@ -9298,23 +10088,23 @@
                 "angle": 0
               },
               {
-                "id": "P103",
-                "path": "Cabinet / Lower module / Frames / Middle deep wall post",
+                "id": "P142",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor aisle rail",
                 "outline": [
                   [
                     1762.0,
-                    40.0
-                  ],
-                  [
-                    1269.0,
-                    40.0
-                  ],
-                  [
-                    1269.0,
                     0.0
                   ],
                   [
                     1762.0,
+                    40.0
+                  ],
+                  [
+                    1269.0,
+                    40.0
+                  ],
+                  [
+                    1269.0,
                     0.0
                   ]
                 ],
@@ -9328,7 +10118,7 @@
                 "angle": 0
               },
               {
-                "id": "P128",
+                "id": "P108",
                 "path": "Cabinet / Lower module / Frames / Catch mounting blocks / Cab-end bottom door catch mounting block",
                 "outline": [
                   [
@@ -9403,23 +10193,23 @@
             },
             "parts": [
               {
-                "id": "P083",
-                "path": "Cabinet / Lower module / Frames / Rear shallow wall rail at 770mm",
+                "id": "P104",
+                "path": "Cabinet / Lower module / Frames / Cab-end deep wall post",
                 "outline": [
                   [
                     493.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
                     0.0
                   ],
                   [
                     493.0,
-                    40.0
-                  ],
-                  [
-                    0.0,
-                    40.0
-                  ],
-                  [
-                    0.0,
                     0.0
                   ]
                 ],
@@ -9433,23 +10223,23 @@
                 "angle": 0
               },
               {
-                "id": "P082",
-                "path": "Cabinet / Lower module / Frames / Rear shallow wall rail at 40mm",
+                "id": "P103",
+                "path": "Cabinet / Lower module / Frames / Middle deep wall post",
                 "outline": [
                   [
                     989.0,
+                    40.0
+                  ],
+                  [
+                    496.0,
+                    40.0
+                  ],
+                  [
+                    496.0,
                     0.0
                   ],
                   [
                     989.0,
-                    40.0
-                  ],
-                  [
-                    496.0,
-                    40.0
-                  ],
-                  [
-                    496.0,
                     0.0
                   ]
                 ],
@@ -9463,23 +10253,23 @@
                 "angle": 0
               },
               {
-                "id": "P081",
-                "path": "Cabinet / Lower module / Frames / Rear aisle rail at 770mm",
+                "id": "P083",
+                "path": "Cabinet / Lower module / Frames / Rear shallow wall rail at 770mm",
                 "outline": [
                   [
                     1485.0,
-                    40.0
-                  ],
-                  [
-                    992.0,
-                    40.0
-                  ],
-                  [
-                    992.0,
                     0.0
                   ],
                   [
                     1485.0,
+                    40.0
+                  ],
+                  [
+                    992.0,
+                    40.0
+                  ],
+                  [
+                    992.0,
                     0.0
                   ]
                 ],
@@ -9493,8 +10283,8 @@
                 "angle": 0
               },
               {
-                "id": "P102",
-                "path": "Cabinet / Lower module / Frames / Cab-end cross rail at 770mm",
+                "id": "P147",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf middle rail",
                 "outline": [
                   [
                     1781.0,
@@ -9568,23 +10358,23 @@
             },
             "parts": [
               {
-                "id": "P080",
-                "path": "Cabinet / Lower module / Frames / Rear aisle rail at 40mm",
+                "id": "P082",
+                "path": "Cabinet / Lower module / Frames / Rear shallow wall rail at 40mm",
                 "outline": [
                   [
                     493.0,
-                    40.0
-                  ],
-                  [
-                    0.0,
-                    40.0
-                  ],
-                  [
-                    0.0,
                     0.0
                   ],
                   [
                     493.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
                     0.0
                   ]
                 ],
@@ -9598,23 +10388,23 @@
                 "angle": 0
               },
               {
-                "id": "P107",
-                "path": "Cabinet / Lower module / Frames / Deep wall rail at 770mm",
+                "id": "P081",
+                "path": "Cabinet / Lower module / Frames / Rear aisle rail at 770mm",
                 "outline": [
                   [
-                    857.0,
+                    989.0,
+                    40.0
+                  ],
+                  [
+                    496.0,
+                    40.0
+                  ],
+                  [
+                    496.0,
                     0.0
                   ],
                   [
-                    857.0,
-                    40.0
-                  ],
-                  [
-                    496.0,
-                    40.0
-                  ],
-                  [
-                    496.0,
+                    989.0,
                     0.0
                   ]
                 ],
@@ -9622,97 +10412,67 @@
                 "blank": [
                   496.0,
                   0.0,
-                  361.0,
+                  493.0,
                   40.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P106",
-                "path": "Cabinet / Lower module / Frames / Deep wall rail at 510mm",
+                "id": "P080",
+                "path": "Cabinet / Lower module / Frames / Rear aisle rail at 40mm",
                 "outline": [
                   [
-                    1221.0,
+                    1485.0,
+                    40.0
+                  ],
+                  [
+                    992.0,
+                    40.0
+                  ],
+                  [
+                    992.0,
                     0.0
                   ],
                   [
-                    1221.0,
-                    40.0
-                  ],
-                  [
-                    860.0,
-                    40.0
-                  ],
-                  [
-                    860.0,
+                    1485.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  860.0,
+                  992.0,
                   0.0,
-                  361.0,
+                  493.0,
                   40.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P105",
-                "path": "Cabinet / Lower module / Frames / Deep wall rail at 317mm",
+                "id": "P146",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf step cross rail",
                 "outline": [
                   [
-                    1585.0,
+                    1781.0,
                     0.0
                   ],
                   [
-                    1585.0,
-                    40.0
+                    1781.0,
+                    34.0
                   ],
                   [
-                    1224.0,
-                    40.0
+                    1488.0,
+                    34.0
                   ],
                   [
-                    1224.0,
+                    1488.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  1224.0,
+                  1488.0,
                   0.0,
-                  361.0,
-                  40.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P096",
-                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 770mm",
-                "outline": [
-                  [
-                    1786.0,
-                    0.0
-                  ],
-                  [
-                    1786.0,
-                    40.0
-                  ],
-                  [
-                    1588.0,
-                    40.0
-                  ],
-                  [
-                    1588.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1588.0,
-                  0.0,
-                  198.0,
+                  293.0,
                   40.0
                 ],
                 "angle": 0
@@ -9726,35 +10486,236 @@
                 40.0
               ],
               [
-                857.0,
+                989.0,
                 0.0,
-                857.0,
+                989.0,
                 40.0
               ],
               [
-                1221.0,
+                1485.0,
                 0.0,
-                1221.0,
+                1485.0,
                 40.0
               ],
               [
-                1585.0,
+                1781.0,
                 0.0,
-                1585.0,
-                40.0
-              ],
-              [
-                1786.0,
-                0.0,
-                1786.0,
+                1781.0,
                 40.0
               ]
             ],
             "remnants": [
               [
-                1789.0,
+                1784.0,
                 0.0,
-                11.0,
+                16.0,
+                40.0
+              ]
+            ]
+          },
+          {
+            "stock": {
+              "name": "Timber length",
+              "length": 1800.0,
+              "width": 40.0,
+              "copies": 0,
+              "offcut": false
+            },
+            "parts": [
+              {
+                "id": "P144",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor deep wall rail",
+                "outline": [
+                  [
+                    0.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
+                    0.0
+                  ],
+                  [
+                    397.1797,
+                    0.0
+                  ],
+                  [
+                    383.9797,
+                    40.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  0.0,
+                  0.0,
+                  397.18,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P107",
+                "path": "Cabinet / Lower module / Frames / Deep wall rail at 770mm",
+                "outline": [
+                  [
+                    761.22,
+                    0.0
+                  ],
+                  [
+                    761.22,
+                    40.0
+                  ],
+                  [
+                    400.22,
+                    40.0
+                  ],
+                  [
+                    400.22,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  400.22,
+                  0.0,
+                  361.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P106",
+                "path": "Cabinet / Lower module / Frames / Deep wall rail at 510mm",
+                "outline": [
+                  [
+                    1125.22,
+                    0.0
+                  ],
+                  [
+                    1125.22,
+                    40.0
+                  ],
+                  [
+                    764.22,
+                    40.0
+                  ],
+                  [
+                    764.22,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  764.22,
+                  0.0,
+                  361.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P105",
+                "path": "Cabinet / Lower module / Frames / Deep wall rail at 317mm",
+                "outline": [
+                  [
+                    1489.22,
+                    0.0
+                  ],
+                  [
+                    1489.22,
+                    40.0
+                  ],
+                  [
+                    1128.22,
+                    40.0
+                  ],
+                  [
+                    1128.22,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1128.22,
+                  0.0,
+                  361.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P141",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor middle rail",
+                "outline": [
+                  [
+                    1785.22,
+                    0.0
+                  ],
+                  [
+                    1785.22,
+                    40.0
+                  ],
+                  [
+                    1492.22,
+                    40.0
+                  ],
+                  [
+                    1492.22,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1492.22,
+                  0.0,
+                  293.0,
+                  40.0
+                ],
+                "angle": 0
+              }
+            ],
+            "cuts": [
+              [
+                397.22,
+                0.0,
+                397.22,
+                40.0
+              ],
+              [
+                761.22,
+                0.0,
+                761.22,
+                40.0
+              ],
+              [
+                1125.22,
+                0.0,
+                1125.22,
+                40.0
+              ],
+              [
+                1489.22,
+                0.0,
+                1489.22,
+                40.0
+              ],
+              [
+                1785.22,
+                0.0,
+                1785.22,
+                40.0
+              ],
+              [
+                397.18,
+                0.0,
+                397.18,
+                40.0
+              ]
+            ],
+            "remnants": [
+              [
+                1788.22,
+                0.0,
+                11.78,
                 40.0
               ]
             ]
@@ -9889,14 +10850,10 @@
                 "angle": 0
               },
               {
-                "id": "P079",
-                "path": "Cabinet / Lower module / Frames / Cab-end shallow wall post",
+                "id": "P150",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf deep wall rail",
                 "outline": [
                   [
-                    1773.0,
-                    40.0
-                  ],
-                  [
                     1456.0,
                     40.0
                   ],
@@ -9905,15 +10862,19 @@
                     0.0
                   ],
                   [
-                    1773.0,
+                    1779.5088,
                     0.0
+                  ],
+                  [
+                    1766.3088,
+                    40.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
                   1456.0,
                   0.0,
-                  317.0,
+                  323.51,
                   40.0
                 ],
                 "angle": 0
@@ -9945,17 +10906,17 @@
                 40.0
               ],
               [
-                1773.0,
+                1779.51,
                 0.0,
-                1773.0,
+                1779.51,
                 40.0
               ]
             ],
             "remnants": [
               [
-                1776.0,
+                1782.51,
                 0.0,
-                24.0,
+                17.49,
                 40.0
               ]
             ]
@@ -10030,23 +10991,23 @@
                 "angle": 0
               },
               {
-                "id": "P101",
-                "path": "Cabinet / Lower module / Frames / Cab-end cross rail at 510mm",
+                "id": "P079",
+                "path": "Cabinet / Lower module / Frames / Cab-end shallow wall post",
                 "outline": [
                   [
-                    1021.0,
+                    1045.0,
+                    40.0
+                  ],
+                  [
+                    728.0,
+                    40.0
+                  ],
+                  [
+                    728.0,
                     0.0
                   ],
                   [
-                    1021.0,
-                    40.0
-                  ],
-                  [
-                    728.0,
-                    40.0
-                  ],
-                  [
-                    728.0,
+                    1045.0,
                     0.0
                   ]
                 ],
@@ -10054,157 +11015,97 @@
                 "blank": [
                   728.0,
                   0.0,
+                  317.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P140",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor step cross rail",
+                "outline": [
+                  [
+                    1341.0,
+                    0.0
+                  ],
+                  [
+                    1341.0,
+                    34.0
+                  ],
+                  [
+                    1048.0,
+                    34.0
+                  ],
+                  [
+                    1048.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1048.0,
+                  0.0,
                   293.0,
                   40.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P094",
-                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 510mm",
+                "id": "P102",
+                "path": "Cabinet / Lower module / Frames / Cab-end cross rail at 770mm",
                 "outline": [
                   [
-                    1222.0,
+                    1637.0,
                     0.0
                   ],
                   [
-                    1222.0,
+                    1637.0,
                     40.0
                   ],
                   [
-                    1024.0,
+                    1344.0,
                     40.0
                   ],
                   [
-                    1024.0,
+                    1344.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  1024.0,
+                  1344.0,
                   0.0,
-                  198.0,
+                  293.0,
                   40.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P092",
-                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 317mm",
+                "id": "P143",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor shallow wall rail",
                 "outline": [
                   [
-                    1423.0,
+                    1731.0203,
                     0.0
                   ],
                   [
-                    1423.0,
-                    40.0
+                    1731.0203,
+                    34.0
                   ],
                   [
-                    1225.0,
-                    40.0
+                    1640.0,
+                    34.0
                   ],
                   [
-                    1225.0,
+                    1640.0,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  1225.0,
+                  1640.0,
                   0.0,
-                  198.0,
-                  40.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P091",
-                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 40mm",
-                "outline": [
-                  [
-                    1624.0,
-                    0.0
-                  ],
-                  [
-                    1624.0,
-                    40.0
-                  ],
-                  [
-                    1426.0,
-                    40.0
-                  ],
-                  [
-                    1426.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1426.0,
-                  0.0,
-                  198.0,
-                  40.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P100",
-                "path": "Cabinet / Lower module / Frames / Cab-end depth-step bottom rail",
-                "outline": [
-                  [
-                    1704.0,
-                    0.0
-                  ],
-                  [
-                    1704.0,
-                    40.0
-                  ],
-                  [
-                    1627.0,
-                    40.0
-                  ],
-                  [
-                    1627.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1627.0,
-                  0.0,
-                  77.0,
-                  40.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P097",
-                "path": "Cabinet / Lower module / Frames / Middle deep cross rail at 770mm",
-                "outline": [
-                  [
-                    1784.0,
-                    0.0
-                  ],
-                  [
-                    1784.0,
-                    40.0
-                  ],
-                  [
-                    1707.0,
-                    40.0
-                  ],
-                  [
-                    1707.0,
-                    0.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  1707.0,
-                  0.0,
-                  77.0,
+                  91.02,
                   40.0
                 ],
                 "angle": 0
@@ -10224,47 +11125,35 @@
                 40.0
               ],
               [
-                1021.0,
+                1045.0,
                 0.0,
-                1021.0,
+                1045.0,
                 40.0
               ],
               [
-                1222.0,
+                1341.0,
                 0.0,
-                1222.0,
+                1341.0,
                 40.0
               ],
               [
-                1423.0,
+                1637.0,
                 0.0,
-                1423.0,
+                1637.0,
                 40.0
               ],
               [
-                1624.0,
+                1731.02,
                 0.0,
-                1624.0,
-                40.0
-              ],
-              [
-                1704.0,
-                0.0,
-                1704.0,
-                40.0
-              ],
-              [
-                1784.0,
-                0.0,
-                1784.0,
+                1731.02,
                 40.0
               ]
             ],
             "remnants": [
               [
-                1787.0,
+                1734.02,
                 0.0,
-                13.0,
+                65.98,
                 40.0
               ]
             ]
@@ -10279,8 +11168,327 @@
             },
             "parts": [
               {
-                "id": "P090",
-                "path": "Cabinet / Lower module / Frames / Rear top cross rail",
+                "id": "P101",
+                "path": "Cabinet / Lower module / Frames / Cab-end cross rail at 510mm",
+                "outline": [
+                  [
+                    293.0,
+                    0.0
+                  ],
+                  [
+                    293.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
+                    40.0
+                  ],
+                  [
+                    0.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  0.0,
+                  0.0,
+                  293.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P138",
+                "path": "Cabinet / Upper module / Frames / Box 6 step deep wall post",
+                "outline": [
+                  [
+                    309.1999,
+                    39.9998
+                  ],
+                  [
+                    296.0,
+                    0.0
+                  ],
+                  [
+                    296.2707,
+                    0.0
+                  ],
+                  [
+                    296.5414,
+                    0.0
+                  ],
+                  [
+                    297.0828,
+                    0.0
+                  ],
+                  [
+                    298.1657,
+                    0.0
+                  ],
+                  [
+                    300.3314,
+                    0.0
+                  ],
+                  [
+                    304.6628,
+                    0.0
+                  ],
+                  [
+                    313.3255,
+                    0.0
+                  ],
+                  [
+                    330.6511,
+                    0.0
+                  ],
+                  [
+                    365.3021,
+                    0.0
+                  ],
+                  [
+                    434.6043,
+                    0.0
+                  ],
+                  [
+                    573.2085,
+                    0.0
+                  ],
+                  [
+                    586.4085,
+                    39.9998
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  296.0,
+                  0.0,
+                  290.42,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P137",
+                "path": "Cabinet / Upper module / Frames / Box 6 middle wall post",
+                "outline": [
+                  [
+                    852.7152,
+                    40.0
+                  ],
+                  [
+                    589.47,
+                    40.0
+                  ],
+                  [
+                    589.47,
+                    0.0
+                  ],
+                  [
+                    852.7152,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  589.47,
+                  0.0,
+                  263.25,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P136",
+                "path": "Cabinet / Upper module / Frames / Box 6 middle aisle post",
+                "outline": [
+                  [
+                    1118.9652,
+                    40.0
+                  ],
+                  [
+                    855.72,
+                    40.0
+                  ],
+                  [
+                    855.72,
+                    0.0
+                  ],
+                  [
+                    1118.9652,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  855.72,
+                  0.0,
+                  263.25,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P135",
+                "path": "Cabinet / Upper module / Frames / Box 6 rear wall post",
+                "outline": [
+                  [
+                    1385.2152,
+                    40.0
+                  ],
+                  [
+                    1121.97,
+                    40.0
+                  ],
+                  [
+                    1121.97,
+                    0.0
+                  ],
+                  [
+                    1385.2152,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1121.97,
+                  0.0,
+                  263.25,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P134",
+                "path": "Cabinet / Upper module / Frames / Box 6 rear aisle post",
+                "outline": [
+                  [
+                    1651.4652,
+                    40.0
+                  ],
+                  [
+                    1388.22,
+                    40.0
+                  ],
+                  [
+                    1388.22,
+                    0.0
+                  ],
+                  [
+                    1651.4652,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1388.22,
+                  0.0,
+                  263.25,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P100",
+                "path": "Cabinet / Lower module / Frames / Cab-end depth-step bottom rail",
+                "outline": [
+                  [
+                    1731.47,
+                    0.0
+                  ],
+                  [
+                    1731.47,
+                    40.0
+                  ],
+                  [
+                    1654.47,
+                    40.0
+                  ],
+                  [
+                    1654.47,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1654.47,
+                  0.0,
+                  77.0,
+                  40.0
+                ],
+                "angle": 0
+              }
+            ],
+            "cuts": [
+              [
+                293.0,
+                0.0,
+                293.0,
+                40.0
+              ],
+              [
+                586.47,
+                0.0,
+                586.47,
+                40.0
+              ],
+              [
+                852.72,
+                0.0,
+                852.72,
+                40.0
+              ],
+              [
+                1118.97,
+                0.0,
+                1118.97,
+                40.0
+              ],
+              [
+                1385.22,
+                0.0,
+                1385.22,
+                40.0
+              ],
+              [
+                1651.47,
+                0.0,
+                1651.47,
+                40.0
+              ],
+              [
+                1731.47,
+                0.0,
+                1731.47,
+                40.0
+              ],
+              [
+                586.42,
+                0.0,
+                586.42,
+                40.0
+              ]
+            ],
+            "remnants": [
+              [
+                1734.47,
+                0.0,
+                65.53,
+                40.0
+              ]
+            ]
+          },
+          {
+            "stock": {
+              "name": "Timber length",
+              "length": 1800.0,
+              "width": 40.0,
+              "copies": 0,
+              "offcut": false
+            },
+            "parts": [
+              {
+                "id": "P096",
+                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 770mm",
                 "outline": [
                   [
                     198.0,
@@ -10309,15 +11517,15 @@
                 "angle": 0
               },
               {
-                "id": "P095",
-                "path": "Cabinet / Lower module / Frames / Middle deep cross rail at 510mm",
+                "id": "P094",
+                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 510mm",
                 "outline": [
                   [
-                    278.0,
+                    399.0,
                     0.0
                   ],
                   [
-                    278.0,
+                    399.0,
                     40.0
                   ],
                   [
@@ -10333,6 +11541,246 @@
                 "blank": [
                   201.0,
                   0.0,
+                  198.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P092",
+                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 317mm",
+                "outline": [
+                  [
+                    600.0,
+                    0.0
+                  ],
+                  [
+                    600.0,
+                    40.0
+                  ],
+                  [
+                    402.0,
+                    40.0
+                  ],
+                  [
+                    402.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  402.0,
+                  0.0,
+                  198.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P091",
+                "path": "Cabinet / Lower module / Frames / Middle shallow cross rail at 40mm",
+                "outline": [
+                  [
+                    801.0,
+                    0.0
+                  ],
+                  [
+                    801.0,
+                    40.0
+                  ],
+                  [
+                    603.0,
+                    40.0
+                  ],
+                  [
+                    603.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  603.0,
+                  0.0,
+                  198.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P090",
+                "path": "Cabinet / Lower module / Frames / Rear top cross rail",
+                "outline": [
+                  [
+                    1002.0,
+                    0.0
+                  ],
+                  [
+                    1002.0,
+                    40.0
+                  ],
+                  [
+                    804.0,
+                    40.0
+                  ],
+                  [
+                    804.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  804.0,
+                  0.0,
+                  198.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P145",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf rear rail",
+                "outline": [
+                  [
+                    1173.0,
+                    0.0
+                  ],
+                  [
+                    1173.0,
+                    40.0
+                  ],
+                  [
+                    1005.0,
+                    40.0
+                  ],
+                  [
+                    1005.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1005.0,
+                  0.0,
+                  168.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P139",
+                "path": "Cabinet / Upper module / Frames / Box 6 floor rear rail",
+                "outline": [
+                  [
+                    1344.0,
+                    0.0
+                  ],
+                  [
+                    1344.0,
+                    40.0
+                  ],
+                  [
+                    1176.0,
+                    40.0
+                  ],
+                  [
+                    1176.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1176.0,
+                  0.0,
+                  168.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P149",
+                "path": "Cabinet / Upper module / Frames / Box 6 upper shelf shallow wall rail",
+                "outline": [
+                  [
+                    1511.6912,
+                    0.0
+                  ],
+                  [
+                    1511.6912,
+                    34.0
+                  ],
+                  [
+                    1347.0,
+                    34.0
+                  ],
+                  [
+                    1347.0,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1347.0,
+                  0.0,
+                  164.69,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P097",
+                "path": "Cabinet / Lower module / Frames / Middle deep cross rail at 770mm",
+                "outline": [
+                  [
+                    1591.73,
+                    0.0
+                  ],
+                  [
+                    1591.73,
+                    40.0
+                  ],
+                  [
+                    1514.73,
+                    40.0
+                  ],
+                  [
+                    1514.73,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1514.73,
+                  0.0,
+                  77.0,
+                  40.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P095",
+                "path": "Cabinet / Lower module / Frames / Middle deep cross rail at 510mm",
+                "outline": [
+                  [
+                    1671.73,
+                    0.0
+                  ],
+                  [
+                    1671.73,
+                    40.0
+                  ],
+                  [
+                    1594.73,
+                    40.0
+                  ],
+                  [
+                    1594.73,
+                    0.0
+                  ]
+                ],
+                "holes": [],
+                "blank": [
+                  1594.73,
+                  0.0,
                   77.0,
                   40.0
                 ],
@@ -10343,25 +11791,25 @@
                 "path": "Cabinet / Lower module / Frames / Middle depth-step bottom rail",
                 "outline": [
                   [
-                    358.0,
+                    1751.73,
                     0.0
                   ],
                   [
-                    358.0,
+                    1751.73,
                     40.0
                   ],
                   [
-                    281.0,
+                    1674.73,
                     40.0
                   ],
                   [
-                    281.0,
+                    1674.73,
                     0.0
                   ]
                 ],
                 "holes": [],
                 "blank": [
-                  281.0,
+                  1674.73,
                   0.0,
                   77.0,
                   40.0
@@ -10377,35 +11825,89 @@
                 40.0
               ],
               [
-                278.0,
+                399.0,
                 0.0,
-                278.0,
+                399.0,
                 40.0
               ],
               [
-                358.0,
+                600.0,
                 0.0,
-                358.0,
+                600.0,
+                40.0
+              ],
+              [
+                801.0,
+                0.0,
+                801.0,
+                40.0
+              ],
+              [
+                1002.0,
+                0.0,
+                1002.0,
+                40.0
+              ],
+              [
+                1173.0,
+                0.0,
+                1173.0,
+                40.0
+              ],
+              [
+                1344.0,
+                0.0,
+                1344.0,
+                40.0
+              ],
+              [
+                1511.73,
+                0.0,
+                1511.73,
+                40.0
+              ],
+              [
+                1591.73,
+                0.0,
+                1591.73,
+                40.0
+              ],
+              [
+                1671.73,
+                0.0,
+                1671.73,
+                40.0
+              ],
+              [
+                1751.73,
+                0.0,
+                1751.73,
+                40.0
+              ],
+              [
+                1511.69,
+                0.0,
+                1511.69,
                 40.0
               ]
             ],
             "remnants": [
               [
-                361.0,
+                1754.73,
                 0.0,
-                1439.0,
+                45.27,
                 40.0
               ]
             ]
           }
         ],
         "unplaced": [],
-        "stock_area": 576000.0,
-        "blank_area": 509760.0,
-        "profile_area": 508982.36961306,
-        "full_stock_count": 8,
+        "stock_area": 720000.0,
+        "blank_area": 702312.4,
+        "profile_area": 695427.61917135,
+        "full_stock_count": 10,
         "offcut_count": 0,
-        "estimated_cost": 92.0,
+        "estimated_cost": 115.0,
         "algorithm": "TS g 1 d Horizontal q 1",
         "profile_allowance": 0,
         "optimal": true,
@@ -10413,19 +11915,19 @@
         "optimises_offcuts": false,
         "best_offcut": {
           "sheet": 7,
-          "x": 361.0,
+          "x": 1734.02,
           "y": 0.0,
-          "length": 1439.0,
+          "length": 65.98,
           "width": 40.0,
-          "area": 57560.0,
-          "perimeter_area_ratio": 0.05138985406532314
+          "area": 2639.2000000000003,
+          "perimeter_area_ratio": 0.08031221582297665
         },
         "objective": "Fewest stock pieces"
       },
       "product-tigerply-okoume-6-6:straight": {
         "mode": "straight",
-        "source": "d9bf201adcfd8aa270314ef9bbe6acdf602edc15397cf7b9f547f79d41e513ad",
-        "created": "2026-11-23T02:32:07.345565+00:00",
+        "source": "a3aa1da8ccf7e909035cb0958e6d41101f32a1394ffb326af56ff21ad3ed3276",
+        "created": "2026-11-23T09:39:03.898090+00:00",
         "options": {
           "confirmed": false,
           "orientations": {},
@@ -10543,7 +12045,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P131",
+            "id": "P122",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -10634,7 +12136,7 @@
             "profile_axes": "Length = local Y; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P132",
+            "id": "P123",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -10643,136 +12145,6 @@
             },
             "blank_length": 394.0,
             "blank_width": 293.0
-          },
-          {
-            "path": "Cabinet / Lower module / Shelves / Cab-end 770mm shelf",
-            "material": "shelves",
-            "length": 394.0,
-            "width": 293.0,
-            "thickness": 6.0,
-            "outline": [
-              [
-                394.0,
-                293.0
-              ],
-              [
-                0.0,
-                293.0
-              ],
-              [
-                0.0,
-                292.6133
-              ],
-              [
-                0.0,
-                292.2266
-              ],
-              [
-                0.0,
-                291.4531
-              ],
-              [
-                0.0,
-                289.9062
-              ],
-              [
-                0.0,
-                286.8125
-              ],
-              [
-                0.0,
-                280.625
-              ],
-              [
-                0.0,
-                268.25
-              ],
-              [
-                0.0,
-                243.5
-              ],
-              [
-                0.0,
-                194.0
-              ],
-              [
-                0.0,
-                95.0
-              ],
-              [
-                11.0,
-                95.0
-              ],
-              [
-                11.0,
-                77.0
-              ],
-              [
-                0.0,
-                77.0
-              ],
-              [
-                0.0,
-                0.0
-              ],
-              [
-                394.0,
-                0.0
-              ]
-            ],
-            "holes": [],
-            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
-            "profile_axes": "Length = local Y; width = local X",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P133",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 394.0,
-            "blank_width": 293.0
-          },
-          {
-            "path": "Cabinet / Lower module / Shelves / Rear 770mm shelf",
-            "material": "shelves",
-            "length": 526.0,
-            "width": 198.0,
-            "thickness": 6.0,
-            "outline": [
-              [
-                526.0,
-                198.0
-              ],
-              [
-                0.0,
-                198.0
-              ],
-              [
-                0.0,
-                0.0
-              ],
-              [
-                526.0,
-                0.0
-              ]
-            ],
-            "holes": [],
-            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
-            "profile_axes": "Length = local Y; width = local X",
-            "fitting_edges": {},
-            "template_fit": false,
-            "id": "P134",
-            "fitting_margins": {
-              "left": 0,
-              "right": 0,
-              "top": 0,
-              "bottom": 0
-            },
-            "blank_length": 526.0,
-            "blank_width": 198.0
           },
           {
             "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Plywood door",
@@ -11070,7 +12442,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P135",
+            "id": "P124",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -11376,7 +12748,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P138",
+            "id": "P127",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -11682,7 +13054,7 @@
             "profile_axes": "Length = local X; width = local Z",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P141",
+            "id": "P130",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -11785,7 +13157,7 @@
             "profile_axes": "Length = local Z; width = local X",
             "fitting_edges": {},
             "template_fit": false,
-            "id": "P144",
+            "id": "P133",
             "fitting_margins": {
               "left": 0,
               "right": 0,
@@ -11794,6 +13166,116 @@
             },
             "blank_length": 706.0,
             "blank_width": 509.0
+          },
+          {
+            "path": "Cabinet / Upper module / Shelves / Box 6 floor panel",
+            "material": "shelves",
+            "length": 538.59,
+            "width": 293.0,
+            "thickness": 6.0,
+            "outline": [
+              [
+                538.5914,
+                293.0
+              ],
+              [
+                12.5914,
+                293.0
+              ],
+              [
+                12.5914,
+                125.0
+              ],
+              [
+                34.5914,
+                125.0
+              ],
+              [
+                34.5914,
+                107.0
+              ],
+              [
+                0.0,
+                107.0
+              ],
+              [
+                99.51,
+                0.0
+              ],
+              [
+                538.5914,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Y; width = local X",
+            "fitting_edges": {},
+            "template_fit": false,
+            "id": "P161",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 538.59,
+            "blank_width": 293.0
+          },
+          {
+            "path": "Cabinet / Upper module / Shelves / Box 6 upper shelf panel",
+            "material": "shelves",
+            "length": 526.0,
+            "width": 293.0,
+            "thickness": 6.0,
+            "outline": [
+              [
+                526.0,
+                293.0
+              ],
+              [
+                0.0,
+                293.0
+              ],
+              [
+                0.0,
+                125.0
+              ],
+              [
+                22.0,
+                125.0
+              ],
+              [
+                22.0,
+                107.0
+              ],
+              [
+                61.0795,
+                107.0
+              ],
+              [
+                160.5895,
+                0.0
+              ],
+              [
+                526.0,
+                0.0
+              ]
+            ],
+            "holes": [],
+            "profile_note": "CAD outline; curves sampled to 0.1 mm. Blind pockets and edge finishing are separate operations.",
+            "profile_axes": "Length = local Y; width = local X",
+            "fitting_edges": {},
+            "template_fit": true,
+            "id": "P162",
+            "fitting_margins": {
+              "left": 0,
+              "right": 0,
+              "top": 0,
+              "bottom": 0
+            },
+            "blank_length": 526.0,
+            "blank_width": 293.0
           }
         ],
         "sheets": [
@@ -11807,8 +13289,8 @@
             },
             "parts": [
               {
-                "id": "P133",
-                "path": "Cabinet / Lower module / Shelves / Cab-end 770mm shelf",
+                "id": "P123",
+                "path": "Cabinet / Lower module / Shelves / Cab-end 510mm shelf",
                 "outline": [
                   [
                     394.0,
@@ -11889,8 +13371,8 @@
                 "angle": 0
               },
               {
-                "id": "P132",
-                "path": "Cabinet / Lower module / Shelves / Cab-end 510mm shelf",
+                "id": "P122",
+                "path": "Cabinet / Lower module / Shelves / Cab-end 317mm shelf",
                 "outline": [
                   [
                     394.0,
@@ -11959,6 +13441,22 @@
                   [
                     394.0,
                     296.0
+                  ],
+                  [
+                    394.0,
+                    373.0
+                  ],
+                  [
+                    372.0,
+                    373.0
+                  ],
+                  [
+                    372.0,
+                    391.0
+                  ],
+                  [
+                    394.0,
+                    391.0
                   ]
                 ],
                 "holes": [],
@@ -11971,402 +13469,601 @@
                 "angle": 0
               },
               {
-                "id": "P131",
-                "path": "Cabinet / Lower module / Shelves / Cab-end 317mm shelf",
-                "outline": [
-                  [
-                    394.0,
-                    885.0
-                  ],
-                  [
-                    0.0,
-                    885.0
-                  ],
-                  [
-                    0.0,
-                    884.6133
-                  ],
-                  [
-                    0.0,
-                    884.2266
-                  ],
-                  [
-                    0.0,
-                    883.4531
-                  ],
-                  [
-                    0.0,
-                    881.9062
-                  ],
-                  [
-                    0.0,
-                    878.8125
-                  ],
-                  [
-                    0.0,
-                    872.625
-                  ],
-                  [
-                    0.0,
-                    860.25
-                  ],
-                  [
-                    0.0,
-                    835.5
-                  ],
-                  [
-                    0.0,
-                    786.0
-                  ],
-                  [
-                    0.0,
-                    687.0
-                  ],
-                  [
-                    11.0,
-                    687.0
-                  ],
-                  [
-                    11.0,
-                    669.0
-                  ],
-                  [
-                    0.0,
-                    669.0
-                  ],
-                  [
-                    0.0,
-                    592.0
-                  ],
-                  [
-                    394.0,
-                    592.0
-                  ],
-                  [
-                    394.0,
-                    669.0
-                  ],
-                  [
-                    372.0,
-                    669.0
-                  ],
-                  [
-                    372.0,
-                    687.0
-                  ],
-                  [
-                    394.0,
-                    687.0
-                  ]
-                ],
-                "holes": [],
-                "blank": [
-                  0.0,
-                  592.0,
-                  394.0,
-                  293.0
-                ],
-                "angle": 0
-              },
-              {
-                "id": "P135",
+                "id": "P124",
                 "path": "Cabinet / Lower module / Doors / Cab-end bottom door / Plywood door",
                 "outline": [
                   [
                     367.0,
-                    890.0
+                    594.0
                   ],
                   [
                     367.0,
-                    1139.0
+                    843.0
                   ],
                   [
                     366.8478,
-                    1139.7654
+                    843.7654
                   ],
                   [
                     366.4142,
-                    1140.4142
+                    844.4142
                   ],
                   [
                     365.7654,
-                    1140.8478
+                    844.8478
                   ],
                   [
                     365.0,
-                    1141.0
+                    845.0
                   ],
                   [
                     2.0,
-                    1141.0
+                    845.0
                   ],
                   [
                     1.2346,
-                    1140.8478
+                    844.8478
                   ],
                   [
                     0.5858,
-                    1140.4142
+                    844.4142
                   ],
                   [
                     0.1522,
-                    1139.7654
+                    843.7654
                   ],
                   [
                     0.0,
-                    1139.0
+                    843.0
                   ],
                   [
                     0.0,
-                    890.0
+                    594.0
                   ],
                   [
                     0.1522,
-                    889.2346
+                    593.2346
                   ],
                   [
                     0.5858,
-                    888.5858
+                    592.5858
                   ],
                   [
                     1.2346,
-                    888.1522
+                    592.1522
                   ],
                   [
                     2.0,
-                    888.0
+                    592.0
                   ],
                   [
                     365.0,
-                    888.0
+                    592.0
                   ],
                   [
                     365.7654,
-                    888.1522
+                    592.1522
                   ],
                   [
                     366.4142,
-                    888.5858
+                    592.5858
                   ],
                   [
                     366.8478,
-                    889.2346
+                    593.2346
                   ]
                 ],
                 "holes": [
                   [
                     [
                       9.6884,
-                      1021.0557
+                      725.0557
                     ],
                     [
                       10.2429,
-                      1021.4924
+                      725.4924
                     ],
                     [
                       10.6,
-                      1022.4888
+                      726.4888
                     ],
                     [
                       10.2569,
-                      1023.49
+                      727.49
                     ],
                     [
                       9.3638,
-                      1024.0581
+                      728.0581
                     ],
                     [
                       8.3116,
-                      1023.9443
+                      727.9443
                     ],
                     [
                       7.5605,
-                      1023.1985
+                      727.1985
                     ],
                     [
                       7.4394,
-                      1022.1471
+                      726.1471
                     ],
                     [
                       8.0012,
-                      1021.2501
+                      725.2501
                     ],
                     [
                       9.0,
-                      1020.9
+                      724.9
                     ]
                   ],
                   [
                     [
                       9.6884,
-                      1005.0557
+                      709.0557
                     ],
                     [
                       10.2429,
-                      1005.4924
+                      709.4924
                     ],
                     [
                       10.6,
-                      1006.4888
+                      710.4888
                     ],
                     [
                       10.2569,
-                      1007.49
+                      711.49
                     ],
                     [
                       9.3638,
-                      1008.0581
+                      712.0581
                     ],
                     [
                       8.3116,
-                      1007.9443
+                      711.9443
                     ],
                     [
                       7.5605,
-                      1007.1985
+                      711.1985
                     ],
                     [
                       7.4394,
-                      1006.1471
+                      710.1471
                     ],
                     [
                       8.0012,
-                      1005.2501
+                      709.2501
                     ],
                     [
                       9.0,
-                      1004.9
+                      708.9
                     ]
                   ],
                   [
                     [
                       20.1039,
-                      1012.7373
+                      716.7373
                     ],
                     [
                       20.8486,
-                      1009.5263
+                      713.5263
                     ],
                     [
                       22.2766,
-                      1006.5554
+                      710.5554
                     ],
                     [
                       24.3191,
-                      1003.9682
+                      707.9682
                     ],
                     [
                       26.8773,
-                      1001.8896
+                      705.8896
                     ],
                     [
                       29.8277,
-                      1000.42
+                      704.42
                     ],
                     [
                       33.028,
-                      999.6302
+                      703.6302
                     ],
                     [
                       36.3234,
-                      999.5585
+                      703.5585
                     ],
                     [
                       39.5549,
-                      1000.2083
+                      704.2083
                     ],
                     [
                       42.5665,
-                      1001.5482
+                      705.5482
                     ],
                     [
                       45.2127,
-                      1003.5136
+                      707.5136
                     ],
                     [
                       47.3658,
-                      1006.0095
+                      710.0095
                     ],
                     [
                       48.9217,
-                      1008.9154
+                      712.9154
                     ],
                     [
                       49.8053,
-                      1012.091
+                      716.091
                     ],
                     [
                       49.974,
-                      1015.3829
+                      719.3829
                     ],
                     [
                       49.4196,
-                      1018.6322
+                      722.6322
                     ],
                     [
                       48.1689,
-                      1021.6819
+                      725.6819
                     ],
                     [
                       46.2823,
-                      1024.3848
+                      728.3848
                     ],
                     [
                       43.8509,
-                      1026.6104
+                      730.6104
                     ],
                     [
                       40.992,
-                      1028.2512
+                      732.2512
                     ],
                     [
                       37.8439,
-                      1029.2279
+                      733.2279
                     ],
                     [
                       34.5584,
-                      1029.4935
+                      733.4935
                     ],
                     [
                       31.2942,
-                      1029.035
+                      733.035
                     ],
                     [
                       28.2089,
-                      1027.8747
+                      731.8747
                     ],
                     [
                       25.4516,
-                      1026.0684
+                      730.0684
                     ],
                     [
                       23.1554,
-                      1023.7036
+                      727.7036
                     ],
                     [
                       21.4312,
-                      1020.8943
+                      724.8943
                     ],
                     [
                       20.3622,
-                      1017.7763
+                      721.7763
                     ],
                     [
                       20.0,
-                      1014.5
+                      718.5
                     ]
                   ]
                 ],
                 "blank": [
                   0.0,
-                  888.0,
+                  592.0,
                   367.0,
                   253.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P144",
+                "id": "P130",
+                "path": "Cabinet / Lower module / Doors / Cab-end above-bed flap / Plywood door",
+                "outline": [
+                  [
+                    377.0,
+                    850.0
+                  ],
+                  [
+                    377.0,
+                    1072.0
+                  ],
+                  [
+                    376.8478,
+                    1072.7654
+                  ],
+                  [
+                    376.4142,
+                    1073.4142
+                  ],
+                  [
+                    375.7654,
+                    1073.8478
+                  ],
+                  [
+                    375.0,
+                    1074.0
+                  ],
+                  [
+                    2.0,
+                    1074.0
+                  ],
+                  [
+                    1.2346,
+                    1073.8478
+                  ],
+                  [
+                    0.5858,
+                    1073.4142
+                  ],
+                  [
+                    0.1522,
+                    1072.7654
+                  ],
+                  [
+                    0.0,
+                    1072.0
+                  ],
+                  [
+                    0.0,
+                    850.0
+                  ],
+                  [
+                    0.1522,
+                    849.2346
+                  ],
+                  [
+                    0.5858,
+                    848.5858
+                  ],
+                  [
+                    1.2346,
+                    848.1522
+                  ],
+                  [
+                    2.0,
+                    848.0
+                  ],
+                  [
+                    375.0,
+                    848.0
+                  ],
+                  [
+                    375.7654,
+                    848.1522
+                  ],
+                  [
+                    376.4142,
+                    848.5858
+                  ],
+                  [
+                    376.8478,
+                    849.2346
+                  ]
+                ],
+                "holes": [
+                  [
+                    [
+                      9.6884,
+                      1052.5557
+                    ],
+                    [
+                      10.2429,
+                      1052.9924
+                    ],
+                    [
+                      10.6,
+                      1053.9888
+                    ],
+                    [
+                      10.2569,
+                      1054.99
+                    ],
+                    [
+                      9.3638,
+                      1055.5581
+                    ],
+                    [
+                      8.3116,
+                      1055.4443
+                    ],
+                    [
+                      7.5605,
+                      1054.6985
+                    ],
+                    [
+                      7.4394,
+                      1053.6471
+                    ],
+                    [
+                      8.0012,
+                      1052.7501
+                    ],
+                    [
+                      9.0,
+                      1052.4
+                    ]
+                  ],
+                  [
+                    [
+                      9.6884,
+                      1036.5557
+                    ],
+                    [
+                      10.2429,
+                      1036.9924
+                    ],
+                    [
+                      10.6,
+                      1037.9888
+                    ],
+                    [
+                      10.2569,
+                      1038.99
+                    ],
+                    [
+                      9.3638,
+                      1039.5581
+                    ],
+                    [
+                      8.3116,
+                      1039.4443
+                    ],
+                    [
+                      7.5605,
+                      1038.6985
+                    ],
+                    [
+                      7.4394,
+                      1037.6471
+                    ],
+                    [
+                      8.0012,
+                      1036.7501
+                    ],
+                    [
+                      9.0,
+                      1036.4
+                    ]
+                  ],
+                  [
+                    [
+                      173.6039,
+                      1037.2373
+                    ],
+                    [
+                      174.3486,
+                      1034.0263
+                    ],
+                    [
+                      175.7766,
+                      1031.0554
+                    ],
+                    [
+                      177.8191,
+                      1028.4682
+                    ],
+                    [
+                      180.3773,
+                      1026.3896
+                    ],
+                    [
+                      183.3277,
+                      1024.92
+                    ],
+                    [
+                      186.528,
+                      1024.1302
+                    ],
+                    [
+                      189.8234,
+                      1024.0585
+                    ],
+                    [
+                      193.0549,
+                      1024.7083
+                    ],
+                    [
+                      196.0665,
+                      1026.0482
+                    ],
+                    [
+                      198.7127,
+                      1028.0136
+                    ],
+                    [
+                      200.8658,
+                      1030.5095
+                    ],
+                    [
+                      202.4217,
+                      1033.4154
+                    ],
+                    [
+                      203.3053,
+                      1036.591
+                    ],
+                    [
+                      203.474,
+                      1039.8829
+                    ],
+                    [
+                      202.9196,
+                      1043.1322
+                    ],
+                    [
+                      201.6689,
+                      1046.1819
+                    ],
+                    [
+                      199.7823,
+                      1048.8848
+                    ],
+                    [
+                      197.3509,
+                      1051.1104
+                    ],
+                    [
+                      194.492,
+                      1052.7512
+                    ],
+                    [
+                      191.3439,
+                      1053.7279
+                    ],
+                    [
+                      188.0584,
+                      1053.9935
+                    ],
+                    [
+                      184.7942,
+                      1053.535
+                    ],
+                    [
+                      181.7089,
+                      1052.3747
+                    ],
+                    [
+                      178.9516,
+                      1050.5684
+                    ],
+                    [
+                      176.6554,
+                      1048.2036
+                    ],
+                    [
+                      174.9312,
+                      1045.3943
+                    ],
+                    [
+                      173.8622,
+                      1042.2763
+                    ],
+                    [
+                      173.5,
+                      1039.0
+                    ]
+                  ]
+                ],
+                "blank": [
+                  0.0,
+                  848.0,
+                  377.0,
+                  226.0
+                ],
+                "angle": 0
+              },
+              {
+                "id": "P133",
                 "path": "Cabinet / Lower module / Doors / Cabinet 3 fixed cover",
                 "outline": [
                   [
@@ -12460,23 +14157,39 @@
                 "angle": 0
               },
               {
-                "id": "P134",
-                "path": "Cabinet / Lower module / Shelves / Rear 770mm shelf",
+                "id": "P161",
+                "path": "Cabinet / Upper module / Shelves / Box 6 floor panel",
                 "outline": [
                   [
-                    923.0,
-                    710.0
+                    935.5914,
+                    805.0
+                  ],
+                  [
+                    409.5914,
+                    805.0
+                  ],
+                  [
+                    409.5914,
+                    637.0
+                  ],
+                  [
+                    431.5914,
+                    637.0
+                  ],
+                  [
+                    431.5914,
+                    619.0
                   ],
                   [
                     397.0,
-                    710.0
+                    619.0
                   ],
                   [
-                    397.0,
+                    496.51,
                     512.0
                   ],
                   [
-                    923.0,
+                    935.5914,
                     512.0
                   ]
                 ],
@@ -12484,600 +14197,349 @@
                 "blank": [
                   397.0,
                   512.0,
-                  526.0,
-                  198.0
+                  538.59,
+                  293.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P141",
-                "path": "Cabinet / Lower module / Doors / Cab-end above-bed flap / Plywood door",
+                "id": "P162",
+                "path": "Cabinet / Upper module / Shelves / Box 6 upper shelf panel",
                 "outline": [
                   [
-                    774.0,
-                    715.0
-                  ],
-                  [
-                    774.0,
-                    937.0
-                  ],
-                  [
-                    773.8478,
-                    937.7654
-                  ],
-                  [
-                    773.4142,
-                    938.4142
-                  ],
-                  [
-                    772.7654,
-                    938.8478
-                  ],
-                  [
-                    772.0,
-                    939.0
-                  ],
-                  [
-                    399.0,
-                    939.0
-                  ],
-                  [
-                    398.2346,
-                    938.8478
-                  ],
-                  [
-                    397.5858,
-                    938.4142
-                  ],
-                  [
-                    397.1522,
-                    937.7654
+                    923.0,
+                    1101.0
                   ],
                   [
                     397.0,
-                    937.0
+                    1101.0
                   ],
                   [
                     397.0,
-                    715.0
+                    933.0
                   ],
                   [
-                    397.1522,
-                    714.2346
+                    419.0,
+                    933.0
                   ],
                   [
-                    397.5858,
-                    713.5858
+                    419.0,
+                    915.0
                   ],
                   [
-                    398.2346,
-                    713.1522
+                    458.0795,
+                    915.0
                   ],
                   [
-                    399.0,
-                    713.0
+                    557.5895,
+                    808.0
                   ],
                   [
-                    772.0,
-                    713.0
-                  ],
-                  [
-                    772.7654,
-                    713.1522
-                  ],
-                  [
-                    773.4142,
-                    713.5858
-                  ],
-                  [
-                    773.8478,
-                    714.2346
+                    923.0,
+                    808.0
                   ]
                 ],
-                "holes": [
-                  [
-                    [
-                      406.6884,
-                      917.5557
-                    ],
-                    [
-                      407.2429,
-                      917.9924
-                    ],
-                    [
-                      407.6,
-                      918.9888
-                    ],
-                    [
-                      407.2569,
-                      919.99
-                    ],
-                    [
-                      406.3638,
-                      920.5581
-                    ],
-                    [
-                      405.3116,
-                      920.4443
-                    ],
-                    [
-                      404.5605,
-                      919.6985
-                    ],
-                    [
-                      404.4394,
-                      918.6471
-                    ],
-                    [
-                      405.0012,
-                      917.7501
-                    ],
-                    [
-                      406.0,
-                      917.4
-                    ]
-                  ],
-                  [
-                    [
-                      406.6884,
-                      901.5557
-                    ],
-                    [
-                      407.2429,
-                      901.9924
-                    ],
-                    [
-                      407.6,
-                      902.9888
-                    ],
-                    [
-                      407.2569,
-                      903.99
-                    ],
-                    [
-                      406.3638,
-                      904.5581
-                    ],
-                    [
-                      405.3116,
-                      904.4443
-                    ],
-                    [
-                      404.5605,
-                      903.6985
-                    ],
-                    [
-                      404.4394,
-                      902.6471
-                    ],
-                    [
-                      405.0012,
-                      901.7501
-                    ],
-                    [
-                      406.0,
-                      901.4
-                    ]
-                  ],
-                  [
-                    [
-                      570.6039,
-                      902.2373
-                    ],
-                    [
-                      571.3486,
-                      899.0263
-                    ],
-                    [
-                      572.7766,
-                      896.0554
-                    ],
-                    [
-                      574.8191,
-                      893.4682
-                    ],
-                    [
-                      577.3773,
-                      891.3896
-                    ],
-                    [
-                      580.3277,
-                      889.92
-                    ],
-                    [
-                      583.528,
-                      889.1302
-                    ],
-                    [
-                      586.8234,
-                      889.0585
-                    ],
-                    [
-                      590.0549,
-                      889.7083
-                    ],
-                    [
-                      593.0665,
-                      891.0482
-                    ],
-                    [
-                      595.7127,
-                      893.0136
-                    ],
-                    [
-                      597.8658,
-                      895.5095
-                    ],
-                    [
-                      599.4217,
-                      898.4154
-                    ],
-                    [
-                      600.3053,
-                      901.591
-                    ],
-                    [
-                      600.474,
-                      904.8829
-                    ],
-                    [
-                      599.9196,
-                      908.1322
-                    ],
-                    [
-                      598.6689,
-                      911.1819
-                    ],
-                    [
-                      596.7823,
-                      913.8848
-                    ],
-                    [
-                      594.3509,
-                      916.1104
-                    ],
-                    [
-                      591.492,
-                      917.7512
-                    ],
-                    [
-                      588.3439,
-                      918.7279
-                    ],
-                    [
-                      585.0584,
-                      918.9935
-                    ],
-                    [
-                      581.7942,
-                      918.535
-                    ],
-                    [
-                      578.7089,
-                      917.3747
-                    ],
-                    [
-                      575.9516,
-                      915.5684
-                    ],
-                    [
-                      573.6554,
-                      913.2036
-                    ],
-                    [
-                      571.9312,
-                      910.3943
-                    ],
-                    [
-                      570.8622,
-                      907.2763
-                    ],
-                    [
-                      570.5,
-                      904.0
-                    ]
-                  ]
-                ],
+                "holes": [],
                 "blank": [
                   397.0,
-                  713.0,
-                  377.0,
-                  226.0
+                  808.0,
+                  526.0,
+                  293.0
                 ],
                 "angle": 0
               },
               {
-                "id": "P138",
+                "id": "P127",
                 "path": "Cabinet / Lower module / Doors / Cab-end middle flap / Plywood door",
                 "outline": [
                   [
-                    774.0,
-                    944.0
+                    1483.0,
+                    2.0
                   ],
                   [
-                    774.0,
-                    1099.0
+                    1483.0,
+                    157.0
                   ],
                   [
-                    773.8478,
-                    1099.7654
+                    1482.8478,
+                    157.7654
                   ],
                   [
-                    773.4142,
-                    1100.4142
+                    1482.4142,
+                    158.4142
                   ],
                   [
-                    772.7654,
-                    1100.8478
+                    1481.7654,
+                    158.8478
                   ],
                   [
-                    772.0,
-                    1101.0
+                    1481.0,
+                    159.0
                   ],
                   [
-                    399.0,
-                    1101.0
+                    1108.0,
+                    159.0
                   ],
                   [
-                    398.2346,
-                    1100.8478
+                    1107.2346,
+                    158.8478
                   ],
                   [
-                    397.5858,
-                    1100.4142
+                    1106.5858,
+                    158.4142
                   ],
                   [
-                    397.1522,
-                    1099.7654
+                    1106.1522,
+                    157.7654
                   ],
                   [
-                    397.0,
-                    1099.0
+                    1106.0,
+                    157.0
                   ],
                   [
-                    397.0,
-                    944.0
+                    1106.0,
+                    2.0
                   ],
                   [
-                    397.1522,
-                    943.2346
+                    1106.1522,
+                    1.2346
                   ],
                   [
-                    397.5858,
-                    942.5858
+                    1106.5858,
+                    0.5858
                   ],
                   [
-                    398.2346,
-                    942.1522
+                    1107.2346,
+                    0.1522
                   ],
                   [
-                    399.0,
-                    942.0
+                    1108.0,
+                    0.0
                   ],
                   [
-                    772.0,
-                    942.0
+                    1481.0,
+                    0.0
                   ],
                   [
-                    772.7654,
-                    942.1522
+                    1481.7654,
+                    0.1522
                   ],
                   [
-                    773.4142,
-                    942.5858
+                    1482.4142,
+                    0.5858
                   ],
                   [
-                    773.8478,
-                    943.2346
+                    1482.8478,
+                    1.2346
                   ]
                 ],
                 "holes": [
                   [
                     [
-                      406.6884,
-                      1079.5557
+                      1115.6884,
+                      137.5557
                     ],
                     [
-                      407.2429,
-                      1079.9924
+                      1116.2429,
+                      137.9924
                     ],
                     [
-                      407.6,
-                      1080.9888
+                      1116.6,
+                      138.9888
                     ],
                     [
-                      407.2569,
-                      1081.99
+                      1116.2569,
+                      139.99
                     ],
                     [
-                      406.3638,
-                      1082.5581
+                      1115.3638,
+                      140.5581
                     ],
                     [
-                      405.3116,
-                      1082.4443
+                      1114.3116,
+                      140.4443
                     ],
                     [
-                      404.5605,
-                      1081.6985
+                      1113.5605,
+                      139.6985
                     ],
                     [
-                      404.4394,
-                      1080.6471
+                      1113.4394,
+                      138.6471
                     ],
                     [
-                      405.0012,
-                      1079.7501
+                      1114.0012,
+                      137.7501
                     ],
                     [
-                      406.0,
-                      1079.4
+                      1115.0,
+                      137.4
                     ]
                   ],
                   [
                     [
-                      406.6884,
-                      1063.5557
+                      1115.6884,
+                      121.5557
                     ],
                     [
-                      407.2429,
-                      1063.9924
+                      1116.2429,
+                      121.9924
                     ],
                     [
-                      407.6,
-                      1064.9888
+                      1116.6,
+                      122.9888
                     ],
                     [
-                      407.2569,
-                      1065.99
+                      1116.2569,
+                      123.99
                     ],
                     [
-                      406.3638,
-                      1066.5581
+                      1115.3638,
+                      124.5581
                     ],
                     [
-                      405.3116,
-                      1066.4443
+                      1114.3116,
+                      124.4443
                     ],
                     [
-                      404.5605,
-                      1065.6985
+                      1113.5605,
+                      123.6985
                     ],
                     [
-                      404.4394,
-                      1064.6471
+                      1113.4394,
+                      122.6471
                     ],
                     [
-                      405.0012,
-                      1063.7501
+                      1114.0012,
+                      121.7501
                     ],
                     [
-                      406.0,
-                      1063.4
+                      1115.0,
+                      121.4
                     ]
                   ],
                   [
                     [
-                      570.6039,
-                      1064.2373
+                      1279.6039,
+                      122.2373
                     ],
                     [
-                      571.3486,
-                      1061.0263
+                      1280.3486,
+                      119.0263
                     ],
                     [
-                      572.7766,
-                      1058.0554
+                      1281.7766,
+                      116.0554
                     ],
                     [
-                      574.8191,
-                      1055.4682
+                      1283.8191,
+                      113.4682
                     ],
                     [
-                      577.3773,
-                      1053.3896
+                      1286.3773,
+                      111.3896
                     ],
                     [
-                      580.3277,
-                      1051.92
+                      1289.3277,
+                      109.92
                     ],
                     [
-                      583.528,
-                      1051.1302
+                      1292.528,
+                      109.1302
                     ],
                     [
-                      586.8234,
-                      1051.0585
+                      1295.8234,
+                      109.0585
                     ],
                     [
-                      590.0549,
-                      1051.7083
+                      1299.0549,
+                      109.7083
                     ],
                     [
-                      593.0665,
-                      1053.0482
+                      1302.0665,
+                      111.0482
                     ],
                     [
-                      595.7127,
-                      1055.0136
+                      1304.7127,
+                      113.0136
                     ],
                     [
-                      597.8658,
-                      1057.5095
+                      1306.8658,
+                      115.5095
                     ],
                     [
-                      599.4217,
-                      1060.4154
+                      1308.4217,
+                      118.4154
                     ],
                     [
-                      600.3053,
-                      1063.591
+                      1309.3053,
+                      121.591
                     ],
                     [
-                      600.474,
-                      1066.8829
+                      1309.474,
+                      124.8829
                     ],
                     [
-                      599.9196,
-                      1070.1322
+                      1308.9196,
+                      128.1322
                     ],
                     [
-                      598.6689,
-                      1073.1819
+                      1307.6689,
+                      131.1819
                     ],
                     [
-                      596.7823,
-                      1075.8848
+                      1305.7823,
+                      133.8848
                     ],
                     [
-                      594.3509,
-                      1078.1104
+                      1303.3509,
+                      136.1104
                     ],
                     [
-                      591.492,
-                      1079.7512
+                      1300.492,
+                      137.7512
                     ],
                     [
-                      588.3439,
-                      1080.7279
+                      1297.3439,
+                      138.7279
                     ],
                     [
-                      585.0584,
-                      1080.9935
+                      1294.0584,
+                      138.9935
                     ],
                     [
-                      581.7942,
-                      1080.535
+                      1290.7942,
+                      138.535
                     ],
                     [
-                      578.7089,
-                      1079.3747
+                      1287.7089,
+                      137.3747
                     ],
                     [
-                      575.9516,
-                      1077.5684
+                      1284.9516,
+                      135.5684
                     ],
                     [
-                      573.6554,
-                      1075.2036
+                      1282.6554,
+                      133.2036
                     ],
                     [
-                      571.9312,
-                      1072.3943
+                      1280.9312,
+                      130.3943
                     ],
                     [
-                      570.8622,
-                      1069.2763
+                      1279.8622,
+                      127.2763
                     ],
                     [
-                      570.5,
-                      1066.0
+                      1279.5,
+                      124.0
                     ]
                   ]
                 ],
                 "blank": [
-                  397.0,
-                  942.0,
+                  1106.0,
+                  0.0,
                   377.0,
                   159.0
                 ],
@@ -13098,6 +14560,12 @@
                 1200.0
               ],
               [
+                1483.0,
+                0.0,
+                1483.0,
+                1200.0
+              ],
+              [
                 0.0,
                 293.0,
                 394.0,
@@ -13111,21 +14579,27 @@
               ],
               [
                 0.0,
-                885.0,
+                845.0,
                 394.0,
-                885.0
+                845.0
               ],
               [
                 0.0,
-                1141.0,
+                1074.0,
                 394.0,
-                1141.0
+                1074.0
               ],
               [
                 367.0,
-                888.0,
+                592.0,
                 367.0,
-                1141.0
+                845.0
+              ],
+              [
+                377.0,
+                848.0,
+                377.0,
+                1074.0
               ],
               [
                 397.0,
@@ -13135,15 +14609,9 @@
               ],
               [
                 397.0,
-                710.0,
+                805.0,
                 1103.0,
-                710.0
-              ],
-              [
-                397.0,
-                939.0,
-                1103.0,
-                939.0
+                805.0
               ],
               [
                 397.0,
@@ -13152,54 +14620,54 @@
                 1101.0
               ],
               [
-                923.0,
+                935.59,
                 512.0,
+                935.59,
+                805.0
+              ],
+              [
                 923.0,
-                710.0
-              ],
-              [
-                774.0,
-                713.0,
-                774.0,
-                939.0
-              ],
-              [
-                774.0,
-                942.0,
-                774.0,
+                808.0,
+                923.0,
                 1101.0
+              ],
+              [
+                1106.0,
+                159.0,
+                1483.0,
+                159.0
               ]
             ],
             "remnants": [
               [
                 370.0,
-                888.0,
+                592.0,
                 24.0,
                 253.0
               ],
               [
-                0.0,
-                1144.0,
-                394.0,
-                56.0
-              ],
-              [
-                926.0,
-                512.0,
-                177.0,
-                198.0
-              ],
-              [
-                777.0,
-                713.0,
-                326.0,
+                380.0,
+                848.0,
+                14.0,
                 226.0
               ],
               [
-                777.0,
-                942.0,
-                326.0,
-                159.0
+                0.0,
+                1077.0,
+                394.0,
+                123.0
+              ],
+              [
+                938.59,
+                512.0,
+                164.41,
+                293.0
+              ],
+              [
+                926.0,
+                808.0,
+                177.0,
+                293.0
               ],
               [
                 397.0,
@@ -13209,18 +14677,24 @@
               ],
               [
                 1106.0,
+                162.0,
+                377.0,
+                1038.0
+              ],
+              [
+                1486.0,
                 0.0,
-                1294.0,
+                914.0,
                 1200.0
               ]
             ],
-            "breakdown_cut_count": 2
+            "breakdown_cut_count": 3
           }
         ],
         "unplaced": [],
         "stock_area": 2880000.0,
-        "blank_area": 1047824.0,
-        "profile_area": 1044670.31001318,
+        "blank_area": 1140158.87,
+        "profile_area": 1116886.51331318,
         "full_stock_count": 1,
         "offcut_count": 0,
         "estimated_cost": 53.77,
@@ -13231,12 +14705,12 @@
         "optimises_offcuts": true,
         "best_offcut": {
           "sheet": 0,
-          "x": 1106.0,
+          "x": 1486.0,
           "y": 0.0,
-          "length": 1294.0,
+          "length": 914.0,
           "width": 1200.0,
-          "area": 1552800.0,
-          "perimeter_area_ratio": 0.0032122617207624936
+          "area": 1096800.0,
+          "perimeter_area_ratio": 0.0038548504741064914
         },
         "objective": "Fewest sheets, then middle-third cuts, smaller crosscut sections and largest offcut"
       },

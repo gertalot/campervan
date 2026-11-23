@@ -624,9 +624,26 @@ Its conversion slider is removed. The former green backrests are removed; the lo
 and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
-`cabinet.py` now builds only the new lower timber carcass: a rear bay, a shallow front bottom bay and two
-full-depth front bays as one unit.
-The upper cabinet remains absent. The lower cabinet includes shelves, three front doors and a fixed cover
+The lower cabinet is one timber carcass with a rear bay, a shallow front bottom bay and two full-depth front bays.
+The upper module currently contains **box 6** above the rear bay. It uses the lower cabinet’s construction.
+Box 6 has two rectangular bays in one removable frame. The rear bay reaches construction X1320,
+and the bay towards the cab reaches X1445. At both floor and shelf level one cross rail runs from the continuous
+aisle rail to the deep wall post. The shallow wall rail butts into this cross rail.
+The deep wall post leans with the pillar panel and is bevelled along its rear face for full-height glue
+contact. The cabinet-side face of the panel meets the outer edge of that post at local Y110.44 at the
+floor and Y197.31 at the top. The four end posts are plumb. The shelves and ledgers stay level.
+The 18mm pillar panel under **Upper module → Skin** clears the registered scan by at least 3mm.
+It spans the height of box 6 and stops at its rear face. It is excluded from the cutting list during this fit study.
+
+All five 40 × 18mm posts run from 770 to 1033.245mm above the finished floor. The box 6 floor and top
+shelf are each one 6mm ply sheet spanning both bays. Each fits around the rear wall post and meets the
+inside face of the angled pillar panel at its own height. At both levels, rip the step cross rail and
+shallow wall rail to 34mm high so the sheet rests directly on them, flush with the surrounding frame.
+The floor finishes at 810mm and the top shelf at 1033.245mm. The lower cabinet has an open top frame.
+Lift the assembled upper carcass level with that frame, then slide it 329mm wallward from the aisle
+at its final fore–aft position.
+Boxes 4, 5, 7 and 8 and the upper doors and skins remain to design.
+The lower cabinet includes shelves, three front doors and a fixed cover
 for cabinet 3; other skins and the catch/stay hardware are still to design.
 The original fitted envelope, dimensions and construction parameters remain in
 [`data/cabinet-reference`](../data/cabinet-reference/README.md).
@@ -634,12 +651,12 @@ The original fitted envelope, dimensions and construction parameters remain in
 The new frame uses the existing 40 × 18mm pine, aisle face and 980mm overall-length allowance, with
 6mm end-skin space at the cab end. The rear frame is flush with the bed, with no outside rear-skin allowance.
 The lower cabinet rear frame starts at local Y0, flush with the bed rear datum. The former 6mm rear
-frame inset is removed; rear rails, shelf ledgers, top shelf and fixed cover extend accordingly. The centre
+frame inset is removed; rear rails and the fixed cover extend accordingly. The centre
 frame and cab-end position remain unchanged.
 Matching aisle/wall post stations share a central post. The shallow wall
 frame's wall-facing edge is aligned to the measured 1200mm floor edge at construction X1350 (display X150).
-The aisle face is at construction X1116, aligned with the fully extended bed. The clear rear entry/top
-shelf depth is 198mm; entry height remains 730mm. The actual
+The aisle face is at construction X1116, aligned with the fully extended bed. The clear rear entry
+depth is 198mm; entry height remains 730mm. The actual
 floor's known fit is the alignment datum. The remaining few-millimetre scan interference is recorded rather
 than used to thin the framing; 3mm scanned clearance is not claimed for these lower wall members.
 The two deeper front compartments share a vertical wall frame at construction X1445, 20mm farther wallward
@@ -653,18 +670,14 @@ the measured arch crown (rounded up to Z274 above the floor). Both compartments 
 deep wall frame. The extra level retains the original mattress-access door datum at Z510; the module interface
 remains Z770. Centre transverse rails are centred on their posts; end transverse rails are flush with the
 outside post faces for the end skins. The tall rear bay has only bottom and top longitudinal rails, with no
-intermediate rails across its aisle or wall face. 18 × 18mm pine ledgers support all four edges of the three
-front shelf levels (Z317, Z510 and Z770) and the rear top shelf (Z770). Their tops sit 6mm below the future
-plywood surfaces. Long ledgers extend to the transverse frame faces, closing their corners against the
-side ledgers: 394mm long in front and 520mm at the rear. Each middle side support is two straight,
-square-ended pieces stopping at the retained upright; no ledger notches are needed. This leaves the small
-7mm recess behind the post at Z510 and Z770 without a timber bridge. The lowest cab-end side support also
-splits around its post; 20 ledger pieces are modelled in total. The rear loading opening remains clear.
+intermediate rails across its aisle or wall face. The two cab-end shelves at Z317 and Z510 rest on
+18 × 18mm pine ledgers on all four edges. The long ledgers meet the side ledgers at the corners.
+Each middle side support is split around its upright, as is the lowest cab-end side support.
+The Z770 frame carries the upper module directly.
 The internal shallow wall rail below the lowest deep shelf is lowered 6mm to Z311, allowing the sheet to
 pass above it. Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
-Four 6mm plywood panels now sit flush on the ledgers: three front shelves at Z317/Z510/Z770 and a rear
-top at Z770. Front blanks are 293 × 394mm, with an 18 × 11mm middle-post edge cutout; the lowest also has
-an 18 × 22mm cab-end post cutout. The rear top is a 198 × 526mm rectangle. Panels fit inside the framing
+Both 6mm plywood panels finish flush with their frame rails. The blanks are 293 × 394mm, with an
+18 × 11mm middle-post edge cutout; the lowest also has an 18 × 22mm cab-end post cutout. Panels fit inside the framing
 and are not sandwiched between members. Cabinet shelves visibility controls the Lower module / Shelves group. Ledger cuts share the existing 18 × 18mm pine stock through their shelf-ledger role.
 Future wall-side infill must stay flush with or inboard of the shallow frame to preserve the measured floor-width envelope.
 The existing Cabinet / Lower module / Frames visibility and timber-cutting paths are reused.
