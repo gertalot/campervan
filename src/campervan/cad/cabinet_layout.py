@@ -79,7 +79,9 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     split = p.cabinet_rear_storage_height_mm + w
     upper = (split + top + w) / 2
     middle = p.cabinet_rear_bay_length_mm + CABINET_END_ALLOWANCE_MM / 2 + skin
-    cab_face = p.cabinet_length_mm - CABINET_END_ALLOWANCE_MM + skin
+    # The finished cab end and the chair-facing side of the divider are fixed.
+    # Thicker lining shifts the middle frame into the front bay only.
+    cab_face = p.cabinet_length_mm - CABINET_END_ALLOWANCE_MM / 2
     bays = ((w, middle - w / 2), (middle + w / 2, cab_face - w))
     if min(end - start for start, end in bays) < 120 or not w < first < split - 2 * w < upper < top - w:
         raise ValueError("Cabinet bays and shelves must leave usable inset-door openings.")

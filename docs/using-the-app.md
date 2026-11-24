@@ -11,8 +11,8 @@ Saved scans and the scan-processing backend are retained.
 ### Camera and visibility
 
 The finished-floor elevation is shared by the benches, cabinet, table and stored gear. Their height controls are
-relative to the finished floor; the van, scan and ceiling remain fixed. The current floor top is 10mm above the
-registered Z0 datum. Scan-fitted cabinet profiles have been refitted for this height.
+relative to the finished floor; the van, scan and ceiling remain fixed. The current floor top is 20mm above the
+registered Z0 datum. The cabinet roof profiles reference the registered van ceiling.
 
 - Drag fixed parts or the background to orbit. Use the ViewCube for a face, edge or corner view.
 - Hide groups with their eye icons or use the category checkboxes in the sidebar.
@@ -22,7 +22,10 @@ registered Z0 datum. Scan-fitted cabinet profiles have been refitted for this he
 - **Table** hides or shows the table in either pose. Choose **Table position → Bench mount / Stowed** in the table
   settings to change its pose; changing pose does not override the Table visibility switch.
 - Filter **Cabinet shelves**, **Cabinet doors**, **Cabinet skin** and **Cabinet frames** independently.
-  Hinges follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
+  Hinges and folding stays follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
+- Raise **Box 5 flap** to 100% to see the Penn Elcom elbow pass dead centre and the flap settle slightly below horizontal.
+  Raise **Box 7 flap** to compare the Vintique left-hand stay.
+  Hide **Cabinet skin** to see the wall-side view of the linkage.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
 
 The browser remembers the camera, visibility and sidebar choices. Use the viewer toolbar to reset or refit the camera.
@@ -118,6 +121,7 @@ These native labelled checkboxes sit outside the model-parameter form in a separ
 
 Change dimensions in the sidebar and apply them. The app reports invalid values and explains dependent limits.
 **Regenerate** forces a fresh geometry build. Matching saved geometry loads without rebuilding.
+If the status says **Select Regenerate to update**, the viewer shows the previous model.
 
 Live sliders and direct dragging operate the sliding bed, storage lid, individual cabinet doors and mounted table.
 Movable parts glow cyan on hover and during dragging. Motion follows the joint limits; there is no collision detection.

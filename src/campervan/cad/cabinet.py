@@ -21,19 +21,13 @@ WOOD = Color(0.84, 0.64, 0.39)
 PLYWOOD = Color(0.91, 0.80, 0.62)
 # Highest registered crown in the cab-end arch band: world Z283.485mm, rounded up.
 ARCH_CROWN_WORLD_Z_MM = 284.0
-# Nearest wall in the complete deep-frame/backing region: X1454.492.
-# Reserve 6mm plywood and at least 3mm scan clearance outside the vertical timber face.
-DEEP_FRAME_OUTER_X_MM = 1445.0
-# The rear bay stops aisleward of the pillar. The deeper bay begins at the shared post station.
-BOX6_REAR_WALL_X_MM = 1320.0
-# Square shoulder measured forward from the cabinet rear, clear of the pillar at shelf height.
-BOX6_STEP_Y_MM = 160.0
-# Cab-side pillar reaches X1406.5 in the clearance-padded upper bay on the tighter side layout.
-# Allow for 6mm backing outside a square frame and 3mm scan clearance.
-BOX4_WALL_X_MM = 1397.0
-# Provisional wall face. Check the future 6mm back against the fixed metal shoulder in the van.
-BOX5_WALL_X_MM = 1356.0
-BOX5_TOP_Z_MM = 1248.0
+# Finished plywood faces in the fitted envelope. The framing bears against the inside of the sheets.
+DEEP_BACK_OUTER_X_MM = 1448.0
+BOX6_REAR_BACK_OUTER_X_MM = 1323.0
+BOX6_PILLAR_RETURN_OUTER_Y_MM = 157.0
+BOX4_BACK_OUTER_X_MM = 1400.0
+BOX5_BACK_OUTER_X_MM = 1359.0
+BOX5_TOP_WORLD_Z_MM = 1258.0
 # Rear face of the full-height compartment clears the rear roof beam on the slide-in path.
 BOX7_MIN_REAR_Y_MM = 300.0
 # The aisle jamb can reach farther rearward under the roof beam than the wall corner.
@@ -41,7 +35,7 @@ BOX7_AISLE_REAR_Y_MM = 235.0
 
 
 def build_cabinet(p: Parameters) -> Compound:
-    if (abs(p.floor_surface_z_mm - CABINET_SCRIBE_FLOOR_Z_MM) > 0.001
+    if (min(abs(p.floor_surface_z_mm - z) for z in (CABINET_SCRIBE_FLOOR_Z_MM, 20.0)) > 0.001
             or abs(p.cabinet_rear_y_mm - CABINET_SCRIBE_REAR_Y_MM) > 0.001):
         raise ValueError("Refit the cabinet frame for the changed floor elevation or rear position.")
     layout = cabinet_layout(p)
@@ -51,7 +45,7 @@ def build_cabinet(p: Parameters) -> Compound:
     arch_level = max(p.arch_height_mm, ARCH_CROWN_WORLD_Z_MM) - p.floor_surface_z_mm + 3 + w
     # The owner's 1200mm floor physically fits between the arches; align the frame to its edge.
     aisle, shallow = layout.front, (p.cargo_width_mm + FLOOR_BASE_WIDTH_MM) / 2
-    deep = DEEP_FRAME_OUTER_X_MM
+    deep = DEEP_BACK_OUTER_X_MM - skin
     rear = 0.0  # Rear frame face is flush with the bed rear datum.
     middle, cab = layout.bays[0][1], layout.bays[1][1]
     if not rear + w < middle < middle + w < cab or deep - shallow <= 2 * t:
@@ -168,11 +162,12 @@ def build_cabinet(p: Parameters) -> Compound:
                                  ((w, arch_level - w), (arch_level, first - w), (first, split - w))),
         fixed_cover=(rear + w, middle, w, split - w), cover_label="Cabinet 3 fixed cover",
     )
-    box5_top = min(layout.top, BOX5_TOP_Z_MM)
+    box5_top = min(layout.top, BOX5_TOP_WORLD_Z_MM - p.floor_surface_z_mm)
     # The post and its bearer share a station just clear of the box 6 catch block.
     box6_catch_end = (rear + w + middle + MOUNT_HEIGHT) / 2
     box7_rear = max(BOX7_MIN_REAR_Y_MM, box6_catch_end)
-    if not BOX6_STEP_Y_MM + t < BOX7_AISLE_REAR_Y_MM < box7_rear < middle - w:
+    step_y = BOX6_PILLAR_RETURN_OUTER_Y_MM + skin
+    if not step_y + t < BOX7_AISLE_REAR_Y_MM < box7_rear < middle - w:
         raise ValueError("Box 7 needs space over the deep part of box 6 for its rear frame and aisle opening.")
     upper_doors = build_cabinet_doors(
         p, "Upper module", ((rear + w, middle, split + w, layout.upper - w),
@@ -221,7 +216,7 @@ def build_cabinet(p: Parameters) -> Compound:
         shelves.append(inset_shelf(label, start, end, wall, level, clear_frame=frame))
         ledges.extend(shelf_ledgers(label, start, end, wall, level, ("Middle", "Cab-end")))
 
-    rear_wall, cab_wall = BOX6_REAR_WALL_X_MM, BOX4_WALL_X_MM
+    rear_wall, cab_wall = BOX6_REAR_BACK_OUTER_X_MM - skin, BOX4_BACK_OUTER_X_MM - skin
     # Measure from the common exposed timber. The box 4 wall post stands on its floor rail.
     bolt_inset = 40.0
     aisle_bolt = aisle + t + bolt_inset
@@ -243,12 +238,12 @@ def build_cabinet(p: Parameters) -> Compound:
             copy_fitting_datums(part, machined)
             timbers[index] = machined
         timbers.append(Compound(label="Catch mounting blocks", children=doors.mounts))
+        timbers.extend(doors.stay_blocks)
 
     machine_frame(parts, lower_doors)
     parts.append(Compound(label="Module fasteners", children=bolts))
 
     # Two rectangular bays share a transverse frame. The shallow wall stops at the step.
-    step_y = BOX6_STEP_Y_MM
     if not rear + w < step_y < middle - w:
         raise ValueError("Box 6 needs room for both wall rails at the rear pillar step.")
     upper_frame = [
@@ -265,7 +260,7 @@ def build_cabinet(p: Parameters) -> Compound:
     ])
     upper_ledges = []
     upper_shelves = []
-    wall5 = BOX5_WALL_X_MM
+    wall5 = BOX5_BACK_OUTER_X_MM - skin
     shallow_roof, return_roof, upper_roof, upright_roof = rear_backing_roof_waste(p, rear_wall, wall5, step_y)
     upper_frame.extend([
         post("Box 8 pillar step upright", wall5, step_y, layout.upper, box5_top,
@@ -298,7 +293,7 @@ def build_cabinet(p: Parameters) -> Compound:
             ])
         else:
             openings.append((deep_label, deep_label, step_y + t, rail_y, wall_rail_x, ("Step", "Middle")))
-        shelf_frame = Compound(upper_frame)
+        shelf_frame = Compound([*upper_frame, *upper_doors.mounts])
         for ledger_label, shelf_label, start, end, wall, end_names in openings:
             upper_ledges.extend(shelf_ledgers(ledger_label, start, end, wall - t, level, end_names,
                                               ends_to_rail=upper_level))
@@ -330,7 +325,7 @@ def build_cabinet(p: Parameters) -> Compound:
         upper_ledges.extend(shelf_ledgers(prefix, start, end, shelf_wall, level, ("Middle", "Cab-end"),
                                           ends_to_rail=level == layout.upper))
         upper_shelves.append(inset_shelf(
-            f"{prefix} panel", start, end, shelf_wall, level, clear_frame=Compound(upper_frame),
+            f"{prefix} panel", start, end, shelf_wall, level, clear_frame=Compound([*upper_frame, *upper_doors.mounts]),
         ))
     machine_frame(upper_frame, upper_doors)
     upper_frame.append(Compound(label="Shelf ledges", children=upper_ledges))
@@ -380,7 +375,8 @@ def build_cabinet(p: Parameters) -> Compound:
         divider("Upper rear end skin", side, REAR_END_SKIN_WALL_X_MM, rear, split,
                 BOX8_POST_TOP_WORLD_Z_MM - p.floor_surface_z_mm, clear=(rear_end_waste,)),
         divider("Upper cab end skin", side, p.cargo_width_mm, cab_face, split, box5_top, clear=(cab_end_waste,)),
-        divider("Box 4 centre divider", aisle + t, deep - t, rail_y - skin, sill, layout.upper - ledger_drop),
+        divider("Box 4 centre divider", aisle + t, deep - t, rail_y - skin, sill, layout.upper - ledger_drop,
+                clear=upper_frame),
         divider("Box 5 centre divider", aisle + t, wall5 - t, rail_y - skin, layout.upper, box5_top - ledger_drop),
         backing("Box 4 backing", cab_wall, rail_y + t, cab_face, split, layout.upper),
         backing("Box 6 shallow backing", rear_wall, rear_end_y, step_y, split, box5_top, clear=(shallow_roof,)),

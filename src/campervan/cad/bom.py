@@ -5,9 +5,12 @@ from typing import Any
 
 from build123d import Location, Shape
 
+from campervan.cad.cabinet_chains import CHAIN
+from campervan.cad.cabinet_stays import PENN, VINTIQUE
 from campervan.cad.scan_scribing import scan_clearance_mm
 from campervan.cad.cut_profiles import cutting_axes, fitting_datums, flat_profile
 from campervan.cad.fitting import VehicleFitting
+from campervan.cad.floor import HATCH_FOAM, ROUTED_BLOCKS
 from campervan.materials import CutPart
 from campervan.parameters import Parameters
 
@@ -27,7 +30,7 @@ def material_for(path: tuple[str, ...]) -> str:
     if "Laptop table" in path:
         return "table-plywood" if name in {"fixed tabletop leaf", "folding tabletop leaf"} else "frames"
     if "Finished floor plywood" in path:
-        if "Floor insulation" in path:
+        if "Floor insulation" in path or path[-1] == HATCH_FOAM:
             return "floor-insulation"
         return "floor-ribs" if "Pine rib frame" in path else "floor"
     if name.startswith("roller catch keeper"):
@@ -39,12 +42,10 @@ def material_for(path: tuple[str, ...]) -> str:
             return "cabinet-shelf-ledges"
         if "Backing glue cleats" in path or "Divider stops" in path:
             return "cabinet-backing-cleats"
-        if name == "pine hinge backing strip":
+        if name in {"pine hinge backing strip", "pine stay door pad"}:
             return "cabinet-hinge-backing"
         if name == "rear top removable infill":
             return "cabinet-doors"
-        if name == "wheel-arch bridge":
-            return "cabinet-bridge"
         if "Frames" in path:
             return "cabinet-frames"
         if "Skin" in path:
@@ -77,6 +78,10 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             return  # Another pose of the same two leaves and purchased leg kit.
         if "Laptop table" in path and "Table hinges · Homer HOM006136" in path:
             return  # One purchased pair; the moving halves follow their tabletop leaves.
+        if part.label == CHAIN or part.label.endswith(f" {CHAIN}"):
+            return  # Both runs come from one purchased pack for the five flaps.
+        if PENN in path or VINTIQUE in path:
+            return  # One purchased stay per trial door, counted in the materials list.
         if "Hinges" in path or "Keeper fixings" in path or any(name.endswith("fixed hardware") for name in path):
             return  # Purchased hinges/bodies: count the static hinge role and moving catch keeper only.
         if "Roller catch bodies" in path:
@@ -84,6 +89,19 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         if part.children:
             for child in part.children:
                 visit(child, path, world)
+            return
+        if ROUTED_BLOCKS in path and part.parent is not None:
+            # Every strip is square-cut to the length of its glue-up before the outside edge is routed.
+            blank = Shape.cast(part.parent.wrapped).located(Location()).bounding_box().size
+            cuts.append(CutPart(
+                path=" / ".join(path[1:]), material="floor-ribs", length=round(blank.X, 2),
+                width=parameters.floor_rib_width_mm, thickness=parameters.floor_rib_thickness_mm,
+                profile_note=("Square-cut the strips and edge-glue them side by side. Rough-cut the assembled "
+                              "block, then flush-trim its outside edge to the fitted floor plywood."
+                              if len(part.parent.children) > 1 else
+                              "Square-cut one batten. Butt it against the adjoining rails and flush-trim "
+                              "the outside edge to the fitted floor plywood."),
+            ))
             return
         # Each leaf retains its construction geometry. Remove its local placement;
         # ancestor transforms (bed motion, lid hinge, mirroring) do not change stock sizes.
@@ -94,12 +112,10 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         scribed = clearance is not None
         profile: dict[str, Any] = {}
         axes = cutting_axes(part)
-        if material in {"slats", "cabinet-frames", "cabinet-bridge", "cabinet-hinge-backing",
+        if material in {"slats", "cabinet-frames", "cabinet-hinge-backing",
                         "cabinet-backing-cleats", "cabinet-shelf-ledges", "floor-ribs"}:
             if material == "cabinet-frames":
                 width, thickness = parameters.cabinet_frame_width_mm, parameters.cabinet_frame_thickness_mm
-            elif material == "cabinet-bridge":
-                width, thickness = parameters.cabinet_bridge_height_mm, parameters.cabinet_bridge_thickness_mm
             elif material == "floor-ribs":
                 width, thickness = parameters.floor_rib_width_mm, parameters.floor_rib_thickness_mm
             elif material in {"cabinet-hinge-backing", "cabinet-backing-cleats", "cabinet-shelf-ledges"}:
@@ -114,7 +130,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 for section in (width, thickness):
                     dimensions.pop(min(range(len(dimensions)), key=lambda i: abs(dimensions[i] - section)))
                 length = round(dimensions[0], 2)
-            if material in {"cabinet-frames", "cabinet-bridge"}:
+            if material == "cabinet-frames":
                 profile = {
                     "profile_note": "Shelf cleats have bevelled backing ends; joining rails retain their shared footprint and flush shelf seats; "
                     "match-drill fixings. Door and fixed-panel openings have 10mm-wide front rebates, "
@@ -154,11 +170,6 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 "door hinge edges remain unrebated. Shelf panels fit flush on separate face-mounted ledgers. "
                 "Joint drilling and vehicle attachments remain to detail."
             ).strip()
-            if part.label == "Middle aisle post":
-                profile["profile_note"] += (
-                    " At the bottom door, carry the 10mm hinge-side rebate through the post thickness"
-                    " between the sill and head rails to seat the piano hinge."
-                )
         elif "Upper module" in path and "aisle" in part.label and (
             part.label.endswith(" post") or part.label.endswith("upper shelf aisle rail")
         ):
@@ -171,7 +182,7 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             ).strip()
         if material in {"floor-ribs", "floor-insulation"}:
             profile["profile_note"] = (
-                f"{profile.get('profile_note', '')} Floor assembly follows the existing floor panels on an assumed flat, "
+                f"{profile.get('profile_note', '')} Subfloor follows the plywood perimeter on an assumed flat, "
                 "horizontal floor; ignore scan-floor noise when preparing these stock cuts."
             ).strip()
         elif material != "unassigned":

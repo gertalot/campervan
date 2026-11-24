@@ -1,10 +1,17 @@
 """Plywood panels in local coordinates: X along, Y thickness, Z up."""
 
-from build123d import Align, Axis, Box, Location, Part, fillet
+from build123d import Align, Axis, Box, Cone, Cylinder, Location, Part, fillet
 
 
 def panel(length: float, thickness: float, height: float) -> Part:
     return Box(length, thickness, height, align=(Align.MIN, Align.MIN, Align.MIN))
+
+
+def countersunk_clearance(depth: float) -> Part:
+    """Vertical clearance for a nominal 4 mm screw, with the head flush at Z=0."""
+    bore = Cylinder(2.25, depth, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    head = Cone(2.25, 4.25, 2, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    return bore + head
 
 
 def frame_panel(

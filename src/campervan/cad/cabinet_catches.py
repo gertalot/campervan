@@ -11,6 +11,7 @@ from campervan.parameters import Parameters
 METAL = Color(0.48, 0.50, 0.53)
 MOUNT_HEIGHT = 40.0
 MOUNT_DEPTH = 30.0
+BLOCK_SCREW_LENGTH = 40.0
 
 
 @dataclass
@@ -28,13 +29,17 @@ def _cylinder_x(radius: float, length: float, x: float, y: float, z: float) -> P
         Location((x, y, z), (0, 90, 0)))
 
 
-def build_door_catch(p: Parameters, label: str, pose: Location) -> DoorCatch:
+def build_door_catch(p: Parameters, label: str, pose: Location, *, screw_inset: float = 9) -> DoorCatch:
     """Build at the free-edge midpoint, with local +Y pointing out of the door opening."""
     face = cabinet_front(p)
     back, mount_x = face + p.cabinet_door_thickness_mm, face + p.cabinet_frame_thickness_mm
     mount_pose = Location((mount_x, 0, -MOUNT_HEIGHT / 2))
     mount = panel(MOUNT_DEPTH, 18, MOUNT_HEIGHT).moved(mount_pose)
     frame_cuts, door_holes, hardware, keeper_fixings = [], [], [], []
+    block_rear = mount_x + MOUNT_DEPTH
+    frame_bite = BLOCK_SCREW_LENGTH - MOUNT_DEPTH
+    if not 0 < frame_bite < p.cabinet_frame_thickness_mm:
+        raise ValueError("Catch-block screws must end inside the cabinet frame.")
 
     # The base lies against the block's opening-facing side. Rollers face towards the door.
     plate = panel(25, 1, 32).moved(Location((mount_x, -1, -16)))
@@ -51,14 +56,15 @@ def build_door_catch(p: Parameters, label: str, pose: Location) -> DoorCatch:
         roller = Cylinder(3.5, 12, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(roller_pose)
         hardware.append(Part(roller.solids(), label="Roller · nominal", color=METAL))
 
-        # Glue the block's broad face to the frame and screw through the unreduced timber band.
-        y, z = 9, sign * 10
-        frame_cuts.append(_cylinder_x(1.9, p.cabinet_frame_thickness_mm + 2, face - 1, y, z))
-        head_pose = Location((face, y, z), (0, 90, 0))
+        # Drive from inside the cabinet, between the two perpendicular catch-base screws.
+        y, z = screw_inset, sign * 7
+        tip_x = block_rear - BLOCK_SCREW_LENGTH
+        frame_cuts.append(_cylinder_x(1.2, frame_bite, tip_x, y, z))
+        mount -= _cylinder_x(1.9, MOUNT_DEPTH, mount_x, y, z)
+        head_pose = Location((block_rear, y, z), (0, -90, 0))
         countersink = Cone(3.3, 1.9, 2, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(head_pose)
-        frame_cuts.append(countersink)
-        mount -= _cylinder_x(1.2, 24, mount_x, y, z)
-        shaft = _cylinder_x(1.75, 40, face, y, z)
+        mount -= countersink
+        shaft = _cylinder_x(1.75, BLOCK_SCREW_LENGTH, tip_x, y, z)
         head = Cone(3.2, 1.75, 2, align=(Align.CENTER, Align.CENTER, Align.MIN)).moved(head_pose)
         hardware.append(Part([*shaft.solids(), *head.solids()], label="Block screw · 6g × 40 nominal", color=METAL))
     plate.label, plate.color = "Catch base plate · nominal", METAL

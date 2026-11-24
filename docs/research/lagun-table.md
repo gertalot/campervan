@@ -19,6 +19,10 @@ leaf's top surface. The upper surface of the folded stack is one panel thickness
 and mount offset all update live without regeneration. Absolute rotation tracks keep intermediate fold poses
 above the fixed leaf even when a stored 180° pose uses a different Euler decomposition.
 
+The BOM uses [RV World NZ kit RV159](https://www.rvworldstore.co.nz/lagun-table-pedestal-natural-anodised).
+The 500mm natural anodised pedestal kit includes one mounting kit. The original purchase record listed NZ$399.
+The retailer listed NZ$440 and stock available on 25 November 2026.
+
 Gert selected [Homer HOM006136 folding-table hinges](https://fostersshipchandlery.co.nz/products/table-hinge-homer-pair)
 on 27 October 2026. The BOM includes two hinges, supplied as **one pair at $75.67**. Fosters specifies a
 dual-pin mechanism that supports the tabletop horizontally and folds over 180°. Its published dimensions

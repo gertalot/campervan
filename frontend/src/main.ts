@@ -118,7 +118,7 @@ for (const input of cabinetSideInputs) input.addEventListener('change', () => {
   if (input.checked) setCabinetSide(input.value);
 });
 setCabinetSide(localStorage.getItem('campervan.cabinet-side')
-  ?? (localStorage.getItem('campervan.mirror-layout') === 'true' ? 'right' : 'left'));
+  ?? (localStorage.getItem('campervan.mirror-layout') === 'false' ? 'left' : 'right'));
 localStorage.removeItem('campervan.mirror-layout');
 if (!isStaticSite) void planning.read();
 setupSidebarResize(element('sidebar-resizer'), element('sidebar'));
@@ -324,13 +324,13 @@ const controller = createController(api, {
   setStatus(model) {
     materials.onStatus(model);
     cutting.onStatus(model);
+    const previous = model.published_revision !== null && model.published_revision !== model.requested_revision;
     const labels = {
-      idle: 'Loading model…',
+      idle: previous ? 'Select Regenerate to update' : 'Loading model…',
       regenerating: 'Regenerating…',
       ready: 'Ready',
       failed: 'Model update failed',
     };
-    const previous = model.published_revision !== null && model.published_revision !== model.requested_revision;
     status.textContent = labels[model.state] + (previous ? ' · Previous model' : '');
     status.dataset.state = model.state;
   },

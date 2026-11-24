@@ -614,12 +614,12 @@ class Parameters(BaseModel):
         default=12.0,
         ge=0,
         title="Floor plywood",
-        description="Owner-confirmed 12mm existing plywood floor panels, above the pine rib frame.",
+        description="Thickness of the two lengthwise plywood panels above the pine rib frame.",
         json_schema_extra={"unit": "mm", "group": ["Finished floor plywood"]},
     )
 
     floor_surface_z_mm: float = Field(
-        default=10.0,
+        default=20.0,
         ge=0,
         title="Finished floor elevation",
         description="Finished floor above the registered van Z0 datum. Furniture heights and gear Z positions "
@@ -629,7 +629,7 @@ class Parameters(BaseModel):
     )
 
     floor_insulation_thickness_mm: float = Field(
-        default=10.0,
+        default=20.0,
         gt=0,
         title="Floor insulation thickness",
         description="EPS infill beneath the plywood, between the pine ribs.",
@@ -637,14 +637,14 @@ class Parameters(BaseModel):
     )
 
     floor_rib_width_mm: float = Field(
-        default=60.0,
+        default=45.0,
         gt=0,
         title="Pine rib width",
         json_schema_extra={"unit": "mm", "group": ["Finished floor plywood", "Pine rib frame"]},
     )
 
     floor_rib_thickness_mm: float = Field(
-        default=10.0,
+        default=20.0,
         gt=0,
         title="Pine rib thickness",
         json_schema_extra={"unit": "mm", "group": ["Finished floor plywood", "Pine rib frame"]},
@@ -1078,21 +1078,8 @@ class Parameters(BaseModel):
         description="Purchased 40mm face; shelf cleats stand with this dimension vertical.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
-    cabinet_bridge_height_mm: float = Field(
-        default=90.0,
-        gt=0,
-        title="Wheel-arch bridge depth",
-        description="90 × 18mm pine rail spans between end panels and carries the centre divider above the wheel arch.",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
-    )
-    cabinet_bridge_thickness_mm: float = Field(
-        default=18.0,
-        gt=0,
-        title="Wheel-arch bridge thickness",
-        json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
-    )
     cabinet_partition_thickness_mm: float = Field(
-        default=3.0,
+        default=4.0,
         gt=0,
         title="Fixed cabinet panel thickness",
         description="Thickness of the plywood end skins, wall-side backs and centre dividers.",
@@ -1136,7 +1123,7 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Box 7 flap",
-        description="Lower the flap above box 6 to horizontal.",
+        description="Raise the top-hinged flap above box 6 to horizontal with the Vintique folding stay.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_cab_end_upper_1_open_percent: float = Field(
@@ -1152,7 +1139,7 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Box 5 flap",
-        description="Lower the flap above box 4 to horizontal.",
+        description="Raise the flap above box 4 through horizontal and settle it on the Penn Elcom stay at 100%.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_lower_doors_open_percent: float = Field(
@@ -1160,7 +1147,7 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Cab-end bottom door",
-        description="Open the bottom front compartment independently of the door above the mattress.",
+        description="Lower the cab-end bottom door to horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Lower compartments"], "control": "position"},
     )
     cabinet_front_middle_door_open_percent: float = Field(

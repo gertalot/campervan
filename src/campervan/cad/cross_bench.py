@@ -4,7 +4,7 @@ from build123d import Axis, Color, Compound, Location, fillet
 
 from campervan.cad.cushions import build_cushions
 from campervan.cad.cross_bench_layout import cross_bench_layout
-from campervan.cad.panels import frame_panel, panel
+from campervan.cad.panels import countersunk_clearance, frame_panel, panel
 from campervan.cad.sliding_bed import long_bed_layout
 from campervan.parameters import Parameters
 
@@ -51,7 +51,13 @@ def build_cross_bench(p: Parameters) -> Compound:
             corner = [edge for edge in slat.edges().filter_by(Axis.Z)
                       if abs(edge.center().X - slat_length) < 1e-6 and abs(edge.center().Y) < 1e-6]
             slat = fillet(corner, p.slat_width_mm / 2)
-        slat.label, slat.color = f"Fixed slat {i + 1:02}", Color(0.87, 0.70, 0.43)
+        name = f"Fixed slat {i + 1:02}"
+        if i == 2:
+            name = "Removable slat 03"
+            for x in (wall_x, aisle_x):
+                slat -= countersunk_clearance(p.slat_thickness_mm).moved(
+                    Location((x + thickness / 2, p.slat_width_mm / 2, p.slat_thickness_mm)))
+        slat.label, slat.color = name, Color(0.87, 0.70, 0.43)
         slat.location = Location((wall_trim, rear + i * (p.slat_width_mm + gap), height))
         slats.append(slat)
     parts.append(Compound(label="Fixed slats", children=slats))

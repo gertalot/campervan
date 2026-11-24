@@ -193,7 +193,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       return;
     }
     const visible = mannequinPose.visible && bed === 0;
-    const floor = groups['/Campervan/Finished floor plywood/Rear panel'] as unknown as Object3D;
+    const floor = groups['/Campervan/Finished floor plywood'] as unknown as Object3D;
     if (!floor) return;
     const floorZ = new Box3().setFromObject(floor).max.z;
     const fitted = mannequin.seat({ ...mannequinPose, visible }, seatCushion.bounds(),

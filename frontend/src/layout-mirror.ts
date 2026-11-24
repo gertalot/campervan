@@ -1,6 +1,7 @@
 import { DoubleSide, Group, type Material, type Object3D } from 'three';
 import type { PieceViewer } from './viewer-pieces';
 
+// The fitted floor belongs to the vehicle. The aisle sheet contains the fuel pump hatch.
 const roots = ['Long bench', 'Cross bench', 'Cabinet', 'Laptop table', 'Stored gear'];
 
 function makeEdgeDoubleSided(material: Material) {

@@ -34,6 +34,40 @@
   "checked": "2026-11-22"
 },
   {
+    "id": "expol-thermaslab-20",
+    "name": "Expol S Grade ThermaSlab · 2400 × 1200 × 20mm",
+    "supplier": "Bunnings Lyall Bay",
+    "url": "https://www.bunnings.co.nz/expol-2400-x-1200-x-20mm-s-grade-polystyrene-thermaslab_p0717186",
+    "kind": "sheet",
+    "dimensions": {
+      "length": 2400,
+      "width": 1200,
+      "thickness": 20
+    },
+    "price_nzd": 16.33,
+    "sale_unit": "sheet",
+    "specification": "I/N 0717186. S grade EPS for the fixed floor bays and the pump hatch insert.",
+    "availability": "Listed online; Lyall Bay stock not checked.",
+    "checked": "2026-11-24"
+  },
+  {
+    "id": "red-stag-45-20-5400",
+    "name": "Red Stag H3.1 pine gauge batten · 45 × 20mm × 5.4m",
+    "supplier": "Bunnings Lyall Bay",
+    "url": "https://www.bunnings.co.nz/45-x-20-5-4m-h3-1-treated-pine-gauge-batten_p0605227",
+    "kind": "timber",
+    "dimensions": {
+      "length": 5400,
+      "width": 45,
+      "thickness": 20
+    },
+    "price_nzd": 17.98,
+    "sale_unit": "5.4m length",
+    "specification": "I/N 0605227. H3.1 treated radiata pine cavity batten, laid flat. Check the supplied profile and thickness before cutting.",
+    "availability": "Listed online; Lyall Bay stock not checked.",
+    "checked": "2026-11-24"
+  },
+  {
     "id": "pinnacle-m6-35-allen-ruspert-6",
     "name": "Pinnacle Black Ruspert Allen-drive round-head bolts and nuts · M6 × 35mm · 6 pack",
     "supplier": "Bunnings Lyall Bay",
@@ -220,7 +254,7 @@
     "price_nzd": 12.54,
     "sale_unit": "pack of 100",
     "pack_quantity": 100,
-    "specification": "Phillips countersunk longthread timber screws. Two per catch mounting block, through front rail into face grain.",
+    "specification": "Phillips countersunk longthread timber screws. Two per catch mounting block, driven from inside the cabinet into the frame.",
     "availability": "Listed online; local branch stock unconfirmed.",
     "checked": "2026-11-08"
   },
@@ -261,22 +295,20 @@
     "checked": "2026-11-07"
   },
   {
-    "id": "pinetrim-90-18-1800",
-    "name": "Pinetrim untreated pine · 90 × 18 × 1800mm",
-    "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinetrim-90-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132627",
-    "kind": "timber",
+    "id": "lagun-rv159",
+    "name": "Lagun table pedestal kit · 500mm",
+    "supplier": "RV World NZ",
+    "url": "https://www.rvworldstore.co.nz/lagun-table-pedestal-natural-anodised",
+    "kind": "hardware",
     "dimensions": {
-      "length": 1800,
-      "width": 90,
-      "thickness": 18
+      "leg_length": 500
     },
-    "price_nzd": 20.85,
-    "sale_unit": "1.8m length",
+    "price_nzd": 440.0,
+    "sale_unit": "kit",
     "pack_quantity": 1,
-    "specification": "Untreated kiln-dried radiata pine dressed four sides. Continuous on-edge wheel-arch bridge; fit its ends to the rear posts.",
-    "availability": "Listed online; local branch stock unconfirmed.",
-    "checked": "2026-11-07"
+    "specification": "RV159. Natural anodised swivel pedestal with one mounting kit.",
+    "availability": "Listed in stock online.",
+    "checked": "2026-11-25"
   },
   {
     "id": "pinetrim-40-18-1800",
@@ -481,12 +513,12 @@
       "length": 3000,
       "wire_diameter": 2
     },
-    "price_nzd": 7.91,
+    "price_nzd": 8.23,
     "sale_unit": "3m pack",
     "pack_quantity": 1,
-    "specification": "Zinc-plated double jack chain for hanging light fittings, pictures and signs. Published chain rating 16kg; this does not rate the plywood attachments or door as a shelf. Cut twelve short lengths for the six drop-down doors. Item 0581686.",
+    "specification": "Zinc-plated double jack chain for hanging light fittings, pictures and signs. Published chain rating 16kg; this does not rate the plywood attachments or door as a shelf. Cut one length per drop-down door. Item 0581686.",
     "availability": "Listed online; Lyall Bay stock and collection availability not confirmed.",
-    "checked": "2026-10-20"
+    "checked": "2026-11-25"
   },
   {
     "id": "tunnelcore-white-3",
@@ -681,5 +713,34 @@
     "specification": "I/N 0293150. Kiln-dried untreated clear radiata pine. Glued door hinge-edge backing;18mm square section.",
     "availability": "Lyall Bay: in stock, Click & Collect; aisle5 bay2, checked17 November2026.",
     "checked": "2026-11-17"
+  },
+  {
+    "id": "penn-elcom-p1240",
+    "name": "Penn Elcom P1240 locking lid stay",
+    "supplier": "Roadcases NZ",
+    "url": "https://roadcases.co.nz/products/penn-elcom-p1240-locking-lid-stay",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 200,
+      "width": 12
+    },
+    "price_nzd": 7.82,
+    "sale_unit": "listed unit",
+    "specification": "Steel, chrome finish, 4.2mm fixing holes. Penn Elcom lists pairs. Roadcases NZ does not specify its pack count.",
+    "checked": "2026-11-24"
+  },
+  {
+    "id": "vintique-left-104",
+    "name": "Vintique left-hand folding lid stay, 104mm arm",
+    "supplier": "Vintique Concepts NZ",
+    "url": "https://www.vintique.co.nz/products/lid-stay-silver-left-armt-only-104mm-arm",
+    "kind": "hardware",
+    "dimensions": {
+      "length": 206
+    },
+    "price_nzd": 3.5,
+    "sale_unit": "each",
+    "specification": "Left-hand, zinc-plated steel with screws. 104mm swivel to tip and 40mm mounting plate.",
+    "checked": "2026-11-24"
   }
 ]

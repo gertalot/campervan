@@ -45,21 +45,24 @@ ROLES = [
         name="Floor plywood",
         kind="sheet",
         fields={"thickness": "floor_ply_thickness_mm"},
-        note="Two existing 12mm panels: rear 830 × 1200mm, front 1200mm long × 1450mm maximum width. "
-        "2030mm overall. Door-wing steps and chamfers are photo estimates pending physical confirmation.",
+        default_product_id="tigerply-12",
+        note="Cut one full-length panel per sheet. Join the straight edges over the bench-side longitudinal rib. "
+        "Cut the pump hatch in the aisle panel. Cut the one-piece lid from a sheet offcut. "
+        "Check the hatch and rear pockets against the van before cutting.",
     ),
     MaterialRole(
         id="floor-ribs", name="Floor pine ribs", kind="timber",
         fields={"width": "floor_rib_width_mm", "thickness": "floor_rib_thickness_mm"},
-        default_product_id="hume-pinetrim-60-10-4800",
-        note="One shared 60 × 10mm frame: mitred perimeter, two longitudinal ribs, a supported panel seam and a three-part cross-batten at the door wings. "
-        "All joints stay in one 10mm layer; verify perimeter mitres against the actual plywood outline.",
+        default_product_id="red-stag-45-20-5400",
+        note="The bench-side longitudinal rib supports the plywood joint. Glue square-cut batten offcuts into "
+        "one block per rear door shoulder and rear pocket. Use one batten across each cab-side shoulder. "
+        "Flush-trim the outside edges to the plywood.",
     ),
     MaterialRole(
         id="floor-insulation", name="Floor EPS insulation", kind="sheet",
         fields={"thickness": "floor_insulation_thickness_mm"},
-        default_product_id="expol-thermaslab-10",
-        note="Nine infill pieces between the floor ribs, cut from one 2400 × 1200 × 10mm sheet. "
+        default_product_id="expol-thermaslab-20",
+        note="Nine fixed infill pieces and one removable insert. Attach the insert to the pump hatch lid. "
         "No grain direction; rotate pieces when cutting. Floor assumed flat and horizontal.",
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
@@ -76,6 +79,7 @@ ROLES = [
     MaterialRole(
         id="lagun",
         name="Lagun swivel table leg",
+        default_product_id="lagun-rv159",
         kind="hardware",
         fields={},
         quantity=1,
@@ -120,9 +124,9 @@ for role in ROLES:
         "table-plywood": "tigerply-18",
         "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "pinetrim-40-18-1800",
-        "cabinet-partitions": "birch-3-2440",
+        "cabinet-partitions": "tigerply-okoume-4",
         "shelves": "tigerply-okoume-6",
-    }.get(role.id)
+    }.get(role.id, role.default_product_id)
     if role.id == "shelves":
         role.note = "6mm pantry shelves bear on face-mounted timber cleats."
     elif role.id == "cabinet-frames":
@@ -130,9 +134,7 @@ for role in ROLES:
             "40 × 18mm untreated pine for the front frame, local shelf cleats, module joints and hardware backing."
         )
     elif role.id == "cabinet-partitions":
-        role.note = (
-            "3mm plywood for the fore and aft end skins, wall-side backs and centre dividers."
-        )
+        role.note = "4mm TigerPly Okoume for the end skins, wall-side backs and centre dividers."
 
 ROLES.extend(
     [
@@ -146,15 +148,6 @@ ROLES.extend(
             "Seven angles use one eight-pack at the current layout. Lid rebates are 3mm deep with 1mm steel clearance; "
             "only a narrow 3mm edge relief passes through the plywood for each vertical flange. "
             "CAD holes are illustrative; confirm supplied hole positions and screw lengths for 18mm timber before drilling.",
-        ),
-        MaterialRole(
-            id="cabinet-bridge",
-            name="Cabinet wheel-arch bridge",
-            kind="timber",
-            fields={"width": "cabinet_bridge_height_mm", "thickness": "cabinet_bridge_thickness_mm"},
-            default_product_id="pinetrim-90-18-1800",
-            note="One 90 × 18mm on-edge rail spans the wheel arch between end panels and carries the centre divider. "
-            "No middle posts.",
         ),
         MaterialRole(
             id="cabinet-door-bolts",
@@ -183,8 +176,8 @@ ROLES.extend(
             fields={},
             quantity=14,
             default_product_id="zenith-6g-40-100",
-            note="Two 6g × 40mm screws through the flap header or side-door upright into each 40 × 18mm catch mounting block. "
-            "Glue the broad mating faces, predrill and countersink. Catch base screws come with the catches.",
+            note="Glue each catch block to the frame. Drive two 6g × 40mm screws from the back of the 30mm block "
+            "into blind pilot holes in the frame. Countersink the block. Catch base screws come with the catches.",
         ),
         MaterialRole(
             id="cabinet-module-fasteners",
@@ -225,7 +218,7 @@ ROLES.extend(
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
             default_product_id="tigerply-okoume-6",
-            note="Seven 6mm inset doors share sheets with the shelves: one side-hinged door and six flaps. "
+            note="Five drop-down and two lift-up 6mm inset doors share sheets with the shelves. "
             "Piano hinges fix into pine-backed edges. The fixed fronts on boxes 3 and 8 use the same door stock.",
         ),
         MaterialRole(
@@ -238,7 +231,7 @@ ROLES.extend(
             note="One 610 × 27mm stainless piano-hinge length per door, trimmed to the backing strip. "
             "Mounting screws are included with the hinges, as shown in the product photo. "
             "Supplied screw size and count are not published. "
-            "Leaves hidden on the unrebated door/jamb edges. Leaf thickness, pin, gap, mortices and "
+            "Leaves hidden on the unrebated hinge edges. Leaf thickness, pin, gap, mortices and "
             "fixing holes are provisional until checked against the physical hinge.",
         ),
         MaterialRole(
@@ -256,12 +249,12 @@ ROLES.extend(
         ),
         MaterialRole(
             id="cabinet-hinge-backing",
-            name="Cabinet door hinge backing strips",
+            name="Cabinet hinge strips and stay pads",
             kind="timber",
             fields={},
             default_product_id="pinetrim-18-18-1200",
-            note="18 × 18mm untreated pine glued behind each 6mm door's hinge edge. "
-            "Ends stop 10mm short of perpendicular door edges to clear the remaining rebates. "
+            note="18 × 18mm pine for the seven hinge strips and the two door-side stay pads. "
+            "Hinge strips stop 10mm from each end, increased to 20mm at the folding stays. "
             "Glue and clamp the full mating face; allow full cure, then accurately pilot-drill the assembled edge.",
         ),
         MaterialRole(
@@ -278,19 +271,24 @@ ROLES.extend(
             ),
         ),
         MaterialRole(
+            id="cabinet-box5-stay", name="Box 5 folding stay", kind="hardware", fields={},
+            quantity=1, default_product_id="penn-elcom-p1240",
+            note="One trial stay. Confirm locking position and installed holding action with the actual flap.",
+        ),
+        MaterialRole(
+            id="cabinet-box7-stay", name="Box 7 left-hand folding stay", kind="hardware", fields={},
+            quantity=1, default_product_id="vintique-left-104",
+            note="One trial stay. Transfer the two bracket patterns from the physical stay.",
+        ),
+        MaterialRole(
             id="cabinet-chains",
             name="Drop-down door chain restraints",
             kind="hardware",
             fields={},
-            quantity=None,
+            quantity=1,
             default_product_id="pinnacle-double-jack-2",
-            note=(
-                "Allow two short restraints per drop-down door, twelve in total. "
-                "Allow roughly 240–300mm each at default door sizes; cut to the actual anchor positions "
-                "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
-                "to plywood frame members. Chains, anchors and fixings are not modelled. "
-                "Confirm link openings, anchor details and closing clearance before buying fixings."
-            ),
+            note="One 3m pack supplies five chains, one per bottom-hinged door. "
+                 "Fit the last link with the flap horizontal. Check the link pitch and anchor fit on the hardware.",
         ),
         MaterialRole(
             id="bed-lid-hinges",
@@ -400,7 +398,7 @@ def active_cuts(cuts: list[CutPart], parameters: Parameters) -> list[CutPart]:
 
 def default_selections() -> dict[str, Selection]:
     return {role.id: Selection(product_id=role.default_product_id) for role in ROLES if role.default_product_id} | {
-        "slats": Selection(owned=True), "floor": Selection(owned=True)
+        "slats": Selection(owned=True)
     }
 
 
@@ -441,6 +439,8 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     if path.exists():
         saved = json.loads(path.read_text())
         parameters = saved.get("parameters", {})
+        for retired in ("cabinet_bridge_height_mm", "cabinet_bridge_thickness_mm"):
+            parameters.pop(retired, None)
         # Previously one saved position controlled both benches.
         project = Project.model_validate(saved | {"parameters": parameters})
     else:
@@ -472,8 +472,6 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
         or (old_frame and old_frame.startswith("tigerply"))
     ):
         project.materials["cabinet-frames"] = Selection(product_id="pinetrim-40-18-1800")
-        if "cabinet-partitions" not in project.materials:
-            project.materials["cabinet-partitions"] = Selection(product_id="birch-3-2440")
         project.materials["cabinet-doors"] = Selection(product_id="tigerply-okoume-6")
         project.materials["shelves"] = Selection(product_id="tigerply-okoume-6")
         project.parameters = project.parameters.model_copy(
@@ -483,7 +481,7 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
                 "cabinet_ceiling_gap_mm": 5.0,
             }
         )
-    for retired in ("ledges", "cabinet-module-timber", "cabinet-back", "cabinet-pillar"):
+    for retired in ("ledges", "cabinet-module-timber", "cabinet-back", "cabinet-pillar", "cabinet-bridge"):
         project.materials.pop(retired, None)
     for role, selection in project.materials.items():
         if selection.product_id == "bbi-redline-6-1200-1195":

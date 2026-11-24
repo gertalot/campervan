@@ -1,116 +1,194 @@
-"""The owner's plywood panels, flat pine frame and insulation infill."""
+"""Lengthwise plywood flooring on a flat pine frame with routed perimeter blocks."""
 
-from math import atan2, degrees, hypot
+from math import ceil
 
-from build123d import Color, Compound, Face, Location, Part, Solid, Wire
+from build123d import Align, Color, Compound, Cylinder, Face, Location, Part, Solid, Wire
 
-from campervan.cad.panels import panel
+from campervan.cad.mirror import mirror_assembly
+from campervan.cad.panels import countersunk_clearance, panel
 from campervan.parameters import Parameters
 
 FLOOR_BASE_WIDTH_MM = 1200.0
+FLOOR_REAR_Y_MM = -15.0
+ROUTED_BLOCKS = "Routed perimeter blocks"
+PINE = Color(0.84, 0.64, 0.39)
+PLY = Color(0.76, 0.70, 0.55, 0.32)
+EPS = Color(0.94, 0.94, 0.90)
+# Centre of the factory pump cover in the registered scan. Floor construction Y starts at the rear sheet edge.
+HATCH_X, HATCH_Y = 1075.0, 1720.0 - FLOOR_REAR_Y_MM
+HATCH_CLEAR = 300.0
+HATCH_GAP = 1.0  # Each edge of the removable plywood and EPS.
+HATCH_FOAM = "Lift-out EPS"
 
 
-def rib_frame(outline: list[tuple[float, float]], centre: float, seam: float,
-              length: float, p: Parameters) -> Compound:
+def routed_block(label: str, profile: list[tuple[float, float]], p: Parameters) -> Compound:
+    """A flush-trimmed glue-up in blank coordinates: X along the grain, Y across the strips."""
+    length = max(x for x, _ in profile)
+    width, depth = p.floor_rib_width_mm, p.floor_rib_thickness_mm
+    finished = Solid.extrude(Face(Wire.make_polygon([(x, y, 0) for x, y in profile])), (0, 0, depth))
+    strips = []
+    for i in range(ceil(max(y for _, y in profile) / width)):
+        stock = panel(length, width, depth).moved(Location((0, i * width, 0)))
+        strips.append(Part((finished & stock).solids(), label=f"Strip {i + 1}", color=PINE))
+    return Compound(label=label, children=strips)
+
+
+def rib_frame(outline: list[tuple[float, float]], centre: float, seam_x: float, cross_batten_y: float, length: float,
+              rear_pocket: list[tuple[float, float]], door_side: list[tuple[float, float]],
+              p: Parameters) -> Compound:
     width, depth = p.floor_rib_width_mm, p.floor_rib_thickness_mm
     bottom = -p.floor_ply_thickness_mm - depth
-    colour = Color(0.84, 0.64, 0.39)
+    half_core = FLOOR_BASE_WIDTH_MM / 2
+    rear_shoulder = door_side[:4]
+    wing, wing_start = rear_shoulder[-1]
+    (_, taper_start), (cab_side, taper_end) = door_side[4:6]
+    door_start = rear_shoulder[0][1]
     members = []
 
-    def inward(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
-        dx, dy = b[0] - a[0], b[1] - a[1]
-        distance = hypot(dx, dy)
-        return -dy / distance, dx / distance
-
-    # Intersections of adjacent inward-offset edges give exact mitred joints.
-    joints = []
-    for index, point in enumerate(outline):
-        before = inward(outline[index - 1], point)
-        after = inward(point, outline[(index + 1) % len(outline)])
-        scale = width / (1 + before[0] * after[0] + before[1] * after[1])
-        joints.append((point[0] + scale * (before[0] + after[0]),
-                       point[1] + scale * (before[1] + after[1])))
-    for index, a in enumerate(outline):
-        following = (index + 1) % len(outline)
-        b = outline[following]
-        dx, dy = b[0] - a[0], b[1] - a[1]
-        distance = hypot(dx, dy)
-        ux, uy = dx / distance, dy / distance
-        corners = (a, b, joints[following], joints[index])
-        local = [((x - a[0]) * ux + (y - a[1]) * uy,
-                  -(x - a[0]) * uy + (y - a[1]) * ux, 0) for x, y in corners]
-        member = Part(Solid.extrude(Face(Wire.make_polygon(local)), (0, 0, depth)).solids(),
-                      label=f"Perimeter rib {index + 1:02}", color=colour)
-        member.location = Location((centre + a[0], a[1], bottom), (0, 0, degrees(atan2(dy, dx))))
+    def rib(name: str, x: float, y: float, span: float, *, along_y: bool = False) -> None:
+        member = panel(span, width, depth)
+        member.label, member.color = name, PINE
+        member.location = Location((x, y, bottom), (0, 0, 90 if along_y else 0))
         members.append(member)
 
-    half_core = FLOOR_BASE_WIDTH_MM / 2
-    if 4 * width >= 2 * half_core or 2 * width >= min(seam, length - seam):
-        raise ValueError("Floor ribs must leave three clear spans and room beside the panel seam.")
-    left = centre - half_core
-    pitch = (2 * half_core - width) / 3
-    centres = [left + width / 2 + pitch * index for index in (1, 2)]
-    for index, x in enumerate(centres, 1):
-        member = panel(length - 2 * width, width, depth)
-        member.label, member.color = f"Longitudinal rib {index}", colour
-        member.location = Location((x + width / 2, width, bottom), (0, 0, 90))
-        members.append(member)
+    # The end rails span the full floor width. Each side rail butts against an end rail and a door shoulder.
+    for index, (x0, y0) in enumerate(outline):
+        x1, y1 = outline[(index + 1) % len(outline)]
+        start, end = sorted((y0, y1))
+        if door_start <= start and end <= taper_end:
+            continue
+        label = f"Perimeter rib {index + 1:02}"
+        if y0 == y1:
+            rib(label, centre + min(x0, x1), min(y0, length - width), abs(x1 - x0))
+        else:
+            start, end = max(start, width), min(end, length - width)
+            right_edge = centre + x0 + (width if x0 < 0 else 0)
+            rib(label, right_edge, start, end - start, along_y=True)
+
+    pocket_end = rear_pocket[-1][1]
+    pocket = routed_block("Right rear pocket", [(pocket_end - y, extra) for extra, y in rear_pocket], p)
+    pocket.location = Location((half_core, pocket_end, 0), (0, 0, -90))
+    inner = half_core - width
+    # Carry the long wing rail into the taper. A stock-width crosspiece then closes the return.
+    # For narrower stock, retain at least half the rail width at the butt joint.
+    taper_run = taper_end - taper_start
+    slope = (wing - cab_side) / taper_run
+    extension = min(max(0, taper_run - width), width / (2 * slope))
+    joint_y = taper_start + extension
+    trim = extension * slope
+    wing_length = joint_y - wing_start
+    rail_profile = [(0, 0), (wing_length, 0), (wing_length, width)]
+    if extension:
+        rail_profile.append((extension, width))
+    rail_profile.append((0, width - trim))
+    wing_rail = routed_block("Right door-wing rail", rail_profile, p)
+    wing_rail.location = Location((wing - width, joint_y, 0), (0, 0, -90))
+
+    right_blocks = [pocket, wing_rail]
+    cab_shoulder = [(wing - trim, joint_y), (cab_side, taper_end)]
+    for name, shoulder in (("Right door shoulder", rear_shoulder), ("Right cab-side door shoulder", cab_shoulder)):
+        start, end = shoulder[0][1], shoulder[-1][1]
+        profile = [(x - inner, y - start) for x, y in shoulder]
+        step = routed_block(name, [(0, 0), *profile, (0, end - start)], p)
+        step.location = Location((inner, start, 0))
+        right_blocks.append(step)
+    blocks = []
+    for right in right_blocks:
+        left = mirror_assembly(right)
+        left.label = right.label.replace("Right", "Left")
+        blocks.extend((left, right))
+    members.append(Compound(label=ROUTED_BLOCKS, children=blocks).moved(Location((centre, 0, bottom))))
+    if 4 * width >= 2 * half_core or 2 * width >= min(cross_batten_y, length - cross_batten_y):
+        raise ValueError("Floor ribs must leave room for the cross-battens.")
+
+    half = HATCH_CLEAR / 2
+    rear, front = HATCH_Y - half, HATCH_Y + half
+    left, right = HATCH_X - half, HATCH_X + half
+    if not (seam_x + width / 2 < left - width
+            and right + width <= centre + half_core - width and front + width < length - width):
+        raise ValueError("The pump hatch frame must clear the seam rib and perimeter ribs.")
+    rib("Longitudinal rib 1", seam_x + width / 2, width, length - 2 * width, along_y=True)
+    rib("Longitudinal rib 2", left, width, length - 2 * width, along_y=True)
+    rib("Pump hatch wall rail", right + width, rear, HATCH_CLEAR, along_y=True)
+    rib("Pump hatch cab rail", left, front, HATCH_CLEAR + width)
     half_wide = max(x for x, _ in outline)
-    wing_ends = [y for x, y in outline if abs(x) == half_wide]
-    wing_middle = (min(wing_ends) + max(wing_ends)) / 2
-    for name, y, half in (("Panel seam batten", seam, half_core),
-                          ("Door-wing cross-batten", wing_middle, half_wide)):
-        intervals = [(centre - half + width, centres[0] - width / 2),
-                     (centres[0] + width / 2, centres[1] - width / 2),
-                     (centres[1] + width / 2, centre + half - width)]
+    for name, y, half_span in (("Panel seam batten", cross_batten_y - width / 2, half_core),
+                               ("Door-wing cross-batten", rear - width, half_wide)):
+        intervals = [(centre - half_span + width, seam_x - width / 2),
+                     (seam_x + width / 2, left - width),
+                     (left, centre + half_span - width)]
         for index, (start, end) in enumerate(intervals, 1):
-            member = panel(end - start, width, depth)
-            member.label, member.color = f"{name} {index}", colour
-            member.location = Location((start, y - width / 2, bottom))
-            members.append(member)
+            rib(f"{name} {index}", start, y, end - start)
     return Compound(label="Pine rib frame", children=members)
 
 
 def build_floor_plywood(p: Parameters) -> Compound:
-    """Owner's two existing panels; stepped door-wing contours are provisional photo estimates."""
+    """Two full-length sheets share the centreline of the rib under both benches."""
     centre = p.cargo_width_mm / 2
-    rear_length, front_length = 830.0, 1200.0
+    cross_batten_y, length = 830.0, 2030.0
     half_width, wing = FLOOR_BASE_WIDTH_MM / 2, 725.0
-    rear_outline = [(-half_width, 0), (half_width, 0),
-                    (half_width, rear_length), (-half_width, rear_length)]
-    # Front piece is reversed end-for-end from the photograph: two rear steps, one front chamfer.
-    # Keep its narrow base beyond the wheel arches; full-width door wings span world Y1165–1835 after placement.
-    front_outline = [
-        (-half_width, 0), (half_width, 0),
-        (half_width, 220), (650, 250), (650, 300), (wing, 350),
-        (wing, 1020), (half_width, 1070), (half_width, front_length),
-        (-half_width, front_length), (-half_width, 1070), (-wing, 1020),
-        (-wing, 350), (-650, 300), (-650, 250), (-half_width, 220),
+    # Half-width and distance from the plywood rear edge. The door wings retain the physical floor outline.
+    door_side = [
+        (half_width, 1050), (650, 1080), (650, 1130), (wing, 1180),
+        (wing, 1850), (half_width, 1900), (half_width, length),
     ]
+    # Extra width beyond the original straight edge, fitted to both rear pillars and arches
+    # across the plywood thickness (registered Z8–20).
+    rear_pocket = [(0, 0), (10, 15), (16, 58), (105, 150), (105, 279), (25, 295), (15, 305), (0, 330)]
+    ply_side = [(half_width + extra, y) for extra, y in rear_pocket] + door_side
+    # Gert's cabinet is on the right. The left rib runs beneath both benches.
+    seam_x = centre - (FLOOR_BASE_WIDTH_MM - p.floor_rib_width_mm) / 6
+    cut = HATCH_CLEAR + p.floor_rib_width_mm
+    ply = p.floor_ply_thickness_mm
+    cut_origin = (HATCH_X - cut / 2, HATCH_Y - cut / 2, -ply)
+    cutout = panel(cut, cut, ply).moved(Location(cut_origin))
     panels = []
-    for name, outline, y in (("Rear panel", rear_outline, 0), ("Front panel", front_outline, rear_length)):
-        wire = Wire.make_polygon([(centre + x, y + along, 0) for x, along in outline])
-        part = Solid.extrude(Face(wire), (0, 0, -p.floor_ply_thickness_mm))
-        part.label, part.color = name, Color(0.76, 0.70, 0.55, 0.32)
+    for name, sign in (("Bench-side panel", -1), ("Aisle panel", 1)):
+        wire = Wire.make_polygon([(seam_x, 0, 0), *((centre + sign * x, y, 0) for x, y in ply_side),
+                                  (seam_x, length, 0)])
+        part = Solid.extrude(Face(wire), (0, 0, -ply))
+        if sign == 1:
+            part = (part - cutout).solid()
+        part.label, part.color = name, PLY
         panels.append(part)
-    outer = rear_outline[:2] + [(x, rear_length + y) for x, y in front_outline[2:]]
-    frame = rib_frame(outer, centre, rear_length, rear_length + front_length, p)
+    outer = [(-half_width, 0), (half_width, 0), *door_side, *((-x, y) for x, y in reversed(door_side))]
+    frame = rib_frame(outer, centre, seam_x, cross_batten_y, length, rear_pocket, door_side, p)
     if p.floor_insulation_thickness_mm > p.floor_rib_thickness_mm:
         raise ValueError("Floor insulation must fit within the pine rib depth.")
+    full_outline = [*ply_side, *((-x, y) for x, y in reversed(ply_side))]
     envelope = Solid.extrude(
-        Face(Wire.make_polygon([(centre + x, y, -p.floor_ply_thickness_mm) for x, y in outer])),
+        Face(Wire.make_polygon([(centre + x, y, -p.floor_ply_thickness_mm) for x, y in full_outline])),
         (0, 0, -p.floor_insulation_thickness_mm),
     )
-    cavities = sorted((envelope - frame).solids(),
+    # Reserve the entire service aperture before deriving the fixed EPS pieces.
+    depth = p.floor_insulation_thickness_mm
+    hole = panel(HATCH_CLEAR, HATCH_CLEAR, depth).moved(
+        Location((HATCH_X - HATCH_CLEAR / 2, HATCH_Y - HATCH_CLEAR / 2, -ply - depth)))
+    cavities = sorted((envelope - frame - hole).solids(),
                       key=lambda solid: (round(solid.bounding_box().center().Y), solid.bounding_box().min.X))
     if len(cavities) != 9:
-        raise ValueError("The floor frame must leave nine insulation bays.")
+        raise ValueError("The floor frame must leave nine fixed insulation bays around the pump hatch.")
     infill = []
     for index, solid in enumerate(cavities):
         row = ("Rear", "Middle", "Front")[index // 3]
         column = ("left", "centre", "right")[index % 3]
-        infill.append(Part([solid], label=f"{row} {column} infill", color=Color(0.94, 0.94, 0.90)))
+        infill.append(Part([solid], label=f"{row} {column} infill", color=EPS))
     insulation = Compound(label="Floor insulation", children=infill)
-    return Compound(label="Finished floor plywood", children=[*panels, frame, insulation]).moved(
-        Location((0, -15, p.floor_surface_z_mm)))
+    lid_side = cut - 2 * HATCH_GAP
+    foam_side = HATCH_CLEAR - 2 * HATCH_GAP
+    lid = panel(lid_side, lid_side, ply).moved(Location((-lid_side / 2, -lid_side / 2, -ply)))
+    foam = panel(foam_side, foam_side, depth).moved(Location((-foam_side / 2, -foam_side / 2, -ply - depth)))
+    screw_offset = HATCH_CLEAR / 2 + p.floor_rib_width_mm / 4
+    for x in (-screw_offset, screw_offset):
+        lid -= countersunk_clearance(ply).moved(Location((x, 0, 0)))
+    # Leave space behind the finger hole so fingers can hook the underside of the plywood.
+    grip_x = -foam_side / 2 + 24
+    grip = Cylinder(12.5, ply, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    lid -= grip.moved(Location((grip_x, 0, 0)))
+    foam -= panel(48, 50, depth).moved(Location((-foam_side / 2, -25, -ply - depth)))
+    lid.label, lid.color = "Lift-out plywood lid", PLY
+    foam.label, foam.color = HATCH_FOAM, EPS
+    hatch = Compound(label="Fuel pump hatch", children=[lid, foam]).moved(Location((HATCH_X, HATCH_Y, 0)))
+    return Compound(label="Finished floor plywood", children=[*panels, frame, insulation, hatch]).moved(
+        Location((0, FLOOR_REAR_Y_MM, p.floor_surface_z_mm)))
 
