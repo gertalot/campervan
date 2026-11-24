@@ -10,6 +10,8 @@ def module_fasteners(p: Parameters, split: float, centres: list[tuple[float, flo
     bottom, top = split - depth, split + depth
     length = 90.0
     washer_thickness, nut_height = 1.6, 5.0
+    if p.cabinet_frame_thickness_mm < 16:
+        raise ValueError("The cabinet cross rails must support the full 16mm module bolt washers.")
     if 2 * depth + 2 * washer_thickness + nut_height >= length:
         raise ValueError("Cabinet module rails leave insufficient thread for the M6 × 90mm bolt and nut.")
     bores: list[Part] = []

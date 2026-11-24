@@ -11,6 +11,8 @@ from campervan.cad.sliding_bed import long_bed_layout
 from campervan.parameters import Parameters
 from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
+# The frame was laid out with a 6mm end-skin allowance, independently of the lining stock.
+CABINET_END_ALLOWANCE_MM = 6.0
 
 def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
     """One bend across the sheet height, bridging recesses and clearing projecting side posts.
@@ -76,8 +78,9 @@ def cabinet_layout(p: Parameters) -> CabinetLayout:
     first = p.platform_height_mm + p.foam_thickness_mm + p.cabinet_mattress_clearance_mm
     split = p.cabinet_rear_storage_height_mm + w
     upper = (split + top + w) / 2
-    middle = p.cabinet_rear_bay_length_mm + skin / 2
-    bays = ((w, middle - w / 2), (middle + w / 2, p.cabinet_length_mm - w))
+    middle = p.cabinet_rear_bay_length_mm + CABINET_END_ALLOWANCE_MM / 2 + skin
+    cab_face = p.cabinet_length_mm - CABINET_END_ALLOWANCE_MM + skin
+    bays = ((w, middle - w / 2), (middle + w / 2, cab_face - w))
     if min(end - start for start, end in bays) < 120 or not w < first < split - 2 * w < upper < top - w:
         raise ValueError("Cabinet bays and shelves must leave usable inset-door openings.")
     if FURNITURE_FIT_ENABLED and first - w < p.arch_height_mm + 3 - p.floor_surface_z_mm:

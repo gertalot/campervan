@@ -35,11 +35,9 @@ def material_for(path: tuple[str, ...]) -> str:
     if "Module fasteners" in path:
         return "cabinet-module-fasteners"
     if "Cabinet" in path:
-        if name == "cabinet 3 fixed cover":
-            return "cabinet-partitions"
         if "Shelf ledges" in path:
             return "cabinet-shelf-ledges"
-        if "Backing glue cleats" in path:
+        if "Backing glue cleats" in path or "Divider stops" in path:
             return "cabinet-backing-cleats"
         if name == "pine hinge backing strip":
             return "cabinet-hinge-backing"
@@ -51,7 +49,7 @@ def material_for(path: tuple[str, ...]) -> str:
             return "cabinet-frames"
         if "Skin" in path:
             return "cabinet-partitions"
-        if name == "plywood door":
+        if name in {"plywood door", "cabinet 3 fixed cover", "box 8 fixed front"}:
             return "cabinet-doors"
     if "Shelf ledges" in path or "Corner cleats" in path or "Rail joint blocks" in path:
         return "ledges"
@@ -73,8 +71,6 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
         path = (*path, part.label)
         if any(group in path for group in ("Vehicle references", "Cushions", "Stored gear", "Lagun hardware")):
             return
-        if part.label == "Rear pillar panel (preview)":
-            return  # Pillar panel fit study, pending a construction decision.
         if "Lid hinges" in path:
             return  # Whole purchased items use explicit role quantities, not component envelopes.
         if "Laptop table" in path and "Stowed" in path:
@@ -158,14 +154,20 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
                 "door hinge edges remain unrebated. Shelf panels fit flush on separate face-mounted ledgers. "
                 "Joint drilling and vehicle attachments remain to detail."
             ).strip()
-        elif "Upper module" in path and part.label.endswith((" step cross rail", " shallow wall rail")):
-            profile["profile_note"] += f" Rip stock to {size.Z:g}mm high for the flush shelf seat."
-        elif part.label == "Box 6 step deep wall post":
-            profile["profile_note"] += " Fit one full-length bevel to the cupboard face of the pillar panel."
-        elif material == "cabinet-backing-cleats":
+            if part.label == "Middle aisle post":
+                profile["profile_note"] += (
+                    " At the bottom door, carry the 10mm hinge-side rebate through the post thickness"
+                    " between the sill and head rails to seat the piano hinge."
+                )
+        elif "Upper module" in path and "aisle" in part.label and (
+            part.label.endswith(" post") or part.label.endswith("upper shelf aisle rail")
+        ):
+            edges = "both opening edges" if part.label == "Box 6 middle aisle post" else "the opening edge"
+            profile["profile_note"] += f" Rebate {edges} 10mm wide and {parameters.cabinet_door_thickness_mm:g}mm deep."
+        elif "Backing glue cleats" in path and "Lower module" in path:
             profile["profile_note"] = (
-                f"{profile.get('profile_note', '')} Backing glue cleats have bevelled ends at horizontal "
-                "shelf/rail joints. Stock lengths include the long points; transfer bevels from CAD before assembly."
+                f"{profile.get('profile_note', '')} Square-cut backing cleat. Glue to the shallow post "
+                "with its glue face flush with the inside face of the wall rail."
             ).strip()
         if material in {"floor-ribs", "floor-insulation"}:
             profile["profile_note"] = (

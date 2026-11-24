@@ -100,7 +100,7 @@ ROLES = [
     ),
     MaterialRole(
         id="cabinet-partitions",
-        name="Cabinet supporting plywood panels",
+        name="Cabinet end skins, backs and dividers",
         kind="sheet",
         fields={"thickness": "cabinet_partition_thickness_mm"},
     ),
@@ -120,7 +120,7 @@ for role in ROLES:
         "table-plywood": "tigerply-18",
         "table-hinges": "homer-table-hinge-pair",
         "cabinet-frames": "pinetrim-40-18-1800",
-        "cabinet-partitions": "tigerply-okoume-6",
+        "cabinet-partitions": "birch-3-2440",
         "shelves": "tigerply-okoume-6",
     }.get(role.id)
     if role.id == "shelves":
@@ -131,7 +131,7 @@ for role in ROLES:
         )
     elif role.id == "cabinet-partitions":
         role.note = (
-            "6mm supporting end panels and centre divider: scribe side and ceiling edges. Van side closes the back."
+            "3mm plywood for the fore and aft end skins, wall-side backs and centre dividers."
         )
 
 ROLES.extend(
@@ -161,9 +161,9 @@ ROLES.extend(
             name="Cabinet catch-keeper through-bolts",
             kind="hardware",
             fields={},
-            quantity=6,
+            quantity=14,
             default_product_id="zenith-m3-12-ss316-8",
-            note="M3 × 12 round-head bolt and nut sets: two per keeper, six for the three front doors. "
+            note="Two M3 × 12 round-head bolt and nut sets per keeper. "
             "Washers separate. Confirm head/hole fit on physical hardware.",
         ),
         MaterialRole(
@@ -171,9 +171,9 @@ ROLES.extend(
             name="Cabinet hardware backing washers",
             kind="hardware",
             fields={},
-            quantity=6,
+            quantity=14,
             default_product_id="zenith-m3-flat-washer-ss316-35",
-            note="M3 flat backing washers, nominal 8mm outside diameter: six catch keeper fixings. "
+            note="One M3 flat backing washer per keeper bolt, nominal 8mm outside diameter. "
             "Confirm bearing faces and fit on the physical hardware.",
         ),
         MaterialRole(
@@ -181,9 +181,9 @@ ROLES.extend(
             name="Cabinet catch-block assembly screws",
             kind="hardware",
             fields={},
-            quantity=6,
+            quantity=14,
             default_product_id="zenith-6g-40-100",
-            note="Two 6g × 40mm screws through the free-side upright into each 40 × 18mm catch mounting block. "
+            note="Two 6g × 40mm screws through the flap header or side-door upright into each 40 × 18mm catch mounting block. "
             "Glue the broad mating faces, predrill and countersink. Catch base screws come with the catches.",
         ),
         MaterialRole(
@@ -192,7 +192,7 @@ ROLES.extend(
             kind="hardware",
             fields={},
             default_product_id="zenith-m6-90-hex-zinc",
-            note="Eight ordinary zinc-plated M6 × 90mm hex bolt-and-nut sets. Nuts included; "
+            note="Two zinc-plated M6 × 90mm hex bolt-and-nut sets per transverse rail pair. Nuts included; "
             "two M6 washers per bolt purchased separately. 6.5mm straight clearance holes, no countersinks. "
             "80mm timber stack; confirm actual washer thickness and full nut engagement before assembly.",
         ),
@@ -201,7 +201,7 @@ ROLES.extend(
             name="Cabinet module washers",
             kind="hardware",
             fields={},
-            quantity=16,
+            quantity=12,
             default_product_id="zenith-m6-16-flat-washer-zinc",
             note="Two M6 × 16mm zinc-plated flat washers per module joint, under the hex head and supplied nut.",
         ),
@@ -216,8 +216,7 @@ ROLES.extend(
                 "One 250ml bottle as an initial cabinet allowance. Glue front-frame joints and "
                 "fixed cleat-to-panel mating faces. Keep the module interface unglued. Close-fitting bare wood only; "
                 "clamp during curing and leave unstressed for 24 hours. Furniture adhesive, not vehicle anchorage. "
-                "Bond the fixed centre divider and end panels to their local timber. "
-                "The van side closes the open wall-facing back."
+                "Bond the fixed centre dividers and wall-side backs to their local timber."
             ),
         ),
         MaterialRole(
@@ -226,15 +225,15 @@ ROLES.extend(
             kind="sheet",
             fields={"thickness": "cabinet_door_thickness_mm"},
             default_product_id="tigerply-okoume-6",
-            note="Three 6mm inset front doors sharing sheets with the shelves: one side-hinged door and two flaps. "
-            "Piano hinges fix into pine-backed edges. Cabinet 3 has a fixed cover using the supporting-panel role.",
+            note="Seven 6mm inset doors share sheets with the shelves: one side-hinged door and six flaps. "
+            "Piano hinges fix into pine-backed edges. The fixed fronts on boxes 3 and 8 use the same door stock.",
         ),
         MaterialRole(
             id="cabinet-hinges",
             name="Cabinet door hinges",
             kind="hardware",
             fields={},
-            quantity=3,
+            quantity=7,
             default_product_id="taskmaster-piano-610-27-ss",
             note="One 610 × 27mm stainless piano-hinge length per door, trimmed to the backing strip. "
             "Mounting screws are included with the hinges, as shown in the product photo. "
@@ -252,8 +251,8 @@ ROLES.extend(
         MaterialRole(
             id="cabinet-backing-cleats", name="Cabinet backing glue cleats", kind="timber", fields={},
             default_product_id="pinetrim-18-18-1200",
-            note="18 × 18mm pine inside the leaning backs at their skin joints. "
-            "Glue to both plywood faces within each module; keep detachable joints unglued.",
+            note="18 × 18mm pine for backing joints and the upper centre divider stops. "
+            "Cut the divider stops square and glue them to the middle rails and divider within the upper module.",
         ),
         MaterialRole(
             id="cabinet-hinge-backing",
@@ -272,7 +271,7 @@ ROLES.extend(
             fields={},
             default_product_id="taskmaster-roller-4",
             note=(
-                "One double roller catch with keeper per front door; three sets need one four-pack. "
+                "One double roller catch with keeper per door; seven sets need two four-packs. "
                 "30mm finger holes have eased rims. CAD catch envelopes are estimates: align the physical "
                 "keepers and rollers before drilling. Check supplied screw lengths against thin plywood; "
                 "use short screws or through-fixings. Roller catches have no verified vehicle holding rating. "
@@ -286,7 +285,7 @@ ROLES.extend(
             quantity=None,
             default_product_id="pinnacle-double-jack-2",
             note=(
-                "Two 3m packs for twelve short restraints: two per drop-down door. "
+                "Allow two short restraints per drop-down door, twelve in total. "
                 "Allow roughly 240–300mm each at default door sizes; cut to the actual anchor positions "
                 "so each door stops horizontally. Through-fix the door anchors and fasten cabinet anchors "
                 "to plywood frame members. Chains, anchors and fixings are not modelled. "
@@ -474,7 +473,7 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     ):
         project.materials["cabinet-frames"] = Selection(product_id="pinetrim-40-18-1800")
         if "cabinet-partitions" not in project.materials:
-            project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-6")
+            project.materials["cabinet-partitions"] = Selection(product_id="birch-3-2440")
         project.materials["cabinet-doors"] = Selection(product_id="tigerply-okoume-6")
         project.materials["shelves"] = Selection(product_id="tigerply-okoume-6")
         project.parameters = project.parameters.model_copy(
@@ -491,8 +490,6 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
             project.materials[role] = selection.model_copy(
                 update={"product_id": "tigerply-okoume-6", "purchase_quantity": None}
             )
-    if project.materials.get("cabinet-partitions", Selection()).product_id == "birch-3-2440":
-        project.materials["cabinet-partitions"] = Selection(product_id="tigerply-okoume-6")
     if project.materials.get("table-plywood", Selection()).product_id == "specrite-pine-18-1200-600":
         project.materials["table-plywood"] = project.materials.get(
             "frames", Selection(product_id="tigerply-18")

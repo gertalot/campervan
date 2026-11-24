@@ -1092,10 +1092,10 @@ class Parameters(BaseModel):
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Frames"]},
     )
     cabinet_partition_thickness_mm: float = Field(
-        default=6.0,
+        default=3.0,
         gt=0,
         title="Fixed cabinet panel thickness",
-        description="Supporting plywood end panels and centre divider, with local timber cleats and backing.",
+        description="Thickness of the plywood end skins, wall-side backs and centre dividers.",
         json_schema_extra={"unit": "mm", "group": ["Cabinet", "Skin"]},
     )
     cabinet_door_thickness_mm: float = Field(
@@ -1127,32 +1127,32 @@ class Parameters(BaseModel):
         default=0.0,
         ge=0,
         le=100,
-        title="Rear bay lower flap",
-        description="Lower the first rear upper-shelf flap to horizontal, held by paired chains.",
+        title="Box 6 flap",
+        description="Lower the rear upper-cabinet door to horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_rear_upper_2_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Rear bay top flap",
-        description="Lower the top rear-shelf flap to horizontal, held by paired chains.",
+        title="Box 7 flap",
+        description="Lower the flap above box 6 to horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_cab_end_upper_1_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Cab-end bay lower flap",
-        description="Lower the first cab-end upper-shelf flap to horizontal, held by paired chains.",
+        title="Box 4 flap",
+        description="Lower the cab-end upper-cabinet door to horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_cab_end_upper_2_open_percent: float = Field(
         default=0.0,
         ge=0,
         le=100,
-        title="Cab-end bay top flap",
-        description="Lower the top cab-end-shelf flap to horizontal, held by paired chains.",
+        title="Box 5 flap",
+        description="Lower the flap above box 4 to horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_lower_doors_open_percent: float = Field(

@@ -326,17 +326,16 @@ Campervan
 │       └── Cross seat
 └── Cabinet
     ├── Lower module
-    │   ├── Frames → front frame, cleats, arch bridge, catch blocks, rear jamb, cab-end bridge upright
-    │   │   └── Module joint → four lower side rails and eight M6 × 90mm hex bolt sets
-    │   ├── Skin → 9mm centre/cab-end panels
-    │   ├── Shelves → lower forward and both middle shelves
-    │   └── Doors → lower flaps, storage pair and fixed hardware
+    │   ├── Frames → posts, rails, cleats and catch blocks
+    │   │   └── Module fasteners → six M6 × 90mm hex bolt sets
+    │   ├── Skin → 3mm backs, centre divider and cab-end panel
+    │   ├── Shelves → two cab-end shelves
+    │   └── Doors → three doors, fixed cover and hardware
     └── Upper module
-        ├── Frames → front frame, shelf cleats and catch blocks
-        │   └── Module joint → four upper side rails
-        ├── Skin → 6mm centre/cab-end/rear supporting panels
-        ├── Shelves → both upper shelves
-        └── Doors → Rear/Cab-end upper 1/2 and fixed hardware
+        ├── Frames → posts, rails, cleats, divider stops and catch blocks
+        ├── Skin → 3mm backs, centre dividers and end panels
+        ├── Shelves → inset shelves
+        └── Doors → four flaps, fixed front and hardware
 ```
 
 The [Japanese 2017 NV200 body research](research/nv200/README.md) records the actual van variant, Nissan dimensions,
@@ -625,43 +624,106 @@ and blue seat now fill the complete sleeping width.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 The lower cabinet is one timber carcass with a rear bay, a shallow front bottom bay and two full-depth front bays.
-The upper module currently contains **box 6** above the rear bay. It uses the lower cabinet’s construction.
-Box 6 has two rectangular bays in one removable frame. The rear bay reaches construction X1320,
-and the bay towards the cab reaches X1445. At both floor and shelf level one cross rail runs from the continuous
-aisle rail to the deep wall post. The shallow wall rail butts into this cross rail.
-The deep wall post leans with the pillar panel and is bevelled along its rear face for full-height glue
-contact. The cabinet-side face of the panel meets the outer edge of that post at local Y110.44 at the
-floor and Y197.31 at the top. The four end posts are plumb. The shelves and ledgers stay level.
-The 18mm pillar panel under **Upper module → Skin** clears the registered scan by at least 3mm.
-It spans the height of box 6 and stops at its rear face. It is excluded from the cutting list during this fit study.
+The removable upper module contains **boxes 4 and 5** above the cab-end bay and **boxes 6 and 7** above the rear bay.
+They share the middle transverse frame and use the lower cabinet’s 40 × 18mm pine.
+Box 4 has a square-ended frame, 281mm deep from the aisle face at X1116 to the wall face at X1397.
+The 3mm wall-side backing finishes at X1400, inside the original allowance at the cab-side pillar.
+The cab-end wall upright fits between the floor and top cross rails with its full 40 × 18mm end on timber.
+At the middle, the wall rails butt into the shared cross rails. The 6mm floor and top shelf sit on
+18 × 18mm ledgers, level with box 6.
+At the top of box 4 the longitudinal rail is flush with the wall-facing sides of both box 5 uprights
+at X1356, 41mm inboard of the box 4 backing.
+The rail is full 40 × 18mm stock. The 6mm shelf and its two transverse ledgers end at its aisle-facing side.
+Box 5 shares the box 4 shelf as its floor. Its straight wall frame steps in 41mm to X1356,
+giving it 240mm outside depth and a level top 1248mm above the finished floor. Its two wall uprights seat
+on the existing transverse rails. The two aisle posts run the full height of the stacked bays.
+Boxes 5 and 7 are open at the top. Their perimeter rails carry the door catches. Check for 3mm clearance between the
+outside face of the 3mm backing and the fixed metal roof shoulder along the full rail during fitting.
 
-All five 40 × 18mm posts run from 770 to 1033.245mm above the finished floor. The box 6 floor and top
-shelf are each one 6mm ply sheet spanning both bays. Each fits around the rear wall post and meets the
-inside face of the angled pillar panel at its own height. At both levels, rip the step cross rail and
-shallow wall rail to 34mm high so the sheet rests directly on them, flush with the surrounding frame.
-The floor finishes at 810mm and the top shelf at 1033.245mm. The lower cabinet has an open top frame.
+Box 6 has two rectangular bays in one removable frame. The rear bay reaches construction X1320,
+and the bay towards the cab reaches X1445. The upper step and middle cross rails run 311mm from the
+aisle rail to the inside face of the deep backing. Each rests on the full 40 × 18mm end of its wall post.
+At floor level the two cross rails butt into the sides of those posts.
+The deep bay starts 160mm forward of the cabinet rear. Its plumb corner post and square-ended rails
+form a 125mm step in frame depth around the rear pillar.
+The three box 6 wall posts and the two lower deep wall posts have their 40mm faces across the van.
+Each is flush with its cross rail. The longitudinal wall rails fit between the posts.
+
+The two deep wall posts start at 770mm and finish beneath the cross rails at 993.245mm above the finished floor.
+The rail tops are at 1033.245mm. The shared middle aisle post continues up to box 5.
+The box 6 floor has two 6mm ply panels, one on either side of the step cross rail.
+Both sit on perimeter ledgers and finish flush with the rail at 810mm. The step cross rails and
+shallow wall rails use full 40 × 18mm stock at both levels. Three rectangular 6mm ply shelves sit flush
+with the top of this frame. From the rear, box 8 has one shelf between the rear rail and the step and
+another between the step and the box 7 bearer. The box 7 shelf spans from the bearer to the middle rail.
+At the top, 18 × 18mm ledgers run inside the shallow wall rail and on both shelf-facing sides of the
+step cross rail and box 7 bearer. Each step ledger ends at the inside wall rail of its own bay.
+The rear bearer ledger stops against the door catch block at the aisle end.
+The lower cabinet has an open top frame.
 Lift the assembled upper carcass level with that frame, then slide it 329mm wallward from the aisle
 at its final fore–aft position.
-Boxes 4, 5, 7 and 8 and the upper doors and skins remain to design.
+Box 7 occupies the forward part of the space above box 6. Its 240mm outside depth and 1248mm top elevation
+match box 5. The two rooms share their middle posts, cross rail and plywood divider. The box 7 rear aisle
+post sits 235mm from the cabinet rear, giving a 261mm clear opening. The wall-side rear post and transverse
+roof rail sit 308mm from the cabinet rear. The rear end of box 7 opens into box 8.
+At this level the longitudinal rail in the deep part of box 6 aligns with box 4's rail at X1356,
+89mm inboard of the deep backing. The 204mm cross support butts against its aisle face.
+The rail and cross support use full 40 × 18mm stock. Their top faces finish level with the box 6
+frame and support the full square-cut foot of the box 7 rear wall post.
+Box 8 has a fixed 6mm aisle front in 10 × 6mm rebates in both jambs.
+The 211mm panel spans the 195mm opening with 8mm of bearing at each side.
+Its bottom edge aligns with the box 7 flap, 2mm above the square sill. A 195 × 18 × 18mm pine batten
+sits on the sill between the jambs and bears against the back of the plywood for fixing.
+The rear post has a square top at world Z1201. The front sits flush with the aisle face and its jigsaw
+edge follows the scanned roof up to the box 7 jamb. The profile allows for the full 329mm slide on
+either side of the van. Boxes 4–7 each have one bottom-hinged aisle flap.
+The centre dividers and wall-side backs are 3mm birch ply. Box 3 is open on the wall side for chair storage.
+The box 1 back sits on the inside faces of the shallow wall rails and attaches
+to two square-cut end cleats. One deep back covers both levels of box 2. Box 6 uses two flat backs and
+square returns at its depth changes. The shared boxes 5 and 7 back extends down to the undersides of
+the three cross beams. Its bottom edge has square notches at the pillar step, middle and cab end.
+The middle notch also clears the 3mm centre divider attached to the beam. The back extends aft to the pillar step.
+There it turns 36mm aisleward and continues to the cabinet rear on the box 6 shallow wall.
+An 18 × 18mm vertical pine cleat joins the shallow back to the step return on the pillar side.
+Cut the shallow back and the stepped return as full-height pieces. Jigsaw the two long panel edges
+to their individual curves from the installed-side scan. The shallow back dips over the rear pillar
+and rises towards the step. The long back follows the shoulder below the roof beam and levels out
+at cabinet height 290mm forward of the cabinet rear. The short return joins the curves with a 19mm rise.
+A 40 × 18mm upright sits on the upper step cross rail against the cab-facing surface of this return.
+Its wall-side edge backs the adjoining skin. A single bevel ends at the skin height on the aisle side
+and 2mm below the skin on the wall side to clear the roof on insertion.
+Each removable module owns its backs. In the lower module the 198 × 770mm
+main panel and 95 × 493mm above-arch extension meet edge to edge on the box 3 faces of the middle cross rails.
+An 18 × 40mm notch at the top of the extension clears the rear longitudinal rail. The 293 × 199.25mm upper panel sits in the same plane on the box 6 face of the shared frame
+and meets the underside of the top shelf ledger.
+The box 4 divider has a full-width head stop and a 161mm sill stop between the two module bolts.
+Both stops are 18 × 18mm. The box 5 divider
+aligns with it and fixes to the top rail, wall upright and sill stop.
 The lower cabinet includes shelves, three front doors and a fixed cover
-for cabinet 3; other skins and the catch/stay hardware are still to design.
+for cabinet 3; other skins and flap stays are still to design.
 The original fitted envelope, dimensions and construction parameters remain in
 [`data/cabinet-reference`](../data/cabinet-reference/README.md).
 
-The new frame uses the existing 40 × 18mm pine, aisle face and 980mm overall-length allowance, with
-6mm end-skin space at the cab end. The rear frame is flush with the bed, with no outside rear-skin allowance.
-The lower cabinet rear frame starts at local Y0, flush with the bed rear datum. The former 6mm rear
-frame inset is removed; rear rails and the fixed cover extend accordingly. The centre
-frame and cab-end position remain unchanged.
-Matching aisle/wall post stations share a central post. The shallow wall
+Both modules have a 3mm cab-end skin. The upper module also has a 3mm rear skin. The skins butt against the
+inside faces of the aisle stiles, hiding the plywood edges from the aisle. The upper rear skin occupies
+local Y0–3 and finishes flush with the bed.
+The cab-end skin occupies Y974–977. The cab-end cross framing finishes at Y974 and the aisle stile at Y977.
+The shared centre supports are 3mm farther towards the cab, giving boxes 3, 6 and 7 longer aisle openings.
+The lower rear frame is open for chair loading. The upper rear skin follows the roof beam down towards
+the pillar and extends past the shallow backing to follow the wall contour. The two cab-end sheets share one
+outline taken through their 3mm thickness at world Y1054–1057. It follows the sidewall from the
+flat floor to the roof and bridges the window recess. The cut passes continuously across the module joint.
+The middle and cab-end shallow wall posts stand 277mm tall with their 40mm faces across the van.
+Each runs from the floor to the underside of a continuous arch-level cross rail. The shallow wall
 frame's wall-facing edge is aligned to the measured 1200mm floor edge at construction X1350 (display X150).
-The aisle face is at construction X1116, aligned with the fully extended bed. The clear rear entry
-depth is 198mm; entry height remains 730mm. The actual
+The aisle face is at construction X1116, aligned with the fully extended bed. The rear shallow wall post
+also has its 40mm face across the van. The chair loading opening runs from the floor to the rear top
+cross rail and measures 176mm wide by 730mm high. The actual
 floor's known fit is the alignment datum. The remaining few-millimetre scan interference is recorded rather
 than used to thin the framing; 3mm scanned clearance is not claimed for these lower wall members.
 The two deeper front compartments share a vertical wall frame at construction X1445, 20mm farther wallward
 than the initial frame. Clipping the registered scan to the full frame/backing region found the nearest wall
-at X1454.492. A future 6mm backing outside the frame retains at least 3mm clearance; overall depth stays
+at X1454.492. The 3mm deep backing finishes at X1448; overall depth stays
 within the saved X1460 exterior limit.
 Square reinforced butt joints connect rails to posts; use glue and dowels or screws, with drilling to be detailed.
 
@@ -672,36 +734,43 @@ remains Z770. Centre transverse rails are centred on their posts; end transverse
 outside post faces for the end skins. The tall rear bay has only bottom and top longitudinal rails, with no
 intermediate rails across its aisle or wall face. The two cab-end shelves at Z317 and Z510 rest on
 18 × 18mm pine ledgers on all four edges. The long ledgers meet the side ledgers at the corners.
-Each middle side support is split around its upright, as is the lowest cab-end side support.
-The Z770 frame carries the upper module directly.
-The internal shallow wall rail below the lowest deep shelf is lowered 6mm to Z311, allowing the sheet to
-pass above it. Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
-Both 6mm plywood panels finish flush with their frame rails. The blanks are 293 × 394mm, with an
-18 × 11mm middle-post edge cutout; the lowest also has an 18 × 22mm cab-end post cutout. Panels fit inside the framing
+At both levels the middle and cab-end side ledgers run continuously between the aisle and wall ledgers.
+The Z770 frame carries the upper module directly. Two M6 × 90mm hex bolts pass vertically through each
+stacked transverse rail pair. Match-drill 6.5mm holes through the 80mm timber stack on the 18mm rail centreline.
+Measure from each cross rail's aisle end towards the wall. The hole centres are 40 and 106mm at the rear,
+40 and 231mm at the middle, and 40 and 183mm at the cab end. Fit a 16mm washer under each head and nut,
+with the heads underneath. The middle sill stop finishes 15mm from each bolt centre.
+Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
+Both 6mm plywood panels are 293 × 391mm rectangles and finish flush with their frame rails. Panels fit inside the framing
 and are not sandwiched between members. Cabinet shelves visibility controls the Lower module / Shelves group. Ledger cuts share the existing 18 × 18mm pine stock through their shelf-ledger role.
-Future wall-side infill must stay flush with or inboard of the shallow frame to preserve the measured floor-width envelope.
+The shallow wall-side infill stays inboard of the shallow frame to preserve the measured floor-width envelope.
 The existing Cabinet / Lower module / Frames visibility and timber-cutting paths are reused.
 The frame is a construction layout, not a load rating; panels and vehicle attachments are still to design.
 
 The cabinet 3 fixed cover and three front doors share Lower module / Doors, so Cabinet doors controls all
-front closures. The fixed cover still uses the supporting-panel plywood material in the BOM. All are 6mm
+front closures. The fixed cover shares the door plywood material in the BOM. All are 6mm
 plywood, flush with the aisle face. Front-frame
 rebates are 10mm wide and 6mm deep, leaving 12mm of timber behind. With 2mm perimeter clearance, panels
-overlap each rebated opening edge by 8mm. Fixed cover rebates run on all four edges; doors retain an
-unrebated hinge edge. The fixed cover is 509 × 706mm; front panels are 367 × 253mm (side-hinged bottom),
-377 × 159mm (middle flap) and 377 × 226mm (above-bed flap). Moving doors retain the existing 30mm finger
+overlap each rebated opening edge by 8mm. The fixed cover is rebated on all four sides.
+All three cab-end lower doors are 377mm wide. On the side-hinged bottom door, carry the hinge-side rebate
+through the full 18mm thickness of the middle aisle post between the sill and head rails only.
+This gives the piano hinge a straight jamb and leaves the post full width at its rail joints.
+The fixed cover is 512 × 706mm. Lower door heights are 253mm, 159mm and 226mm from bottom to top.
+The upper doors use the same flap construction, with 10 × 6mm rebates at the sides and head and the hinge on
+the unrebated sill. The flap sizes are 377 × 189.25mm for box 4, 377 × 180.75mm for box 5,
+512 × 189.25mm for box 6 and 277 × 180.75mm for box 7. Moving doors retain the existing 30mm finger
 holes and 18 × 18mm glued pine hinge backing. Piano hinges use the existing nominal 27mm section;
 actual screw patterns, leaf thickness and mortises still need checking against the physical hardware.
-The existing rebate and piano-hinge mechanisms are reused; retired rear-door controls are removed.
-The middle and above-bed flaps have separate controls. Each of the three doors now has a Taskmaster
-double roller catch on a 30mm length of 40 × 18mm pine behind the free-side upright. The 30mm projection
-supports the nominal 25mm-deep base and retains 8mm beyond the frame-screw tips. The base is mounted
-vertically, clearing the shelf ledgers; flap catches sit near their free top edges. Two 6g × 40mm screws
+Each door has an independent opening control. Each of the seven doors has a Taskmaster
+double roller catch on a 30mm length of 40 × 18mm pine behind the frame. The side-hinged door catches halfway up its free upright.
+Each bottom-hinged flap catches at the centre of its header, directly above the finger hole. Where a shelf
+ledger shares that header, two square-cut lengths butt against the block. The 30mm projection supports
+the nominal 25mm-deep base and retains 8mm beyond the frame-screw tips. Two 6g × 40mm screws
 and glue attach each block to the unreduced frame band, with flush countersunk heads. The keeper is
 through-bolted to the 6mm door with two M3 × 12mm bolts, nuts and backing washers. Local rear-lip relief
 clears the keeper without changing the front rebate outline. Mounts are in Frames; fixed catch bodies and
-moving keepers follow Cabinet doors. The BOM counts three sets (one four-pack), six keeper bolts/washers
-and six block screws; catch-base screws come with the product. Geometry and drill patterns remain nominal
+moving keepers follow Cabinet doors. The BOM counts seven sets (two four-packs), fourteen keeper bolts/washers
+and fourteen block screws; catch-base screws come with the product. Geometry and drill patterns remain nominal
 until checked against the physical catches; no retention-force rating is established. Flap stays remain to design.
 
 The following describes the checkpointed cabinet, not the active assembly.

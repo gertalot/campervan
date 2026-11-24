@@ -1,11 +1,16 @@
-"""Lower cabinet and its separately removable upper rear bay (box 6)."""
+"""Lower cabinet and the removable upper frame shared by boxes 4–7."""
 
-from math import hypot
+from collections.abc import Sequence
 
-from build123d import Color, Compound, Face, Keep, Location, Part, Plane, Solid, Wire
+from build123d import Color, Compound, Location, Part, Solid
 
+from campervan.cad.cabinet_catches import MOUNT_HEIGHT
 from campervan.cad.cabinet_layout import cabinet_layout
-from campervan.cad.cabinet_doors import build_cabinet_doors
+from campervan.cad.cabinet_modules import module_fasteners
+from campervan.cad.cabinet_doors import CabinetDoors, build_cabinet_doors
+from campervan.cad.cabinet_upper import (
+    BOX8_POST_TOP_WORLD_Z_MM, REAR_END_SKIN_WALL_X_MM, end_skin_waste, rear_backing_roof_waste, rear_face_clearance,
+)
 from campervan.cad.cut_profiles import copy_fitting_datums, set_fitting_datums
 from campervan.cad.floor import FLOOR_BASE_WIDTH_MM
 from campervan.cad.panels import panel
@@ -21,28 +26,18 @@ ARCH_CROWN_WORLD_Z_MM = 284.0
 DEEP_FRAME_OUTER_X_MM = 1445.0
 # The rear bay stops aisleward of the pillar. The deeper bay begins at the shared post station.
 BOX6_REAR_WALL_X_MM = 1320.0
-PILLAR_ACROSS = 0.93
-PILLAR_RISE = 0.33
-PILLAR_PLY_DEPTH_Y = 18 * hypot(1, PILLAR_ACROSS, PILLAR_RISE)
-
-
-def _pillar_wall_y(x: float, z: float) -> float:
-    """Registered pillar-facing surface of the 18mm sheet in cabinet coordinates."""
-    return 43.3 + PILLAR_ACROSS * (x - 1400) + PILLAR_RISE * (z - 770)
-
-
-def _rear_pillar_panel(bottom: float, top: float) -> Part:
-    """Fit a single 18mm sheet along the scanned pillar at the box 6 step."""
-    points = [(x, _pillar_wall_y(x, z), z) for x, z in (
-        (BOX6_REAR_WALL_X_MM, bottom), (DEEP_FRAME_OUTER_X_MM, bottom),
-        (DEEP_FRAME_OUTER_X_MM, top), (BOX6_REAR_WALL_X_MM, top),
-    )]
-    face = Face(Wire.make_polygon(points))
-    # Extrude toward the cabinet. The Y travel gives 18mm measured normal to the fitted face.
-    sheet = Solid.extrude(face, (0, PILLAR_PLY_DEPTH_Y, 0))
-    # The cabinet rear is at Y0. Plane.XZ's negative half-space faces into the cabinet.
-    trimmed = sheet.split(Plane.XZ, keep=Keep.BOTTOM)
-    return Part(trimmed.solids(), label="Rear pillar panel (preview)", color=PLYWOOD)
+# Square shoulder measured forward from the cabinet rear, clear of the pillar at shelf height.
+BOX6_STEP_Y_MM = 160.0
+# Cab-side pillar reaches X1406.5 in the clearance-padded upper bay on the tighter side layout.
+# Allow for 6mm backing outside a square frame and 3mm scan clearance.
+BOX4_WALL_X_MM = 1397.0
+# Provisional wall face. Check the future 6mm back against the fixed metal shoulder in the van.
+BOX5_WALL_X_MM = 1356.0
+BOX5_TOP_Z_MM = 1248.0
+# Rear face of the full-height compartment clears the rear roof beam on the slide-in path.
+BOX7_MIN_REAR_Y_MM = 300.0
+# The aisle jamb can reach farther rearward under the roof beam than the wall corner.
+BOX7_AISLE_REAR_Y_MM = 235.0
 
 
 def build_cabinet(p: Parameters) -> Compound:
@@ -58,93 +53,104 @@ def build_cabinet(p: Parameters) -> Compound:
     aisle, shallow = layout.front, (p.cargo_width_mm + FLOOR_BASE_WIDTH_MM) / 2
     deep = DEEP_FRAME_OUTER_X_MM
     rear = 0.0  # Rear frame face is flush with the bed rear datum.
-    middle = p.cabinet_rear_bay_length_mm + skin / 2 - w / 2
-    cab = p.cabinet_length_mm - skin - w
+    middle, cab = layout.bays[0][1], layout.bays[1][1]
     if not rear + w < middle < middle + w < cab or deep - shallow <= 2 * t:
         raise ValueError("Lower cabinet needs two clear bays and room for the wall-side depth extension.")
     if not w < arch_level < first - w:
         raise ValueError("The arch-clearance and mattress-access levels must leave a usable compartment.")
     parts = []
 
-    def post(name: str, outer: float, y: float, bottom: float, top: float) -> Part:
+    def post(name: str, outer: float, y: float, bottom: float, top: float, *, transverse: bool = False,
+             roof_waste: Solid | None = None) -> Part:
+        pose = (Location((outer - w, y, bottom)) if transverse
+                else Location((outer, y, bottom), (0, 0, 90)))
         part = panel(w, t, top - bottom)
+        if roof_waste is not None:
+            part = Part((part - roof_waste.moved(pose.inverse())).solids())
         part.label, part.color = name, WOOD
-        part.location = Location((outer, y, bottom), (0, 0, 90))
+        part.location = pose
         set_fitting_datums(part, 0, 1)
         return part
 
-    def rail(name: str, outer: float, start: float, end: float, top: float, *,
-             raked_start: bool = False, top_recess: float = 0) -> Part:
-        length = end - start
-        if raked_start:
-            # start/end are the marks on the top edge; transfer the same post rake onto the mating end.
-            shift = w * PILLAR_RISE
-            outline = Wire.make_polygon([
-                (-shift, 0, 0), (length, 0, 0),
-                (length, 0, w - top_recess), (-top_recess * PILLAR_RISE, 0, w - top_recess),
-            ])
-            part = Part([Solid.extrude(Face(outline), (0, t, 0))])
-        else:
-            part = panel(length, t, w - top_recess)
+    def rail(name: str, outer: float, start: float, end: float, top: float) -> Part:
+        part = panel(end - start, t, w)
         part.label, part.color = name, WOOD
         part.location = Location((outer, start, top - w), (0, 0, 90))
         set_fitting_datums(part, 1, 2)
         return part
 
-    def cross(name: str, start: float, end: float, y: float, top: float, *, top_recess: float = 0) -> Part:
-        part = panel(end - start, t, w - top_recess)
+    def cross(name: str, start: float, end: float, y: float, top: float) -> Part:
+        part = panel(end - start, t, w)
         part.label, part.color = name, WOOD
         part.location = Location((start, y, top - w))
         set_fitting_datums(part, 1, 2)
         return part
 
-    # Shared posts establish the same centre line on the aisle and wall sides.
+    # The two shallow posts under the deep compartments sit directly beneath their cross rails.
+    rail_y = middle + (w - t) / 2
+    # The aisle stiles conceal each end sheet. Cross frames sit against the plywood's inside face.
+    rear_end_y = rear + skin
+    cab_end_y = cab + w - skin - t
     for name, y in (("Rear", rear), ("Middle", middle), ("Cab-end", cab)):
         parts.append(post(f"{name} aisle post", aisle + t, y, 0, split))
-        parts.append(post(f"{name} shallow wall post", shallow, y, 0, arch_level if name == "Cab-end" else split))
-    for name, start, end in (("Rear", rear + w, middle), ("Cab-end", middle + w, cab)):
-        aisle_levels = (w, split) if name == "Rear" else (w, arch_level, first, split)
-        wall_levels = (w, split) if name == "Rear" else (w, arch_level - p.cabinet_shelf_thickness_mm)
-        for level in aisle_levels:
+    parts.append(post("Rear shallow wall post", shallow, rear_end_y, 0, split, transverse=True))
+    for name, y in (("Middle", rail_y), ("Cab-end", cab_end_y)):
+        parts.append(post(f"{name} shallow wall post", shallow, y, 0, arch_level - w, transverse=True))
+        parts.append(cross(f"{name} shallow cross rail at {w:g}mm", aisle + t, shallow - w, y, w))
+        for level in (arch_level, first, split):
+            parts.append(cross(f"{name} cross rail at {level:g}mm", aisle + t, deep - w, y, level))
+    parts.append(cross("Rear top cross rail", aisle + t, shallow - w, rear_end_y, split))
+    for name, start, end, levels in (
+        ("Rear", rear + w, middle, (w, split)),
+        ("Cab-end", middle + w, cab, (w, arch_level, first, split)),
+    ):
+        for level in levels:
             parts.append(rail(f"{name} aisle rail at {level:g}mm", aisle + t, start, end, level))
-        for level in wall_levels:
+    for name, start, end, levels in (
+        ("Rear", rear_end_y + t, rail_y, (w, split)),
+        ("Cab-end", rail_y + t, cab_end_y, (w,)),
+    ):
+        for level in levels:
             parts.append(rail(f"{name} shallow wall rail at {level:g}mm", shallow, start, end, level))
-
-    # The centre frame stays centred; exposed end frames are flush for the future end skins.
-    inset = (w - t) / 2
-    parts.append(cross("Rear top cross rail", aisle + t, shallow - t, rear, split))
-    for name, y in (("Middle", middle + inset), ("Cab-end", cab + w - t)):
-        for level in (w, arch_level):
-            parts.append(cross(f"{name} shallow cross rail at {level:g}mm", aisle + t, shallow - t, y, level))
-        parts.append(cross(f"{name} depth-step bottom rail", shallow, deep - t, y, arch_level))
-        for level in (first, split):
-            if name == "Middle":
-                parts.append(cross(f"Middle shallow cross rail at {level:g}mm", aisle + t, shallow - t, y, level))
-                parts.append(cross(f"Middle deep cross rail at {level:g}mm", shallow, deep - t, y, level))
-            else:
-                parts.append(cross(f"Cab-end cross rail at {level:g}mm", aisle + t, deep - t, y, level))
 
     # Two full-depth compartments share one wall ladder above the arch. Posts and rails meet at
     # reinforced butt joints; the intermediate level retains the original mattress-access opening.
-    for name, y in (("Middle", middle), ("Cab-end", cab)):
-        parts.append(post(f"{name} deep wall post", deep, y, arch_level - w, split))
+    for name, y in (("Middle", rail_y), ("Cab-end", cab_end_y)):
+        parts.append(post(f"{name} deep wall post", deep, y, arch_level - w, split, transverse=True))
     for level in (arch_level, first, split):
-        parts.append(rail(f"Deep wall rail at {level:g}mm", deep, middle + w, cab, level))
+        parts.append(rail(f"Deep wall rail at {level:g}mm", deep, rail_y + t, cab_end_y, level))
 
     # Shelves and their perimeter supports share the same inside frame boundaries.
     ledges = []
     shelves = []
     frame = Compound(parts)
     size = 18.0
+    ledger_drop = p.cabinet_shelf_thickness_mm + size
 
-    def ledge(name: str, x: float, y: float, length: float, level: float, *, along_y: bool = False) -> Part:
+    def cleat(name: str, x: float, y: float, length: float, bottom: float, *, along_y: bool = False) -> Part:
         part = panel(length, size, size)
         part.label, part.color = name, WOOD
-        part.location = Location((x + size if along_y else x, y,
-                                  level - p.cabinet_shelf_thickness_mm - size),
+        part.location = Location((x + size if along_y else x, y, bottom),
                                  (0, 0, 90) if along_y else (0, 0, 0))
         set_fitting_datums(part, 1, 2)
         return part
+
+    def skin_sheet(name: str, length: float, height: float, pose: Location, clear: Sequence[Part | Solid]) -> Part:
+        sheet = panel(length, skin, height)
+        if clear:
+            sheet = sheet - Compound(clear).moved(pose.inverse())
+        result = Part(sheet.solids(), label=name, color=PLYWOOD)
+        result.location = pose
+        return result
+
+    def divider(name: str, x: float, end: float, y: float, bottom: float, top: float,
+                *, clear: Sequence[Part | Solid] = ()) -> Part:
+        return skin_sheet(name, end - x, top - bottom, Location((x, y, bottom)), clear)
+
+    def backing(name: str, x: float, start: float, end: float, bottom: float, top: float,
+                *, clear: Sequence[Part | Solid] = ()) -> Part:
+        pose = Location((x + skin, start, bottom), (0, 0, 90))
+        return skin_sheet(name, end - start, top - bottom, pose, clear)
 
     def inset_shelf(label: str, start: float, end: float, wall: float, level: float,
                     *, clear_frame: Compound) -> Part:
@@ -157,117 +163,253 @@ def build_cabinet(p: Parameters) -> Compound:
         result.location = pose
         return result
 
+    lower_doors = build_cabinet_doors(
+        p, "Lower module", tuple((middle + w, cab, sill, head) for sill, head in
+                                 ((w, arch_level - w), (arch_level, first - w), (first, split - w))),
+        fixed_cover=(rear + w, middle, w, split - w), cover_label="Cabinet 3 fixed cover",
+    )
+    box5_top = min(layout.top, BOX5_TOP_Z_MM)
+    # The post and its bearer share a station just clear of the box 6 catch block.
+    box6_catch_end = (rear + w + middle + MOUNT_HEIGHT) / 2
+    box7_rear = max(BOX7_MIN_REAR_Y_MM, box6_catch_end)
+    if not BOX6_STEP_Y_MM + t < BOX7_AISLE_REAR_Y_MM < box7_rear < middle - w:
+        raise ValueError("Box 7 needs space over the deep part of box 6 for its rear frame and aisle opening.")
+    upper_doors = build_cabinet_doors(
+        p, "Upper module", ((rear + w, middle, split + w, layout.upper - w),
+                            (middle + w, cab, split + w, layout.upper - w),
+                            (middle + w, cab, layout.upper, box5_top - w),
+                            (BOX7_AISLE_REAR_Y_MM + w, middle, layout.upper, box5_top - w)),
+        fixed_cover=(rear + w, BOX7_AISLE_REAR_Y_MM, layout.upper, box5_top),
+        cover_label="Box 8 fixed front", rebate_sill=False, roof_clearance=rear_face_clearance(p),
+    )
+    catch_bounds = sorted((mount.bounding_box() for mount in lower_doors.mounts + upper_doors.mounts),
+                          key=lambda bounds: bounds.min.Y)
+
     def shelf_ledgers(label: str, start: float, end: float, wall: float, level: float,
-                      end_names: tuple[str | None, str | None], *,
-                      split_start: bool = False, split_end: bool = False, wall_ledger: bool = True) -> list[Part]:
+                      end_names: tuple[str, str], *, ends_to_rail: bool = False) -> list[Part]:
         side = aisle + t
-        supports = [ledge(f"{label} · Aisle ledger", side, start, end - start, level, along_y=True)]
-        if wall_ledger:
-            supports.append(ledge(f"{label} · Wall ledger", wall - size, start, end - start, level, along_y=True))
-        left = side + size
-        right = wall - size if wall_ledger else wall
-        for name, y, divided in ((end_names[0], start, split_start), (end_names[1], end - size, split_end)):
-            if name is None:
+        bottom = level - ledger_drop
+        # Square-cut the ledger either side of each block mounted on the same rail.
+        spans = []
+        cursor = start
+        blocks = [b for b in catch_bounds if b.min.Z < bottom + size and b.max.Z > bottom
+                  and b.min.Y < end and b.max.Y > start]
+        for block in blocks:
+            if block.max.Y <= cursor:
                 continue
-            spans = ((left, shallow - t), (shallow, right)) if divided else ((left, right),)
-            for index, (x0, x1) in enumerate(spans, 1):
-                supports.append(ledge(f"{label} · {name} side ledger {index}", x0, y, x1 - x0, level))
+            if cursor < block.min.Y:
+                spans.append((cursor, block.min.Y))
+            cursor = max(cursor, block.max.Y)
+        if cursor < end:
+            spans.append((cursor, end))
+        supports = []
+        for index, (y0, y1) in enumerate(spans, 1):
+            suffix = f" {index}" if len(spans) > 1 else ""
+            supports.append(cleat(f"{label} · Aisle ledger{suffix}", side, y0, y1 - y0, bottom, along_y=True))
+        y0, y1 = (start + size, end - size) if ends_to_rail else (start, end)
+        supports.append(cleat(f"{label} · Wall ledger", wall - size, y0, y1 - y0, bottom, along_y=True))
+        right = wall if ends_to_rail else wall - size
+        for name, y in ((end_names[0], start), (end_names[1], end - size)):
+            # A catch block at this corner projects farther into the shelf than the aisle ledger.
+            left = max([side + size] + [b.max.X for b in blocks if b.min.Y < y + size and b.max.Y > y])
+            supports.append(cleat(f"{label} · {name} side ledger 1", left, y, right - left, bottom))
         return supports
 
-    start, end, wall = middle + inset + t, cab + w - t, deep - t
+    start, end, wall = rail_y + t, cab_end_y, deep - t
     for level in (arch_level, first):
         label = f"Cab-end {level:g}mm shelf"
         shelves.append(inset_shelf(label, start, end, wall, level, clear_frame=frame))
-        ledges.extend(shelf_ledgers(
-            label, start, end, wall, level, ("Middle", "Cab-end"), split_start=True, split_end=level == arch_level,
-        ))
+        ledges.extend(shelf_ledgers(label, start, end, wall, level, ("Middle", "Cab-end")))
 
-    door_parts = build_cabinet_doors(
-        p, ((rear + w, middle), (middle + w, cab)),
-        ((w, arch_level - w), (arch_level, first - w), (first, split - w)), (w, split - w),
-    )
-    parts.append(Compound(label="Catch mounting blocks", children=door_parts.mounts))
-    rebate_cutters = Compound(door_parts.frame_cuts)
-    for index, part in enumerate(parts):
-        if part.children:
-            continue
-        pose = part.location
-        rebated = Part((part - rebate_cutters).moved(pose.inverse()).solids(), label=part.label, color=part.color)
-        rebated.location = pose
-        copy_fitting_datums(part, rebated)
-        parts[index] = rebated
+    rear_wall, cab_wall = BOX6_REAR_WALL_X_MM, BOX4_WALL_X_MM
+    # Measure from the common exposed timber. The box 4 wall post stands on its floor rail.
+    bolt_inset = 40.0
+    aisle_bolt = aisle + t + bolt_inset
+    middle_wall_bolt = deep - w - bolt_inset
+    bolt_centres = []
+    for y, wall_bolt in ((rear_end_y, min(shallow, rear_wall) - w - bolt_inset),
+                         (rail_y, middle_wall_bolt), (cab_end_y, min(deep, cab_wall) - w - bolt_inset)):
+        if wall_bolt - aisle_bolt < bolt_inset:
+            raise ValueError("The cabinet cross rails need room for two module bolts clear of their end joints.")
+        bolt_centres.extend(((aisle_bolt, y + t / 2), (wall_bolt, y + t / 2)))
+    bores, bolts = module_fasteners(p, split, bolt_centres)
+
+    def machine_frame(timbers: list[Part], doors: CabinetDoors) -> None:
+        cutters = Compound([*doors.frame_cuts, *bores])
+        for index, part in enumerate(timbers):
+            pose = part.location
+            machined = Part((part - cutters).moved(pose.inverse()).solids(), label=part.label, color=part.color)
+            machined.location = pose
+            copy_fitting_datums(part, machined)
+            timbers[index] = machined
+        timbers.append(Compound(label="Catch mounting blocks", children=doors.mounts))
+
+    machine_frame(parts, lower_doors)
+    parts.append(Compound(label="Module fasteners", children=bolts))
 
     # Two rectangular bays share a transverse frame. The shallow wall stops at the step.
-    pillar_panel = _rear_pillar_panel(split, layout.upper)
-    rear_wall = BOX6_REAR_WALL_X_MM
-
-    def shoulder_y(z: float) -> float:
-        # The long point of the bevel is at the inboard edge of the wall post.
-        return _pillar_wall_y(deep - t, z) + PILLAR_PLY_DEPTH_Y
-
-    step_width = w * hypot(1, PILLAR_RISE)  # Horizontal footprint of the raked stock.
-    upper_frame = [post(f"Box 6 {name} post", x, y, split, layout.upper) for name, x, y in (
-        ("rear aisle", aisle + t, rear), ("rear wall", rear_wall, rear),
-        ("middle aisle", aisle + t, middle), ("middle wall", deep, middle),
-    )]
-    foot = shoulder_y(split)
-    height = layout.upper - split
-    # The pillar ply ends at the shallow wall. Only trim shelf material beyond that wall.
-    pillar_face = Plane(origin=(deep - t, foot, split), z_dir=(-PILLAR_ACROSS, 1, -PILLAR_RISE))
-    corner = panel(deep - rear_wall, middle + inset - rear, height).moved(Location((rear_wall, rear, split)))
-    pillar_space = corner.split(pillar_face, keep=Keep.BOTTOM)
-    footprint = Wire.make_polygon([
-        (deep - t, foot, split), (deep, foot + t * PILLAR_ACROSS, split),
-        (deep, foot + step_width, split), (deep - t, foot + step_width, split),
+    step_y = BOX6_STEP_Y_MM
+    if not rear + w < step_y < middle - w:
+        raise ValueError("Box 6 needs room for both wall rails at the rear pillar step.")
+    upper_frame = [
+        post("Box 6 rear wall post", rear_wall, rear_end_y, split, layout.upper, transverse=True),
+        post("Box 6 middle wall post", deep, rail_y, split, layout.upper - w, transverse=True),
+        post("Box 6 step deep wall post", deep, step_y, split, layout.upper - w, transverse=True),
+    ]
+    # Box 4 uses the existing middle aisle post and both middle cross rails.
+    upper_frame.extend([
+        post("Box 6 rear aisle post", aisle + t, rear, split, BOX8_POST_TOP_WORLD_Z_MM - p.floor_surface_z_mm),
+        post("Box 6 middle aisle post", aisle + t, middle, split, box5_top),
+        post("Box 4 cab-end wall post", cab_wall, cab_end_y, split + w, layout.upper - w, transverse=True),
+        post("Box 4 cab-end aisle post", aisle + t, cab, split, box5_top),
     ])
-    solid = Solid.extrude(Face(footprint), (0, height * PILLAR_RISE, height))
-    # Keep the cut list in the axes of the actual 40 × 18 stock.
-    pose = Plane(origin=(deep - t, foot, split), x_dir=(1, 0, 0), z_dir=(0, PILLAR_RISE, 1)).location
-    stile = Part([solid.moved(pose.inverse())], label="Box 6 step deep wall post", color=WOOD)
-    stile.location = pose
-    set_fitting_datums(stile, 0, 1)
-    upper_frame.append(stile)
     upper_ledges = []
     upper_shelves = []
-    # The transverse rail runs from the continuous aisle rail to the pillar-side post.
+    wall5 = BOX5_WALL_X_MM
+    shallow_roof, return_roof, upper_roof, upright_roof = rear_backing_roof_waste(p, rear_wall, wall5, step_y)
+    upper_frame.extend([
+        post("Box 8 pillar step upright", wall5, step_y, layout.upper, box5_top,
+             transverse=True, roof_waste=upright_roof),
+        cross("Box 6 upper shelf bearer for box 7", aisle + t, wall5 - t, box7_rear, layout.upper),
+        post("Box 7 rear wall upright", wall5, box7_rear, layout.upper, box5_top - w, transverse=True),
+    ])
+    # The upper cross rails bear on the deep posts; the floor rails butt into their sides.
     for name, level in (("floor", split + w), ("upper shelf", layout.upper)):
-        step_back = shoulder_y(level)
-        step_front = step_back + step_width
-        step_cross = step_front - t
-        shelf_recess = p.cabinet_shelf_thickness_mm
         prefix = f"Box 6 {name}"
+        upper_level = name == "upper shelf"
+        wall_rail_x = wall5 if upper_level else deep
+        cross_end = deep if upper_level else deep - w
         upper_frame.extend([
-            cross(f"{prefix} rear rail", aisle + t, rear_wall - t, rear, level),
-            cross(f"{prefix} step cross rail", aisle + t, deep - t, step_cross, level,
-                  top_recess=shelf_recess),
-            cross(f"{prefix} middle rail", aisle + t, deep - t, middle + inset, level),
+            cross(f"{prefix} rear rail", aisle + t, rear_wall - w, rear_end_y, level),
+            cross(f"{prefix} step cross rail", aisle + t, cross_end, step_y, level),
+            cross(f"{prefix} middle rail", aisle + t, cross_end, rail_y, level),
             rail(f"{prefix} aisle rail", aisle + t, rear + w, middle, level),
-            rail(f"{prefix} shallow wall rail", rear_wall, rear + w, step_cross, level, top_recess=shelf_recess),
-            rail(f"{prefix} deep wall rail", deep, step_front, middle, level, raked_start=True),
+            rail(f"{prefix} shallow wall rail", rear_wall, rear_end_y + t, step_y, level),
+            rail(f"{prefix} deep wall rail", wall_rail_x, step_y + t, rail_y, level),
         ])
-        for bay, wall, start, end, end_names in (
-            ("shallow", rear_wall, rear + t, step_cross, ("Rear", None)),
-            ("deep", deep, step_front, middle + inset, (None, "Middle")),
-        ):
-            label = f"{prefix} {bay} panel"
-            upper_ledges.extend(shelf_ledgers(
-                label, start, end, wall - t, level, end_names, wall_ledger=bay == "deep",
-            ))
+        shallow_label, deep_label = f"{prefix} shallow panel", f"{prefix} deep panel"
+        openings = [(shallow_label, "Box 8 rear shelf" if upper_level else shallow_label,
+                     rear_end_y + t, step_y, rear_wall, ("Rear", "Step"))]
+        if upper_level:
+            openings.extend([
+                (f"{deep_label} rear section", "Box 8 forward shelf", step_y + t, box7_rear,
+                 wall_rail_x, ("Step", "Bearer")),
+                (deep_label, "Box 7 shelf", box7_rear + t, rail_y, wall_rail_x, ("Bearer", "Middle")),
+            ])
+        else:
+            openings.append((deep_label, deep_label, step_y + t, rail_y, wall_rail_x, ("Step", "Middle")))
+        shelf_frame = Compound(upper_frame)
+        for ledger_label, shelf_label, start, end, wall, end_names in openings:
+            upper_ledges.extend(shelf_ledgers(ledger_label, start, end, wall - t, level, end_names,
+                                              ends_to_rail=upper_level))
+            upper_shelves.append(inset_shelf(shelf_label, start, end, wall - t, level, clear_frame=shelf_frame))
+
+    # Box 5 shares box 4's shelf and sill. Its wall posts land on the two transverse
+    # rails below the shelf, with their entire 40 × 18mm end faces on timber.
+    start, end = rail_y + t, cab_end_y
+    upper_frame.extend([
+        post("Box 5 middle wall upright", wall5, rail_y, layout.upper, box5_top - w, transverse=True),
+        post("Box 5 cab-end wall upright", wall5, end, layout.upper, box5_top - w, transverse=True),
+        cross("Box 5 upper shelf middle rail", aisle + t, wall5, rail_y, box5_top),
+        cross("Box 5 upper shelf cab-end rail", aisle + t, wall5, end, box5_top),
+        rail("Box 5 upper shelf aisle rail", aisle + t, middle + w, cab, box5_top),
+        rail("Box 5 upper shelf wall rail", wall5, start, end, box5_top),
+        post("Box 7 rear aisle post", aisle + t, BOX7_AISLE_REAR_Y_MM, layout.upper, box5_top),
+        cross("Box 7 upper shelf rear rail", aisle + t, wall5, box7_rear, box5_top),
+        rail("Box 7 upper shelf aisle rail", aisle + t, BOX7_AISLE_REAR_Y_MM + w, middle, box5_top),
+        rail("Box 7 upper shelf wall rail", wall5, box7_rear + t, rail_y, box5_top),
+    ])
+    for prefix, level in (("Box 4 floor", split + w), ("Box 4 upper shelf", layout.upper)):
+        wall = wall5 if level == layout.upper else cab_wall
+        shelf_wall = wall - t
+        upper_frame.extend([
+            cross(f"{prefix} cab-end rail", aisle + t, cab_wall, end, level),
+            rail(f"{prefix} aisle rail", aisle + t, middle + w, cab, level),
+            rail(f"{prefix} wall rail", wall, start, end, level),
+        ])
+        upper_ledges.extend(shelf_ledgers(prefix, start, end, shelf_wall, level, ("Middle", "Cab-end"),
+                                          ends_to_rail=level == layout.upper))
         upper_shelves.append(inset_shelf(
-            f"{prefix} panel", rear, middle + inset, deep - t, level,
-            clear_frame=Compound([*upper_frame, pillar_space]),
+            f"{prefix} panel", start, end, shelf_wall, level, clear_frame=Compound(upper_frame),
         ))
+    machine_frame(upper_frame, upper_doors)
     upper_frame.append(Compound(label="Shelf ledges", children=upper_ledges))
+
+    # The two sheets meet above the arch. The top wall rail crosses the corner of the extension.
+    extension = divider("Above-arch centre divider", shallow - t, deep - t, rail_y - skin, arch_level - w, split)
+    relief = panel(t, skin, w).moved(Location((0, 0, split - arch_level)))
+    trimmed = Part((extension.located(Location()) - relief).solids(), label=extension.label, color=PLYWOOD)
+    trimmed.location = extension.location
+    # The box 1 back meets the inside face of the shallow wall rails.
+    shallow_back = shallow - t - skin
+    cab_face = cab_end_y + t
+    side = aisle + t
+    rear_end_waste, cab_end_waste = end_skin_waste(p, rear, cab_face)
+    lower_skin = [
+        divider("Lower cab end skin", side, p.cargo_width_mm, cab_face, 0, split, clear=(cab_end_waste,)),
+        divider("Box 3 centre divider", aisle + t, shallow - t, rail_y - skin, 0, split),
+        trimmed,
+        backing("Box 1 backing", shallow_back, rail_y + t, cab_end_y, 0,
+                arch_level - p.cabinet_shelf_thickness_mm, clear=ledges),
+        backing("Box 2 backing", deep, rail_y, cab_face, arch_level - w, split),
+    ]
+    def backing_cleat(label: str, x: float, y: float, bottom: float, top: float) -> Part:
+        timber = panel(size, size, top - bottom)
+        timber.label, timber.color = label, WOOD
+        timber.location = Location((x, y, bottom))
+        set_fitting_datums(timber, 0, 1)
+        return timber
+
+    # Box 1 has no shallow top rail. Give each end of its back a glue face on the shallow post.
+    backing_cleats = [backing_cleat(f"Box 1 {name} backing cleat", shallow - t, y, w, arch_level - w)
+                     for name, y in (("middle", rail_y + t), ("cab-end", cab_end_y - size))]
+    parts.append(Compound(label="Backing glue cleats", children=backing_cleats))
+    # World Z1147 keeps the square end clear of the pillar through the 329mm installation slide.
+    step_cleat = backing_cleat("Box 6 pillar corner backing cleat", rear_wall + skin, step_y - skin - size,
+                               split, 1147 - p.floor_surface_z_mm)
+    front_cleat = cleat("Box 8 fixed front sill cleat", aisle + p.cabinet_door_thickness_mm, rear + w,
+                        BOX7_AISLE_REAR_Y_MM - (rear + w), layout.upper, along_y=True)
+    upper_frame.append(Compound(label="Backing glue cleats", children=[step_cleat, front_cleat]))
+    sill, head = split + w, layout.upper - w
+    # Above box 6 the return only bridges the shallow back to the boxes 5/7 wall plane.
+    return_waste = panel(deep - wall5, skin, box5_top - layout.upper).moved(
+        Location((wall5 + skin, step_y - skin, layout.upper)))
+    # One square notch clears both the middle cross beam and the divider fixed to its rear face.
+    divider_allowance = panel(skin, skin, w).moved(Location((wall5, rail_y - skin, head)))
+    upper_skin = [
+        divider("Upper rear end skin", side, REAR_END_SKIN_WALL_X_MM, rear, split,
+                BOX8_POST_TOP_WORLD_Z_MM - p.floor_surface_z_mm, clear=(rear_end_waste,)),
+        divider("Upper cab end skin", side, p.cargo_width_mm, cab_face, split, box5_top, clear=(cab_end_waste,)),
+        divider("Box 4 centre divider", aisle + t, deep - t, rail_y - skin, sill, layout.upper - ledger_drop),
+        divider("Box 5 centre divider", aisle + t, wall5 - t, rail_y - skin, layout.upper, box5_top - ledger_drop),
+        backing("Box 4 backing", cab_wall, rail_y + t, cab_face, split, layout.upper),
+        backing("Box 6 shallow backing", rear_wall, rear_end_y, step_y, split, box5_top, clear=(shallow_roof,)),
+        divider("Box 6 pillar step return", rear_wall + skin, deep + skin, step_y - skin, split, box5_top,
+                clear=(return_roof, return_waste)),
+        backing("Box 6 deep backing", deep, step_y, rail_y + t, split, layout.upper),
+        divider("Box 6 middle step return", cab_wall + skin, deep + skin, rail_y + t, split, layout.upper),
+        backing("Boxes 5 and 7 backing", wall5, step_y, cab_face, head, box5_top,
+                clear=(upper_roof, divider_allowance, *upper_frame)),
+    ]
+    stops = [cleat("Box 5 sill divider stop", aisle + t, rail_y, wall5 - w - (aisle + t), layout.upper)]
+    # Keep the sill stop in one piece between the nuts, with room at each end for a socket.
+    socket_clearance = 15.0
+    stops.append(cleat("Sill divider stop", aisle_bolt + socket_clearance, rail_y,
+                       middle_wall_bolt - aisle_bolt - 2 * socket_clearance, sill))
+    stops.append(cleat("Head divider stop", aisle + t, rail_y, deep - w - (aisle + t), head - size))
+    upper_frame.append(Compound(label="Divider stops", children=stops))
 
     parts.append(Compound(label="Shelf ledges", children=ledges))
     return Compound(label="Cabinet", children=[
         Compound(label="Lower module", children=[
             Compound(label="Frames", children=parts), Compound(label="Shelves", children=shelves),
-            door_parts.assembly,
+            Compound(label="Skin", children=lower_skin),
+            Compound(label="Doors", children=lower_doors.parts),
         ]),
         Compound(label="Upper module", children=[
             Compound(label="Frames", children=upper_frame),
             Compound(label="Shelves", children=upper_shelves),
-            Compound(label="Skin", children=[pillar_panel]),
+            Compound(label="Skin", children=upper_skin),
+            Compound(label="Doors", children=upper_doors.parts),
         ]),
     ])

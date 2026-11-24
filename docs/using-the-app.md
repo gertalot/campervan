@@ -301,19 +301,11 @@ tag measurement follows the [AprilTag pose convention](https://github.com/AprilR
 
 ### Cabinet module joint
 
-The replacement cabinet contains Lower module and Upper module. Each has Frames, Skin, Shelves and Doors.
-Frames includes the side joining rails and module fasteners. Cabinet → Frames controls the 40 × 18mm pine section;
-the wheel-arch bridge uses 90 × 18mm pine. The rear corner uses ordinary 40 × 18mm posts; the former wide return pieces and short rails are removed.
-The rear end frame clears the pillar independently of the main back frame. Shelves and fixed middle/end skins extend past the timber
-and are jigsaw-scribed to the actual van side and finished ceiling. The van side closes the open back.
-Doors and shelves are 6mm plywood; fixed skins are 3mm birch.
-Cabinet → Module joint sets the 20mm lower-skin guide lips at the middle, cab-end and rear, with 0.5mm fitting clearance. The split follows the middle shelf tops. Those shelves belong to the lower module, flush in continuous rail
-seats, with drilled module-bolt holes instead of edge notches.
-
-Eight M6 × 90mm hex bolt-and-nut sets with washers join the side rails; there are no front or rear rail bolts.
-Keep the interface unglued. Slide the upper module into alignment before fitting bolts. Hardware envelopes and
-joint machining need confirmation before cutting. The earlier plywood-cabinet module notes describe the superseded
-construction; use [the replacement construction rationale](research/cabinet-redesign.md) for this model.
+The removable upper cabinet sits directly on the lower cabinet's rear, middle and cab-end cross rails.
+Slide the upper cabinet into position, clamp the matching rails together and match-drill two vertical
+6.5mm holes per pair. Fit six M6 × 90mm bolts from underneath, with a 16mm washer under each head and nut.
+Keep the mating faces unglued. The fasteners appear under Lower module → Frames → Module fasteners.
+The drilling positions are in the [CAD model notes](cad-model.md).
 
 
 ## Hinged storage bed
