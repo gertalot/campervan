@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from build123d import Align, Color, Compound, Cone, Cylinder, Face, Location, Part, Solid, Wire
 
-from campervan.cad.cabinet_layout import cabinet_front
+from campervan.cad.cabinet_layout import DOOR_FASTENER_INSET_MM, cabinet_front
 from campervan.cad.panels import panel
 from campervan.parameters import Parameters
 
@@ -30,7 +30,7 @@ def _cylinder_x(radius: float, length: float, x: float, y: float, z: float) -> P
 
 
 def build_door_catch(p: Parameters, label: str, pose: Location, *, screw_inset: float = 9) -> DoorCatch:
-    """Build at the free-edge midpoint, with local +Y pointing out of the door opening."""
+    """Place the catch at the supplied pose, with local +Y pointing out of the opening."""
     face = cabinet_front(p)
     back, mount_x = face + p.cabinet_door_thickness_mm, face + p.cabinet_frame_thickness_mm
     mount_pose = Location((mount_x, 0, -MOUNT_HEIGHT / 2))
@@ -80,7 +80,7 @@ def build_door_catch(p: Parameters, label: str, pose: Location, *, screw_inset: 
     ]))
     tongue_solid = Solid.extrude(tongue, (0, 2, 0))
     for sign in (-1, 1):
-        y, z = -11, sign * 8
+        y, z = -DOOR_FASTENER_INSET_MM, sign * 8
         bore = _cylinder_x(1.6, p.cabinet_door_thickness_mm + 3, face - 1, y, z)
         door_holes.append(bore)
         keeper_plate -= bore

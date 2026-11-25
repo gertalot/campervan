@@ -23,8 +23,8 @@ registered Z0 datum. The cabinet roof profiles reference the registered van ceil
   settings to change its pose; changing pose does not override the Table visibility switch.
 - Filter **Cabinet shelves**, **Cabinet doors**, **Cabinet skin** and **Cabinet frames** independently.
   Hinges and folding stays follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
-- Raise **Box 5 flap** to 100% to see the Penn Elcom elbow pass dead centre and the flap settle slightly below horizontal.
-  Raise **Box 7 flap** to compare the Vintique left-hand stay.
+- Pull **Box 5 flap** or **Box 7 flap** down to close it from any position, including fully open.
+  You can also set its position with the flap slider. At 100% the flap sits slightly below horizontal.
   Hide **Cabinet skin** to see the wall-side view of the linkage.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
 

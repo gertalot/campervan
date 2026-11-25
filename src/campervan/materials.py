@@ -54,15 +54,16 @@ ROLES = [
         id="floor-ribs", name="Floor pine ribs", kind="timber",
         fields={"width": "floor_rib_width_mm", "thickness": "floor_rib_thickness_mm"},
         default_product_id="red-stag-45-20-5400",
-        note="The bench-side longitudinal rib supports the plywood joint. Glue square-cut batten offcuts into "
-        "one block per rear door shoulder and rear pocket. Use one batten across each cab-side shoulder. "
+        note="Cut each cross rib in one piece. Fit the lengthwise ribs between them to support the plywood joint "
+        "and the hatch. Trim both ends of the middle cross rib to the door shoulders. "
+        "Edge-glue offcuts beside each end and at each rear pocket. Use one batten across each cab-side shoulder. "
         "Flush-trim the outside edges to the plywood.",
     ),
     MaterialRole(
         id="floor-insulation", name="Floor EPS insulation", kind="sheet",
         fields={"thickness": "floor_insulation_thickness_mm"},
         default_product_id="expol-thermaslab-20",
-        note="Nine fixed infill pieces and one removable insert. Attach the insert to the pump hatch lid. "
+        note="Twelve fixed infill pieces and one removable insert. Attach the insert to the pump hatch lid. "
         "No grain direction; rotate pieces when cutting. Floor assumed flat and horizontal.",
     ),
     MaterialRole(id="frames", name="Frame plywood", kind="sheet", fields={"thickness": "frame_thickness_mm"}),
@@ -270,16 +271,11 @@ ROLES.extend(
                 "use short screws or through-fixings. Roller catches have no verified vehicle holding rating. "
             ),
         ),
-        MaterialRole(
-            id="cabinet-box5-stay", name="Box 5 folding stay", kind="hardware", fields={},
+        *(MaterialRole(
+            id=f"cabinet-box{box}-stay", name=f"Box {box} folding stay", kind="hardware", fields={},
             quantity=1, default_product_id="penn-elcom-p1240",
-            note="One trial stay. Confirm locking position and installed holding action with the actual flap.",
-        ),
-        MaterialRole(
-            id="cabinet-box7-stay", name="Box 7 left-hand folding stay", kind="hardware", fields={},
-            quantity=1, default_product_id="vintique-left-104",
-            note="One trial stay. Transfer the two bracket patterns from the physical stay.",
-        ),
+            note="One stay, one separate 10mm spacer and two pivot screws per flap. Check the stop before drilling.",
+        ) for box in (5, 7)),
         MaterialRole(
             id="cabinet-chains",
             name="Drop-down door chain restraints",
@@ -455,6 +451,8 @@ def load_project(path: Path = PROJECT_PATH) -> Project:
     if project.materials.get("cabinet-hinges", Selection()).product_id == "zenith-butt-35":
         project.materials["cabinet-hinges"] = Selection(product_id="taskmaster-piano-610-27-ss")
     project.materials.pop("cabinet-stays", None)
+    if project.materials.get("cabinet-box7-stay", Selection()).product_id == "vintique-left-104":
+        project.materials["cabinet-box7-stay"] = Selection(product_id="penn-elcom-p1240")
     project.materials.pop("lagun-second-bracket", None)
     project.materials.pop("cabinet-storage-latches", None)  # All doors now share one latch product/role.
     project.materials.pop("cabinet-module-nuts", None)  # Ordinary bolt sets include their nuts.

@@ -5,6 +5,7 @@ from math import atan2, cos, degrees, hypot, radians, sin, sqrt
 
 from build123d import Axis, Color, Compound, Edge, Face, Location, Part, Plane, Solid, Wire
 
+from campervan.cad.cabinet_layout import DOOR_FASTENER_INSET_MM
 from campervan.cad.cabinet_piano import HINGE_PROJECTION
 from campervan.cad.panels import panel
 
@@ -12,6 +13,7 @@ CHAIN = "Jack chain"
 METAL = Color(0.65, 0.67, 0.69)
 EYE_HEIGHT = 125.0  # Common mounting jig, measured from the hinge axis.
 PIN_OFFSET = 8.0  # Distance from the mounting face to the chain pin.
+PIN_INSET = 7.0  # Distance from the opening edge to the pin.
 
 
 @dataclass(frozen=True)
@@ -78,7 +80,7 @@ def _anchor(moving: bool, thickness: float) -> tuple[Part, list[Solid]]:
                 _cylinder(0, 4, 0, (0, 1, 0), 3.3, 1)]
     bores = []
     for z in (-6, 6):
-        y = foot_y + (15 if moving else 6)
+        y = DOOR_FASTENER_INSET_MM - PIN_INSET if moving else foot_y + 6
         # Door fixings go through the ply. Frame screws enter from behind the stile.
         depth = thickness if moving else min(10, thickness - 2)
         bore = _cylinder(-PIN_OFFSET - depth, y, z, (1, 0, 0), 1.7 if moving else 1.2, depth)
@@ -92,15 +94,20 @@ def _anchor(moving: bool, thickness: float) -> tuple[Part, list[Solid]]:
 
 
 def build_chain(
-    layout: ChainLayout, percent: float, jamb: float, label: str,
+    layout: ChainLayout, percent: float, jamb: float, label: str, *, side: int,
 ) -> tuple[Compound, Compound, list[Solid], list[Solid]]:
+    """Side points from the outer post into the opening along Y."""
     frame_angle, door_angle = layout.angles(percent)
     groups, cut_sets = [], []
     for moving, x, angle, thickness in ((False, layout.frame_x, frame_angle, layout.stile_thickness),
                                         (True, layout.door_x, door_angle, layout.door_thickness)):
-        pivot = Location((x, jamb + 7, EYE_HEIGHT))
+        pivot = Location((x, jamb + side * PIN_INSET, EYE_HEIGHT))
         anchor, holes = _anchor(moving, thickness)
         run = _links(layout.length / 2, quarter_turn=moving)
+        if side < 0:
+            anchor = anchor.mirror(Plane.XZ)
+            holes = [hole.mirror(Plane.XZ) for hole in holes]
+            run = run.mirror(Plane.XZ)
         run.label = "Door run" if moving else "Frame run"
         run.location = pivot * Location((0, 0, 0), (0, angle, 0))
         groups.append(Compound(label=CHAIN if moving else f"{label} {CHAIN}", children=[anchor.moved(pivot), run]))

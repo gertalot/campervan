@@ -294,7 +294,7 @@ Campervan
 │   ├── Bench-side panel
 │   ├── Aisle panel
 │   ├── Pine rib frame
-│   ├── Floor insulation (nine fixed infill pieces)
+│   ├── Floor insulation (twelve fixed infill pieces)
 │   └── Fuel pump hatch → Lift-out plywood lid, Lift-out EPS
 ├── Long bench
 │   ├── Storage box
@@ -619,18 +619,20 @@ Old project fields and material selections for the removed deck, divider, lid, b
 The lower cabinet is one timber carcass with a rear bay, a shallow front bottom bay and two full-depth front bays.
 The removable upper module contains **boxes 4 and 5** above the cab-end bay and **boxes 6 and 7** above the rear bay.
 They share the middle transverse frame and use the lower cabinet’s 40 × 18mm pine.
-Box 4 has a square-ended frame, 280mm deep from the aisle face at X1116 to the timber face at X1396.
-The 4mm wall-side backing finishes at X1400, inside the original allowance at the cab-side pillar.
+Box 4 has a square-ended frame, 328mm deep from the aisle face at X1116 to the timber face at X1444.
+Its floor and cab-end cross rails reach the same depth as the deep section of box 6.
+One 4mm plywood sheet backs box 4 and the deep section of box 6. Its outer face sits at X1448.
+At box 4, a curved cut in the top edge clears the cab-side pillar. The cut follows the registered right-side scan.
 The cab-end wall upright fits between the floor and top cross rails with its full 40 × 18mm end on timber.
 At the middle, the wall rails butt into the shared cross rails. The 6mm floor and top shelf sit on
 18 × 18mm ledgers, level with box 6.
 At the top of box 4 the longitudinal rail is flush with the wall-facing sides of both box 5 uprights
-at X1355, 41mm inboard of the box 4 wall frame.
+at X1355, 89mm inboard of the box 4 wall frame.
 The rail is full 40 × 18mm stock. The 6mm shelf and its two transverse ledgers end at its aisle-facing side.
-Box 5 shares the box 4 shelf as its floor. Its straight wall frame steps in 41mm to X1355,
+Box 5 shares the box 4 shelf as its floor. Its straight wall frame steps in 89mm to X1355,
 giving it 239mm frame depth and a level top 1238mm above the finished floor. Its two wall uprights seat
 on the existing transverse rails. The two aisle posts run the full height of the stacked bays.
-Boxes 5 and 7 are open at the top. Their perimeter rails carry the door catches. Check for 3mm clearance between the
+Boxes 5 and 7 are open at the top. Check for 3mm clearance between the
 outside face of the 4mm backing and the fixed metal roof shoulder along the full rail during fitting.
 
 Box 6 has two rectangular bays in one removable frame. The rear bay reaches construction X1319,
@@ -673,7 +675,7 @@ either side of the van. Boxes 4–7 each have one bottom-hinged aisle flap.
 The centre dividers and wall-side backs are 4mm Bunnings TigerPly Okoume. Box 3 is open on the wall side for chair storage.
 The box 1 back sits on the inside faces of the shallow wall rails and attaches
 to two square-cut end cleats. One deep back covers both levels of box 2. Box 6 uses two flat backs and
-square returns at its depth changes. The shared boxes 5 and 7 back extends down to the undersides of
+a square return at the rear pillar. The shared boxes 5 and 7 back extends down to the undersides of
 the three cross beams. Its bottom edge has square notches at the pillar step, middle and cab end.
 The middle notch also clears the 4mm centre divider attached to the beam. The back extends aft to the pillar step.
 There it turns 36mm aisleward and continues to the cabinet rear on the box 6 shallow wall.
@@ -733,7 +735,7 @@ At both levels the middle and cab-end side ledgers run continuously between the 
 The Z770 frame carries the upper module directly. Two M6 × 90mm hex bolts pass vertically through each
 stacked transverse rail pair. Match-drill 6.5mm holes through the 80mm timber stack on the 18mm rail centreline.
 Measure from each cross rail's aisle end towards the wall. The hole centres are 40 and 105mm at the rear,
-40 and 230mm at the middle, and 40 and 182mm at the cab end. Fit a 16mm washer under each head and nut,
+and 40 and 230mm at both the middle and cab end. Fit a 16mm washer under each head and nut,
 with the heads underneath. The middle sill stop finishes 15mm from each bolt centre.
 Glue and screw the ledgers to the frame; keep screws clear of the frame-joint dowels.
 Both 6mm plywood panels are 292 × 389mm rectangles and finish flush with their frame rails. Panels fit inside the framing
@@ -770,30 +772,34 @@ until checked against the physical catches. The catch holding force is unpublish
 #### Top-row folding stays
 
 The Box 5 and Box 7 sliders raise the top-row flaps. Each 6mm door has a top
-piano hinge with an 18mm pine backing strip, a low finger pull and a roller catch centred on the sill.
-The opposing catches on the box 4/5 rail have 4mm between their 18mm mounting blocks. The shelf has a
-local cutout around the upper catch block. The hinge and backing stop 20mm from the stay-side door edge
+piano hinge with an 18mm pine backing strip and a low, centred finger pull.
+The box 5 roller catch attaches to the cab-end aisle post. The box 7 catch attaches to the post beside box 8.
+Each block stands vertically behind the post. Its bottom clears the shelf by the door gap (2mm).
+The hinge and backing stop 20mm from the stay-side door edge
 and 10mm from the opposite end. This leaves space for the door arm beside the hinge when open.
 
-| Trial installation | Hardware geometry used | Attachment |
-| --- | --- | --- |
-| Box 5, Penn Elcom P1240 | 12mm strap and 4.2mm fixing eyes. The drawing places the elbow 80mm along and 18mm across from each eye, giving an 82mm pivot pitch. The published 91.75mm arm length is a different measurement. | Turn the 40 × 18 × 50mm stile block with its 40mm face spanning the jamb edge. It bears 20mm on the stile and projects 20mm into the opening. The door has a 50mm-long, 18mm-square pine pad. The two exposed fixing faces line up and the pressed arms fold on the opening side of both pads. |
-| Box 7, Vintique left | The supplier gives 206mm overall, 104mm swivel to tip and a 40mm plate. Scaling the product photos gives approximately 98.5mm between pivots and 30mm between plate screws. CAD uses the listed 1.2mm gauge. The same listing also says 2.5mm. | Flat plate on a 40 × 18 × 50mm extension behind the left aisle stile, bent plate against a 50mm-long pine pad on the inner door face. |
+Each flap uses one Penn Elcom P1240 beside the centre stile. Each fixed pivot screws into the opening-side
+face of the stile through a 10mm tubular spacer. Its centre is 13mm behind the cabinet face with 18mm stock.
+The fixed eye has 1mm nominal clearance behind the closed 6mm flap. The pilot centre is 5mm from the back of the stile.
+Both links fold towards the stile. Each door pivot screws into the stile-facing side of a 50mm long,
+18mm square pine pad glued to the inside of its flap. The divider has a straight front edge.
+The model uses nominal 25mm stile screws, 12mm pad screws and 8mm outside diameter spacers.
+Confirm the free pivot action, screw fit and edge clearance on an offcut before drilling the cabinet.
 
-Both elbows fold into the cabinet. Box 5 reaches dead centre with the flap horizontal and 164mm between the fixing eyes.
-The elbow then crosses the line between the eyes and the flap settles under its own weight. At 100% the model assumes the
-two long webs line up and the short legs bear against one another. The eyes are then 160mm apart, the elbow is 18mm
-past centre and the flap rests 3.1° below horizontal. The reverse slider motion lifts the flap back to horizontal as the
-elbow returns through centre. The P1240 drawing gives the arm dimensions but does not specify the stop contact angle.
-Box 7 still reaches horizontal with the Vintique pivots in line. Confirm the stop and release with the actual stays
-before transferring holes to the cabinet. Bend radii, forming details
+The drawing places the elbow pin 80mm along and 18mm across from each fixing eye.
+The straps are 12mm wide and the fixing eyes are 4.2mm in diameter.
+The assumed physical stop puts the fixing eyes 160mm apart and the flap about 3° below horizontal.
+The preview uses that flap angle at 100%. The elbow stays on the folding side of the line between the eyes.
+This lets the flap close immediately from any position. The slider provides an alternative to dragging the flap.
+See the [W3C guidance on dragging movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html).
+The P1240 drawing gives the arm dimensions but does not specify the stop contact angle.
+Check the stop and release with the actual stays before drilling the cabinet. Bend radii, forming details
 and screw patterns are approximate.
 
 Sources: [Penn Elcom specifications](https://www.penn-elcom.com/200mm-chrome-locking-lid-stay-p1240),
 [Penn Elcom catalogue, printed page 205](https://www.penn-elcom.com/global-product-catalogue-download),
 [P1240 dimensioned drawing](https://www.flightcasefittings.co.uk/media/catalog/product/p/1/p1240-dwg.jpg),
-[Roadcases NZ product photo](https://roadcases.co.nz/products/penn-elcom-p1240-locking-lid-stay),
-[Vintique dimensions and photos](https://www.vintique.co.nz/products/lid-stay-silver-left-armt-only-104mm-arm).
+[Roadcases NZ product photo](https://roadcases.co.nz/products/penn-elcom-p1240-locking-lid-stay).
 
 The following describes the checkpointed cabinet, not the active assembly.
 
@@ -910,7 +916,9 @@ The BOM allows seven 610mm Taskmaster stainless piano-hinge lengths (one per fla
 and washers, and the mounting blocks use fourteen screws. Hinge fixings remain unspecified. Hardware geometry
 uses nominal mounting dimensions. Each of the five bottom-hinged flaps has one 2mm Pinnacle jack chain.
 The two mounting pins sit 125mm above the hinge axis with the flap closed. The fixed lug attaches to the back
-of the aisle stile. The moving lug bolts through the plywood. At 90° the pin centres are about 188mm apart.
+of the outer aisle post in each bay. The four cab-end chains use the cab-end posts. The box 6 chain uses the rear post.
+The moving lug bolts through the plywood. Its bolts sit 11mm inside the opening, at the same inset as the upper side catches.
+At 90° the pin centres are about 188mm apart.
 One 3m pack covers all five doors. With the flap horizontal, check the actual link length before drilling.
 The CAD approximates the link shape and the slack with two runs. The lug and pin sizes are nominal.
 Boxes 5 and 7 use their folding stays. Cleat fixing holes and vehicle anchorage remain to detail. Pine backing strips follow the moving doors and appear in the cut list.
@@ -1087,8 +1095,8 @@ switch, so hiding Vehicle leaves the arches controlled by Wheel arches. Both arc
 work; changing Vehicle preserves their settings. The checkbox preference uses the existing saved visibility paths.
 Visible wheel arches have opaque faces and outlines and are excluded from See inside fading and click-through picking.
 Wooden floor controls the top-level Finished floor plywood assembly, outside Vehicle references. It contains the
-two 2030mm-long panels cut from separate 2400 × 1200 × 12mm sheets. The straight joint sits on the
-continuous rib at X557.5, 64.5mm inside the aisle face of the long bench in the cabinet-right layout.
+two 2030mm-long panels cut from separate 2400 × 1200 × 12mm sheets. Timber supports the straight joint
+along its full length at X557.5, 64.5mm inside the aisle face of the long bench in the cabinet-right layout.
 The bench-side blank is 532.5mm wide and the
 aisle blank is 917.5mm wide. Both retain the original door-wing steps and chamfers at the sliding doors.
 Behind each wheel arch a flush-trimmed pine block supports the 105mm plywood extension.
@@ -1099,18 +1107,21 @@ driven by the shared `floor_surface_z_mm` parameter.
 One shared frame of 45 × 20mm Red Stag pine battens (Bunnings I/N 0605227, 5.4m lengths) sits beneath
 both panels. The front and rear rails each span the full 1200mm floor width.
 The four side rails have square ends and fit between the end rails and the routed door shoulders.
-For each door, edge-glue three 170mm offcuts for the rear shoulder. At the cab-side shoulder, use one
+The middle cross rib includes the first strip of both rear door shoulders. Cut it from one 1300mm blank.
+Use the floor plywood as a guide to trim both ends. Add two 170mm offcuts per shoulder beside the rib.
+At each cab-side shoulder, use one
 157.5 × 45 × 20mm crosspiece. Extend the long wing rail 5mm into the taper and butt it against the crosspiece.
 Flush-trim the rail tip and crosspiece together to the plywood. The square joint has 32.5mm of contact.
 Use three 330mm offcuts for each rear pocket.
 Jigsaw the glue-ups close to the fitted plywood outline, then use the plywood edge as the flush-trim guide.
-The seam rib at X557.5 and the hatch rib at X902.5 both run the length of the frame.
+The rear cross rib is 1110mm long. The clear bays from the rear end rail to the hatch cross rib
+measure 468⅓mm, 491⅔mm and 445mm.
+The 1360mm cross rib spans the door wings at Y1547.5 and forms the rear edge of the pump hatch.
+Square-cut lengthwise ribs at X557.5 and X902.5 butt against each cross rib.
 The clear spans across the 1200mm core are 340, 300 and 380mm from left to right.
-The hatch rib forms the aisle side of the opening. The door-wing cross-battens align at Y1547.5 and
-butt against the two longitudinal ribs. The right segment forms the rear hatch rail.
-Two short rails close the wall side and cab side of the hatch. The rear cross-battens stay at Y815.
+The lengthwise rib at X902.5 forms the aisle side of the hatch. Two short rails close its wall and cab sides.
 The ribs occupy Z−12…8. The complete floor is 32mm thick on the assumed flat floor.
-The nine fixed infill pieces and the removable insert use 20mm Expol S Grade ThermaSlab (Bunnings I/N 0717186).
+The twelve fixed infill pieces and the removable insert use 20mm Expol S Grade ThermaSlab (Bunnings I/N 0717186).
 
 The registered scan places the pump cover near X1075, Y1720. Check the tab positions in the van before cutting.
 The timber frame leaves a 300 × 300mm clear opening. The aisle sheet contains the entire 345 × 345mm cutout.

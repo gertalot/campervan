@@ -16,6 +16,26 @@ def _roof_edge(p: Parameters, stations: list[tuple[float, float]], start_slope: 
                             tangents=[(0, 1, start_slope), (0, 1, 0)], scale=False)
 
 
+def _scribe_waste(p: Parameters, stations: list[tuple[float, float]], start_slope: float,
+                  end_y: float | None = None) -> Solid:
+    curve = _roof_edge(p, stations, start_slope)
+    first, last = curve.start_point(), curve.end_point()
+    corners = [tuple(last)]
+    if end_y is not None:  # Level across the thickness of the return.
+        corners.append((0, end_y - p.cabinet_rear_y_mm, last.Z))
+    corners.extend([(0, corners[-1][1], p.body_height_mm), (0, first.Y, p.body_height_mm), tuple(first)])
+    wire = Wire([curve, *(Edge.make_line(a, b) for a, b in zip(corners, corners[1:]))])
+    return Solid.extrude(Face(wire), (p.cargo_width_mm, 0, 0))
+
+
+def cab_pillar_backing_waste(p: Parameters) -> Solid:
+    """Cut the box 4 backing around the cab-side pillar at the X1448 outer face."""
+    stations = [(909, 1082), (916, 1017), (925, 927), (934, 865), (941, 850), (953, 836),
+                (964, 833), (978, 837), (988, 851), (1000, 891), (1009, 921), (1017, 927),
+                (1023, 957), (1030, 1017), (1037, 1060), (1045, 1088)]
+    return _scribe_waste(p, stations, -8)
+
+
 def rear_backing_roof_waste(p: Parameters, rear_wall: float, upper_wall: float,
                             step_y: float) -> tuple[Solid, Solid, Solid, Solid]:
     """Jigsaw contours from sections through the installed sheets, in registered vehicle Y/Z."""
@@ -23,22 +43,17 @@ def rear_backing_roof_waste(p: Parameters, rear_wall: float, upper_wall: float,
     step = p.cabinet_rear_y_mm + step_y
     skin = p.cabinet_partition_thickness_mm
 
-    def scribe(stations: list[tuple[float, float]], start_slope: float, end_y: float | None = None) -> Solid:
-        curve = _roof_edge(p, stations, start_slope)
-        first, last = curve.start_point(), curve.end_point()
-        corners = [tuple(last)]
-        if end_y is not None:  # Level across the thickness of the return.
-            corners.append((0, end_y - p.cabinet_rear_y_mm, last.Z))
-        corners.extend([(0, corners[-1][1], p.body_height_mm), (0, first.Y, p.body_height_mm), tuple(first)])
-        wire = Wire([curve, *(Edge.make_line(a, b) for a, b in zip(corners, corners[1:]))])
-        return Solid.extrude(Face(wire), (p.cargo_width_mm, 0, 0))
+    shallow = _scribe_waste(
+        p, [(80, 1099), (92, 1094), (108, 1087), (122, 1080), (134, 1078),
+            (148, 1092), (162, 1116), (179, 1140), (192, 1149), (216, 1162), (step - skin, rear_z)],
+        -0.5, step,
+    )
+    upper = _scribe_waste(
+        p, [(step, upper_z), (260, 1176), (286, 1194), (301, 1208),
+            (314, 1226), (331, 1224), (349, 1234), (359, 1243), (370, 1258)],
+        1,
+    )
 
-    shallow = scribe([(80, 1099), (92, 1094), (108, 1087), (122, 1080), (134, 1078),
-                      (148, 1092), (162, 1116), (179, 1140), (192, 1149), (216, 1162),
-                      (step - skin, rear_z)], -0.5, step)
-    upper = scribe([(step, upper_z), (260, 1176), (286, 1194), (301, 1208),
-                    (314, 1226), (331, 1224), (349, 1234), (359, 1243), (370, 1258)],
-                   1)
     def bevel(inner: float, y: float, depth: float, wall_z: float) -> Solid:
         z0, z1 = rear_z - p.floor_surface_z_mm, wall_z - p.floor_surface_z_mm
         outline = [(inner, y, z0), (upper_wall, y, z1), (p.cargo_width_mm, y, z1),

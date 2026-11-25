@@ -2,7 +2,7 @@
 
 from math import ceil
 
-from build123d import Align, Color, Compound, Cylinder, Face, Location, Part, Solid, Wire
+from build123d import Align, Color, Compound, Cylinder, Face, Location, Part, Plane, Solid, Wire
 
 from campervan.cad.mirror import mirror_assembly
 from campervan.cad.panels import countersunk_clearance, panel
@@ -33,7 +33,7 @@ def routed_block(label: str, profile: list[tuple[float, float]], p: Parameters) 
     return Compound(label=label, children=strips)
 
 
-def rib_frame(outline: list[tuple[float, float]], centre: float, seam_x: float, cross_batten_y: float, length: float,
+def rib_frame(outline: list[tuple[float, float]], centre: float, seam_x: float, length: float,
               rear_pocket: list[tuple[float, float]], door_side: list[tuple[float, float]],
               p: Parameters) -> Compound:
     width, depth = p.floor_rib_width_mm, p.floor_rib_thickness_mm
@@ -90,6 +90,17 @@ def rib_frame(outline: list[tuple[float, float]], centre: float, seam_x: float, 
         start, end = shoulder[0][1], shoulder[-1][1]
         profile = [(x - inner, y - start) for x, y in shoulder]
         step = routed_block(name, [(0, 0), *profile, (0, end - start)], p)
+        if shoulder is rear_shoulder:
+            # The first strip at each shoulder is the profiled end of the same cross rib.
+            tip, *remaining = step.children
+            right_tip = tip.solid().moved(Location((inner, 0, 0)))
+            centre_span = panel(2 * inner, width, depth).moved(Location((-inner, 0, 0)))
+            cross_rib = centre_span.fuse(right_tip, right_tip.mirror(Plane.YZ)).solid()
+            cross_rib.label, cross_rib.color = "Cross rib 2", PINE
+            members.append(cross_rib.moved(Location((centre, start, bottom))))
+            if not remaining:
+                continue
+            step = Compound(label=name, children=remaining)
         step.location = Location((inner, start, 0))
         right_blocks.append(step)
     blocks = []
@@ -98,34 +109,34 @@ def rib_frame(outline: list[tuple[float, float]], centre: float, seam_x: float, 
         left.label = right.label.replace("Right", "Left")
         blocks.extend((left, right))
     members.append(Compound(label=ROUTED_BLOCKS, children=blocks).moved(Location((centre, 0, bottom))))
-    if 4 * width >= 2 * half_core or 2 * width >= min(cross_batten_y, length - cross_batten_y):
-        raise ValueError("Floor ribs must leave room for the cross-battens.")
-
     half = HATCH_CLEAR / 2
     rear, front = HATCH_Y - half, HATCH_Y + half
     left, right = HATCH_X - half, HATCH_X + half
     if not (seam_x + width / 2 < left - width
             and right + width <= centre + half_core - width and front + width < length - width):
         raise ValueError("The pump hatch frame must clear the seam rib and perimeter ribs.")
-    rib("Longitudinal rib 1", seam_x + width / 2, width, length - 2 * width, along_y=True)
-    rib("Longitudinal rib 2", left, width, length - 2 * width, along_y=True)
+    # Keep the rear rib in place. The door shoulder and the hatch locate the next two ribs.
+    hatch_rib_y = rear - width
+    bay_length = (hatch_rib_y - 3 * width) / 3
+    if bay_length <= 0:
+        raise ValueError("The floor must have room for three bays behind the pump hatch.")
+    pitch = width + bay_length
+    rib("Cross rib 1", centre - inner, pitch, 2 * inner)
+    rib("Cross rib 3", centre - wing + width, hatch_rib_y, 2 * (wing - width))
+    start = width
+    for index, end in enumerate((pitch, door_start, hatch_rib_y, length - width), 1):
+        for name, x in (("Seam rib", seam_x + width / 2), ("Hatch-side rib", left)):
+            rib(f"{name} {index}", x, start, end - start, along_y=True)
+        start = end + width
     rib("Pump hatch wall rail", right + width, rear, HATCH_CLEAR, along_y=True)
     rib("Pump hatch cab rail", left, front, HATCH_CLEAR + width)
-    half_wide = max(x for x, _ in outline)
-    for name, y, half_span in (("Panel seam batten", cross_batten_y - width / 2, half_core),
-                               ("Door-wing cross-batten", rear - width, half_wide)):
-        intervals = [(centre - half_span + width, seam_x - width / 2),
-                     (seam_x + width / 2, left - width),
-                     (left, centre + half_span - width)]
-        for index, (start, end) in enumerate(intervals, 1):
-            rib(f"{name} {index}", start, y, end - start)
     return Compound(label="Pine rib frame", children=members)
 
 
 def build_floor_plywood(p: Parameters) -> Compound:
     """Two full-length sheets share the centreline of the rib under both benches."""
     centre = p.cargo_width_mm / 2
-    cross_batten_y, length = 830.0, 2030.0
+    length = 2030.0
     half_width, wing = FLOOR_BASE_WIDTH_MM / 2, 725.0
     # Half-width and distance from the plywood rear edge. The door wings retain the physical floor outline.
     door_side = [
@@ -152,7 +163,7 @@ def build_floor_plywood(p: Parameters) -> Compound:
         part.label, part.color = name, PLY
         panels.append(part)
     outer = [(-half_width, 0), (half_width, 0), *door_side, *((-x, y) for x, y in reversed(door_side))]
-    frame = rib_frame(outer, centre, seam_x, cross_batten_y, length, rear_pocket, door_side, p)
+    frame = rib_frame(outer, centre, seam_x, length, rear_pocket, door_side, p)
     if p.floor_insulation_thickness_mm > p.floor_rib_thickness_mm:
         raise ValueError("Floor insulation must fit within the pine rib depth.")
     full_outline = [*ply_side, *((-x, y) for x, y in reversed(ply_side))]
@@ -166,11 +177,11 @@ def build_floor_plywood(p: Parameters) -> Compound:
         Location((HATCH_X - HATCH_CLEAR / 2, HATCH_Y - HATCH_CLEAR / 2, -ply - depth)))
     cavities = sorted((envelope - frame - hole).solids(),
                       key=lambda solid: (round(solid.bounding_box().center().Y), solid.bounding_box().min.X))
-    if len(cavities) != 9:
-        raise ValueError("The floor frame must leave nine fixed insulation bays around the pump hatch.")
+    if len(cavities) != 12:
+        raise ValueError("The floor frame must leave twelve fixed insulation bays around the pump hatch.")
     infill = []
     for index, solid in enumerate(cavities):
-        row = ("Rear", "Middle", "Front")[index // 3]
+        row = ("Rear", "Rear middle", "Front middle", "Front")[index // 3]
         column = ("left", "centre", "right")[index % 3]
         infill.append(Part([solid], label=f"{row} {column} infill", color=EPS))
     insulation = Compound(label="Floor insulation", children=infill)

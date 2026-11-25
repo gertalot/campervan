@@ -13,6 +13,8 @@ from campervan.parameter_fit import FURNITURE_FIT_ENABLED
 
 # The frame was laid out with a 6mm end-skin allowance, independently of the lining stock.
 CABINET_END_ALLOWANCE_MM = 6.0
+# Side catch and chain fasteners share a drill line measured into the clear opening.
+DOOR_FASTENER_INSET_MM = 11.0
 
 def cabinet_back_profile(p: Parameters, inset: float) -> Wire:
     """One bend across the sheet height, bridging recesses and clearing projecting side posts.

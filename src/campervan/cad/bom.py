@@ -6,7 +6,7 @@ from typing import Any
 from build123d import Location, Shape
 
 from campervan.cad.cabinet_chains import CHAIN
-from campervan.cad.cabinet_stays import PENN, VINTIQUE
+from campervan.cad.cabinet_stays import PENN
 from campervan.cad.scan_scribing import scan_clearance_mm
 from campervan.cad.cut_profiles import cutting_axes, fitting_datums, flat_profile
 from campervan.cad.fitting import VehicleFitting
@@ -80,8 +80,8 @@ def cut_list(model: Shape[Any], parameters: Parameters) -> list[CutPart]:
             return  # One purchased pair; the moving halves follow their tabletop leaves.
         if part.label == CHAIN or part.label.endswith(f" {CHAIN}"):
             return  # Both runs come from one purchased pack for the five flaps.
-        if PENN in path or VINTIQUE in path:
-            return  # One purchased stay per trial door, counted in the materials list.
+        if PENN in path or any(group.endswith(f" {PENN}") for group in path):
+            return  # One purchased stay per top-row flap, counted in the materials list.
         if "Hinges" in path or "Keeper fixings" in path or any(name.endswith("fixed hardware") for name in path):
             return  # Purchased hinges/bodies: count the static hinge role and moving catch keeper only.
         if "Roller catch bodies" in path:

@@ -9,7 +9,8 @@ from campervan.cad.cabinet_layout import cabinet_layout
 from campervan.cad.cabinet_modules import module_fasteners
 from campervan.cad.cabinet_doors import CabinetDoors, build_cabinet_doors
 from campervan.cad.cabinet_upper import (
-    BOX8_POST_TOP_WORLD_Z_MM, REAR_END_SKIN_WALL_X_MM, end_skin_waste, rear_backing_roof_waste, rear_face_clearance,
+    BOX8_POST_TOP_WORLD_Z_MM, REAR_END_SKIN_WALL_X_MM, cab_pillar_backing_waste, end_skin_waste,
+    rear_backing_roof_waste, rear_face_clearance,
 )
 from campervan.cad.cut_profiles import copy_fitting_datums, set_fitting_datums
 from campervan.cad.floor import FLOOR_BASE_WIDTH_MM
@@ -21,11 +22,10 @@ WOOD = Color(0.84, 0.64, 0.39)
 PLYWOOD = Color(0.91, 0.80, 0.62)
 # Highest registered crown in the cab-end arch band: world Z283.485mm, rounded up.
 ARCH_CROWN_WORLD_Z_MM = 284.0
-# Finished plywood faces in the fitted envelope. The framing bears against the inside of the sheets.
+# Finished wall-side plywood faces in construction coordinates.
 DEEP_BACK_OUTER_X_MM = 1448.0
 BOX6_REAR_BACK_OUTER_X_MM = 1323.0
 BOX6_PILLAR_RETURN_OUTER_Y_MM = 157.0
-BOX4_BACK_OUTER_X_MM = 1400.0
 BOX5_BACK_OUTER_X_MM = 1359.0
 BOX5_TOP_WORLD_Z_MM = 1258.0
 # Rear face of the full-height compartment clears the rear roof beam on the slide-in path.
@@ -216,14 +216,14 @@ def build_cabinet(p: Parameters) -> Compound:
         shelves.append(inset_shelf(label, start, end, wall, level, clear_frame=frame))
         ledges.extend(shelf_ledgers(label, start, end, wall, level, ("Middle", "Cab-end")))
 
-    rear_wall, cab_wall = BOX6_REAR_BACK_OUTER_X_MM - skin, BOX4_BACK_OUTER_X_MM - skin
+    rear_wall = BOX6_REAR_BACK_OUTER_X_MM - skin
     # Measure from the common exposed timber. The box 4 wall post stands on its floor rail.
     bolt_inset = 40.0
     aisle_bolt = aisle + t + bolt_inset
     middle_wall_bolt = deep - w - bolt_inset
     bolt_centres = []
     for y, wall_bolt in ((rear_end_y, min(shallow, rear_wall) - w - bolt_inset),
-                         (rail_y, middle_wall_bolt), (cab_end_y, min(deep, cab_wall) - w - bolt_inset)):
+                         (rail_y, middle_wall_bolt), (cab_end_y, middle_wall_bolt)):
         if wall_bolt - aisle_bolt < bolt_inset:
             raise ValueError("The cabinet cross rails need room for two module bolts clear of their end joints.")
         bolt_centres.extend(((aisle_bolt, y + t / 2), (wall_bolt, y + t / 2)))
@@ -238,7 +238,6 @@ def build_cabinet(p: Parameters) -> Compound:
             copy_fitting_datums(part, machined)
             timbers[index] = machined
         timbers.append(Compound(label="Catch mounting blocks", children=doors.mounts))
-        timbers.extend(doors.stay_blocks)
 
     machine_frame(parts, lower_doors)
     parts.append(Compound(label="Module fasteners", children=bolts))
@@ -255,7 +254,7 @@ def build_cabinet(p: Parameters) -> Compound:
     upper_frame.extend([
         post("Box 6 rear aisle post", aisle + t, rear, split, BOX8_POST_TOP_WORLD_Z_MM - p.floor_surface_z_mm),
         post("Box 6 middle aisle post", aisle + t, middle, split, box5_top),
-        post("Box 4 cab-end wall post", cab_wall, cab_end_y, split + w, layout.upper - w, transverse=True),
+        post("Box 4 cab-end wall post", deep, cab_end_y, split + w, layout.upper - w, transverse=True),
         post("Box 4 cab-end aisle post", aisle + t, cab, split, box5_top),
     ])
     upper_ledges = []
@@ -315,10 +314,10 @@ def build_cabinet(p: Parameters) -> Compound:
         rail("Box 7 upper shelf wall rail", wall5, box7_rear + t, rail_y, box5_top),
     ])
     for prefix, level in (("Box 4 floor", split + w), ("Box 4 upper shelf", layout.upper)):
-        wall = wall5 if level == layout.upper else cab_wall
+        wall = wall5 if level == layout.upper else deep
         shelf_wall = wall - t
         upper_frame.extend([
-            cross(f"{prefix} cab-end rail", aisle + t, cab_wall, end, level),
+            cross(f"{prefix} cab-end rail", aisle + t, deep, end, level),
             rail(f"{prefix} aisle rail", aisle + t, middle + w, cab, level),
             rail(f"{prefix} wall rail", wall, start, end, level),
         ])
@@ -378,12 +377,11 @@ def build_cabinet(p: Parameters) -> Compound:
         divider("Box 4 centre divider", aisle + t, deep - t, rail_y - skin, sill, layout.upper - ledger_drop,
                 clear=upper_frame),
         divider("Box 5 centre divider", aisle + t, wall5 - t, rail_y - skin, layout.upper, box5_top - ledger_drop),
-        backing("Box 4 backing", cab_wall, rail_y + t, cab_face, split, layout.upper),
         backing("Box 6 shallow backing", rear_wall, rear_end_y, step_y, split, box5_top, clear=(shallow_roof,)),
         divider("Box 6 pillar step return", rear_wall + skin, deep + skin, step_y - skin, split, box5_top,
                 clear=(return_roof, return_waste)),
-        backing("Box 6 deep backing", deep, step_y, rail_y + t, split, layout.upper),
-        divider("Box 6 middle step return", cab_wall + skin, deep + skin, rail_y + t, split, layout.upper),
+        backing("Boxes 4 and 6 deep backing", deep, step_y, cab_face, split, layout.upper,
+                clear=(cab_pillar_backing_waste(p),)),
         backing("Boxes 5 and 7 backing", wall5, step_y, cab_face, head, box5_top,
                 clear=(upper_roof, divider_allowance, *upper_frame)),
     ]

@@ -1123,7 +1123,7 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Box 7 flap",
-        description="Raise the top-hinged flap above box 6 to horizontal with the Vintique folding stay.",
+        description="Open or close the flap above box 6. At 100% it sits just below horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_cab_end_upper_1_open_percent: float = Field(
@@ -1139,7 +1139,7 @@ class Parameters(BaseModel):
         ge=0,
         le=100,
         title="Box 5 flap",
-        description="Raise the flap above box 4 through horizontal and settle it on the Penn Elcom stay at 100%.",
+        description="Open or close the flap above box 4. At 100% it sits just below horizontal.",
         json_schema_extra={"unit": "%", "group": ["Cabinet", "Doors", "Upper flaps"], "control": "position"},
     )
     cabinet_lower_doors_open_percent: float = Field(
