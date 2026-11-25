@@ -15,17 +15,19 @@ relative to the finished floor; the van, scan and ceiling remain fixed. The curr
 registered Z0 datum. The cabinet roof profiles reference the registered van ceiling.
 
 - Drag fixed parts or the background to orbit. Use the ViewCube for a face, edge or corner view.
-- Hide groups with their eye icons or use the category checkboxes in the sidebar.
-- **See inside** fades obstructing vehicle surfaces. Turn it off to view the opaque body; windows remain transparent.
-- Show **Wheel arches** independently of the rest of the vehicle.
+- **Visibility** starts with six rows. Select a triangle to expand a group. Select its eye to hide or show it.
+  A hidden parent dims its children's eyes. Each child keeps its setting. A slash means its own setting is off.
+- Under **Camera**, **See inside** fades obstructing vehicle surfaces. Turn it off to view the opaque body; windows remain transparent.
+- **Vehicle** controls the body, wheel arches and scan. **Wheel arches** and **Scan comparison** keep their own settings.
+- **Bed/couch** controls both benches, their cushions and slats, and the mannequin.
 - **Long bench** also controls the table's fixed mounting bracket and backing plate.
 - **Table** hides or shows the table in either pose. Choose **Table position → Bench mount / Stowed** in the table
   settings to change its pose; changing pose does not override the Table visibility switch.
-- Filter **Cabinet shelves**, **Cabinet doors**, **Cabinet skin** and **Cabinet frames** independently.
+- Expand **Cabinet** to set **Shelves**, **Doors**, **Skin** and **Frames** across both cabinet modules.
   Hinges and folding stays follow Doors. These switches act immediately without regeneration and retain their choices while Cabinet is hidden.
 - Pull **Box 5 flap** or **Box 7 flap** down to close it from any position, including fully open.
   You can also set its position with the flap slider. At 100% the flap sits slightly below horizontal.
-  Hide **Cabinet skin** to see the wall-side view of the linkage.
+  Hide **Cabinet → Skin** to see the wall-side view of the linkage.
 - Resize the sidebar by dragging its right edge. Collapse groups by clicking their headings.
 
 The browser remembers the camera, visibility and sidebar choices. Use the viewer toolbar to reset or refit the camera.
@@ -40,9 +42,8 @@ The control reuses a labelled native range input, keyboard interaction and a deg
 [WAI form labels](https://www.w3.org/WAI/tutorials/forms/labels/) and
 [slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/). This does not establish full accessibility compliance.
 
-The cabinet filters reuse native labelled checkboxes, Space-key activation and the existing mixed state when the two
-modules differ, following the relevant [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
-This is a focused interaction choice, not a claim of full accessibility conformance.
+The triangle and eye have separate keyboard controls. Tab to either control and press Enter or Space.
+Each eye has a fixed accessible name and reports its saved state. [W3C disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/), [W3C toggle button pattern](https://www.w3.org/WAI/ARIA/apg/patterns/button/).
 
 ### Scan comparison
 
@@ -106,7 +107,7 @@ Untick an item to omit it from cut lists and active BOM requirements. Choices sa
 The design, hierarchy, dimensions, motion controls and product selections remain available throughout.
 Excluded items are hidden immediately, without changing their saved eye settings. Re-including an item restores
 its previous visibility, including any hidden subcomponents and table pose. Its eye buttons are disabled while
-excluded. The Visibility checkboxes retain their saved choices as well. A failed save restores the prior inclusion.
+excluded. A failed save restores the prior inclusion.
 
 The table option excludes both tabletop leaves, Lagun kit and hinges from manufacturing
 and purchasing. The storage box remains required. The old rear drawer and its purchasing option have been removed.
@@ -121,10 +122,12 @@ These native labelled checkboxes sit outside the model-parameter form in a separ
 
 Change dimensions in the sidebar and apply them. The app reports invalid values and explains dependent limits.
 **Regenerate** forces a fresh geometry build. Matching saved geometry loads without rebuilding.
-If the status says **Select Regenerate to update**, the viewer shows the previous model.
+If the saved geometry is stale, the app shows it and starts an update automatically.
+The status reads **Regenerating… · Previous model** until the new geometry is ready.
+The status message leaves keyboard focus in place. [W3C guidance on status messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)
 
 Live sliders and direct dragging operate the sliding bed, storage lid, individual cabinet doors and mounted table.
-Movable parts glow cyan on hover and during dragging. Motion follows the joint limits; there is no collision detection.
+Movable parts show a hint under the pointer. They glow cyan during a drag. Motion follows the joint limits; there is no collision detection.
 
 | Control | Behaviour |
 | --- | --- |
@@ -142,6 +145,36 @@ Extending the bed stows a mounted table; retracting the bed restores it when the
 
 Use **Alt-drag** to orbit over draggable objects. Rotate the camera if a part's allowed motion is edge-on.
 
+The **Paint bucket** sits to the right of the person icon. Click it or press **B** in the CAD view.
+Click the adjacent swatch to open the colour picker. Choose **RGB** or **HSV**.
+In **Choose paint**, click the pipette beside the colour preview. Click a surface in the model.
+The picker returns to the same tab with the surface colour, texture and opacity. Press **Esc** during sampling to cancel.
+On the raw scan, the pipette takes the colour at the clicked point.
+Select a letter under **Slider channel** to choose the vertical slider. The arrows above the square identify its two axes.
+RGB starts with red on the slider, blue across the square and green up the square.
+HSV starts with hue on the slider, saturation across the square and value up the square.
+Each channel also has a horizontal slider and a numeric field. Both tabs accept a **Hex code** beside the colour preview.
+Use the checkerboard slider to adjust opacity. Use **Tab** to reach each control. Use the arrow keys to adjust a slider.
+Choose a surface finish from **Textures**.
+Pine timber and bed slats show wood grain by default. Choose **Dressed pine** for the grain and its natural pine colour.
+To tint the pine, choose a colour in **RGB** or **HSV** after you select the texture.
+**Favourites** stores swatches for later. **Currently used** shows finishes on the visible, paintable parts.
+Hover over a part to see a light cyan tint on the exposed surfaces of its paint group.
+A thin outline shows the group edges through other parts.
+Click to apply the swatch to the group. Press **Esc** to put the bucket away.
+Use **Undo paint** beside the swatch or press **⌘Z** on Mac (**Ctrl+Z** elsewhere).
+Use **Redo paint** or press **⇧⌘Z** (**Ctrl+Shift+Z** elsewhere) to reapply it.
+Each paint change on a group counts as one step. The project saves each step with the new finish.
+A new paint change clears redo. Existing finishes in an older project form the starting point.
+Skins, shelves, slats, cabinet frames, doors and bench frames each share a finish.
+The door finish covers the plywood flaps and fixed fronts. Hinges, stays, chains, catches and their fasteners keep their metal finish.
+Click the long seat, wall backrest, or cross seat to paint all three cushions in one step.
+To paint a photographed trim panel, show the colour scan and click the panel with the paint bucket.
+Each of the five panels has its own finish. Undo the first paint change on a panel to see its original scan colour.
+With the colour scan visible, click the timber ceiling to apply one colour or texture across its curved surface.
+Undo the first ceiling paint change to restore its timber colour.
+Paint choices and favourite swatches are saved with the project.
+
 The toolbar's person icon enables **Human view** (**H**, also in the right-click menu). It switches to perspective,
 preserving your position and field of view. It captures and hides the pointer; move the mouse to look around without
 holding a button or reaching a window edge.
@@ -157,8 +190,8 @@ Reset centres the rotation pivot on the van and fits it to the viewport, preserv
 
 ### Mannequins and gear
 
-Expand **Mannequin** to adjust seated and lying poses. The main visibility checkbox toggles the group; each person's
-eye icon controls that mannequin. The lying mannequins follow the bed conversion. Pose, body shape and foam compression
+Expand **Mannequin** to adjust seated and lying poses. The eye under **Bed/couch → Mannequin** controls all three poses.
+Each pose also has its own eye. The lying mannequins follow the bed conversion. Pose, body shape and foam compression
 are visual fit references.
 
 The local app saves all three poses and their visibility choices in `data/project.json` without regenerating CAD.

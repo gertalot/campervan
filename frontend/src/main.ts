@@ -8,6 +8,7 @@ import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
 import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
+import { setupFloorDrawing } from './floor-drawing';
 import { setupAprilTags } from './apriltags';
 import { setupCadScanReference } from './cad-scan-reference';
 import { isStaticSite, readSnapshotPart } from './site-runtime';
@@ -17,6 +18,15 @@ function element<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);
   if (!found) throw new Error(`Missing element: ${id}`);
   return found as T;
+}
+function mountPositionSlider(row: HTMLElement, label: HTMLLabelElement, input: HTMLInputElement) {
+  const output = document.createElement('output');
+  output.htmlFor = input.id;
+  output.id = `${input.id}-value`;
+  label.htmlFor = input.id;
+  row.classList.add('parameter-row', 'position-row');
+  row.append(label, output, input);
+  return output;
 }
 const form = element<HTMLFormElement>('parameters');
 const fields = element('fields');
@@ -50,7 +60,6 @@ const viewer = createCadViewer(element('viewer'), () => visibility.restore(), me
 }, message => {
   for (const mode of ['seated', 'lying', 'lying-second']) element(`mannequin-${mode}-status`).textContent = message;
 }, pose => mannequinControls.fitted(pose));
-const visibility = setupVisibility(element('visibility'), viewer);
 const fieldOfView = element<HTMLInputElement>('camera-fov');
 const fieldOfViewValue = element<HTMLOutputElement>('camera-fov-value');
 fieldOfView.value = String(viewer.getFieldOfView());
@@ -63,7 +72,8 @@ fieldOfView.addEventListener('input', () => {
   showFieldOfView();
   viewer.setFieldOfView(fieldOfView.valueAsNumber);
 });
-const scanComparison = setupCadScanReference(element('scan-reference'), viewer);
+let scanComparison: ReturnType<typeof setupCadScanReference> | undefined;
+let scanCentreline: number | undefined;
 const seeInside = element<HTMLInputElement>('see-inside');
 seeInside.checked = localStorage.getItem('campervan.see-inside') !== 'false';
 viewer.setSeeInside(seeInside.checked);
@@ -75,7 +85,7 @@ const seatedMannequin = element<HTMLDetailsElement>('mannequin');
 let mannequinSaveTimer: number;
 let mannequinSave = Promise.resolve();
 const mannequinControls = setupMannequinControls(
-  seatedMannequin, element<HTMLInputElement>('mannequin-visible'), pose => viewer.setMannequinPose(pose),
+  seatedMannequin, pose => viewer.setMannequinPose(pose),
   settings => {
     window.clearTimeout(mannequinSaveTimer);
     mannequinSaveTimer = window.setTimeout(() => {
@@ -86,15 +96,49 @@ const mannequinControls = setupMannequinControls(
     }, 300);
   },
 );
+const visibility = setupVisibility(element('visibility'), viewer, mannequinControls);
 let dirty = false;
 const planning = new PlanningClient();
 setupTabs();
 if (!isStaticSite) {
+  const { setupInspiration } = await import('./inspiration');
+  setupInspiration(element('inspiration-panel'));
   setupAprilTags(element('apriltags-panel'));
   const { setupPlanner } = await import('./planner');
   setupPlanner(element('plan-panel'), planning);
 }
 const materials = setupMaterials(planning);
+const floorDrawing = setupFloorDrawing(element('floor-pattern-panel'));
+const rotationKey = 'campervan.floor-pattern-rotation';
+const cadFloorRotation = element('cad-floor-rotation');
+const rotationControls = [cadFloorRotation, element('drawing-floor-rotation')].map(row => {
+  const label = document.createElement('label');
+  label.textContent = 'Floor pattern rotation';
+  label.title = 'Clockwise, with the cab at the top.';
+  const input = document.createElement('input');
+  input.id = `${row.id}-angle`;
+  input.type = 'range';
+  input.min = '0';
+  input.max = '360';
+  input.step = '1';
+  const output = mountPositionSlider(row, label, input);
+  input.oninput = () => {
+    setFloorRotation(input.valueAsNumber);
+    localStorage.setItem(rotationKey, input.value);
+  };
+  return { input, output };
+});
+function setFloorRotation(degrees: number) {
+  for (const { input, output } of rotationControls) {
+    input.value = String(degrees);
+    output.value = `${degrees}°`;
+    input.setAttribute('aria-valuetext', `${degrees} degrees clockwise`);
+  }
+  viewer.setFloorRotation(degrees);
+  floorDrawing.setRotation(degrees);
+}
+const savedRotation = Number(localStorage.getItem(rotationKey));
+setFloorRotation(Number.isInteger(savedRotation) && savedRotation >= 0 && savedRotation <= 360 ? savedRotation : 0);
 const cutting = setupCutting(element('cuts-panel'), path => {
   showTab('cad');
   if (path.startsWith('Laptop table / ')) {
@@ -103,7 +147,7 @@ const cutting = setupCutting(element('cuts-panel'), path => {
   if (!viewer.focusPiece(path)) {
     error.textContent = 'This piece is not in the displayed CAD model yet.'; error.hidden = false;
   }
-});
+}, floorDrawing.setGroups);
 viewer.setPieceLink({ has: cutting.hasPart, show: path => { void cutting.showPart(path); } });
 const cabinetSideControl = element('cabinet-side-control');
 const cabinetSideInputs = [...cabinetSideControl.querySelectorAll<HTMLInputElement>('input[name="cabinet-side"]')];
@@ -233,15 +277,11 @@ const controller = createController(api, {
       input.title = label.title;
       if (field.control === 'position') {
         input.dataset.livePosition = 'true';
-        if (field.options) {
+        if (input instanceof HTMLSelectElement) {
           row.classList.add('choice-row');
           row.append(label, input);
         } else {
-          row.classList.add('position-row');
-          const value = document.createElement('output');
-          value.htmlFor = name;
-          value.id = `${name}-value`;
-          row.append(label, value, input);
+          mountPositionSlider(row, label, input);
         }
         input.addEventListener('input', () => viewer.previewPositions({ [name]: Number(input.value) }));
         input.addEventListener('change', () => { void viewer.savePositions(); });
@@ -260,6 +300,7 @@ const controller = createController(api, {
       parent.append(row);
       inputs.set(name, input);
     }
+    liveControls.append(cadFloorRotation);
     const stored = groupFor(['Laptop table', 'Stowed'], fields);
     const hint = document.createElement('p');
     hint.id = 'table-stowed-summary';
@@ -292,7 +333,8 @@ const controller = createController(api, {
   },
   setParameters(parameters, reset) {
     viewer.setLayoutWidth(parameters.cargo_width_mm);
-    scanComparison?.setCentreline(parameters.cargo_width_mm / 2);
+    scanCentreline = parameters.cargo_width_mm / 2;
+    scanComparison?.setCentreline?.(scanCentreline);
     const stack = 2 * parameters.table_ply_thickness_mm;
     element('table-stowed-summary').textContent = `Folded top with upright and arm stored underneath. `
       + `Approx. ${stack + 77}mm thick including the ${stack}mm timber stack. `
@@ -309,7 +351,11 @@ const controller = createController(api, {
     refreshBuildVisibility();
     if (reset) dirty = false;
   },
-  setViewerUrl: url => viewer.connect(url),
+  setViewerUrl(url) {
+    scanComparison ??= setupCadScanReference(element('scan-reference'), viewer);
+    if (scanCentreline !== undefined) scanComparison.setCentreline?.(scanCentreline);
+    return viewer.connect(url);
+  },
   setPosition(name, percent) {
     const input = inputs.get(name);
     if (input) input.value = String(percent);
@@ -326,7 +372,7 @@ const controller = createController(api, {
     cutting.onStatus(model);
     const previous = model.published_revision !== null && model.published_revision !== model.requested_revision;
     const labels = {
-      idle: previous ? 'Select Regenerate to update' : 'Loading model…',
+      idle: 'Loading model…',
       regenerating: 'Regenerating…',
       ready: 'Ready',
       failed: 'Model update failed',
@@ -343,7 +389,10 @@ const controller = createController(api, {
   clearTimeout: handle => window.clearTimeout(handle as number),
 }, window.localStorage);
 viewer.setMotionController(controller);
-onTab(tab => { if (tab !== 'cad') viewer.cancelDrag(); });
+onTab(tab => {
+  viewer.setCadActive(tab === 'cad');
+  controller.setCadActive(tab === 'cad');
+});
 
 const draftValues = () => Object.fromEntries([...inputs].map(([name, input]) => [name,
   input instanceof HTMLInputElement && input.type === 'checkbox'

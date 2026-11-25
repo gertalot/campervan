@@ -1,3 +1,5 @@
+import { shortcutLabel } from './keyboard-shortcuts';
+export { isMac, ariaShortcut, shortcutLabel } from './keyboard-shortcuts';
 import { Extension, type Editor } from '@tiptap/core';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { emptyFilter, id } from './planning-api';
@@ -48,16 +50,6 @@ export type PlanAction = {
   when?: (editor: Editor) => boolean; enabled?: (editor: Editor) => boolean;
   checked?: (editor: Editor) => boolean; run: (editor: Editor) => unknown;
 };
-export const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform);
-export function shortcutLabel(shortcut?: string): string {
-  if (!shortcut) return '';
-  const symbols: Record<string, string> = { Mod: isMac() ? '⌘' : 'Ctrl', Alt: isMac() ? '⌥' : 'Alt',
-    Shift: isMac() ? '⇧' : 'Shift', Enter: '↵', ArrowUp: '↑', ArrowDown: '↓', Tab: 'Tab', F10: 'F10' };
-  return shortcut.split('-').map(key => symbols[key] ?? key.toUpperCase()).join(isMac() ? '' : '+');
-}
-export function ariaShortcut(shortcut?: string) {
-  return shortcut?.split('-').map(key => key === 'Mod' ? isMac() ? 'Meta' : 'Control' : key).join('+');
-}
 export const actionLabel = (action: PlanAction, editor: Editor) => typeof action.label === 'function' ? action.label(editor) : action.label;
 const taskContext = (editor: Editor) => Boolean(currentTask(editor)) && !editor.isActive('table');
 const tableContext = (editor: Editor) => editor.isActive('table');

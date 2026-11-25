@@ -3,7 +3,6 @@
 import argparse
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 from campervan.settings import load_settings
@@ -105,9 +104,9 @@ def main() -> None:
         os.environ["CAMPERVAN_DEV"] = "1" if args.command == "dev-api" else "0"
     settings = load_settings()
     if args.command == "viewer":
-        _foreground(
-            [sys.executable, "-m", "ocp_viewer", "--host", settings.viewer_host, "--port", str(settings.viewer_port)]
-        )
+        from campervan.viewer_server import serve_viewer
+
+        serve_viewer(settings.viewer_host, settings.viewer_port)
     elif args.command == "dev-ui":
         environment = dict(os.environ)
         environment.update(

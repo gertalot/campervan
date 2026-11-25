@@ -15,8 +15,17 @@ The model uses parametric Python geometry built with [build123d](https://github.
 | Plan | Break the conversion into nested tasks, with notes, tables and linked purchases. |
 | Cut list | See individual pieces and sheet layouts, allowing for kerf, grain direction and available stock. |
 | AprilTags | Generate a PDF of unique 36h11 tags, automatically fitted to the selected paper and print dimensions. |
+| Inspiration | Browse photos of Twin Peaks-themed rooms and DIY van interiors. Each photo links to its source. |
 
 Double-click a wooden piece to find it in the other view: CAD to cut list, or cut list to CAD.
+
+In **Inspiration**, select one or more tags to show photos with any selected tag. Select **All photos** to reset.
+Click the heart on a thumbnail or an enlarged photo to mark it as a favourite. Click again to clear it.
+The gallery saves favourites in `data/inspiration/catalogue.json`.
+The filters and hearts use [W3C toggle button guidance](https://www.w3.org/WAI/ARIA/apg/patterns/button/).
+Select a photo to enlarge it. Use the left and right arrow keys to browse the filtered photos. Press Escape to close.
+The gallery uses a native dialog with a close button and visible navigation controls. The remove button appears on
+hover, on keyboard focus and on touch screens. [W3C modal dialog guidance](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)
 
 ## Run locally
 
@@ -34,7 +43,7 @@ make dev-api    # Python API and CAD source watcher
 make dev-ui     # Web interface
 ```
 
-Open **http://127.0.0.1:5173**. Keep one application tab open: the viewer service sends geometry to one active connection.
+Open **http://127.0.0.1:5173**. You can open multiple CAD tabs. Each receives the model and has its own measurement tools.
 
 Edit the model in `src/campervan/cad/` or change dimensions in the app. Dimension changes rebuild geometry; sliders
 and dragging move the existing model in the browser. The development services reload source changes.

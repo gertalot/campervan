@@ -1,5 +1,6 @@
-import { Box3, Vector3, type Object3D, type SkinnedMesh } from 'three';
+import { Box3, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3, type Object3D, type SkinnedMesh } from 'three';
 import { createFoamSkin } from './foam-surface';
+import { shirazVelvet } from './paint-swatch';
 
 /** Preserve the existing seated-preview dent; it is independent of lid fitting. */
 function seatedDent(human: Object3D | null, seat: Box3) {
@@ -44,8 +45,13 @@ function seatedDent(human: Object3D | null, seat: Box3) {
 /** One direct geometry update per pose. No physics, gravity, inertia or settling. */
 export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Object3D,
   onChange: () => void, inCoordinates: (operation: () => void) => void) {
-  const blue = createFoamSkin(seat), orange = createFoamSkin(back);
-  const cross = createFoamSkin(crossSeat);
+  const velvet = new TextureLoader().load(shirazVelvet.image, onChange);
+  velvet.name = shirazVelvet.id;
+  velvet.colorSpace = SRGBColorSpace;
+  velvet.wrapS = velvet.wrapT = RepeatWrapping;
+  velvet.repeat.set(1 / shirazVelvet.width, 1 / shirazVelvet.height);
+  const blue = createFoamSkin(seat, velvet), orange = createFoamSkin(back, velvet);
+  const cross = createFoamSkin(crossSeat, velvet);
   cross.draw(() => {});
   const size = blue.localBounds.getSize(new Vector3());
 
@@ -96,6 +102,6 @@ export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Obj
   return {
     bounds: () => blue.bounds(),
     deform(human: Object3D | null, lidPercent = 0) { inCoordinates(() => update(human, lidPercent)); },
-    dispose() { blue.dispose(); orange.dispose(); cross.dispose(); },
+    dispose() { blue.dispose(); orange.dispose(); cross.dispose(); velvet.dispose(); },
   };
 }

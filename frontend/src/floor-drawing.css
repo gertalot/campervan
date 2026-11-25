@@ -1,0 +1,27 @@
+#floor-pattern-panel { grid-area: 1 / 1 / -1 / -1; min-height: 0; overflow: auto; padding: clamp(12px, 3vw, 42px); }
+.tape-points { fill: #075368; stroke: white; stroke-width: 4px; paint-order: stroke; }
+.tape-points text { font-size: 32px; font-weight: 650; }
+.floor-sheet { max-width: 1100px; margin: auto; padding: clamp(18px, 3vw, 42px); background: #f9f8f4; color: #292929; }
+.floor-sheet h2 { color: inherit; font-size: 24px; font-weight: 620; margin: 0 0 18px; }
+.floor-sheet h3 { font-size: 16px; margin: 0 0 10px; }
+.floor-sheet h3 small { margin-left: 6px; font-weight: 400; }
+.floor-figures { display: grid; grid-template-columns: minmax(0, .83fr) minmax(0, 1fr); gap: clamp(16px, 3vw, 40px); }
+.floor-sheet figure { margin: 0 0 20px; }
+.floor-sheet svg { display: block; width: 100%; height: auto; font-family: inherit; overflow: visible; }
+.floor-sheet figcaption, .floor-sheet p { font-size: 13px; line-height: 1.55; }
+.floor-sheet figcaption { margin-top: 8px; }
+.floor-sheet .dimension path, .floor-sheet .angle-mark path { fill: none; stroke: #075368; stroke-width: 1.6; }
+.floor-sheet .extension path { fill: none; stroke: #75716c; stroke-width: 1; }
+.floor-sheet svg text { text-anchor: middle; }
+.floor-sheet .angle-mark text, .floor-sheet .dimension text { font-size: 17px; font-weight: 650; fill: #093f50;
+  stroke: #f9f8f4; stroke-width: 5px; stroke-linejoin: round; paint-order: stroke; }
+.floor-sheet .plan-label { font-size: 51px; font-weight: 600; fill: #155b70; }
+.floor-sheet table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.floor-sheet th, .floor-sheet td { border-bottom: 1px solid #c4c2bc; text-align: right; padding: 6px 3px; }
+.floor-sheet caption { text-align: left; padding-bottom: 4px; }
+.floor-sheet th:first-child { text-align: left; }
+.floor-sheet td:first-child { text-align: left; }
+.floor-colours { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; }
+.floor-colours span::before { content: ''; display: inline-block; width: 1em; height: 1em; background: var(--paint);
+  border: 1px solid #888; margin-right: 5px; vertical-align: -.12em; }
+@media (max-width: 760px) { .floor-figures { grid-template-columns: 1fr; } }

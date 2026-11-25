@@ -1,12 +1,22 @@
 import {
   BoxGeometry, IntType, Uint32BufferAttribute, Vector3,
-  type BufferGeometry, type Mesh, type Object3D,
+  type BufferGeometry, type Color, type Mesh, type MeshStandardMaterial, type Object3D, type Texture,
 } from 'three';
 
 /** Rounded display mesh; each draw deforms its cached rest shape once. */
-export function createFoamSkin(group: Object3D) {
-  const cad = group as Object3D & { front: Mesh; edges?: Object3D & { geometry: BufferGeometry } };
+export function createFoamSkin(group: Object3D, velvet: Texture) {
+  const cad = group as Object3D & { front: Mesh<BufferGeometry, MeshStandardMaterial>; originalColor: Color;
+    edges?: Object3D & { geometry: BufferGeometry } };
   const mesh = cad.front;
+  const material = mesh.material;
+  const originalMap = material.map, originalColor = cad.originalColor.clone();
+  const originalRoughness = material.roughness, originalMetalness = material.metalness;
+  material.map = velvet;
+  material.color.set(0xffffff);
+  cad.originalColor.copy(material.color); // OCP restores this colour after selection.
+  material.metalness = 0;
+  material.roughness = 0.85;
+  material.needsUpdate = true;
   const geometry = mesh.geometry;
   const original = geometry.clone();
   original.computeBoundingBox();
@@ -19,6 +29,7 @@ export function createFoamSkin(group: Object3D) {
     .translate(centre.x, centre.y, centre.z);
   const positions = skin.getAttribute('position');
   const faceNormals = skin.getAttribute('normal');
+  const uv = skin.getAttribute('uv');
   const sourceIds = original.getAttribute('componentId');
   const sourceNormals = original.getAttribute('normal');
   const componentIds = sourceIds ? new Uint32Array(positions.count) : null;
@@ -29,6 +40,10 @@ export function createFoamSkin(group: Object3D) {
   const innerMax = localBounds.max.clone().addScalar(-radius);
 
   for (let i = 0; i < positions.count; i++) {
+    // Measure each sewn face in millimetres so any fabric follows the foam through deformation.
+    const uLength = faceNormals.getX(i) ? size.z : size.x;
+    const vLength = faceNormals.getY(i) ? size.z : size.y;
+    uv.setXY(i, uv.getX(i) * uLength, uv.getY(i) * vLength);
     // Assign the original CAD face before rounding changes its normal.
     if (componentIds && sourceNormals) {
       for (let j = 0; j < sourceIds.count; j++) {
@@ -100,6 +115,12 @@ export function createFoamSkin(group: Object3D) {
   return {
     mesh, localBounds, bounds, draw,
     dispose() {
+      material.map = originalMap;
+      material.color.copy(originalColor);
+      cad.originalColor.copy(originalColor);
+      material.roughness = originalRoughness;
+      material.metalness = originalMetalness;
+      material.needsUpdate = true;
       if (displayed) {
         geometry.dispose();
         geometry.copy(original);

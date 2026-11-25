@@ -18,6 +18,8 @@
 },
 {
   "id": "hume-pinetrim-60-10-4800",
+  "face_texture": "pine",
+  "face_colour": "#E2C7A2",
   "name": "Hume Pine Pinetrim dressed board · 60 × 10mm × 4.8m",
   "supplier": "Bunnings Lyall Bay",
   "url": "https://www.bunnings.co.nz/hume-pine-60-x-10mm-4-8mm-pinetrim-dressed-board_p0298285",
@@ -52,6 +54,8 @@
   },
   {
     "id": "red-stag-45-20-5400",
+    "face_texture": "pine",
+    "face_colour": "#CAC1A6",
     "name": "Red Stag H3.1 pine gauge batten · 45 × 20mm × 5.4m",
     "supplier": "Bunnings Lyall Bay",
     "url": "https://www.bunnings.co.nz/45-x-20-5-4m-h3-1-treated-pine-gauge-batten_p0605227",
@@ -260,6 +264,8 @@
   },
   {
     "id": "pinetrim-140-18-1800",
+    "face_texture": "pine",
+    "face_colour": "#F1C99E",
     "name": "Pinetrim untreated pine · 140 × 18 × 1800mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinetrim-140-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132635",
@@ -278,6 +284,7 @@
   },
   {
     "id": "birch-3-2440",
+    "face_colour": "#BFBEBE",
     "name": "Solid birch plywood · 3mm",
     "supplier": "Renovation Warehouse NZ",
     "url": "https://renovationwarehouse.co.nz/collections/latest-arrivals/products/plywood-2440x1220x3mm-solid-birch-hardwood",
@@ -312,6 +319,8 @@
   },
   {
     "id": "pinetrim-40-18-1800",
+    "face_texture": "pine",
+    "face_colour": "#EFD4B7",
     "name": "Pinetrim untreated pine · 40 × 18 × 1800mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinetrim-40-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132618",
@@ -348,6 +357,8 @@
   },
   {
     "id": "specrite-pine-18-1200-600",
+    "face_texture": "pine",
+    "face_colour": "#E2CDA8",
     "name": "Specrite laminated radiata pine panel · 18mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619",
@@ -366,6 +377,7 @@
   },
   {
     "id": "prempanel-bamboo-25",
+    "face_colour": "#C17D39",
     "name": "Prempanel laminated bamboo panel",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770",
@@ -384,6 +396,8 @@
   },
   {
     "id": "pinetrim-18-18-2400",
+    "face_texture": "pine",
+    "face_colour": "#E7D1B4",
     "name": "Pinetrim untreated clear pine D4S · 18 × 18mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinetrim-18-x-18-x-2-4m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293156",
@@ -453,6 +467,7 @@
   },
   {
     "id": "tigerply-okoume-6",
+    "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 6mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-6mm-okoume-plywood_p0345103",
@@ -471,6 +486,7 @@
   },
   {
     "id": "tigerply-okoume-9",
+    "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 9mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-9mm-okoume-plywood-9mm_p0345104",
@@ -540,6 +556,7 @@
   },
   {
     "id": "tigerply-18",
+    "face_colour": "#B8A283",
     "name": "Tigerply untreated plywood · 18mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-18mm-non-structural-untreated-plywood-18mm_p0170556",
@@ -558,6 +575,7 @@
   },
   {
     "id": "tigerply-12",
+    "face_colour": "#BBAA8E",
     "name": "Tigerply untreated plywood · 12mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-12mm-non-structural-untreated-plywood-12mm_p0170555",
@@ -576,6 +594,7 @@
   },
   {
     "id": "tigerply-okoume-4",
+    "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 4mm",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-4mm-okoume-plywood-4mm_p0345102",
@@ -698,6 +717,8 @@
   },
   {
     "id": "pinetrim-18-18-1200",
+    "face_texture": "pine",
+    "face_colour": "#EFD2B3",
     "name": "Pinetrim untreated clear pine D4S · 18 × 18mm × 1.2m",
     "supplier": "Bunnings NZ",
     "url": "https://www.bunnings.co.nz/pinetrim-18-x-18-x-1-2m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293150",

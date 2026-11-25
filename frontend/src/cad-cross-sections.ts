@@ -1,8 +1,6 @@
 /** Exact scan cuts and independently authored, explicitly recorded vehicle sections. */
 import { Group, Matrix4, Mesh, Vector3, type Object3D } from 'three';
-import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
-import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { screenLine } from './screen-line';
 import { disposeObject, layerUrl, loadObject } from './scan-assets';
 import type { ScanResult } from './scan-library-api';
 import { ScanSectionIndex, type SectionMesh } from './scan-section-geometry';
@@ -71,17 +69,6 @@ function outlinePositions(section: AuthoredSection, station: number): Float32Arr
   return new Float32Array(positions);
 }
 
-function line(positions: Float32Array, color: string, width: number, opacity: number, order: number) {
-  const geometry = new LineSegmentsGeometry().setPositions(positions);
-  const material = new LineMaterial({ color, linewidth: width, opacity, transparent: true,
-    depthTest: false, depthWrite: false });
-  const result = new LineSegments2(geometry, material);
-  result.renderOrder = order;
-  result.userData.campervanOverlay = true;
-  result.raycast = () => {};
-  return result;
-}
-
 function clear(group: Group) {
   for (const child of [...group.children]) { child.removeFromParent(); disposeObject(child); }
 }
@@ -133,7 +120,7 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
         for (const station of controls.rawStations(panel.plane, panel.coordinate)) {
           const segments = layer.index.section(station);
           if (segments.length) {
-            const contour = line(segments, '#36ed76', 1.5, panel.rawOpacity, 9002);
+            const contour = screenLine(segments, '#36ed76', 1.5, panel.rawOpacity, 9002);
             contour.name = `${panel.plane} raw section at ${controls.displayCoordinate(panel.plane, station)} mm`;
             contour.visible = panel.rawOpacity > 0; layer.raw.add(contour);
           }
@@ -144,7 +131,7 @@ export function setupCrossSections(container: HTMLElement, viewer: CrossSectionV
         if (section.plane !== panel.plane) continue;
         for (const station of sectionStations(section)) {
           const selected = section.id === panel.activeId && Math.abs(station - panel.coordinate) < 0.5;
-          const outline = line(outlinePositions(section, station), '#368cff', selected ? 3 : 2,
+          const outline = screenLine(outlinePositions(section, station), '#368cff', selected ? 3 : 2,
             panel.blueOpacity * (selected ? 1 : 0.6), selected ? 9001 : 9000);
           outline.name = 'Blue section ' + section.id + ' at ' + station;
           outline.visible = panel.blueOpacity > 0; layer.blue.add(outline);

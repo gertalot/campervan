@@ -1,19 +1,19 @@
 /** A scan is a display reference, independent of CAD geometry, selection and furniture mirroring. */
-import { Matrix4, Mesh, Points, type Object3D } from 'three';
+import { Matrix4, type Object3D } from 'three';
+import { createScanPanels, type ScanDisplay } from './scan-panels';
 import { disposeObject, layerUrl, loadObject } from './scan-assets';
 import { readScanResults, type ScanResult } from './scan-library-api';
 import { isStaticSite } from './site-runtime';
 import { setupCrossSections, type CrossSectionViewer } from './cad-cross-sections';
 
 interface ReferenceViewer extends CrossSectionViewer {
-  setScanReference(root: Object3D | undefined): void;
-  setVehicleComparisonOpacity(opacity: number | null): void;
+  setScanReference(scan?: ScanDisplay, vehicleOpacity?: number, scanOpacity?: number): void;
 }
 
 export function setupCadScanReference(container: HTMLElement, viewer: ReferenceViewer) {
   container.hidden = false;
   container.insertAdjacentHTML('beforeend', `
-    <label class="reference-toggle"><input type="checkbox" data-visible /> Show scan reference</label>
+    <label class="reference-toggle"><input type="checkbox" data-visible /> Show scan reference with Vehicle</label>
     <label class="reference-result">Reconstruction<select data-result></select></label>
     <button type="button" data-refresh>Refresh references</button>
     <label class="reference-opacity">Scan opacity <output data-opacity-value></output>
@@ -38,6 +38,7 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   opacity.value = String(saved.opacity ?? (isStaticSite ? 100 : 45));
   vehicleOpacity.value = String(saved.vehicleOpacity ?? (isStaticSite ? 0 : 35));
   let scans: ScanResult[] = [], root: Object3D | undefined, generation = 0;
+  let scanDisplay: ReturnType<typeof createScanPanels> | undefined;
   const selected = () => scans.find(scan => scan.key === select.value);
 
   function save() {
@@ -47,22 +48,10 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   function display() {
     output.value = `${opacity.value}%`;
     opacity.setAttribute('aria-valuetext', `${opacity.value} percent`);
-    if (root) {
-      root.visible = visible.checked;
-      root.traverse(object => {
-        if (!(object instanceof Mesh || object instanceof Points)) return;
-        for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-          material.opacity = Number(opacity.value) / 100;
-          material.transparent = material.opacity < 1;
-          material.depthWrite = !material.transparent;
-          material.needsUpdate = true;
-        }
-      });
-    }
-    viewer.setScanReference(root);
+    viewer.setScanReference(visible.checked ? scanDisplay : undefined, Number(vehicleOpacity.value) / 100,
+      Number(opacity.value) / 100);
     vehicleOutput.value = `${vehicleOpacity.value}%`;
     vehicleOpacity.setAttribute('aria-valuetext', `${vehicleOpacity.value} percent`);
-    viewer.setVehicleComparisonOpacity(visible.checked && root ? Number(vehicleOpacity.value) / 100 : null);
   }
   function position() {
     const scan = selected();
@@ -78,15 +67,20 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       .multiply(new Matrix4().fromArray(scan.alignment!.matrix!.flat()).transpose());
     root.matrix.copy(transform).decompose(root.position, root.quaternion, root.scale);
     root.updateMatrixWorld(true);
+    scanDisplay = createScanPanels(root, scan.key);
     display();
     void sections?.setReference(scan, root);
   }
+  function clearReference() {
+    viewer.setScanReference(undefined);
+    void sections?.setReference(undefined, undefined);
+    scanDisplay?.dispose();
+    scanDisplay = undefined;
+    if (root) { disposeObject(root); root = undefined; }
+  }
   async function load() {
     const token = ++generation;
-    viewer.setScanReference(undefined);
-    viewer.setVehicleComparisonOpacity(null);
-    void sections?.setReference(undefined, undefined);
-    if (root) { disposeObject(root); root = undefined; }
+    clearReference();
     const scan = selected();
     if (!scan) return;
     const layer = scan.layers?.find(layer => layer.id === 'mesh')
@@ -97,7 +91,6 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       const loaded = await loadObject(layerUrl(scan, layer), layer.kind);
       if (token !== generation) { disposeObject(loaded); return; }
       loaded.name = 'Scan reference';
-      loaded.traverse(object => { object.userData.campervanOverlay = true; object.raycast = () => {}; });
       root = loaded;
       position();
       status.textContent = 'Aligned to CAD · reference only';
@@ -123,9 +116,8 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
       select.replaceChildren(...scans.map(scan => new Option(scan.display_name, scan.key)));
       if (scans.some(scan => scan.key === previous)) select.value = previous;
       if (!scans.length) {
-        generation++; viewer.setScanReference(undefined); viewer.setVehicleComparisonOpacity(null);
-        void sections?.setReference(undefined, undefined);
-        if (root) { disposeObject(root); root = undefined; }
+        generation++;
+        clearReference();
         status.textContent = 'No CAD-registered scan available.'; return;
       }
       await load();
@@ -137,5 +129,5 @@ export function setupCadScanReference(container: HTMLElement, viewer: ReferenceV
   }
   refresh.onclick = () => { void refreshReferences(); };
   void refreshReferences();
-  return sections && { setCentreline: sections.setCentreline };
+  return { setCentreline: sections?.setCentreline };
 }

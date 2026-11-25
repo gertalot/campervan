@@ -148,15 +148,16 @@ def _hinged_door(
 def build_cabinet_doors(
     p: Parameters, module: str, openings: tuple[tuple[float, float, float, float], ...],
     *, fixed_cover: tuple[float, float, float, float], cover_label: str,
-    rebate_sill: bool = True, roof_clearance: Solid | None = None,
+    roof_clearance: Solid | None = None,
 ) -> CabinetDoors:
     """Frame openings are (start Y, end Y, sill Z, head Z) at the aisle face."""
     gap, rebate = p.cabinet_door_gap_mm, REBATE_WIDTH
+    overlap = rebate - gap
     doors, hinges, frame_cuts, mounts, catches = [], [], [], [], []
     for (parameter, label), (start, end, bottom, top) in zip(DOOR_CONTROLS[module], openings, strict=True):
-        left = start - rebate + gap
-        low = bottom - rebate + gap if label in STAY_SIDES else bottom + gap
-        width = end - start + 2 * (rebate - gap)
+        left = start - overlap
+        low = bottom - overlap if label in STAY_SIDES else bottom + gap
+        width = end - start + 2 * overlap
         height = top - bottom + rebate - 2 * gap
         built = _hinged_door(p, label, left, low, width, height, getattr(p, parameter))
         doors.append(built.door)
@@ -169,9 +170,8 @@ def build_cabinet_doors(
                                                               Compound(label="Roller catch bodies", children=catches)]))
 
     start, end, bottom, top = fixed_cover
-    overlap = rebate - gap
     left = start - overlap
-    low = bottom - overlap if rebate_sill else bottom + gap
+    low = bottom - overlap
     width = end - start + 2 * overlap
     high = top if roof_clearance is not None else top + overlap
     cover = panel(width, p.cabinet_door_thickness_mm, high - low)

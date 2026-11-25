@@ -5,9 +5,9 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -17,8 +17,10 @@ from campervan.coordinator import Coordinator, ModelStatus, Regenerate
 from campervan.cross_sections import register_cross_sections
 from campervan.cutting import stock_groups
 from campervan.cutting_models import CuttingSettings, LayoutRequest, StockUpdate
+from campervan.inspiration import register_inspiration
 from campervan.mannequins import MannequinSettings
 from campervan.materials import ROLES, MaterialUpdate, resolve
+from campervan.paint import PaintChange, PaintSwatch, PaintView
 from campervan.parameter_fit import FitError, fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import PROJECT_PATH
@@ -120,6 +122,7 @@ def build_app(
     register_scan_processing(app, scan_processing, scan_layouts)
     register_planning(app, project_path)
     register_cross_sections(app, project_path)
+    register_inspiration(app, project_path.parent / "inspiration")
     package = find_spec("ocp_viewer")
     assert package is not None and package.origin is not None
     assets = Path(package.origin).parent / "server" / "static"
@@ -219,6 +222,27 @@ def build_app(
             coordinator.cuts_revision,
             status.requested_revision,
         )
+
+    @app.get("/api/v1/paint")
+    async def get_paint(coordinator: CurrentCoordinator) -> PaintView:
+        return coordinator.paint.view()
+
+    @app.put("/api/v1/paint/assignment")
+    async def set_paint_assignment(change: PaintChange, coordinator: CurrentCoordinator) -> PaintView:
+        coordinator.set_paint(coordinator.paint.assign(change))
+        return coordinator.paint.view()
+
+    @app.post("/api/v1/paint/history/{direction}")
+    async def step_paint_history(direction: Literal["undo", "redo"], coordinator: CurrentCoordinator) -> PaintView:
+        coordinator.set_paint(coordinator.paint.step(direction))
+        return coordinator.paint.view()
+
+    @app.put("/api/v1/paint/favourites")
+    async def set_paint_favourites(
+        favourites: Annotated[list[PaintSwatch], Body(embed=True)],
+        coordinator: CurrentCoordinator,
+    ) -> None:
+        coordinator.set_paint(coordinator.paint.model_copy(update={"favourites": favourites}))
 
     @app.patch("/api/v1/build-options", response_model=BuildOptions)
     async def set_build_options(options: BuildOptions, coordinator: CurrentCoordinator) -> BuildOptions:
@@ -326,6 +350,8 @@ def create_app() -> FastAPI:
         @app.get("/cad", include_in_schema=False)
         @app.get("/plan", include_in_schema=False)
         @app.get("/cuts", include_in_schema=False)
+        @app.get("/inspiration", include_in_schema=False)
+        @app.get("/floor-pattern", include_in_schema=False)
         @app.get("/apriltags", include_in_schema=False)
         @app.get("/scan", include_in_schema=False)
         @app.get("/bom", include_in_schema=False)

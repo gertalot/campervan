@@ -16,6 +16,7 @@ export interface Motion { position: number; tracks: Track[] }
 export interface DragSnapshot { positions: Record<string, number> }
 export interface DragHost {
   viewer(): PieceViewer | undefined;
+  painting(): boolean;
   motions(): Record<string, Motion>;
   pose(): Record<string, number>;
   pick(event: MouseEvent): { path: string; point: Vector3 } | null;
@@ -144,14 +145,14 @@ function hingeSolver(target: Target, camera: Camera, rect: DOMRect, x: number, y
 }
 
 export function createViewerDrag(container: HTMLElement, host: DragHost) {
-  let gesture: Gesture | null = null, hover: Target | null = null, latestHover: PointerEvent | null = null;
+  let gesture: Gesture | null = null, latestHover: PointerEvent | null = null;
   let frame = 0, attached = false, suppressClickUntil = 0;
   let removeOverlay: (() => void) | undefined;
   const hint = document.createElement('div'); hint.className = 'cad-drag-hint'; hint.hidden = true;
   hint.setAttribute('role', 'status'); hint.setAttribute('aria-live', 'polite');
   function targetAt(event: MouseEvent): Target | null {
     const viewer = host.viewer(); if (!viewer?.ready) return null;
-    if (hasActiveTool(viewer) || viewer.state.get('animationMode') === 'explode') return null;
+    if (host.painting() || hasActiveTool(viewer) || viewer.state.get('animationMode') === 'explode') return null;
     const hit = host.pick(event); if (!hit) return null;
     const groups = viewer.rendered.nestedGroup.groups;
     if (under(hit.path, TABLE_WOOD) && /\/(Fixed|Folding) tabletop leaf(?:\/|$)/.test(hit.path)
@@ -176,13 +177,6 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     return null;
   }
 
-  function overlay(target: Target | null, active = false) {
-    removeOverlay?.(); removeOverlay = undefined;
-    if (!target) { if (host.viewer()?.ready) host.viewer()!.update(true, false); return; }
-    removeOverlay = highlightPiece(target.group, CYAN, active);
-    host.viewer()?.update(true, false);
-  }
-
   function showHint(text: string, x: number, y: number) {
     hint.hidden = false;
     if (hint.textContent !== text) hint.textContent = text;
@@ -191,7 +185,12 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     hint.style.top = `${Math.max(48, Math.min(y - rect.top + 20, rect.height - hint.offsetHeight - 48))}px`;
   }
   function clearHover() {
-    hover = null; latestHover = null; overlay(null); hint.hidden = true;
+    latestHover = null; hint.hidden = true;
+    if (removeOverlay) {
+      removeOverlay(); removeOverlay = undefined;
+      const viewer = host.viewer();
+      if (viewer?.ready) viewer.update(true, false);
+    }
     container.classList.remove('cad-can-drag', 'cad-is-dragging');
   }
   function describe(target: Target, pose: Patch) {
@@ -250,7 +249,6 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     if (current || !latestHover) return;
     const event = latestHover; latestHover = null;
     const target = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ? null : targetAt(event);
-    if (target?.path !== hover?.path) { hover = target; overlay(target); }
     container.classList.toggle('cad-can-drag', Boolean(target));
     if (target) showHint(`${target.label} · Drag · Alt-drag orbits`, event.clientX, event.clientY);
     else hint.hidden = true;
@@ -294,7 +292,9 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
   function pointerMove(event: PointerEvent) {
     const current = gesture;
     if (!current) {
-      if (event.target instanceof HTMLCanvasElement && !event.buttons) { latestHover = event; requestFrame(); }
+      if (!host.painting() && event.target instanceof HTMLCanvasElement && !event.buttons) {
+        latestHover = event; requestFrame();
+      }
       return;
     }
     if (event.pointerId !== current.id) return;
@@ -302,7 +302,9 @@ export function createViewerDrag(container: HTMLElement, host: DragHost) {
     event.preventDefault(); event.stopImmediatePropagation();
     current.x = event.clientX; current.y = event.clientY;
     if (!current.active && Math.hypot(current.x - current.downX, current.y - current.downY) > 4) {
-      current.active = true; hover = null; overlay(current.target, true);
+      current.active = true;
+      removeOverlay = highlightPiece(current.target.group, CYAN);
+      host.viewer()?.update(true, false);
       container.classList.add('cad-is-dragging');
     }
     if (current.active) { current.dirty = true; requestFrame(); }

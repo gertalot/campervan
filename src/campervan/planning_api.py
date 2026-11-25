@@ -179,6 +179,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
         project = Project(
             parameters=parameters, materials=saved.project.materials, cutting=saved.project.cutting,
             mannequins=saved.project.mannequins if saved.project.mannequins is not None else current.mannequins,
+            paint=saved.project.paint if "paint" in saved.project.model_fields_set else current.paint,
         )
         restored = saved.planning.model_copy(deep=True)
         restored.revision = max(revision, restored.revision) + 1
@@ -191,6 +192,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
             store.write(restored, backup=valid_current)
             current.cutting = project.cutting
             current.mannequins = project.mannequins
+            current.paint = project.paint
             if changed:
                 # accept saves before changing live state; it schedules regeneration without yielding.
                 await current.accept(project.parameters, project.materials)
@@ -203,6 +205,7 @@ def register_planning(app: FastAPI, project_path: Path) -> None:
             current.materials = previous.materials
             current.cutting = previous.cutting
             current.mannequins = previous.mannequins
+            current.paint = previous.paint
             for path, content in ((project_path, old_project), (store.path, old_plan)):
                 if content is None:
                     path.unlink(missing_ok=True)

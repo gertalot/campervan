@@ -18,6 +18,7 @@ export interface Operation {
 export interface PurchaseRow {
   record: PurchaseRecord; required: number | null; owned: number; remaining: number | null; remaining_cost: number | null;
   status: string; uses: string[]; shared: boolean; legacy_owned: boolean; generated: boolean;
+  previous_model: boolean;
 }
 export interface Totals { spent: number; remaining: number; forecast: number; unknown_remaining: number; unknown_spent: number }
 export interface PurchaseView { rows: PurchaseRow[]; totals: Totals; revision: number }

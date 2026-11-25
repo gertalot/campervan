@@ -11,7 +11,7 @@ import './cutting.css';
 const methodNames: Record<Mode, string> = { straight: 'Straight saw cuts', nesting: 'Nested shapes' };
 const previousModelMessage = 'These pieces are from the previous CAD model. The updated model is still loading.';
 
-export function setupCutting(host: HTMLElement, showInCad: (path: string) => void) {
+export function setupCutting(host: HTMLElement, showInCad: (path: string) => void, onGroups: (groups: Group[]) => void) {
   let data: Data | null = null, filter = 'all', loading = false, statusKey = '', savingFailed = false;
   let cuttingRevision = -1;
   let pending = Promise.resolve();
@@ -161,7 +161,12 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     loading = true;
     const scroll = host.scrollTop;
     refreshPromise = (async () => {
-      try { await pending; data = await request<Data>('cutting'); render(); host.scrollTop = scroll; }
+      try {
+        await pending;
+        data = await request<Data>('cutting');
+        onGroups(data.groups);
+        render(); host.scrollTop = scroll;
+      }
       catch (error) { host.replaceChildren(feedback); message((error as Error).message); }
       finally { loading = false; refreshPromise = null; }
     })();
@@ -504,6 +509,7 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
       const fresh = await request<Data>('cutting');
       if (data && !data.current && fresh.current) {
         data = fresh;
+        onGroups(data.groups);
         render();
         return;
       }
@@ -527,7 +533,10 @@ export function setupCutting(host: HTMLElement, showInCad: (path: string) => voi
     download('campervan-cut-list.csv', csv(rows), 'text/csv;charset=utf-8');
   }
   void refresh();
-  onTab(tab => { if (tab === 'cuts') void refresh(); else { inspector.close(); pieceMenu.close(); } });
+  onTab(tab => {
+    if (tab !== 'cuts') { inspector.close(); pieceMenu.close(); }
+    if (tab === 'cuts' || (tab === 'floor-pattern' && !data?.current)) void refresh();
+  });
   return {
     refresh,
     setMirrored(value: boolean) {

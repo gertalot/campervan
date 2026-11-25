@@ -1,8 +1,9 @@
 /** Picking, framing and persistent selection for links to physical cutting pieces. */
-import { Box3, Mesh, Raycaster, Vector2, Vector3, type Camera, type Material, type Object3D } from 'three';
+import { Box3, Mesh, Raycaster, Vector2, Vector3, type Camera, type Intersection, type Material, type Object3D } from 'three';
 import { createPlanDropdown, type PlanMenuItem } from './plan-dropdown';
 import { highlightPiece } from './viewer-highlight';
 
+export interface PiecePoint { path: string; point: Vector3; hit?: Intersection }
 interface PickHit { info: { solidPath: string | null; path: string } }
 export interface PieceViewer {
   ready: boolean;
@@ -38,7 +39,7 @@ const cutPath = (path: string) => path
 const cadPath = (path: string) => '/Campervan/' + path.split(' / ').join('/');
 
 export function createViewerPieces(container: HTMLElement, getViewer: () => PieceViewer | undefined,
-  cancelCamera: () => void, saveCamera: () => void) {
+  cancelCamera: () => void, saveCamera: () => void, painting = () => false) {
   const menu = createPlanDropdown();
   let link: Link | undefined;
   const selected = new Map<string, () => void>();
@@ -81,8 +82,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   function onlyPiece(): string | undefined {
     return selected.size === 1 ? selected.keys().next().value : undefined;
   }
+  function canSelect() {
+    const viewer = getViewer();
+    return Boolean(viewer?.ready) && !hasActiveTool(viewer) && !painting();
+  }
   function navigate(path = onlyPiece()) {
-    if (!hasActiveTool(getViewer()) && path && link?.has(cutPath(path))) link.show(cutPath(path));
+    if (canSelect() && path && link?.has(cutPath(path))) link.show(cutPath(path));
   }
   function frame(box: Box3, direction?: Vector3) {
     const viewer = getViewer();
@@ -137,11 +142,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     const path = target ?? onlyPiece();
     return [
       { label: 'Show in cut list', group: 'piece', shortcut: 'Double-click',
-        enabled: !hasActiveTool(getViewer()) && Boolean(path && link?.has(cutPath(path))), run: () => navigate(target) },
+        enabled: canSelect() && Boolean(path && link?.has(cutPath(path))), run: () => navigate(target) },
       { label: 'Clear selection', group: 'selection', shortcut: 'Esc', ariaShortcut: 'Escape',
-        enabled: !hasActiveTool(getViewer()), run: () => { if (!hasActiveTool(getViewer())) clear(); } },
+        enabled: canSelect(), run: () => { if (canSelect()) clear(); } },
       { label: path && selected.has(path) ? 'Remove piece from selection' : 'Add piece to selection',
-        group: 'selection', shortcut: 'Shift-click', enabled: Boolean(path), run: () => { if (path) toggle(path, true); } },
+        group: 'selection', shortcut: 'Shift-click', enabled: canSelect() && Boolean(path),
+        run: () => { if (canSelect() && path) toggle(path, true); } },
       resetCommand(),
       ...extraCommands(),
     ];
@@ -196,10 +202,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
   function updateControls() {
     const measuring = hasActiveTool(getViewer());
     const path = onlyPiece();
-    showButton.disabled = measuring || !path || !link?.has(cutPath(path));
-    clearButton.disabled = menuButton.disabled = measuring;
+    clearButton.disabled = !canSelect();
+    showButton.disabled = clearButton.disabled || !path || !link?.has(cutPath(path));
+    menuButton.disabled = measuring;
     const label = !showButton.disabled ? `Show ${path!.split('/').at(-1)} in cut list › Double-click`
       : measuring ? 'Show in cut list › Finish measuring first'
+      : painting() ? 'Show in cut list › Turn off the paint bucket first'
       : 'Show in cut list › Select a wood piece, or double-click one';
     showButton.title = label; showButton.parentElement!.parentElement!.dataset.tooltip = label;
   }
@@ -217,12 +225,12 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     };
   }
   container.addEventListener('pointerdown', event => {
-    if (hasActiveTool(getViewer()) || !canvasEvent(event) || event.button !== 0) return;
+    if (!canSelect() || !canvasEvent(event) || event.button !== 0) return;
     down = { x: event.clientX, y: event.clientY, camera: JSON.stringify(getViewer()?.getCameraPosition()) };
     container.focus({ preventScroll: true });
   }, true);
   container.addEventListener('click', event => {
-    if (hasActiveTool(getViewer()) || !canvasEvent(event) || event.button !== 0 || !down) return;
+    if (!canSelect() || !canvasEvent(event) || event.button !== 0 || !down) return;
     const start = down; down = undefined;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 4
       || start.camera !== JSON.stringify(getViewer()?.getCameraPosition())) return;
@@ -234,7 +242,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     if (hasActiveTool(getViewer()) || !canvasEvent(event)) return;
     // Reserve all canvas double-clicks: the renderer otherwise uses modifiers to hide/isolate parts.
     event.preventDefault(); event.stopImmediatePropagation();
-    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!canSelect() || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     const path = pick(event);
     if (path && link?.has(cutPath(path))) { selectOnly(path); navigate(path); }
   }, true);
@@ -256,7 +264,7 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     event.preventDefault(); event.stopImmediatePropagation(); resetCommand().run();
   }, true);
   document.addEventListener('keydown', event => {
-    if (hasActiveTool(getViewer()) || event.key !== 'Escape' || event.defaultPrevented
+    if (!canSelect() || event.key !== 'Escape' || event.defaultPrevented || document.querySelector('#cad-paint-picker:popover-open')
       || container.closest('[inert]') || !selected.size) return;
     if ((event.target as Element).closest('[role="menu"]')) return;
     event.preventDefault(); clear();
@@ -267,21 +275,23 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
     toolChanged() {
       down = undefined; menu.close();
       // Remove only our overlay: clear() would also reset the measurement endpoints.
-      if (hasActiveTool(getViewer())) selectOnly(null);
+      if (!canSelect()) selectOnly(null);
       else updateControls();
     },
     setLink(value: Link) { link = value; },
     setCommands(value: () => PlanMenuItem[]) { extraCommands = value; },
-    pickPoint(event: MouseEvent) {
+    pickPath: pick,
+    pickPoint(event: MouseEvent, resolveHit?: (ray: Raycaster, cad: PiecePoint | null) => PiecePoint | null) {
       const path = pick(event), viewer = getViewer();
       const group = path && viewer?.rendered.nestedGroup.groups[path];
       const canvas = container.querySelector('canvas');
-      if (!path || !viewer || !group || !canvas) return null;
-      group.updateWorldMatrix(true, true);
+      if (!viewer?.ready || !canvas || (!group && !resolveHit)) return null;
       const rect = canvas.getBoundingClientRect();
       const ray = new Raycaster();
       ray.setFromCamera(new Vector2(2 * (event.clientX - rect.left) / rect.width - 1,
         1 - 2 * (event.clientY - rect.top) / rect.height), viewer.rendered.camera.camera);
+      if (!path || !group) return resolveHit?.(ray, null) ?? null;
+      group.updateWorldMatrix(true, true);
       const solid = group as Object3D & { front?: Mesh; back?: Mesh };
       const meshes: Mesh[] = [];
       if (solid.front) meshes.push(solid.front);
@@ -290,7 +300,9 @@ export function createViewerPieces(container: HTMLElement, getViewer: () => Piec
         if (object instanceof Mesh && !object.userData.campervanOverlay) meshes.push(object);
       });
       const hits = ray.intersectObjects(meshes, false).filter(hit => !hit.object.userData.campervanOverlay);
-      return hits.length ? { path, point: hits[0].point } : null;
+      const point = hits[0]?.point;
+      const cad = point ? { path, point, hit: hits[0] } : null;
+      return resolveHit ? resolveHit(ray, cad) : cad;
     },
     orbitTarget(): number[] {
       const viewer = getViewer()!;

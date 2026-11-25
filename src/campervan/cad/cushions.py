@@ -81,12 +81,13 @@ def cushion_layout(p: Parameters, bench: str) -> tuple[Cushion, ...]:
     if foam >= min(width / 2, cross_length, length):
         raise ValueError("Upright backrests must leave room on both seat cushions.")
     if bench == "Long bench":
+        seat_width = width - 1.0  # Recess the foam 1 mm from the aisle face of the rail.
         return (
             Cushion(
                 "Long seat",
-                (width, length, foam),
-                (width / 2, length / 2, flat_z),
-                (backrest_height + width / 2, length / 2, flat_z),
+                (seat_width, length, foam),
+                (seat_width / 2, length / 2, flat_z),
+                (backrest_height + seat_width / 2, length / 2, flat_z),
                 flat,
                 (0.19, 0.47, 0.63),
             ),
@@ -133,7 +134,7 @@ def build_cushions(p: Parameters, bench: str) -> Compound:
     pillow = Box(600, 400, 200)
     pillow.label, pillow.color = "Pillow", Color(0.22, 0.22, 0.22)
     pieces.append(Compound(label="Rear pillow" if bench == "Long bench" else "Front pillow", children=[pillow]))
-    # Centre full-size foam on the rail-to-rail span, intentionally overlapping both rails.
+    # Both benches use the wall-side rail as the cushion datum.
     cushions = Compound(label="Cushions", children=pieces)
     cushions.location = Location((long_bed_layout(p).lid_rear, 0, 0))
     return cushions

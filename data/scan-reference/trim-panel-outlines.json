@@ -1,0 +1,23 @@
+[
+  {
+    "name": "wheel-arch trim panel",
+    "wall": "side",
+    "corners": [[200, 368, 45, 52], [200, 696, 50, 60], [922, 693, 45, 45], [925, 370, 158, 156]],
+    "depth": [6.47, 600, 500, 1.01, -1.89, -0.14, -0.19],
+    "surfaceOffsetMm": 6
+  },
+  {
+    "name": "sliding door trim panel",
+    "wall": "side",
+    "corners": [[1131, 64, 138, 142], [1131, 698, 76, 74], [1818, 692, 35, 54], [1821, 63, 68, 65]],
+    "depth": [8.66, 1500, 400, 0.87, 0.41, 0.19, 0.16],
+    "surfaceOffsetMm": 12
+  },
+  {
+    "name": "Rear hatch trim panel",
+    "wall": "rear",
+    "corners": [[160, 82, 117, 115], [155, 727, 63, 69]],
+    "depth": [-38.91, 750, 400, 0, 0.74, 0.31, 0.46],
+    "surfaceOffsetMm": 12
+  }
+]

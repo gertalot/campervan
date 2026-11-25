@@ -1,4 +1,4 @@
-const categories: Record<string, string[]> = {
+export const categories: Record<string, string[]> = {
   vehicle: ['/Campervan/Vehicle references'],
   wheelArches: ['/Campervan/Vehicle references/Wheel arches'],
   woodenFloor: ['/Campervan/Finished floor plywood'],
@@ -22,7 +22,7 @@ const categories: Record<string, string[]> = {
 };
 
 interface VisibilityViewer {
-  setVisibility(rules: Record<string, boolean>, independentRoots: string[]): void;
+  setVisibility(rules: Record<string, boolean>): void;
   setExcludedComponents(paths: string[]): void;
   getVisibility(paths: string[]): 'shown' | 'hidden' | 'mixed';
 }
@@ -30,7 +30,7 @@ interface VisibilityViewer {
 export function updateVisibilityButton(button: HTMLButtonElement, title: string, state: 'shown' | 'hidden' | 'mixed') {
   button.dataset.visibility = state;
   button.setAttribute('aria-pressed', state === 'mixed' ? 'mixed' : String(state === 'shown'));
-  button.setAttribute('aria-label', `${state === 'shown' ? 'Hide' : 'Show'} ${title}`);
+  button.setAttribute('aria-label', `${title} visibility`);
   button.title = `${state === 'shown' ? 'Hide' : 'Show'} ${title}${state === 'mixed' ? ' (partly visible)' : ''}`;
 }
 
@@ -48,11 +48,15 @@ export function createVisibilityButton(title: string, toggle: () => void) {
   return button;
 }
 
-export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer) {
-  const inputs = [...container.querySelectorAll<HTMLInputElement>('input[name]')];
+export function setupVisibility(
+  container: HTMLElement, viewer: VisibilityViewer,
+  mannequin: { eye: HTMLButtonElement; setBedVisible(enabled: boolean): void },
+) {
   const groups = new Map<HTMLButtonElement, { paths: string[]; title: string }>();
   const key = 'campervan.visibility.paths';
-  const independentRoots = categories.wheelArches;
+  const bedKey = 'campervan.visibility.bedCouch';
+  const bedRoots = [...categories.longBench, ...categories.crossBench];
+  let bedVisible = localStorage.getItem(bedKey) !== 'false';
   let excludedRoots: string[] = [];
   const rules: Record<string, boolean> = {
     '/Campervan/Vehicle references/Floor outline': false,
@@ -78,26 +82,50 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
   }
   rules[categories.longBench[1]] ??= rules[categories.longBench[0]] ?? true;
   if (localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(rules));
-  // Assembly switches must retain independent content filters and reference-wire choices.
-  const independentPaths = new Set([
-    ...Object.values(categories).flat(),
-    '/Campervan/Vehicle references/Floor outline',
-    '/Campervan/Vehicle references/Rear opening/Clear opening',
-  ]);
   if (!localStorage.getItem(key)) {
-    for (const input of inputs) {
-      for (const path of categories[input.name]) {
-        rules[path] = localStorage.getItem(`campervan.visibility.${input.name}`) !== 'false';
-      }
+    for (const [name, paths] of Object.entries(categories)) {
+      for (const path of paths) rules[path] = localStorage.getItem(`campervan.visibility.${name}`) !== 'false';
     }
   }
 
+  const rows = [...container.querySelectorAll<HTMLElement>('li[data-category]')].map(row => {
+    const name = row.dataset.category!;
+    const label = row.querySelector<HTMLElement>(':scope > label, :scope > details > summary')!;
+    const title = label.textContent!.trim();
+    const paths = categories[name] ?? [];
+    const eye = name === 'mannequin' ? mannequin.eye : createVisibilityButton(title, () => {
+      if (name === 'bedCouch') {
+        bedVisible = !bedVisible;
+        localStorage.setItem(bedKey, String(bedVisible));
+        apply();
+      } else {
+        change(paths, !paths.every(path => rules[path] !== false));
+      }
+    });
+    eye.id = `visibility-${name}`;
+    if (label instanceof HTMLLabelElement) label.htmlFor = eye.id;
+    row.prepend(eye);
+    return { name, title, paths, eye };
+  });
+
   function refresh() {
-    for (const input of inputs) {
-      // A checkbox represents its own switch, even when another switch masks its contents.
-      const enabled = categories[input.name].map(path => rules[path] !== false);
-      input.checked = enabled.every(Boolean);
-      input.indeterminate = enabled.some(Boolean) && !input.checked;
+    const hidden = Object.keys(rules).filter(path => !rules[path]);
+    for (const { name, title, paths, eye } of rows) {
+      if (name === 'bedCouch') {
+        updateVisibilityButton(eye, title, bedVisible ? 'shown' : 'hidden');
+        continue;
+      }
+      const maskedByBed = !bedVisible && (name === 'mannequin' || paths.every(path =>
+        bedRoots.some(root => path === root || path.startsWith(`${root}/`))));
+      const masked = maskedByBed || (paths.length > 0 && paths.every(path =>
+        hidden.some(root => path.startsWith(`${root}/`))));
+      eye.toggleAttribute('data-masked', masked);
+      if (masked) eye.setAttribute('aria-description', 'Hidden by a parent group.');
+      else eye.removeAttribute('aria-description');
+      if (name === 'mannequin') continue;
+      const enabled = paths.filter(path => rules[path] !== false).length;
+      updateVisibilityButton(eye, title, enabled === paths.length ? 'shown' : enabled ? 'mixed' : 'hidden');
+      eye.disabled = paths.every(path => excludedRoots.some(root => path === root || path.startsWith(`${root}/`)));
     }
     for (const [button, { paths, title }] of groups) {
       updateVisibilityButton(button, title, viewer.getVisibility(paths));
@@ -105,28 +133,22 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
     }
   }
 
-  function change(paths: string[], visible: boolean) {
-    for (const path of paths) {
-      for (const existing of Object.keys(rules)) {
-        const independent = [...independentPaths].some(root => root.startsWith(`${path}/`)
-          && (existing === root || existing.startsWith(`${root}/`)));
-        const excluded = excludedRoots.some(root => existing === root || existing.startsWith(`${root}/`));
-        if (existing.startsWith(`${path}/`) && !independentPaths.has(existing) && !independent && !excluded) {
-          delete rules[existing];
-        }
-      }
-      rules[path] = visible;
-    }
-    localStorage.setItem(key, JSON.stringify(rules));
-    viewer.setVisibility(rules, independentRoots);
+  function apply() {
+    const effective = { ...rules };
+    if (!bedVisible) for (const root of bedRoots) effective[root] = false;
+    mannequin.setBedVisible(bedVisible);
+    viewer.setVisibility(effective);
     viewer.setExcludedComponents(excludedRoots);
     refresh();
   }
 
-  for (const input of inputs) {
-    input.addEventListener('change', () => change(categories[input.name], input.checked));
+  function change(paths: string[], visible: boolean) {
+    for (const path of paths) rules[path] = visible;
+    localStorage.setItem(key, JSON.stringify(rules));
+    apply();
   }
 
+  apply();
   return {
     setBuildInclusion(included: { table: boolean }) {
       excludedRoots = [
@@ -135,11 +157,7 @@ export function setupVisibility(container: HTMLElement, viewer: VisibilityViewer
       viewer.setExcludedComponents(excludedRoots);
       refresh();
     },
-    restore() {
-      viewer.setVisibility(rules, independentRoots);
-      viewer.setExcludedComponents(excludedRoots);
-      refresh();
-    },
+    restore: apply,
     resetGroups() { groups.clear(); },
     addGroup(heading: HTMLElement, path: string, title: string) {
       const cabinetGroups: Record<string, string[]> = {

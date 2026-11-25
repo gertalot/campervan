@@ -35,13 +35,25 @@ p { margin: 0; }
 #camera-controls legend { margin-bottom: 5px; padding: 0; font-size: 11px; color: #929aa6; }
 #camera-controls label { display: block; }
 #camera-controls output { float: right; }
-#camera-controls input { display: block; width: 100%; margin: 6px 0; accent-color: #8bb7e8; }
+#camera-controls input[type="range"] { display: block; width: 100%; margin: 6px 0; accent-color: #8bb7e8; }
 #camera-controls small { color: #929aa6; }
 #visibility { margin: 0 0 12px; padding: 0 0 10px; border: 0; border-bottom: 1px solid #34373e; }
 #visibility legend { margin-bottom: 5px; padding: 0; font-size: 11px; color: #929aa6; }
-#visibility label { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; cursor: pointer; }
-#visibility input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
-#visibility .see-inside { display: flex; margin-top: 6px; }
+#camera-controls .see-inside { display: flex; align-items: center; gap: 4px; margin-top: 6px; cursor: pointer; }
+#camera-controls .see-inside input { width: 12px; height: 12px; margin: 0; accent-color: #8bb7e8; }
+#visibility ul { list-style: none; margin: 0; padding: 0; }
+#visibility ul ul { margin-left: 15px; border-left: 1px solid #34373e; }
+#visibility li { position: relative; }
+#visibility summary, #visibility label { display: block; margin-right: 25px; padding: 3px 0 3px 16px;
+  line-height: 18px; cursor: pointer; }
+#visibility summary { position: relative; list-style: none; }
+#visibility summary::-webkit-details-marker { display: none; }
+#visibility summary::before { content: '▸'; position: absolute; left: 3px; color: #aab3c0; }
+#visibility details[open] > summary::before { content: '▾'; }
+#visibility .group-visibility { position: absolute; top: 0; right: 0; width: 24px; height: 24px;
+  display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: #c9d1db; }
+#visibility .group-visibility:hover, #visibility summary:hover, #visibility label:hover { background: #34373e; }
+#visibility .group-visibility[data-masked] svg { opacity: 0.45; }
 #scan-reference { margin: 0 0 16px; padding: 0 0 12px; border: 0; border-bottom: 1px solid #34373e; }
 #scan-reference legend { padding: 0; margin-bottom: 8px; color: #aab3c0; }
 #scan-reference .reference-toggle { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
@@ -120,7 +132,7 @@ aside input { width: 100%; min-width: 0; height: 23px; padding: 2px 5px; border:
 .position-row output { text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
 .choice-row select { grid-column: 1 / -1; width: 100%; min-width: 0; padding: 4px;
   border: 1px solid #454a54; border-radius: 3px; background: #15171a; color: #e3e7ed; font: inherit; font-size: 11px; }
-.position-row input { grid-column: 1 / -1; height: 18px; margin: 0; padding: 0; border: 0; accent-color: #8bb7e8; }
+.position-row input { grid-column: 1 / -1; width: 100%; height: 18px; margin: 0; padding: 0; border: 0; accent-color: #8bb7e8; }
 .actions { display: flex; gap: 6px; position: sticky; top: 0; z-index: 1;
   margin-bottom: 10px; padding: 6px; background: #1b1d21; }
 .actions[hidden] { display: none; }
@@ -151,6 +163,7 @@ aside button:focus-visible, aside input:focus-visible, summary:focus-visible { o
 #viewer.cad-can-drag canvas { cursor: grab !important; }
 #viewer.cad-is-dragging canvas { cursor: grabbing !important; }
 #viewer.cad-human-view canvas { cursor: crosshair !important; }
+#viewer.cad-painting canvas { cursor: crosshair !important; }
 .cad-human-hint { position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 8;
   width: fit-content; max-width: calc(100% - 24px); pointer-events: none; border-radius: 4px;
   padding: 6px 9px; background: #17282eed; color: #e0faff; font: 12px/1.4 system-ui, sans-serif; }

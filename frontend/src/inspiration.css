@@ -1,0 +1,48 @@
+#inspiration-panel { position: absolute; inset: 0; overflow: auto; padding: 24px clamp(16px, 3vw, 48px) 56px;
+  background: #191b1f; color: #e5e8ec; }
+.inspiration-heading { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.inspiration-heading h2 { margin: 0; color: inherit; font-size: 23px; font-weight: 600; letter-spacing: -.4px; }
+.inspiration-heading span, .inspiration-status { color: #b0b7c2; }
+.inspiration-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.inspiration-filters button { padding: 5px 13px; border-radius: 18px; border: 1px solid #697381;
+  font: inherit; color: inherit; background: transparent; cursor: pointer; }
+.inspiration-filters button[aria-pressed=true] { background: #354f6b; border-color: #a6c8eb; color: #fff; }
+.inspiration-tags { color: #b0b7c2; }
+.inspiration-card .inspiration-tags { margin-right: 10px; }
+.inspiration-status:not(:empty) { margin-bottom: 12px; }
+.inspiration-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: 26px 18px; }
+.inspiration-card { position: relative; min-width: 0; }
+.inspiration-preview { display: block; width: 100%; aspect-ratio: 4/3; padding: 0; overflow: hidden;
+  border: 0; border-radius: 4px; background: #25282d; cursor: zoom-in; }
+.inspiration-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.inspiration-card h3 { margin: 8px 0 2px; font-size: 14px; line-height: 1.35; font-weight: 600; }
+#inspiration-panel a { color: #b3c6df; text-decoration: none; }
+#inspiration-panel a:hover, #inspiration-panel a:focus-visible { text-decoration: underline; }
+#inspiration-panel :focus-visible { outline: 2px solid #a9d0ff; outline-offset: 2px; }
+.inspiration-heart, .inspiration-remove, .inspiration-dialog button { display: grid; place-items: center; padding: 0;
+  width: 36px; height: 36px; border-radius: 5px; color: #fff; background: #202327ee;
+  border: 1px solid #ffffff52; cursor: pointer; }
+.inspiration-remove { position: absolute; top: 8px; right: 8px; }
+.inspiration-heart { position: absolute; top: 8px; left: 8px; }
+.inspiration-heart svg, .inspiration-remove svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; }
+.inspiration-heart[aria-pressed=true] svg { color: #ff98ae; fill: currentColor; }
+.inspiration-heart:hover { background: #48333d; }
+.inspiration-save-error:not(:empty) { margin: 0; padding: 0 12px 12px; }
+.inspiration-save-error:empty { display: none; }
+.inspiration-remove:hover { background: #6c3539; }
+@media (hover: hover) {
+  .inspiration-card:not(:hover):not(:focus-within) .inspiration-remove { opacity: 0; pointer-events: none; }
+}
+.inspiration-dialog { position: fixed; width: fit-content; max-width: 96vw; max-height: 96dvh; padding: 0;
+  border: 1px solid #555961; border-radius: 6px; background: #15171a; color: #f4f4f4; }
+.inspiration-dialog::backdrop { background: #090a0cee; }
+.inspiration-full { display: block; width: min(88vw, 1600px); height: min(78dvh, 1000px); object-fit: contain; }
+.inspiration-dialog .inspiration-close { position: absolute; top: 10px; right: 10px; font-size: 25px; }
+.inspiration-controls { display: flex; align-items: center; gap: 8px; padding: 12px; }
+.inspiration-controls button { flex: none; font-size: 19px; }
+.inspiration-controls button:hover, .inspiration-close:hover { background: #383e46; }
+.inspiration-caption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 12px;
+  flex: 1; min-width: 0; }
+.inspiration-caption span { color: #b5bcc6; }

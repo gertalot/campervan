@@ -11,8 +11,18 @@ from uuid import uuid4
 from campervan.cutting import effective_options, layout_score, refresh_layout_source, source_key, stock_groups
 from campervan.cutting_worker import LayoutSearch
 from campervan.mannequins import MannequinSettings
-from campervan.materials import CutPart, Project, Selection, active_cuts, load_project, resolve, save_project
+from campervan.materials import (
+    CutPart,
+    Project,
+    Selection,
+    active_cuts,
+    load_project,
+    resolve,
+    save_project,
+    stock_appearance,
+)
 from campervan.model_cache import ModelBundle, model_fingerprint, read_bundle, save_bundle
+from campervan.paint import PaintState
 from campervan.parameter_fit import fit_parameters
 from campervan.parameters import Parameters
 from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
@@ -52,6 +62,7 @@ class Coordinator:
         self.materials = project.materials
         self.cutting = project.cutting
         self.mannequins = project.mannequins
+        self.paint = project.paint
         self.cutting_jobs: dict[str, dict[str, Any]] = {}
         self._cutting_tasks: dict[str, asyncio.Task[None]] = {}
         self._cutting_searches: dict[str, LayoutSearch] = {}
@@ -76,6 +87,7 @@ class Coordinator:
             materials=self.materials,
             cutting=self.cutting,
             mannequins=self.mannequins,
+            paint=self.paint,
         )
 
     @property
@@ -96,6 +108,12 @@ class Coordinator:
         save_project(self.project().model_copy(update={"mannequins": settings}), self._project_path)
         self.mannequins = settings
         return settings
+
+    def set_paint(self, paint: PaintState) -> None:
+        if paint is self.paint:
+            return
+        save_project(self.project().model_copy(update={"paint": paint}), self._project_path)
+        self.paint = paint
 
     def cutting_changed(self) -> None:
         self._status = replace(self._status, cutting_revision=self._status.cutting_revision + 1)
@@ -216,12 +234,15 @@ class Coordinator:
             await self.stop_cutting()
         project = self.project().model_copy(update={"parameters": resolved, "materials": selected})
         save_project(project, self._project_path)
+        appearance_changed = (
+            selected != self.materials and stock_appearance(selected) != stock_appearance(self.materials)
+        )
         self.parameters, self.materials = resolved, selected
         if not force and key == previous_key and self._status.state == "regenerating":
             return self._status.requested_revision
         if not force and self._bundle is not None and self._bundle.cuts is not None and key == self._bundle.fingerprint:
             # A return to cached dimensions also supersedes an in-flight build for different dimensions.
-            replay = key != previous_key or self._status.state != "ready"
+            replay = appearance_changed or key != previous_key or self._status.state != "ready"
             revision = self._status.requested_revision + int(replay)
             self._cuts = self._bundle.cuts
             self.cuts_revision = revision
@@ -230,7 +251,7 @@ class Coordinator:
             if replay:
                 try:
                     async with self._publication:
-                        await asyncio.to_thread(replay_model, self._bundle, self._settings)
+                        await asyncio.to_thread(replay_model, self._bundle, self._settings, stock_appearance(selected))
                 except Exception as failure:
                     logger.exception("Saved model delivery failed")
                     if revision == self._status.requested_revision:
@@ -254,7 +275,7 @@ class Coordinator:
         return revision
 
     async def load(self) -> ModelStatus:
-        """Replay saved geometry on reconnect; only build automatically when none exists."""
+        """Replay saved geometry and start a build if the cache is missing or stale."""
         if self._status.state != "regenerating":
             fingerprint = model_fingerprint(self.parameters)
             if self._bundle is None or self._bundle.fingerprint != fingerprint:
@@ -267,7 +288,9 @@ class Coordinator:
         try:
             async with self._publication:
                 if self._bundle is not None:
-                    await asyncio.to_thread(replay_model, self._bundle, self._settings)
+                    await asyncio.to_thread(
+                        replay_model, self._bundle, self._settings, stock_appearance(self.materials)
+                    )
         except Exception as failure:
             logger.exception("Saved model delivery failed")
             if revision == self._status.requested_revision:
@@ -283,7 +306,7 @@ class Coordinator:
                 await self.ensure_cutting()
                 if self._bundle.cuts is None and (self._task is None or self._task.done()):
                     await self.accept(force=True)
-            elif self._bundle is None:
+            elif self._status.state != "failed":
                 await self.accept()
         return self._status
 
@@ -310,10 +333,12 @@ class Coordinator:
                 async with self._publication:
                     if revision != self._status.requested_revision:
                         return
-                    save_bundle(self._cache_path, bundle)
+                    # Keep the last cut list on disk until the new one is ready.
+                    if bundle.cuts is not None or self.cuts_revision is None:
+                        save_bundle(self._cache_path, bundle)
                     self._bundle = bundle
                     if not geometry_published:
-                        await asyncio.to_thread(replay_model, bundle, self._settings)
+                        await asyncio.to_thread(replay_model, bundle, self._settings, stock_appearance(self.materials))
                         geometry_published = True
                         if revision != self._status.requested_revision:
                             return

@@ -935,7 +935,7 @@ class Parameters(BaseModel):
     )
 
     inside_radius_mm: float = Field(
-        default=25.0,
+        default=25.5,
         gt=0,
         title="Opening radius",
         json_schema_extra={"unit": "mm", "group": ["Cross bench", "Fixed frame"]},

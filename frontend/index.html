@@ -13,6 +13,8 @@
       <button id="plan-tab" aria-controls="plan-panel" aria-pressed="false">Plan</button>
       <button id="cuts-tab" aria-controls="cuts-panel" aria-pressed="false">Cut list</button>
       <button id="apriltags-tab" aria-controls="apriltags-panel" aria-pressed="false">AprilTags</button>
+      <button id="floor-pattern-tab" aria-controls="floor-pattern-panel" aria-pressed="false">Floor pattern</button>
+      <button id="inspiration-tab" aria-controls="inspiration-panel" aria-pressed="false">Inspiration</button>
     </nav><p id="status" role="status" aria-live="polite" aria-atomic="true">Connecting…</p></header>
     <main id="workspace">
     <section id="cad-panel" aria-label="CAD">
@@ -26,6 +28,7 @@
               <label><input type="radio" name="cabinet-side" value="right" checked /><span>Right</span></label>
             </div>
           </div>
+          <div id="cad-floor-rotation"></div>
         </div>
         <fieldset id="camera-controls">
           <legend>Camera</legend>
@@ -33,27 +36,43 @@
           <input id="camera-fov" type="range" min="20" max="100" step="1" value="80"
             aria-describedby="camera-fov-hint" />
           <small id="camera-fov-hint">Perspective only · default 80°.</small>
+          <label class="see-inside"><input type="checkbox" id="see-inside" /> See inside</label>
         </fieldset>
         <fieldset id="visibility">
           <legend>Visibility</legend>
-          <label><input type="checkbox" name="vehicle" checked /> Vehicle</label>
-          <label><input type="checkbox" name="wheelArches" checked /> Wheel arches</label>
-          <label><input type="checkbox" name="woodenFloor" checked /> Wooden floor</label>
-          <label><input type="checkbox" name="slats" checked /> Slats</label>
-          <label><input type="checkbox" name="cushions" checked /> Cushions</label>
-          <label><input type="checkbox" name="cabinet" checked /> Cabinet</label>
-          <label><input type="checkbox" name="topCabinet" checked /> Top cabinet</label>
-          <label><input type="checkbox" name="bottomCabinet" checked /> Bottom cabinet</label>
-          <label><input type="checkbox" name="cabinetShelves" checked /> Cabinet shelves</label>
-          <label><input type="checkbox" name="cabinetDoors" checked /> Cabinet doors</label>
-          <label><input type="checkbox" name="cabinetSkin" checked /> Cabinet skin</label>
-          <label><input type="checkbox" name="cabinetFrames" checked /> Cabinet frames</label>
-          <label><input type="checkbox" name="storedGear" checked /> Stored gear</label>
-          <label><input type="checkbox" name="longBench" checked /> Long bench</label>
-          <label><input type="checkbox" name="crossBench" checked /> Cross bench</label>
-          <label><input type="checkbox" name="table" checked /> Table</label>
-          <label><input type="checkbox" id="mannequin-visible" /> Mannequin</label>
-          <label class="see-inside"><input type="checkbox" id="see-inside" /> See inside</label>
+          <ul>
+            <li data-category="vehicle">
+              <details><summary>Vehicle</summary>
+                <ul><li data-category="wheelArches"><label>Wheel arches</label></li></ul>
+              </details>
+            </li>
+            <li data-category="woodenFloor"><label>Wooden floor</label></li>
+            <li data-category="cabinet">
+              <details><summary>Cabinet</summary>
+                <ul>
+                  <li data-category="topCabinet"><label>Top cabinet</label></li>
+                  <li data-category="bottomCabinet"><label>Bottom cabinet</label></li>
+                  <li data-category="cabinetShelves"><label>Shelves</label></li>
+                  <li data-category="cabinetDoors"><label>Doors</label></li>
+                  <li data-category="cabinetSkin"><label>Skin</label></li>
+                  <li data-category="cabinetFrames"><label>Frames</label></li>
+                </ul>
+              </details>
+            </li>
+            <li data-category="bedCouch">
+              <details><summary>Bed/couch</summary>
+                <ul>
+                  <li data-category="longBench"><label>Long bench</label></li>
+                  <li data-category="crossBench"><label>Cross bench</label></li>
+                  <li data-category="cushions"><label>Cushions</label></li>
+                  <li data-category="slats"><label>Slats</label></li>
+                  <li data-category="mannequin"><label>Mannequin</label></li>
+                </ul>
+              </details>
+            </li>
+            <li data-category="table"><label>Table</label></li>
+            <li data-category="storedGear"><label>Gear</label></li>
+          </ul>
         </fieldset>
         <fieldset id="scan-reference" hidden>
           <legend>Scan comparison</legend>
@@ -85,6 +104,8 @@
     <section id="bom-panel" aria-label="Bill of materials" hidden></section>
     <section id="cuts-panel" aria-label="Cut list and layouts" hidden></section>
     <section id="apriltags-panel" aria-label="AprilTag PDF generator" hidden></section>
+    <section id="floor-pattern-panel" aria-label="Floor pattern drawing" hidden></section>
+    <section id="inspiration-panel" aria-label="Interior inspiration" hidden></section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

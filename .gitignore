@@ -1,10 +1,16 @@
 /.venv/
 # Version the saved design and published scan reference; keep other local data private.
 /data/*
+!/data/inspiration/
 !/data/project.json
 !/data/scan-reference/
 /data/scan-reference/*
 !/data/scan-reference/reference.json
+!/data/scan-reference/ceiling-outline.json
+!/data/scan-reference/ceiling-trim.json
+!/data/scan-reference/trim-panel-outlines.json
+!/data/scan-reference/window-outlines.json
+!/data/scan-reference/window-trim.json
 !/data/scan-reference/mesh.ply
 /.local/
 /data/*.tmp

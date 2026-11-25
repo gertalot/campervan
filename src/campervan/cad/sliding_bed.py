@@ -14,8 +14,6 @@ from campervan.cad.cut_profiles import set_fitting_datums
 from campervan.cad.panels import frame_panel, panel
 from campervan.parameters import Parameters
 
-WOOD = Color(0.87, 0.70, 0.43)
-FIXED_WOOD = Color(0.72, 0.52, 0.32)
 HINGE_SLAT_TRIM = 5.0
 # Registered rear-pillar chamfer, in near-wall construction/world X+Y coordinates.
 REAR_PILLAR_CORNER_SUM_MM = 214.0
@@ -161,7 +159,7 @@ def build_bed_slats(p: Parameters, layout: BedLayout, *, moving: bool) -> Compou
                                           align=(Align.CENTER, Align.CENTER, Align.MIN))
                         slat -= access.moved(Location((bolt_x - x, bolt_y - layout.slat_ys[i], -1)))
         slat.location = Location((x, layout.slat_ys[i], layout.slat_bottom - layout.box_top))
-        slat.label, slat.color = f"{name} slat {i + 1:02}", WOOD if moving else FIXED_WOOD
+        slat.label = f"{name} slat {i + 1:02}"
         slats.append(slat)
     return Compound(label=f"{name} slats", children=slats)
 

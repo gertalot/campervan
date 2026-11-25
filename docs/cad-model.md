@@ -12,7 +12,7 @@ before OCP replaces geometry and reattached afterwards, outside CAD selection an
 The active reference `nv200-photo-20261120` uses the 249,842-triangle export from
 `data/scanruler/nv200-250k-doors-colour.scanruler`. The rear and left sliding door panels were repaired before
 reduction. The PLY stores the recovered photographic texture as RGB on its 126,585 vertices.
-The export converts ScanRuler millimetres to metres and preserves the inward-facing triangle order used by See inside.
+The export converts ScanRuler millimetres to metres and preserves the inward-facing triangle order of the scan.
 It retains the 1205mm wheel-arch-gap calibration and the rigid registration to the earlier interior scan,
 including its approximately centimetre-scale rear-datum uncertainty. The local scan run and the versioned
 `data/scan-reference/` use the same mesh and pose for the live CAD viewer, fitting calculations and static exports.
@@ -20,14 +20,42 @@ including its approximately centimetre-scale rear-datum uncertainty. The local s
 During comparison, `vehicle-fade.ts` applies a light-pink display tint and a base vehicle opacity, including the
 wheel arches. See inside fading and click-through picking still apply to nearby panels and edges. Hiding the
 reference restores original material colours and opacity while retaining the See inside setting.
-The same checkbox switches reference meshes between `FrontSide` and `DoubleSide` rendering in `viewer.ts`.
-The corrected interior scan's triangle winding points into the cabin (checked on floor, wall and roof patches), so
-front-face rendering hides the near-side shell's backs while preserving interior-facing surfaces. This is face culling,
-not named-panel fading: differently oriented or mixed-winding scans may hide wanted faces. Opacity changes and model
-reloads preserve the mode; scan geometry is unchanged.
-The existing native checkbox remains the single control, retaining its label and keyboard behaviour
-([WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)); the comparison help text describes its
-effect on both models. Face visibility uses [Three.js Material.side](https://threejs.org/docs/pages/Material.html#side).
+The scan and the CAD body use the same **See inside** fade in `vehicle-fade.ts`.
+The viewer groups scan triangles by position when it loads a registered scan. Each outer band extends up to 300mm inward
+and narrows to 180mm at the edges. At a corner, either adjoining face can control the fade.
+Near scan panels fade smoothly to zero opacity. Far panels retain their selected opacity.
+With **See inside** off, the whole scan uses the selected scan opacity. Both sides of each triangle remain visible.
+Cross sections and furniture fitting use the complete source mesh.
+The colour scan displays a separate timber ceiling between the rear header and the cab headliner.
+`data/scan-reference/ceiling-outline.json` stores half the perimeter and the measured transverse profiles.
+The viewer mirrors the ceiling about X = 750 mm. Near mid-length, the centre sits about 17 mm above each side.
+The rise varies along the van. **See inside** fades the ceiling with the roof.
+`data/scan-reference/ceiling-trim.json` identifies the scan faces to replace and the edge to join to the new ceiling.
+The replacement ceiling covers both Velcro strap locations. The viewer omits the scanned straps.
+The colour scan shows five cargo windows with blue-grey panes (`#739EAD`) at 20% opacity.
+**See inside** fades each pane with its wall.
+The scan shows dark trim panels above both wheel arches, on both sliding doors, and on the rear hatch.
+`data/scan-reference/trim-panel-outlines.json` records their profiles from the colour scan.
+Both sides share one profile for each panel shape. The hatch profile reflects about the same centreline.
+The paint surfaces sit 6 mm inward on the wheel-arch panels and 12 mm inward on the doors.
+This allowance clears bumps in the scan. Each trim panel accepts its own paint finish.
+Until a panel has a finish, the scan supplies its original colour.
+`data/scan-reference/window-outlines.json` records the corner positions, tangent lengths, and depth fits in CAD coordinates.
+Each side window pair uses one profile reflected about the registered CAD centreline at X = 750 mm.
+The fixed pair uses the reviewed left rear outline. The sliding door profile uses both scanned openings.
+For all five windows, the display mesh joins the scanned metal to the vertices of each pane.
+`data/scan-reference/window-trim.json` records the edits for the indexed 249,842-face PLY.
+Face ranges give the first face to remove and the first face to keep after that range.
+Each wall loop pairs an original vertex index with a fraction of the pane perimeter.
+The wider repair below the left rear window covers a tear in the scanned sill.
+The repaired metal follows sections measured across intact parts of both side walls. Fixed and sliding windows have
+separate sections for the sill, top, and each end. Rows under `reveal` in `window-outlines.json` are 5 mm apart.
+Each row gives the inward depth in millimetres and the red, green, and blue values from the scan.
+The viewer blends adjacent sections at each corner and fits them between the glass and the surviving metal.
+The rear hatch uses two left corners and their reflection about X = 750 mm. Its depth fit includes the tilt and bow.
+The repair uses separate sections from the intact left sill, top, and upright. Both uprights use the same section.
+The cut follows surviving hatch triangles. The largest gaps extend about 60 mm above the glass and 100 mm below it.
+The existing labelled checkbox supports the Space key. [WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)
 The vehicle uses its pre-experiment baseline geometry; no scan-fitted rear-floor increment or progress lines are active.
 
 ## Cross sections
@@ -538,7 +566,8 @@ separate fitting work; the accepted middle-pillar placement does not certify tho
 
 At the saved 390mm slat-top height, the lid underside and box rim are Z354. The moving support is a single 18mm
 plywood frame, from the floor to Z422. Its lower top member is 50mm high (Z322–372),
-with 60mm-wide integral legs and a 25mm-radius open-bottom cutout matching the cross-bench frame construction.
+with 60mm-wide integral legs. The moving frame and cross-bench frame cut-outs have a 25.5mm inside corner radius
+for the 51mm hole saw.
 `bed_moving_rail_height_mm` controls the top member; leg width and opening radius use the existing frame parameters.
 The frame spans X604–622 and Y0–1178, shortened 102mm at the cab end for the Lagun mounting area.
 Its integral cab-end leg moves with the new end. It has no hinge notches.
@@ -559,7 +588,7 @@ fixings to the supplied hardware and 18mm timber before drilling.
 
 `Hinged lid` owns the plywood and the retained slat/slider geometry. `Lid hinges` owns the two mechanisms,
 including separately animated upper rails, arms and telescoping springs. Opening storage retracts the bed;
-extending it closes the lid. The Table visibility checkbox hides both table poses independently of bed motion. The Table position selector
+extending it closes the lid. The Table eye hides both table poses independently of bed motion. The Table position selector
 chooses Bench mount or Stowed, including after reloading. The fixed mount and backing follow Long bench. The blue cushion follows the lid's linkage
 transform as its placement carrier; the orange cushion stays upright and lifts just enough to clear blue.
 Actual foam forces and wall/mesh clearance remain unverified.
@@ -613,7 +642,7 @@ its full width and thickness, while retaining full bearing on the wall-side fram
 retain their dimensions. The cut list records the shortened rectangular piece.
 The cross bench has one full-width fixed cushion, combining the former blue seat and purple backrest.
 Its conversion slider is removed. The former green backrests are removed; the long bench's taller orange backrest
-and blue seat now fill the complete sleeping width.
+and blue seat meet when the bed is flat.
 Old project fields and material selections for the removed deck, divider, lid, bearers and stops are discarded on load.
 
 The lower cabinet is one timber carcass with a rear bay, a shallow front bottom bay and two full-depth front bays.
@@ -665,9 +694,10 @@ At this level the longitudinal rail in the deep part of box 6 aligns with box 4'
 89mm inboard of the deep frame. The 203mm cross support butts against its aisle face.
 The rail and cross support use full 40 × 18mm stock. Their top faces finish level with the box 6
 frame and support the full square-cut foot of the box 7 rear wall post.
-Box 8 has a fixed 6mm aisle front in 10 × 6mm rebates in both jambs.
+Box 8 has a fixed 6mm aisle front in 10 × 6mm rebates in both jambs and the sill.
 The 211mm panel spans the 195mm opening with 8mm of bearing at each side.
-Its bottom edge aligns with the box 7 flap, 2mm above the square sill. A 195 × 18 × 18mm pine batten
+Its bottom edge aligns with the closed box 7 flap. Both overlap the sill by 8mm and have a 2mm reveal.
+A 195 × 18 × 18mm pine batten
 sits on the sill between the jambs and bears against the back of the plywood for fixing.
 The rear post has a square top at world Z1201. The front sits flush with the aisle face and its jigsaw
 edge follows the scanned roof up to the box 7 jamb. The profile allows for the full 329mm slide on
@@ -923,14 +953,9 @@ One 3m pack covers all five doors. With the flap horizontal, check the actual li
 The CAD approximates the link shape and the slack with two runs. The lug and pin sizes are nominal.
 Boxes 5 and 7 use their folding stays. Cleat fixing holes and vehicle anchorage remain to detail. Pine backing strips follow the moving doors and appear in the cut list.
 
-The Visibility section provides independent Cabinet shelves, Cabinet doors, Cabinet skin and Cabinet frames
-checkboxes, each covering both modules. Hinges follow Doors, including their stationary leaves. These are local
-viewer controls and require no server roundtrip or regeneration. Their saved preferences survive hiding/showing
-the whole cabinet. Top cabinet and Bottom cabinet use the same checkbox mechanism to control Upper module and
-Lower module respectively. They mask the complete module without clearing its category filters or individual
-component-eye choices; restoring either module restores those choices. The Cabinet checkbox still gates both.
-The controls retain the existing native labelled-checkbox pattern, following
-[WAI's label guidance](https://www.w3.org/WAI/tutorials/forms/labels/).
+In **Visibility → Cabinet**, Shelves, Doors, Skin and Frames each cover both modules. Hinges follow Doors,
+including their stationary leaves. Top cabinet and Bottom cabinet control the upper and lower modules.
+Each visibility change takes effect locally. Hiding Cabinet or either module preserves all child settings.
 Parameter-group eye buttons use the same actual component paths.
 
 Loading an old project replaces the cabinet's obsolete 3mm skin selection with the existing 9mm Bunnings product
@@ -961,7 +986,7 @@ position and handle controls save with the project and move without regeneration
 The bag starts upright across the rear gap, centred at X=750, Y=45, with its bottom at Z=0.
 The chairs start edge-on in the aisle, centred at X=520/640, Y=600, with their feet at Z=0; these are temporary
 comparison positions, not an approved storage arrangement. Each object has independent footprint-centre X/Y,
-bottom elevation and rotation sliders under Stored gear, plus group visibility eyes and a Stored gear checkbox.
+bottom elevation and rotation sliders under Stored gear, plus group visibility eyes and the Gear eye.
 These use the existing live motion tracks: dragging moves geometry immediately, releasing saves the pose without
 regeneration, and browser storage restores it after reloads. Translation sliders step by 1mm and rotation by 1°.
 The cabinet and bed are unchanged. The owner confirms the real bag fits behind the existing bed with 20–30mm
@@ -969,11 +994,12 @@ spare clearance; the current estimated hatch shape conflicts with that reference
 to be reconciled. This discrepancy is not evidence that the real bag needs more space.
 
 `cushions.py` builds three foam blocks using the shared 100mm thickness.
-The long seat is 600 × 1280; the fixed cross seat is 1070 × 580.
+The long seat is 599 × 1280mm. Its aisle edge sits 1mm inside the outer rail face in both bed positions.
+The fixed cross seat is 1070 × 580mm.
 The orange backrest is 470 × 1280, retaining its seated bottom elevation and 100mm thickness. Its height follows
-the difference between sleeping width and long-seat width. The former two green backrests are removed.
-At full conversion, nominal orange fills X22–492 and the long seat X492–1092, meeting without a gap.
-Both Cushions groups use the wall-side rail datum X22, centring the nominal 1070mm mattress on the rails.
+the difference between bed width and long-bench width. The former two green backrests are removed.
+At full conversion, the orange backrest spans X22–492 and the long seat spans X492–1091.
+Both Cushions groups use the wall-side rail datum X22.
 The cross-bench slats and frames share that datum; the frontmost slat still stops at vehicle X100.
 The long-bed extension is 22mm wider than before. The cabinet aisle face is consequently 16mm wallward from the former narrow-bed design
 (the initial 6mm bed gap was removed, widening the cabinet by 6mm),
@@ -987,8 +1013,8 @@ Storage-lid tracks act on a `Foam` assembly parent, while conversion tracks reta
 The `Foam / Core` mesh keeps OCP's native box-centring offset untouched; this offset must not be replaced by
 absolute storage tracks, even at the closed pose. Deformation reads the core mesh, while pillow bounds use its parent.
 The blue child uses the lid delta conjugated through its closed cushion pose, including the shared wall-side rail offset.
-`cushion-foam.ts` performs one direct geometry update per pose. Blue and orange retain their full manufactured widths in the viewer: 600mm and 470mm. At full conversion,
-these form a centred 1070mm mattress, intentionally overlapping each 18mm retaining rail. No rail-based
+`cushion-foam.ts` performs one direct geometry update per pose. The viewer uses the foam cut sizes from CAD.
+At full conversion, the cushions overlap both 18mm retaining rails. No rail-based
 width scaling or clipping is applied. These dimensions are the foam cut sizes, not upholstery patterns or
 seam allowances. During storage opening it follows the lid
 and loses at most 3mm of thickness. Orange remains upright, rises as a whole, and compresses at most 3mm at
@@ -996,10 +1022,12 @@ its lower edge. Every orange vertex is constrained above blue's planar upper sur
 the linear half-space condition also separates the triangle interiors. No gravity, velocities, material solver,
 iterations or settling animation remain. `foam-surface.ts` supplies a rounded, seam-smoothed display mesh
 with 25mm XY and 10mm Z spacing. Dimensions in CAD and purchasing data remain nominal.
-The fixed cross-bench blue cushion uses the same rounded foam skin and display settings, at its existing size
-and placement. It does not participate in the long bench's storage-lid fitting.
+The long seat, wall backrest, and cross seat share one paint finish. Their default is Shiraz crushed velvet.
+The texture uses a crop of the product photo. Its ruler gives an approximate repeat of 312mm for the cropped tile.
+The texture follows each cushion as it moves and compresses. Colour and sheen depend on the viewer lighting.
+[Spotlight Landry Crushed Velvet in Shiraz](https://www.spotlightstores.com/en-nz/p/landry-crushed-velvet-upholstery/BP80426843-shiraz)
+The fixed cross seat does not participate in the long bench's storage-lid fitting.
 CAD child poses and browser keyframes share `lid_cushion_locations`; all XYZ rotation components are specified.
-Manufactured foam dimensions and the manual bed-conversion sequence remain unchanged.
 
 `frontend/src/viewer.ts` owns the viewer host. It embeds the installed OCP renderer through `createPage`, using the
 constructor hook to retain the viewer instance. FastAPI serves that package's JS/CSS at `/viewer-assets`; Vite proxies
@@ -1036,11 +1064,8 @@ Slider previews are combined into one animation-frame update using the latest va
 tracks are applied. Mannequin fitting, seat compression and pillow deformation are recalculated for bed or
 mannequin changes; table, storage-lid, door and gear sliders leave them alone. A slider frame draws once. Releasing
 a slider with the same value does not repeat the geometry update; its API save still occurs.
-The labelled Table checkbox in Visibility hides or shows both poses; the Table position selector chooses the pose,
-using the existing table_mount values 0 and 2. Bed extension and lid movement never change that selection.
-It persists through browser storage and pose saves, including when reloading an extended bed. The checkbox
-retains native label activation and Space-key toggling, following the
-[WAI checkbox guidance](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/).
+The Table eye controls both poses. The Table position selector chooses the pose with table_mount values 0 and 2.
+Browser storage retains visibility. Bed and lid movement preserve the selected pose.
 Older project files and browser storage containing only the shared bed position initialize both bench sliders to that
 position. Once separate positions are saved, they remain independent.
 
@@ -1055,10 +1080,38 @@ Direct manipulation uses `viewer-drag.ts` and the existing vehicle-aware piece p
 the moving bed slats/legs, storage lid, cabinet doors and mounted tabletop leaves take precedence over camera orbit.
 The 4px threshold preserves ordinary clicks and double-click cut-list navigation. Pointer capture owns the gesture;
 Escape, lost capture, page blur, tab changes and geometry replacement restore the starting pose and automatic
-table-return flag. `viewer-highlight.ts` supplies the same translucent surface tint and edge outline for persistent
-magenta selection and cyan drag previews. Active fill opacity is 0.42; hover opacity is 0.13. Overlay objects are
-marked and excluded from ray picking, and their materials and generated edges are disposed when removed.
+table-return flag. `viewer-highlight.ts` supplies the translucent surface tint and edge outline for persistent
+magenta selection, active drags and paint groups. Paint hover adds a 12% cyan tint to exposed surfaces.
+Each visible member of the paint group gets a 1.5 px cyan outline at 55% opacity. The outline shows through other parts.
+The outline adds a shape cue to the tint. The picker ignores overlay objects. The viewer releases their materials
+and generated edges when it removes them. [W3C guidance on the use of colour](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)
 Alt-drag and the toolbar/context-menu orbit override (O) retain camera access on movable parts.
+
+Ordinary pointer movement leaves CAD colours visible. The renderer's native hover picker remains active for
+measurement. The paint bucket uses the CAD piece picker and previews all members of its target group.
+Each saved assignment records the group's previous finish. Undo restores that finish, including the original CAD
+material for a group with no previous assignment. The project stores undo and redo with the assignments.
+An identical assignment leaves both stacks intact. Paint shortcuts apply in the CAD view.
+[Apple keyboard shortcuts](https://support.apple.com/guide/mac-help/keyboard-shortcuts-mchlgtd_kbd01/mac)
+The picker uses a native popover and keyboard-accessible tabs.
+[W3C tabs guidance](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)
+
+The RGB and HSV tabs use the rectangle and channel controls from Color Designer.
+The table lists the channels that increase to the right and up for each vertical slider.
+
+| Vertical slider | Right | Up |
+| --- | --- | --- |
+| Red (RGB default) | Blue | Green |
+| Green | Blue | Red |
+| Blue | Red | Green |
+| Hue (HSV default) | Saturation | Value |
+| Saturation | Hue | Value |
+| Value | Hue | Saturation |
+
+Each channel also has a horizontal slider and a numeric field. Each slider shows the colours available at the
+current values of the other channels. The two tabs share one hex field. Opacity uses a separate checkerboard slider.
+[Color Designer picker](https://colordesigner.io/color-picker) ·
+[W3C slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/)
 
 The renderer's existing `activeTool` state owns measurement mode. A state subscription cancels pending drags and
 selection clicks, removes our magenta/cyan overlays, closes the piece menu and disables the piece-action buttons.
@@ -1089,10 +1142,9 @@ the automatic table-return flag. The release listener uses window capture and mo
 Category visibility uses the viewer's actual leaf paths and `setStates`. Vehicle, Wooden floor, Slats, Cushions and
 Cabinet preferences live in browser localStorage and are reapplied when geometry arrives. Slats covers the long bench's
 fixed/moving slats and the fixed cross-bench slats.
-Cushions covers both benches' foam groups; their sidebar eyes also work independently.
-Wheel arches has its own checkbox beside Vehicle. Its visibility is independent of the containing Vehicle references
-switch, so hiding Vehicle leaves the arches controlled by Wheel arches. Both arches' individual eye controls still
-work; changing Vehicle preserves their settings. The checkbox preference uses the existing saved visibility paths.
+Vehicle hides the registered scan mesh and wheel arches. When Vehicle is visible, each follows its own saved setting.
+Cushions controls the foam on both benches. Bed/couch hides both benches, the fixed table mount and the mannequins.
+Its browser setting is separate from the saved CAD path rules and mannequin settings.
 Visible wheel arches have opaque faces and outlines and are excluded from See inside fading and click-through picking.
 Wooden floor controls the top-level Finished floor plywood assembly, outside Vehicle references. It contains the
 two 2030mm-long panels cut from separate 2400 × 1200 × 12mm sheets. Timber supports the straight joint
@@ -1103,6 +1155,16 @@ Behind each wheel arch a flush-trimmed pine block supports the 105mm plywood ext
 The shared seam lies under the benches between Y80 and Y1940. It continues a further 95mm to the rear
 threshold and 75mm towards the cab. Both panels have separate cut outlines. Their tops are at Z20,
 driven by the shared `floor_surface_z_mm` parameter.
+
+The cream and brown chevrons continue across the sheet joint and the pump lid.
+The CAD finish and the **Floor pattern** drawing use one stripe dimension from the [pattern artwork](research/red-room-floor-proof.svg).
+The drawing shows both sheets together on a rectangular blank with 50 mm extra at each edge.
+Measure the tape positions from the left and rear edges of the blank. The blue lines show the cuts.
+Use **Floor pattern rotation** with the other live sliders in the CAD sidebar or on the Floor pattern tab. Positive angles turn clockwise
+about the centre of the blank, with the cab at the top. Both views use the same angle.
+The table gives the positions of the six tape marks for that angle. The browser saves the angle locally.
+The native slider supports arrow keys for one-degree steps and Home for zero. Its label and degree readout
+follow the [W3C slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/).
 
 One shared frame of 45 × 20mm Red Stag pine battens (Bunnings I/N 0605227, 5.4m lengths) sits beneath
 both panels. The front and rear rails each span the full 1200mm floor width.
@@ -1126,15 +1188,12 @@ The twelve fixed infill pieces and the removable insert use 20mm Expol S Grade T
 The registered scan places the pump cover near X1075, Y1720. Check the tab positions in the van before cutting.
 The timber frame leaves a 300 × 300mm clear opening. The aisle sheet contains the entire 345 × 345mm cutout.
 Cut the 343 × 343mm lid from one plywood offcut. Attach the 298 × 298mm EPS insert to its underside.
-The insert has a recess below the finger hole. Two countersunk screws secure the lid to the side rails.
-The finger hole and both screws are at the same fore-aft position as removable slat 03.
-Drill the pilot holes into the timber during assembly. Keep the screw tips inside the timber.
+The plain lid rests on the timber rails with a 1mm gap on each side. Keep the painted edges clear so the lid lifts out.
 
-Remove the cross-bench cushion. Unscrew slat 03 from its two support frames. Remove the two lid screws.
-Use the finger hole to lift the lid. Turn it edge-on to pass it between slats 02 and 04.
+Remove the cross-bench cushion. Unscrew slat 03 from its two support frames.
+Lift the lid and turn it edge-on to pass it between slats 02 and 04.
 
-The native labelled checkbox follows the [WAI-ARIA checkbox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/)
-(consulted 26 October 2026): a visible label and standard Space-key toggling, using the existing Visibility fieldset.
+The **See inside** checkbox is in the Camera fieldset.
 
 **See inside** adjusts vehicle opacity in the browser before the existing viewer paints each frame. Assembly paths
 assign walls, doors, pillars and rear corners to their vehicle side; roofs and floors have vertical directions.
@@ -1209,16 +1268,16 @@ during storage opening; their saved visibility preferences return when the lid c
 
 The **Mannequin** group contains **Seated mannequin**, **Lying mannequin** and **Second lying mannequin** controls
 and independent rig instances. Both lying people use the same measured body size, each fitted to its own pillow.
-Each heading has the same eye control as CAD groups, with its own saved visibility preference. The main visibility
-checkbox gates all three while preserving those preferences. Reset posture preserves the instance's visibility.
+Each heading has the same eye control as CAD groups, with its own saved visibility preference. The Mannequin eye
+controls all three while preserving those preferences. Reset posture preserves the instance's visibility.
 The seated instance shows only at 0% bed extension, enabled lying instances only at 100%; none show during travel.
 Hidden lying instances do not deform their pillow or contribute feet-outside warnings. The lying posture uses the measured rig,
 with extended legs, lightly crossed ankles and hands over the belly. It is visible at full bed extension only.
 Head position follows the front pillow; adjustable pillow compression deforms its displayed mesh and restores it when
 the person is hidden or seated. Contact fitting is approximate and needs visual inspection.
 The pose reference is [PoseMyArt's lying crossed-legs pose](https://posemy.art/crossed-legs-poses/lying-crossed-legs-male-pose/666/).
-The mannequin checkbox lives alongside the other switches in **Visibility**. All three poses, their individual
-visibility and the group checkbox save under `mannequins` in `data/project.json`. The API returns that configuration
+The Mannequin eye is under **Visibility → Bed/couch**. All three poses, their individual
+visibility and the group setting save under `mannequins` in `data/project.json`. The API returns that configuration
 with the parameters, and `PUT /api/v1/model/mannequins` updates it without regenerating geometry. Existing browser
 poses migrate into projects without saved mannequin settings. Metadata refreshes reattach the same controls.
 Lying sliders adjust pillow-relative X/Y/Z offsets, body rotation, back lift/curvature, head tilt, hip/knee bend and
@@ -1269,7 +1328,17 @@ Browser storage retains camera, category visibility and live-control preferences
 bottoms remain on top of the ledges, whose bottoms stay aligned with the support-frame cross-beams.
 
 The CAD worker builds the assembly once and returns viewer geometry before `cad/bom.py` collects cutting envelopes.
-Its explicit material mapping uses assembly paths and labels; update this mapping when changing the component tree.
+The cut list and the viewer use the same stock roles in `cad/stock.py`. Update these roles when the assembly tree changes.
+Each linked wood product has a `face_colour` in the catalogue. It comes from the median sRGB colour of a lit wood face.
+The Okoumé colour comes from the installed panel to the left of the mirror in Gert's reference photo.
+The other wood colours come from supplier product photos. The viewer applies each colour to the exposed wood,
+including both table positions.
+The floor paint covers the upper faces of the two floor panels and the hatch lid.
+The existing bed slats use the same dressed pine colour as the 40 × 18 mm Pinetrim stock.
+Pine stock also has a grain texture. Its grain follows the longest local axis of each solid.
+The texture uses a single board from a pine scan, with the stain colour removed.
+The selected stock supplies the timber colour. A saved paint finish replaces this default.
+[Coated Pine scan by Charlotte Baglioni and Rico Cilliers, CC0](https://polyhaven.com/a/coated_pine)
 Local leaf envelopes ignore parent motion, so opening the lid, sliding the bed or hiding parts does not alter quantities.
 The worker returns cuts separately, tagged by the same model fingerprint. The coordinator accepts them only for
 the current revision and then starts layout optimisation. The BOM marks previous cuts as stale until extraction

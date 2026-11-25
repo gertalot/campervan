@@ -53,7 +53,7 @@ export class ApiError extends Error {
 export async function request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   if (isStaticSite) {
     if (method !== 'GET') throw new Error('This exported snapshot is read-only.');
-    if (!['parameters', 'materials', 'cutting', 'purchases', 'scans'].includes(path)) {
+    if (!['parameters', 'materials', 'cutting', 'purchases', 'scans', 'paint'].includes(path)) {
       throw new Error(`This action requires the local application: ${path}`);
     }
     return readSnapshotPart<T>(path);

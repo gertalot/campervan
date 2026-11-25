@@ -205,7 +205,7 @@ export function createSectionControls(container: HTMLElement, changed: (panel: S
   }
   panels.forEach(panel => { updateBounds(panel); move(panel, panel.coordinate, panel.activeId ?? undefined); });
   void refresh();
-  const timer = window.setInterval(() => { if (!window.document.hidden) void refresh(); }, 2000);
+  const timer = window.setInterval(() => { if (!window.document.hidden && !container.closest('[inert]')) void refresh(); }, 2000);
   import.meta.hot?.dispose(() => window.clearInterval(timer));
   return {
     panels,

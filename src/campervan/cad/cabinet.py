@@ -175,7 +175,7 @@ def build_cabinet(p: Parameters) -> Compound:
                             (middle + w, cab, layout.upper, box5_top - w),
                             (BOX7_AISLE_REAR_Y_MM + w, middle, layout.upper, box5_top - w)),
         fixed_cover=(rear + w, BOX7_AISLE_REAR_Y_MM, layout.upper, box5_top),
-        cover_label="Box 8 fixed front", rebate_sill=False, roof_clearance=rear_face_clearance(p),
+        cover_label="Box 8 fixed front", roof_clearance=rear_face_clearance(p),
     )
     catch_bounds = sorted((mount.bounding_box() for mount in lower_doors.mounts + upper_doors.mounts),
                           key=lambda bounds: bounds.min.Y)

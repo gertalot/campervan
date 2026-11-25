@@ -2,8 +2,10 @@
 import {
   DoubleSide, EdgesGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, type Object3D,
 } from 'three';
+import { screenLine } from './screen-line';
 
-export function highlightPiece(group: Object3D, colour: string, active = true) {
+export function highlightPiece(group: Object3D, colour: string, mode: 'selection' | 'paint' = 'selection') {
+  const paint = mode === 'paint';
   const fronts = new Set<Mesh>(), fallback = new Set<Mesh>();
   group.traverse(object => {
     if (object.userData.campervanOverlay) return;
@@ -14,20 +16,33 @@ export function highlightPiece(group: Object3D, colour: string, active = true) {
   const dispose: (() => void)[] = [];
   for (const source of fronts.size ? fronts : fallback) {
     if (!source.parent || source.userData.campervanOverlay) continue;
+    if (paint && (!source.visible || !(Array.isArray(source.material)
+      ? source.material.some(material => material.visible) : source.material.visible))) continue;
     const material = new MeshBasicMaterial({ color: colour, side: DoubleSide, transparent: true,
-      opacity: active ? 0.42 : 0.13, depthTest: false, depthWrite: false, toneMapped: false });
+      opacity: paint ? 0.12 : 0.42, depthTest: paint, depthWrite: false, toneMapped: false,
+      polygonOffset: paint, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
     const surface = new Mesh(source.geometry, material);
+    surface.renderOrder = paint ? 10001 : 10003;
     const edges = new EdgesGeometry(source.geometry, 35);
-    const lineMaterial = new LineBasicMaterial({ color: colour, transparent: true,
-      opacity: active ? 1 : 0.85, depthTest: false, depthWrite: false, toneMapped: false });
-    const outline = new LineSegments(edges, lineMaterial);
+    const outline = paint
+      ? screenLine(edges.getAttribute('position').array as Float32Array, colour, 1.5, 0.55, 10002)
+      : new LineSegments(edges, new LineBasicMaterial({ color: colour, transparent: true,
+        depthTest: false, depthWrite: false, toneMapped: false }));
+    if (paint) {
+      // Screen-space ribbons keep their winding when the van layout is mirrored.
+      outline.material.side = DoubleSide;
+      outline.material.forceSinglePass = true;
+      outline.material.toneMapped = false;
+      edges.dispose();
+    } else outline.renderOrder = surface.renderOrder;
     for (const object of [surface, outline]) {
       object.position.copy(source.position); object.quaternion.copy(source.quaternion); object.scale.copy(source.scale);
       object.userData.campervanOverlay = true; object.raycast = () => {};
-      object.renderOrder = active ? 10003 : 10002; source.parent.add(object);
+      source.parent.add(object);
     }
     dispose.push(() => {
-      surface.removeFromParent(); outline.removeFromParent(); material.dispose(); edges.dispose(); lineMaterial.dispose();
+      surface.removeFromParent(); outline.removeFromParent();
+      material.dispose(); outline.geometry.dispose(); outline.material.dispose();
     });
   }
   return () => dispose.forEach(remove => remove());

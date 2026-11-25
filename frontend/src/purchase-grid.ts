@@ -294,6 +294,7 @@ export function mountPurchaseGrid(
         requiredInput?.setAttribute('data-missing', 'true'); cells[1].append(el('small', 'Quantity missing'));
       }
       cells[1].append(el('small', record.unit));
+      if (row.previous_model) cells[1].append(el('small', 'Previous model estimate'));
       const owned = row.owned ?? record.owned;
       if (owned > record.owned) {
         cells[2].append(el('span', String(owned)), el('small', 'Existing stock'));

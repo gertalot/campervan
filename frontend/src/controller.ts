@@ -22,6 +22,10 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
   let polling = false;
   let timer: unknown;
   let session: string | null = null;
+  let cadActive = false;
+  let viewerUrl: string | undefined;
+  let viewerConnected = false;
+  let needsModel = true;
   let metadata: Record<string, FieldMetadata> | null = null;
   let current: ModelStatus | null = null;
   let inputError: string | null = null;
@@ -150,7 +154,8 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
         const data = await api.getParameters();
         if (!running) return;
         view.setMannequins(data.mannequins ?? null);
-        if (!metadata) await view.setViewerUrl(data.viewer_url);
+        viewerUrl = data.viewer_url;
+        needsModel = true;
         metadata = data.schema.properties;
         current = null;
         inputError = null;
@@ -171,13 +176,22 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
           .filter(([name, value]) => data.parameters[name] !== value));
         if (!api.readOnly && Object.keys(restoredPositions).length) await api.setPositions(restoredPositions);
         session = data.session_id;
-        if (!api.readOnly) status = await api.loadModel();
-        if (!running || status.session_id !== session) return;
-        show(status);
+
         const draft = Object.fromEntries(Object.entries({ ...data.parameters, ...positions })
           .map(([name, value]) => [name, String(value)]));
         await preview(draft);
-      } else show(status);
+      }
+      if (cadActive && needsModel && viewerUrl) {
+        if (!viewerConnected) {
+          await view.setViewerUrl(viewerUrl);
+          viewerConnected = true;
+        }
+        if (cadActive && running) {
+          if (!api.readOnly) status = await api.loadModel();
+          needsModel = false;
+        }
+      }
+      if (running && status.session_id === session) show(status);
     } catch (error) { failed = true; showError(error); }
     finally {
       polling = false;
@@ -185,6 +199,10 @@ export function createController(api: Api, view: View, clock: Clock, storage: Pi
     }
   }
   return {
+    setCadActive(active: boolean) {
+      cadActive = active;
+      if (active && needsModel) void poll();
+    },
     async start() {
       if (running) return;
       running = true;

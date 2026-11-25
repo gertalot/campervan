@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, Literal
 
+import orjson
+
+from campervan.cad.stock import material_for
 from campervan.model_cache import ModelBundle
 from campervan.parameters import Parameters
 from campervan.settings import Settings
@@ -12,10 +15,11 @@ from campervan.settings import Settings
 if TYPE_CHECKING:
     from build123d import Compound
 
+    from campervan.materials import StockFace
+
 
 def build_viewer_frames(model: Compound, parameters: Parameters) -> list[tuple[Literal["B", "D", "S"], str]]:
     """Use OCP's transport interface to capture a complete show, without a viewer connection."""
-    import orjson
     from ocp_viewer_core.codec import default  # type: ignore[import-untyped]
     from ocp_viewer_core.comms import Comms, Session  # type: ignore[import-untyped]
     from ocp_viewer_core.config import Camera, Config  # type: ignore[import-untyped]
@@ -54,13 +58,35 @@ def build_viewer_frames(model: Compound, parameters: Parameters) -> list[tuple[L
     return transport.frames
 
 
-def replay_model(bundle: ModelBundle, settings: Settings) -> None:
+def display_frame(payload: str, appearance: dict[str, StockFace]) -> dict[str, Any]:
+    """Apply selected stock appearances to the live and exported CAD scenes."""
+    message: dict[str, Any] = orjson.loads(payload)
+    if message.get("type") == "data":
+        textures: dict[str, str] = {}
+        nodes = [message["data"]["shapes"]]
+        while nodes:
+            node = nodes.pop()
+            if "parts" in node:
+                nodes.extend(node["parts"])
+            elif node.get("type") == "shapes":
+                role = material_for(tuple(node["id"].strip("/").split("/")))
+                if face := appearance.get(role):
+                    node["color"] = face.colour
+                    if face.texture:
+                        textures[node["id"]] = face.texture
+        message["stockTextures"] = textures
+    return message
+
+
+def replay_model(bundle: ModelBundle, settings: Settings, appearance: dict[str, StockFace]) -> None:
     """Deliver the saved messages in order, using the existing OCP socket and measurement backend."""
     from websockets.sync.client import connect
 
     with connect(f"ws://{settings.viewer_host}:{settings.viewer_port}") as socket:
         # Load exact measurement shapes before displaying their matching mesh.
         for kind, payload in sorted(bundle.frames, key=lambda frame: frame[0] != "B"):
+            if kind == "D":
+                payload = orjson.dumps(display_frame(payload, appearance)).decode()
             socket.send(f"{kind}:{payload}")
             if kind == "B" and not json.loads(socket.recv()).get("ok"):
                 raise RuntimeError("CAD viewer did not accept the saved measurement geometry")

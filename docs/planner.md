@@ -91,7 +91,9 @@ and does not trigger a missing-data warning. Totals include only recorded spendi
 Currency is NZD. Add delivery as its own item.
 Changing a unit label does not convert quantities. Each shared product contributes once to whole-project totals.
 
-CAD stock is grouped by product. Hardware uses pack counts; sheets/timber use current, complete saved cutting layouts.
+CAD stock is grouped by product. Hardware uses pack counts. Sheets and timber use complete layouts that match the cut list and stock settings.
+If the model changes, the BOM shows quantities from the last complete cut list as **Previous model estimate**.
+The BOM updates them when the new cut list and matching layouts are ready. Manual quantity overrides take priority.
 Existing unsourced bed slats use their modelled piece count. Required includes owned and bought stock; ownership
 reduces only what remains to buy. Required can override calculated need. Saved purchases of a product no longer
 selected in CAD remain as Unused stock with actual spending retained. CAD source specifications/cut lists appear

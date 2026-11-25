@@ -32,6 +32,7 @@ def purchase_view(
         role_groups[role.id] = key
         group = groups.setdefault(key, {
             "product": product, "uses": [], "counts": [], "owned": [], "quantities": [], "kind": role.kind,
+            "uses_cut_count": False,
         })
         group["uses"].append(role.name)
         group["owned"].append(bool(selection and selection.owned))
@@ -39,12 +40,13 @@ def purchase_view(
             group["role"] = role.id
         group["quantities"].append(selection.purchase_quantity if selection else None)
         count = role.quantity
-        if count is None and current:
+        if count is None:
             count = sum(cut.material == role.id for cut in cuts) or None
+            group["uses_cut_count"] = True
         # Unsourced reused timber is counted as the actual cut pieces, not hypothetical stock lengths.
         group["counts"].append(count if role.kind == "hardware" or (role.kind == "timber" and not product) else None)
     stock_counts: dict[str, list[int | None]] = {}
-    if cutting and current:
+    if cutting:
         for stock in cutting["groups"]:
             key = role_groups[stock["parts"][0]["material"]]
             result = cutting["state"]["results"].get(f'{stock["key"]}:{cutting["state"]["settings"]["algorithm"]}')
@@ -72,6 +74,7 @@ def purchase_view(
                 unit_price=product.price_nzd if product else None,
             )
         required = stored.required
+        previous_model = False
         legacy = bool(group and any(group["owned"]))
         if required is None and group:
             counts = group["counts"]
@@ -80,15 +83,17 @@ def purchase_view(
                 required = sum(group["quantities"]) if all(q is not None for q in group["quantities"]) else None
             elif all(count is not None for count in counts):
                 required = ceil(sum(counts) / (product.pack_quantity if product else 1))
+                previous_model = not current and group["uses_cut_count"]
             elif key in stock_counts and all(count is not None for count in stock_counts[key]):
                 required = sum(stock_counts[key])
+                previous_model = not current
         unused = group is None and bool(stored.product_id or stored.role_id)
         if unused:
             required = 0
         # Required is the total design requirement. Ownership changes only what remains to buy.
         automatic_owned = required if group and all(group["owned"]) and required is not None else 0
         if group and group["kind"] == "hardware" and not all(group["owned"]):
-            owned_counts = [count for count, owned in zip(group["counts"], group["owned"]) if owned]
+            owned_counts = [count for count, owned in zip(group["counts"], group["owned"], strict=True) if owned]
             if owned_counts and all(count is not None for count in owned_counts):
                 automatic_owned = sum(owned_counts) // (product.pack_quantity if product else 1)
         owned = max(stored.owned, automatic_owned)
@@ -107,7 +112,7 @@ def purchase_view(
             status = "Partly bought" if stored.bought else "Not bought"
         rows.append({
             "record": stored.model_dump(), "required": required, "remaining": remaining,
-            "owned": owned,
+            "owned": owned, "previous_model": previous_model,
             "remaining_cost": cost, "status": status,
             "uses": group["uses"] if group else [], "shared": bool(group and len(group["uses"]) > 1),
             "legacy_owned": legacy, "generated": group is not None or unused,
@@ -117,8 +122,12 @@ def purchase_view(
 
 def purchase_totals(rows: list[dict[str, Any]]) -> dict[str, Any]:
     rows = list({row["record"]["id"]: row for row in rows}.values())
-    spent = sum((Decimal(str(row["record"]["spent"])) for row in rows if row["record"]["spent"] is not None), Decimal(0))
-    remaining = sum((Decimal(str(row["remaining_cost"])) for row in rows if row["remaining_cost"] is not None), Decimal(0))
+    spent = sum(
+        (Decimal(str(row["record"]["spent"])) for row in rows if row["record"]["spent"] is not None), Decimal(0)
+    )
+    remaining = sum(
+        (Decimal(str(row["remaining_cost"])) for row in rows if row["remaining_cost"] is not None), Decimal(0)
+    )
     return {
         "spent": money(spent), "remaining": money(remaining), "forecast": money(spent + remaining),
         "unknown_remaining": sum(row["remaining_cost"] is None for row in rows),

@@ -4,12 +4,15 @@ import { createViewerCamera, type CameraState, type CameraViewer } from './viewe
 import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPose } from './mannequin';
 import { createPillows } from './pillows';
 import { createCushionFoam } from './cushion-foam';
+import { applyFloorFinish } from './floor-finish';
 import { createVehicleFade } from './vehicle-fade';
+import type { ScanDisplay } from './scan-panels';
 import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
 import { createViewerHuman, type HumanViewer } from './viewer-human';
+import { createViewerPaint } from './viewer-paint';
 import { createLayoutMirror } from './layout-mirror';
-import { Box3, DoubleSide, FrontSide, Mesh, type Object3D, type Scene } from 'three';
+import { Box3, type Object3D, type Scene } from 'three';
 import * as library from './renderer';
 import { assetUrl, isStaticSite } from './site-runtime';
 
@@ -49,6 +52,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let visibilityRules: Record<string, boolean> = {};
   let unsubscribeTool: (() => void) | undefined;
   let socket: WebSocket | undefined;
+  let cadActive = false;
+  let pendingFocus: string | undefined;
   let motions: Record<string, Motion> = {};
   const positions: Record<string, number> = {};
   const bases = new Map<string, Vector>();
@@ -66,23 +71,45 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let seatCushion: ReturnType<typeof createCushionFoam> | undefined;
   const vehicleFade = createVehicleFade();
   const layoutMirror = createLayoutMirror();
-  let scanReference: Object3D | undefined;
+  let floorDegrees = 0;
+  let rotateFloor: ReturnType<typeof applyFloorFinish>;
+  let scanDisplay: ScanDisplay | undefined;
+  let scanVehicleOpacity: number | null = null;
   let crossSections: Object3D | undefined;
   const human = createViewerHuman(container, () => viewer,
-    () => { cancelCameraAnimation(); drag.cancel(); }, saveCamera, () => pieces.orbitTarget());
+    () => { paint.cancel(); cancelCameraAnimation(); drag.cancel(); }, saveCamera, () => pieces.orbitTarget());
   const pieces = createViewerPieces(container, () => viewer as unknown as PieceViewer | undefined,
-    () => { cancelCameraAnimation(); human.cancel(); drag.cancel(); }, saveCamera);
+    () => { cancelCameraAnimation(); human.cancel(); drag.cancel(); }, saveCamera, () => paint.isActive());
   const drag = createViewerDrag(container, {
     viewer: () => viewer as unknown as PieceViewer | undefined,
     motions: () => motions,
     pose: () => motionController?.snapshotPositions().positions ?? { ...positions },
     pick: pieces.pickPoint,
+    painting: () => paint.isActive(),
     preview: previewPose,
     save: () => { void saveAcceptedPositions(); },
     snapshot: () => motionController?.snapshotPositions() ?? { positions: { ...positions } },
     restore: snapshot => motionController?.restorePositions(snapshot),
   });
-  pieces.setCommands(() => [...human.commands(), ...drag.commands()]);
+  const paint = createViewerPaint(container, {
+    pick(event, sample = false) {
+      if (!scanDisplay?.root.visible) {
+        if (sample) return pieces.pickPoint(event);
+        const path = pieces.pickPath(event);
+        return path ? { path } : null;
+      }
+      const scan = scanDisplay;
+      return pieces.pickPoint(event, (ray, cad) => scan.pickPaint(ray, cad, scanVehicleOpacity ?? 1, sample));
+    },
+    modeChanged(active) {
+      if (active) { cancelCameraAnimation(); human.cancel(); }
+      drag.toolChanged();
+      pieces.toolChanged();
+    },
+    redraw() { if (viewer?.ready) viewer.update(true, false); },
+    error: onError,
+  });
+  pieces.setCommands(() => [...human.commands(), ...drag.commands(), ...paint.commands()]);
 
   function previewPose(patch: Record<string, number>) {
     motionController?.previewPositions(patch);
@@ -111,18 +138,10 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   });
   let seeInside = false;
 
-  function updateScanSides() {
-    // The reconstructed interior mesh is wound towards the cabin. Culling its backs
-    // opens the near-side shell while keeping inward-facing floor and far-side faces.
-    const side = seeInside ? FrontSide : DoubleSide;
-    scanReference?.traverse(object => {
-      if (!(object instanceof Mesh)) return;
-      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        if (material.side === side) continue;
-        material.side = side;
-        material.needsUpdate = true;
-      }
-    });
+  function updateScanVisibility() {
+    const vehicleVisible = visibilityRules['/Campervan/Vehicle references'] !== false;
+    if (scanDisplay) scanDisplay.root.visible = vehicleVisible;
+    vehicleFade.setComparisonOpacity(scanDisplay && vehicleVisible ? scanVehicleOpacity : null);
   }
 
   function showMannequin(render = true) {
@@ -298,6 +317,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
 
   return {
     async connect(url: string) {
+      void paint.load();
       const css = document.createElement('link');
       css.rel = 'stylesheet';
       css.href = assetUrl('viewer-assets/css/three-cad-viewer.css');
@@ -315,12 +335,17 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         constructor(...args: any[]) {
           super(...args);
           viewer = this as unknown as CadViewer;
+          const nativeHover = this.pickingController.hoverPreselectActive.bind(this.pickingController);
+          this.pickingController.hoverPreselectActive = () => hasActiveTool(this as unknown as PieceViewer) && nativeHover();
           this.reset = () => pieces.resetCommand().run();
           this.display.resize = () => pieces.resetCommand().run();
           unsubscribeTool?.();
           unsubscribeTool = (this as unknown as PieceViewer).state.subscribe('activeTool', () => {
-            drag.toolChanged(); pieces.toolChanged(); human.toolChanged(hasActiveTool(this as unknown as PieceViewer));
-            if (hasActiveTool(this as unknown as PieceViewer)) this.display.shapeFilterDropDownMenu.setValue('All');
+            const measuring = hasActiveTool(this as unknown as PieceViewer);
+            this.pickingController.clearHover();
+            paint.toolChanged(measuring);
+            drag.toolChanged(); pieces.toolChanged(); human.toolChanged(measuring);
+            if (measuring) this.display.shapeFilterDropDownMenu.setValue('All');
           });
           const update = this.update.bind(this);
           this.update = (...updateArgs: any[]) => {
@@ -341,7 +366,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         overrides: { display: { tools: false, glass: false, theme: 'dark' }, viewer: { tools: false } },
         send(command: string, message: unknown) {
           if (command === 'status') saveCamera();
-          if (socket?.readyState === WebSocket.OPEN) socket.send(`U:${JSON.stringify({ command, text: message })}`);
+          if (cadActive && socket?.readyState === WebSocket.OPEN) socket.send(`U:${JSON.stringify({ command, text: message })}`);
         },
       });
       const allowed = new Set(['perspective', 'transparent', 'blackedges', 'reset', 'distance']);
@@ -393,10 +418,11 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           rendering = true;
           // OCP disposes its old scene when replacing geometry; keep the independent human rig.
           if (message.type === 'data') {
-            scanReference?.removeFromParent();
+            scanDisplay?.root.removeFromParent();
             crossSections?.removeFromParent();
             drag.cancel();
             pieces.clear();
+            paint.detach();
             vehicleFade.clear();
             layoutMirror.clear();
             Object.values(mannequins).forEach(model => model.root.removeFromParent());
@@ -406,6 +432,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           try { page.handleMessage(message); }
           finally { rendering = false; }
           if (message.type === 'data') {
+            rotateFloor = applyFloorFinish(viewer!.rendered.nestedGroup.groups);
+            rotateFloor?.(floorDegrees);
             vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
             const picker = (viewer as unknown as PieceViewer).idPicker;
             if (picker) {
@@ -422,7 +450,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             pillows.attach(viewer!.rendered.nestedGroup.groups);
             pillows.pose(positions.bed_extension_percent ?? 0);
             layoutMirror.attach(viewer!.rendered.nestedGroup.groups);
-            if (scanReference) viewer!.rendered.scene.add(scanReference);
+            if (scanDisplay) viewer!.rendered.scene.add(scanDisplay.root);
             if (crossSections) viewer!.rendered.scene.add(crossSections);
             motions = {};
             bases.clear();
@@ -442,8 +470,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             cameraNavigation.applyFieldOfView();
             saveCamera();
             onModel();
+            if (pendingFocus) {
+              if (!pieces.focus(pendingFocus)) onError('This piece is not in the displayed CAD model yet.');
+              pendingFocus = undefined;
+            }
             showTables();
             showMannequin();
+            paint.attach(viewer!.rendered.nestedGroup.groups, message.stockTextures ?? {});
+            viewer!.update(true, false);
           }
         }
       }
@@ -465,7 +499,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         catch (error) { onError(error instanceof Error ? error.message : String(error)); }
       };
       await new Promise<void>((resolve, reject) => {
-        socket!.onopen = () => { socket!.send('L:{}'); resolve(); };
+        socket!.onopen = () => { if (cadActive) socket!.send('L:{}'); resolve(); };
         socket!.onerror = () => {
           const error = new Error('CAD viewer connection failed. Check make viewer.');
           onError(error.message);
@@ -480,21 +514,37 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       positions[name] = percent;
       scheduleMove(name);
     },
+    setCadActive(active: boolean) {
+      if (active === cadActive) return;
+      cadActive = active;
+      if (socket?.readyState === WebSocket.OPEN) socket.send(active ? 'L:{}' : 'X:{}');
+      if (!active) {
+        pendingFocus = undefined;
+        human.cancel(); drag.cancel(); paint.cancel();
+      }
+    },
     setMotionController(controller: MotionController) { motionController = controller; },
     getFieldOfView: cameraNavigation.getFieldOfView,
+    setFloorRotation(degrees: number) {
+      floorDegrees = degrees;
+      rotateFloor?.(degrees);
+      viewer?.update(true, false);
+    },
     setFieldOfView(degrees: number) {
       cameraNavigation.setFieldOfView(degrees);
       viewer?.update(true, false);
     },
-    setScanReference(root: Object3D | undefined) {
-      scanReference?.removeFromParent();
-      scanReference = root;
-      updateScanSides();
-      if (root && viewer?.ready) viewer.rendered.scene.add(root);
-      viewer?.update(true, false);
-    },
-    setVehicleComparisonOpacity(opacity: number | null) {
-      vehicleFade.setComparisonOpacity(opacity);
+    setScanReference(scan?: ScanDisplay, vehicleOpacity?: number, scanOpacity = 1) {
+      paint.clearPointer();
+      if (scanDisplay !== scan) {
+        scanDisplay?.root.removeFromParent();
+        scanDisplay = scan;
+        paint.setScanPaintPanels(scan?.paintPanels ?? []);
+        if (scanDisplay && viewer?.ready) viewer.rendered.scene.add(scanDisplay.root);
+      }
+      vehicleFade.setScanPanels(scan?.panels ?? [], scanOpacity);
+      scanVehicleOpacity = vehicleOpacity ?? null;
+      updateScanVisibility();
       viewer?.update(true, false);
     },
     setCrossSections(root: Object3D) {
@@ -512,12 +562,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     previewPositions: previewPose,
     savePositions: saveAcceptedPositions,
-    cancelDrag() { human.cancel(); drag.cancel(); },
     setPieceLink: pieces.setLink,
-    focusPiece: pieces.focus,
+    focusPiece(path: string) {
+      if (viewer?.ready) return pieces.focus(path);
+      pendingFocus = path;
+      return true;
+    },
     setSeeInside(enabled: boolean) {
       seeInside = enabled;
-      updateScanSides();
       viewer?.update(true, false);
     },
     setMannequinPose(pose: MannequinPose) {
@@ -549,19 +601,14 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       if (!visible.length || visible.every(Boolean)) return 'shown';
       return visible.some(Boolean) ? 'mixed' : 'hidden';
     },
-    setVisibility(rules: Record<string, boolean>, independentRoots: string[] = []) {
+    setVisibility(rules: Record<string, boolean>) {
       visibilityRules = { ...rules };
+      updateScanVisibility();
       if (!viewer?.ready) return;
       const states: Record<string, number[]> = {};
       const hidden = Object.keys(rules).filter(path => !rules[path]);
       for (const [path, state] of Object.entries(viewer.getStates())) {
-        // Independent references retain their own visibility when a containing
-        // assembly is hidden. Their own switches and descendant filters still apply.
-        const independent = independentRoots.find(root => path === root || path.startsWith(`${root}/`));
-        const visible = !hidden.some(prefix => {
-          if (independent?.startsWith(`${prefix}/`)) return false;
-          return path === prefix || path.startsWith(`${prefix}/`);
-        });
+        const visible = !hidden.some(root => path === root || path.startsWith(`${root}/`));
         states[path] = state.map(value => value === 3 ? 3 : Number(visible));
       }
       viewer.setStates(states);

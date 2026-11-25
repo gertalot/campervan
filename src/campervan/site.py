@@ -10,12 +10,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from campervan.materials import active_cuts, load_project
+from campervan.materials import active_cuts, load_project, stock_appearance
 from campervan.model_cache import model_fingerprint, read_bundle
 from campervan.paths import MODEL_CACHE_PATH, PROJECT_PATH
 from campervan.planning import parse_document
 from campervan.purchases import purchase_view
 from campervan.snapshot import cutting_data, material_data, parameter_response
+from campervan.viewer import display_frame
 from campervan.worker import regenerate_model
 
 
@@ -101,10 +102,12 @@ async def export_site() -> None:
             project.mannequins,
         ).model_dump(mode="json", by_alias=True),
         "materials": material_data(project.parameters, project.materials, cuts, 0, 0),
+        "paint": project.paint.view().model_dump(mode="json"),
         "cutting": cutting,
         "purchases": purchases | {"filtered_totals": purchases["totals"]},
     }
-    frames = [json.loads(payload) for kind, payload in bundle.frames if kind != "B"]
+    appearance = stock_appearance(project.materials)
+    frames = [display_frame(payload, appearance) for kind, payload in bundle.frames if kind != "B"]
     # Finish in a temporary directory so a failed build leaves the previous export intact.
     with TemporaryDirectory(prefix=".campervan-site-", dir=root) as temporary:
         output = Path(temporary) / "site"

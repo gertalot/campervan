@@ -1,0 +1,164 @@
+#cad-paint-picker, .paint-chip {
+  --paint-checks: repeating-conic-gradient(#b4b8bd 0% 25%, #71777e 0% 50%) 0 0 / 8px 8px;
+}
+#viewer .cad-paint-controls button[aria-pressed="true"] { color: #29dbf0; background: #25444b; border-radius: 4px; }
+.paint-chip {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #92a0aa;
+  border-radius: 4px;
+  background: var(--paint-checks);
+}
+.paint-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paint-colour) var(--paint-image) center / cover;
+  background-blend-mode: multiply;
+  opacity: var(--paint-opacity);
+}
+.cad-paint-controls .paint-chip { vertical-align: middle; }
+
+#cad-paint-picker {
+  --paint-width: min(455px, calc(100vw - 16px));
+  position: fixed;
+  inset: auto;
+  top: var(--paint-anchor-y);
+  left: clamp(8px, var(--paint-anchor-x), calc(100vw - var(--paint-width) - 8px));
+  width: var(--paint-width);
+  max-height: calc(100dvh - var(--paint-anchor-y) - 8px);
+  overflow: auto;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #505964;
+  border-radius: 8px;
+  box-shadow: 0 8px 26px #0007;
+  background: #22252a;
+  color: #e3e7ed;
+  font: 12px/1.4 system-ui, sans-serif;
+}
+#cad-paint-picker button, #cad-paint-picker input { font: inherit; }
+#cad-paint-picker button {
+  color: inherit; background: #30353d; border: 1px solid #535c68; border-radius: 4px; cursor: pointer;
+}
+#cad-paint-picker button:hover { background: #3b444f; }
+#cad-paint-picker :is(button, input):focus-visible, #cad-paint-picker .paint-plane:has(:focus-visible) {
+  outline: 2px solid #9ec5ef; outline-offset: 1px;
+}
+#cad-paint-picker .paint-heading, #cad-paint-picker .paint-bottom {
+  display: flex; align-items: center; gap: 10px;
+}
+#cad-paint-picker .paint-heading { justify-content: space-between; font-size: 14px; }
+#cad-paint-picker .paint-close { min-width: 26px; height: 26px; font-size: 19px; line-height: 1; }
+#cad-paint-picker .paint-bottom .paint-chip { width: 40px; height: 36px; }
+#cad-paint-picker .paint-current-name, #cad-paint-picker .paint-current-detail { display: block; }
+#cad-paint-picker .paint-current-name[hidden] { display: none; }
+#cad-paint-picker .paint-current-name { font-variant-numeric: tabular-nums; }
+#cad-paint-picker .paint-current-detail { margin-top: 2px; color: #b6bec9; }
+#cad-paint-picker .paint-tabs { display: flex; flex-wrap: wrap; margin-top: 8px; border-bottom: 1px solid #454b55; }
+#cad-paint-picker .paint-tabs button { padding: 5px 6px; border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; background: transparent; color: #b6bec9; font-size: 11px; }
+#cad-paint-picker .paint-tabs [aria-selected="true"] { border-bottom-color: #9ec5ef; color: #fff; }
+#cad-paint-picker .paint-axes { margin: 0 0 6px; color: #b6bec9; white-space: pre-wrap; }
+#cad-paint-picker .paint-editor { min-width: 0; --thumb: var(--shade); }
+#cad-paint-picker .paint-box-layout {
+  display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(78px, 22%); gap: 10px; align-items: start;
+}
+#cad-paint-picker .paint-plane {
+  position: relative; aspect-ratio: 1; width: 100%; border-radius: 4px;
+  --spectrum: linear-gradient(to right in srgb, red, yellow, lime, cyan, blue, magenta, red);
+  background: linear-gradient(to top, #000, transparent),
+    linear-gradient(to right in srgb, #fff, hsl(var(--hue) 100% 50%));
+  box-shadow: inset 0 0 0 1px #ffffff38; cursor: crosshair; touch-action: none; user-select: none;
+}
+#cad-paint-picker :is([data-rail="Red"], [data-rail="Green"], [data-rail="Blue"]) .paint-plane {
+  background: linear-gradient(to right in srgb, black, var(--x-colour)),
+    linear-gradient(to top in srgb, black, var(--y-colour)), var(--base);
+  background-blend-mode: screen;
+}
+#cad-paint-picker [data-rail="Saturation"] .paint-plane {
+  --veil: rgb(255 255 255 / var(--wash));
+  background: linear-gradient(to top, black, transparent), linear-gradient(var(--veil), var(--veil)), var(--spectrum);
+}
+#cad-paint-picker [data-rail="Value"] .paint-plane {
+  --veil: rgb(0 0 0 / var(--darken));
+  background: linear-gradient(var(--veil), var(--veil)), linear-gradient(to top, white, transparent), var(--spectrum);
+}
+#cad-paint-picker .paint-point {
+  position: absolute; top: var(--shade-y); left: var(--shade-x); transform: translate(-50%, -50%);
+  width: 15px; height: 15px; border: 2px solid white; border-radius: 50%; background: var(--shade);
+  box-shadow: 0 0 0 1px #000a, 0 1px 3px #0008; pointer-events: none;
+}
+#cad-paint-picker .paint-plane:has(:focus-visible)::after {
+  position: absolute; bottom: 6px; left: 6px; padding: 2px 6px; border-radius: 3px;
+  background: #1b1d21; color: #fff; pointer-events: none;
+}
+#cad-paint-picker .paint-plane:has(input:first-child:focus-visible)::after { content: attr(data-x); }
+#cad-paint-picker .paint-plane:has(input:nth-child(2):focus-visible)::after { content: attr(data-y); }
+#cad-paint-picker .paint-scale { display: grid; grid-template-columns: 1fr auto; color: #c9d0d9; }
+#cad-paint-picker .paint-scale span { font-variant-numeric: tabular-nums; }
+#cad-paint-picker .paint-track {
+  appearance: none; grid-column: 1 / -1; width: 100%; height: 24px; margin: 0; background: none; cursor: pointer;
+}
+#cad-paint-picker .paint-rail {
+  grid-column: auto; writing-mode: vertical-lr; direction: rtl; width: 20px; height: 100%; min-height: 0;
+}
+#cad-paint-picker .paint-tools { display: grid; align-content: start; gap: 10px; }
+#cad-paint-picker .paint-channel-choices { display: flex; margin: 0; padding: 0; border: 0; }
+#cad-paint-picker .paint-channel-choices legend { margin-bottom: 4px; padding: 0; color: #b6bec9; }
+#cad-paint-picker .paint-channel-choices label { position: relative; flex: 1; }
+#cad-paint-picker .paint-channel-choices input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; }
+#cad-paint-picker .paint-channel-choices span {
+  display: block; padding: 4px 0; border: 1px solid #505964; text-align: center; border-radius: 3px;
+}
+#cad-paint-picker .paint-channel-choices input:checked + span { background: #30465f; border-color: #9ec5ef; }
+#cad-paint-picker .paint-channel-choices input:focus-visible + span { outline: 2px solid white; }
+#cad-paint-picker .paint-colour-preview { height: 48px; background: var(--shade); border-radius: 4px; border: 1px solid #ffffff40; }
+#cad-paint-picker .paint-channel-row { display: grid; grid-template-columns: 85px minmax(0, 1fr) 56px;
+  align-items: center; gap: 9px; margin-top: 6px; }
+#cad-paint-picker .paint-channel-row .paint-track { grid-column: auto; }
+#cad-paint-picker .paint-channels { margin-top: 12px; }
+#cad-paint-picker .paint-alpha {
+  --track: linear-gradient(to right, transparent, var(--shade)), var(--paint-checks);
+  --thumb: var(--shade);
+}
+#cad-paint-picker .paint-track::-webkit-slider-runnable-track {
+  height: 12px; border-radius: 6px; background: var(--track);
+}
+#cad-paint-picker .paint-track::-moz-range-track { height: 12px; border-radius: 6px; background: var(--track); }
+#cad-paint-picker .paint-track::-webkit-slider-thumb {
+  appearance: none; width: 16px; height: 16px; margin-top: -2px; border: 2px solid white; border-radius: 50%;
+  background: var(--thumb); box-shadow: 0 0 0 1px #000a;
+}
+#cad-paint-picker .paint-track::-moz-range-thumb {
+  box-sizing: border-box; width: 16px; height: 16px; border: 2px solid white; border-radius: 50%;
+  background: var(--thumb); box-shadow: 0 0 0 1px #000a;
+}
+#cad-paint-picker .paint-rail::-webkit-slider-runnable-track { width: 12px; height: 100%; }
+#cad-paint-picker .paint-rail::-webkit-slider-thumb { margin: 0 0 0 -2px; }
+#cad-paint-picker .paint-rail::-moz-range-track { width: 12px; height: 100%; }
+#cad-paint-picker [role="tabpanel"]:not([hidden]) {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 7px; padding: 12px 0;
+}
+#cad-paint-picker .paint-tools > label { display: grid; gap: 4px; color: #b6bec9; }
+#cad-paint-picker .paint-editor :is(input[type="text"], input[type="number"]) {
+  min-width: 0; width: 100%; padding: 5px 7px; border: 1px solid #505964; border-radius: 4px;
+  background: #15171a; color: #e3e7ed; font-variant-numeric: tabular-nums;
+}
+#cad-paint-picker [role="tabpanel"] input:user-invalid { border-color: #f09a91; }
+
+#cad-paint-picker :is(#cad-paint-favourites-panel, #cad-paint-currently-used-panel):not([hidden]) {
+  grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
+}
+#cad-paint-picker [role="tabpanel"] button {
+  display: flex; align-items: center; gap: 6px; padding: 5px; font-size: 11px; text-align: left; overflow-wrap: anywhere;
+}
+#cad-paint-picker #cad-paint-textures-panel button { flex-direction: column; align-items: stretch; }
+#cad-paint-picker #cad-paint-textures-panel .paint-chip { width: 100%; height: 35px; }
+#cad-paint-picker [role="tabpanel"] button[aria-pressed="true"] { border-color: #9ec5ef; background: #30465f; }
+#cad-paint-picker .paint-bottom { flex-wrap: wrap; border-top: 1px solid #454b55; margin-top: 8px; padding-top: 12px; }
+#cad-paint-picker .paint-favourite { margin-left: auto; padding: 6px 9px; }

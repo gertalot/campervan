@@ -142,9 +142,9 @@ function setupPoseControls(
   };
 }
 
-/** The master checkbox masks each mannequin's saved visibility preference. */
+/** Keep pose choices when the mannequin or the bed is hidden. */
 export function setupMannequinControls(
-  container: HTMLDetailsElement, visible: HTMLInputElement, change: (pose: MannequinPose) => void,
+  container: HTMLDetailsElement, change: (pose: MannequinPose) => void,
   save: (settings: MannequinSettings) => void,
 ) {
   let loaded = false, restoring = false;
@@ -157,11 +157,23 @@ export function setupMannequinControls(
   container.open = localStorage.getItem(collapsedKey) !== 'true';
   container.addEventListener('toggle', () => localStorage.setItem(collapsedKey, String(!container.open)));
   const saved = JSON.parse(localStorage.getItem('campervan.mannequin.seated') ?? '{}');
-  visible.checked = localStorage.getItem('campervan.mannequin.visible') === null
+  let visible = localStorage.getItem('campervan.mannequin.visible') === null
     ? saved.visible !== false : localStorage.getItem('campervan.mannequin.visible') !== 'false';
   const poses = new Map<string, MannequinPose>();
+  let bedVisible = true;
+  function displayPose(pose: MannequinPose) {
+    change({ ...pose, visible: bedVisible && visible && pose.visible });
+  }
+  const eye = createVisibilityButton('Mannequin', () => {
+    visible = !visible;
+    updateVisibilityButton(eye, 'Mannequin', visible ? 'shown' : 'hidden');
+    localStorage.setItem('campervan.mannequin.visible', String(visible));
+    for (const pose of poses.values()) displayPose(pose);
+    persist();
+  });
+  updateVisibilityButton(eye, 'Mannequin', visible ? 'shown' : 'hidden');
   function configuration(): MannequinSettings {
-    return { version: 1, visible: visible.checked, poses: Object.fromEntries([...poses].map(([mode, pose]) =>
+    return { version: 1, visible, poses: Object.fromEntries([...poses].map(([mode, pose]) =>
       [mode, { ...pose, poseVersion: 2 }])) as MannequinSettings['poses'] };
   }
   function persist() {
@@ -177,16 +189,17 @@ export function setupMannequinControls(
     container.append(group);
     return setupPoseControls(group, defaults, pose => {
       poses.set(pose.mode, pose);
-      change({ ...pose, visible: visible.checked && pose.visible });
+      displayPose(pose);
       persist();
     });
   });
-  visible.addEventListener('change', () => {
-    localStorage.setItem('campervan.mannequin.visible', String(visible.checked));
-    for (const pose of poses.values()) change({ ...pose, visible: visible.checked && pose.visible });
-    persist();
-  });
   return {
+    eye,
+    setBedVisible(enabled: boolean) {
+      if (bedVisible === enabled) return;
+      bedVisible = enabled;
+      for (const pose of poses.values()) displayPose(pose);
+    },
     restore(settings: MannequinSettings | null) {
       restoring = true;
       let selected = settings;
@@ -196,11 +209,12 @@ export function setupMannequinControls(
         if (saved?.source === publishedSource) selected = saved.settings;
       }
       if (selected) {
-        visible.checked = selected.visible;
+        visible = selected.visible;
+        updateVisibilityButton(eye, 'Mannequin', visible ? 'shown' : 'hidden');
         for (const [index, mode] of ['seated', 'lying', 'lying-second'].entries()) {
           groups[index].restore(selected.poses[mode as MannequinPose['mode']]);
         }
-        localStorage.setItem('campervan.mannequin.visible', String(visible.checked));
+        localStorage.setItem('campervan.mannequin.visible', String(visible));
       }
       restoring = false;
       loaded = true;

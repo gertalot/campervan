@@ -57,7 +57,7 @@ def build_cross_bench(p: Parameters) -> Compound:
             for x in (wall_x, aisle_x):
                 slat -= countersunk_clearance(p.slat_thickness_mm).moved(
                     Location((x + thickness / 2, p.slat_width_mm / 2, p.slat_thickness_mm)))
-        slat.label, slat.color = name, Color(0.87, 0.70, 0.43)
+        slat.label = name
         slat.location = Location((wall_trim, rear + i * (p.slat_width_mm + gap), height))
         slats.append(slat)
     parts.append(Compound(label="Fixed slats", children=slats))

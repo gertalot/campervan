@@ -2,10 +2,11 @@
 
 from math import ceil
 
-from build123d import Align, Color, Compound, Cylinder, Face, Location, Part, Plane, Solid, Wire
+from build123d import Color, Compound, Face, Location, Part, Plane, Solid, Wire
 
 from campervan.cad.mirror import mirror_assembly
-from campervan.cad.panels import countersunk_clearance, panel
+from campervan.cad.panels import panel
+from campervan.cad.stock import HATCH_FOAM
 from campervan.parameters import Parameters
 
 FLOOR_BASE_WIDTH_MM = 1200.0
@@ -18,7 +19,6 @@ EPS = Color(0.94, 0.94, 0.90)
 HATCH_X, HATCH_Y = 1075.0, 1720.0 - FLOOR_REAR_Y_MM
 HATCH_CLEAR = 300.0
 HATCH_GAP = 1.0  # Each edge of the removable plywood and EPS.
-HATCH_FOAM = "Lift-out EPS"
 
 
 def routed_block(label: str, profile: list[tuple[float, float]], p: Parameters) -> Compound:
@@ -189,14 +189,6 @@ def build_floor_plywood(p: Parameters) -> Compound:
     foam_side = HATCH_CLEAR - 2 * HATCH_GAP
     lid = panel(lid_side, lid_side, ply).moved(Location((-lid_side / 2, -lid_side / 2, -ply)))
     foam = panel(foam_side, foam_side, depth).moved(Location((-foam_side / 2, -foam_side / 2, -ply - depth)))
-    screw_offset = HATCH_CLEAR / 2 + p.floor_rib_width_mm / 4
-    for x in (-screw_offset, screw_offset):
-        lid -= countersunk_clearance(ply).moved(Location((x, 0, 0)))
-    # Leave space behind the finger hole so fingers can hook the underside of the plywood.
-    grip_x = -foam_side / 2 + 24
-    grip = Cylinder(12.5, ply, align=(Align.CENTER, Align.CENTER, Align.MAX))
-    lid -= grip.moved(Location((grip_x, 0, 0)))
-    foam -= panel(48, 50, depth).moved(Location((-foam_side / 2, -25, -ply - depth)))
     lid.label, lid.color = "Lift-out plywood lid", PLY
     foam.label, foam.color = HATCH_FOAM, EPS
     hatch = Compound(label="Fuel pump hatch", children=[lid, foam]).moved(Location((HATCH_X, HATCH_Y, 0)))

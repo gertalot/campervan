@@ -2,12 +2,13 @@
 
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from campervan.cutting_models import CuttingState
 from campervan.mannequins import MannequinSettings
+from campervan.paint import PaintState
 from campervan.parameters import Parameters, default_parameters
 from campervan.paths import PROJECT_PATH
 
@@ -22,6 +23,8 @@ class Product(BaseModel):
     kind: Literal["sheet", "timber", "hardware"]
     dimensions: dict[str, float]
     specification: str
+    face_colour: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    face_texture: Literal["pine"] | None = None
     checked: str
     price_nzd: float | None = None
     sale_unit: str = "sheet"
@@ -403,10 +406,34 @@ class Project(BaseModel):
     materials: dict[str, Selection] = Field(default_factory=default_selections)
     cutting: CuttingState = Field(default_factory=CuttingState)
     mannequins: MannequinSettings | None = None
+    paint: PaintState = Field(default_factory=PaintState)
 
 
 def catalogue() -> list[Product]:
     return [Product.model_validate(item) for item in json.loads(CATALOGUE_PATH.read_text())]
+
+
+class StockFace(NamedTuple):
+    colour: str
+    texture: str | None
+
+
+def stock_appearance(selections: dict[str, Selection]) -> dict[str, StockFace]:
+    """Resolve each stock role to its display colour and optional grain."""
+    faces = {
+        product.id: StockFace(product.face_colour, product.face_texture)
+        for product in catalogue()
+        if product.face_colour
+    }
+    selected = {
+        role: faces[selection.product_id]
+        for role, selection in selections.items()
+        if selection.product_id and selection.product_id in faces
+    }
+    if "slats" in selections and selections["slats"].product_id is None:
+        # Use dressed pine as the visual reference for the owner's existing slats.
+        selected["slats"] = faces["pinetrim-40-18-1800"]
+    return selected
 
 
 def resolve(parameters: Parameters, selections: dict[str, Selection]) -> Parameters:

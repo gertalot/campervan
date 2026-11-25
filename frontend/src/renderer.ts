@@ -17,7 +17,7 @@ export const {
   Line3, LineLoop, LineSegments, LinearFilter, LinearMipmapLinearFilter, LinearMipmapNearestFilter, LinearSRGBColorSpace,
   Loader, LoaderUtils, Material, MathUtils, Matrix4, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial,
   MirroredRepeatWrapping, NearestFilter, NearestMipmapLinearFilter, NearestMipmapNearestFilter, NumberKeyframeTrack,
-  MeshPhongMaterial, Object3D, OrthographicCamera, PerspectiveCamera, PointLight, Points, PointsMaterial,
+  MeshPhongMaterial, Object3D, OrthographicCamera, Path, PerspectiveCamera, PointLight, Points, PointsMaterial,
   PropertyBinding, Quaternion,
   QuaternionKeyframeTrack, RepeatWrapping, Scene, ShaderLib, ShaderMaterial, Skeleton, SkeletonHelper,
   SkinnedMesh, Sphere, SpotLight,
