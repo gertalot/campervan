@@ -3,7 +3,7 @@
   "id": "expol-thermaslab-10",
   "name": "Expol S Grade ThermaSlab · 2400 × 1200 × 10mm",
   "supplier": "Bunnings Lyall Bay",
-  "url": "https://www.bunnings.co.nz/expol-2400-x-1200-x-10mm-s-grade-polystyrene-thermaslab-10mm_p0717137",
+  "url": "https://trade.bunnings.co.nz/expol-2400-x-1200-x-10mm-s-grade-polystyrene-thermaslab-10mm_p0717137",
   "kind": "sheet",
   "dimensions": {
     "length": 2400,
@@ -22,7 +22,7 @@
   "face_colour": "#E2C7A2",
   "name": "Hume Pine Pinetrim dressed board · 60 × 10mm × 4.8m",
   "supplier": "Bunnings Lyall Bay",
-  "url": "https://www.bunnings.co.nz/hume-pine-60-x-10mm-4-8mm-pinetrim-dressed-board_p0298285",
+  "url": "https://trade.bunnings.co.nz/hume-pine-60-x-10mm-4-8mm-pinetrim-dressed-board_p0298285",
   "kind": "timber",
   "dimensions": {
     "length": 4800,
@@ -39,7 +39,7 @@
     "id": "expol-thermaslab-20",
     "name": "Expol S Grade ThermaSlab · 2400 × 1200 × 20mm",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/expol-2400-x-1200-x-20mm-s-grade-polystyrene-thermaslab_p0717186",
+    "url": "https://trade.bunnings.co.nz/expol-2400-x-1200-x-20mm-s-grade-polystyrene-thermaslab_p0717186",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -58,7 +58,7 @@
     "face_colour": "#CAC1A6",
     "name": "Red Stag H3.1 pine gauge batten · 45 × 20mm × 5.4m",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/45-x-20-5-4m-h3-1-treated-pine-gauge-batten_p0605227",
+    "url": "https://trade.bunnings.co.nz/45-x-20-5-4m-h3-1-treated-pine-gauge-batten_p0605227",
     "kind": "timber",
     "dimensions": {
       "length": 5400,
@@ -75,7 +75,7 @@
     "id": "pinnacle-m6-35-allen-ruspert-6",
     "name": "Pinnacle Black Ruspert Allen-drive round-head bolts and nuts · M6 × 35mm · 6 pack",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/pinnacle-m6-x-35mm-black-ruspert-round-head-bolts-and-nuts-6-pack_p0257708",
+    "url": "https://trade.bunnings.co.nz/pinnacle-m6-x-35mm-black-ruspert-round-head-bolts-and-nuts-6-pack_p0257708",
     "kind": "hardware",
     "dimensions": {
       "length": 35,
@@ -93,7 +93,7 @@
     "id": "zenith-m6-40-coach-zinc",
     "name": "Zenith zinc-plated coach-head bolt and nut · M6 × 40mm",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/zenith-6-x-40mm-zinc-plated-coach-head-bolt-and-nut_p0230135",
+    "url": "https://trade.bunnings.co.nz/zenith-6-x-40mm-zinc-plated-coach-head-bolt-and-nut_p0230135",
     "kind": "hardware",
     "dimensions": {"length": 40, "diameter": 6},
     "price_nzd": 0.43,
@@ -107,7 +107,7 @@
     "id": "zenith-m6-55-coach-zinc",
     "name": "Zenith zinc-plated coach-head bolt and nut · M6 × 55mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-6-x-55mm-zinc-plated-coach-head-bolt-and-nut_p0230284",
+    "url": "https://trade.bunnings.co.nz/zenith-6-x-55mm-zinc-plated-coach-head-bolt-and-nut_p0230284",
     "kind": "hardware",
     "dimensions": {"length": 55, "diameter": 6},
     "price_nzd": 0.47,
@@ -121,7 +121,7 @@
     "id": "zenith-m6-nyloc-zinc-12",
     "name": "Zenith zinc-plated nylon locking nuts · M6 · 12 pack",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/zenith-6mm-zinc-plated-nylon-lock-12-pack_p0150618",
+    "url": "https://trade.bunnings.co.nz/zenith-6mm-zinc-plated-nylon-lock-12-pack_p0150618",
     "kind": "hardware",
     "dimensions": {"diameter": 6},
     "price_nzd": 7.52,
@@ -135,7 +135,7 @@
     "id": "zenith-m6-90-hex-zinc",
     "name": "Zenith zinc-plated hex bolt and nut · M6 × 90mm",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/zenith-m6-x-90mm-zinc-plated-hex-bolt-and-nut_p0237424",
+    "url": "https://trade.bunnings.co.nz/zenith-m6-x-90mm-zinc-plated-hex-bolt-and-nut_p0237424",
     "kind": "hardware",
     "dimensions": {"length": 90, "diameter": 6},
     "price_nzd": 0.61,
@@ -149,7 +149,7 @@
     "id": "zenith-m6-16-flat-washer-zinc",
     "name": "Zenith zinc-plated round flat washer · M6 × 16mm",
     "supplier": "Bunnings Lyall Bay",
-    "url": "https://www.bunnings.co.nz/zenith-m6-x-16mm-zinc-plated-round-flat-washer_p0250013",
+    "url": "https://trade.bunnings.co.nz/zenith-m6-x-16mm-zinc-plated-round-flat-washer_p0250013",
     "kind": "hardware",
     "dimensions": {"outside_diameter": 16},
     "price_nzd": 0.07,
@@ -163,7 +163,7 @@
     "id": "pinnacle-m5-nyloc-ss-10",
     "name": "Pinnacle stainless nylon lock nut · M5 · 10 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinnacle-m5-stainless-steel-nylon-lock-nut-10-pack_p1100808",
+    "url": "https://trade.bunnings.co.nz/pinnacle-m5-stainless-steel-nylon-lock-nut-10-pack_p1100808",
     "kind": "hardware",
     "dimensions": {"diameter": 5},
     "price_nzd": 8.30,
@@ -177,7 +177,7 @@
     "id": "pinnacle-m5-flat-washer-ss316-12",
     "name": "Pinnacle 316 stainless flat washer · M5 · 12 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinnacle-m5-stainless-steel-flat-washer-12-pack_p0130532",
+    "url": "https://trade.bunnings.co.nz/pinnacle-m5-stainless-steel-flat-washer-12-pack_p0130532",
     "kind": "hardware",
     "dimensions": {"bore_diameter": 5.5, "outside_diameter": 10},
     "price_nzd": 2.74,
@@ -191,7 +191,7 @@
     "id": "zenith-m3-12-ss316-8",
     "name": "Zenith 316 stainless round-head bolt and nut · M3 × 12mm · 8 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-bolt-nut-round-m-3x-12mm-ss316-8pk_p2310752",
+    "url": "https://trade.bunnings.co.nz/zenith-bolt-nut-round-m-3x-12mm-ss316-8pk_p2310752",
     "kind": "hardware",
     "dimensions": {"length": 12, "diameter": 3},
     "price_nzd": 7.96,
@@ -205,7 +205,7 @@
     "id": "zenith-m3-flat-washer-ss316-35",
     "name": "Zenith 316 stainless flat washer · M3 / 1⁄8 inch · 35 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-flat-washer-suits-1-8-m3-ss316-35pk_p2320123",
+    "url": "https://trade.bunnings.co.nz/zenith-flat-washer-suits-1-8-m3-ss316-35pk_p2320123",
     "kind": "hardware",
     "dimensions": {},
     "price_nzd": 7.96,
@@ -250,7 +250,7 @@
     "id": "zenith-6g-40-100",
     "name": "Zenith zinc-plated longthread timber screws · 6g × 40mm · 100 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-6g-x-40mm-zinc-plated-longthread-timber-screws-100-pack_p2434142",
+    "url": "https://trade.bunnings.co.nz/zenith-6g-x-40mm-zinc-plated-longthread-timber-screws-100-pack_p2434142",
     "kind": "hardware",
     "dimensions": {
       "length": 40
@@ -268,7 +268,7 @@
     "face_colour": "#F1C99E",
     "name": "Pinetrim untreated pine · 140 × 18 × 1800mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinetrim-140-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132635",
+    "url": "https://trade.bunnings.co.nz/pinetrim-140-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132635",
     "kind": "timber",
     "dimensions": {
       "length": 1800,
@@ -323,7 +323,7 @@
     "face_colour": "#EFD4B7",
     "name": "Pinetrim untreated pine · 40 × 18 × 1800mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinetrim-40-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132618",
+    "url": "https://trade.bunnings.co.nz/pinetrim-40-x-18-x-1-8m-premium-untreated-kiln-dried-pine-dressed-4-sides_p0132618",
     "kind": "timber",
     "dimensions": {
       "length": 1800,
@@ -361,7 +361,7 @@
     "face_colour": "#E2CDA8",
     "name": "Specrite laminated radiata pine panel · 18mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619",
+    "url": "https://trade.bunnings.co.nz/specrite-1200-x-600-x-18mm-timber-multi-use-pine-panel_p0419619",
     "kind": "sheet",
     "dimensions": {
       "length": 1200,
@@ -380,7 +380,7 @@
     "face_colour": "#C17D39",
     "name": "Prempanel laminated bamboo panel",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770",
+    "url": "https://trade.bunnings.co.nz/2200-x-600-x-25mm-prempanel-laminated-bamboo-panel_p0221770",
     "kind": "sheet",
     "dimensions": {
       "length": 2200,
@@ -400,7 +400,7 @@
     "face_colour": "#E7D1B4",
     "name": "Pinetrim untreated clear pine D4S · 18 × 18mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinetrim-18-x-18-x-2-4m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293156",
+    "url": "https://trade.bunnings.co.nz/pinetrim-18-x-18-x-2-4m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293156",
     "kind": "timber",
     "dimensions": {
       "length": 2400,
@@ -418,7 +418,7 @@
     "id": "selleys-aquadhere-exterior-250",
     "name": "Selleys Aquadhere Exterior PVA glue · 250ml",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/selleys-aquadhere-exterior-pva-glue-250ml_p0277319",
+    "url": "https://trade.bunnings.co.nz/selleys-aquadhere-exterior-pva-glue-250ml_p0277319",
     "kind": "hardware",
     "dimensions": {},
     "price_nzd": 17,
@@ -432,7 +432,7 @@
     "id": "taskmaster-roller-4",
     "name": "Taskmaster zinc double roller catch · 4 pack",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/taskmaster-zinc-double-roller-catch-4-pack_p0035579",
+    "url": "https://trade.bunnings.co.nz/taskmaster-zinc-double-roller-catch-4-pack_p0035579",
     "kind": "hardware",
     "dimensions": {},
     "price_nzd": 4.73,
@@ -470,7 +470,7 @@
     "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 6mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-6mm-okoume-plywood_p0345103",
+    "url": "https://trade.bunnings.co.nz/tigerply-2400-x-1200-x-6mm-okoume-plywood_p0345103",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -489,7 +489,7 @@
     "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 9mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-9mm-okoume-plywood-9mm_p0345104",
+    "url": "https://trade.bunnings.co.nz/tigerply-2400-x-1200-x-9mm-okoume-plywood-9mm_p0345104",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -507,7 +507,7 @@
     "id": "zenith-butt-35",
     "name": "Zenith zinc-plated fixed-pin butt hinge · 35mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-35mm-zinc-plated-fixed-pin-butt-hinge_p4161393",
+    "url": "https://trade.bunnings.co.nz/zenith-35mm-zinc-plated-fixed-pin-butt-hinge_p4161393",
     "kind": "hardware",
     "dimensions": {
       "length": 35
@@ -523,7 +523,7 @@
     "id": "pinnacle-double-jack-2",
     "name": "Pinnacle zinc-plated double jack chain · 2mm × 3m",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinnacle-2mm-x-3m-zinc-plated-double-jack-chain_p0581686",
+    "url": "https://trade.bunnings.co.nz/pinnacle-2mm-x-3m-zinc-plated-double-jack-chain_p0581686",
     "kind": "hardware",
     "dimensions": {
       "length": 3000,
@@ -540,7 +540,7 @@
     "id": "tunnelcore-white-3",
     "name": "Tunnelcore white polypropylene flute board · 3mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tunnelcore-2440-x-1220-x-3mm-white-double-wall-pp-flute-board_p0999179",
+    "url": "https://trade.bunnings.co.nz/tunnelcore-2440-x-1220-x-3mm-white-double-wall-pp-flute-board_p0999179",
     "kind": "sheet",
     "dimensions": {
       "length": 2440,
@@ -559,7 +559,7 @@
     "face_colour": "#B8A283",
     "name": "Tigerply untreated plywood · 18mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-18mm-non-structural-untreated-plywood-18mm_p0170556",
+    "url": "https://trade.bunnings.co.nz/tigerply-2400-x-1200-x-18mm-non-structural-untreated-plywood-18mm_p0170556",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -578,7 +578,7 @@
     "face_colour": "#BBAA8E",
     "name": "Tigerply untreated plywood · 12mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-12mm-non-structural-untreated-plywood-12mm_p0170555",
+    "url": "https://trade.bunnings.co.nz/tigerply-2400-x-1200-x-12mm-non-structural-untreated-plywood-12mm_p0170555",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -597,7 +597,7 @@
     "face_colour": "#D9A886",
     "name": "Tigerply Okoume plywood · 4mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/tigerply-2400-x-1200-x-4mm-okoume-plywood-4mm_p0345102",
+    "url": "https://trade.bunnings.co.nz/tigerply-2400-x-1200-x-4mm-okoume-plywood-4mm_p0345102",
     "kind": "sheet",
     "dimensions": {
       "length": 2400,
@@ -615,7 +615,7 @@
     "id": "carinya-50-40",
     "name": "Carinya reinforcing angles · 50 × 50 × 40 × 2mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/carinya-50-x-50-x-40-x-2mm-galvanised-reinforcing-angle-bracket-8-pack_p3962402",
+    "url": "https://trade.bunnings.co.nz/carinya-50-x-50-x-40-x-2mm-galvanised-reinforcing-angle-bracket-8-pack_p3962402",
     "kind": "hardware",
     "dimensions": {
       "length": 50,
@@ -633,7 +633,7 @@
     "id": "zenith-100-22",
     "name": "Zenith mending plates · 100 × 22mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-mending-plate-100x22mm-4pk-zp_p0821317",
+    "url": "https://trade.bunnings.co.nz/zenith-mending-plate-100x22mm-4pk-zp_p0821317",
     "kind": "hardware",
     "dimensions": {
       "length": 100,
@@ -669,7 +669,7 @@
     "id": "taskmaster-610",
     "name": "Taskmaster continuous hinge · 610 × 27mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/taskmaster-610-x-27mm-nickel-plated-continuous-hinge_p0445960",
+    "url": "https://trade.bunnings.co.nz/taskmaster-610-x-27mm-nickel-plated-continuous-hinge_p0445960",
     "kind": "hardware",
     "dimensions": {
       "length": 610,
@@ -686,7 +686,7 @@
     "id": "zenith-8g-15",
     "name": "Zenith 8g × 15mm button-head timber screws",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/zenith-8g-x-15mm-galvanised-button-head-stitching-timber-screws-100-pack_p2420703",
+    "url": "https://trade.bunnings.co.nz/zenith-8g-x-15mm-galvanised-button-head-stitching-timber-screws-100-pack_p2420703",
     "kind": "hardware",
     "dimensions": {
       "length": 15
@@ -702,7 +702,7 @@
     "id": "taskmaster-piano-610-27-ss",
     "name": "Taskmaster stainless steel continuous hinge · 610 × 27mm",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/taskmaster-610-x-27mm-stainless-steel-continuous-hinge_p0445946",
+    "url": "https://trade.bunnings.co.nz/taskmaster-610-x-27mm-stainless-steel-continuous-hinge_p0445946",
     "kind": "hardware",
     "dimensions": {
       "length": 610,
@@ -721,7 +721,7 @@
     "face_colour": "#EFD2B3",
     "name": "Pinetrim untreated clear pine D4S · 18 × 18mm × 1.2m",
     "supplier": "Bunnings NZ",
-    "url": "https://www.bunnings.co.nz/pinetrim-18-x-18-x-1-2m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293150",
+    "url": "https://trade.bunnings.co.nz/pinetrim-18-x-18-x-1-2m-untreated-clear-pine-dressed-4-sides-sold-by-the-piece-_p0293150",
     "kind": "timber",
     "dimensions": {
       "length": 1200,
