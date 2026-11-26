@@ -4,7 +4,7 @@ import type { ScanPaintPanel } from './scan-panels';
 import { request } from './api';
 import { ariaShortcut, isMac, shortcutLabel } from './keyboard-shortcuts';
 import { createPaintPicker, paintCommandLabel, paintShortcut } from './paint-picker';
-import { createPaintSurface } from './paint-surface';
+import { createPaintSurface, type PaintFace } from './paint-surface';
 import type { PaintSwatch } from './paint-swatch';
 import { paintTarget } from './paint-target';
 import type { PlanMenuItem } from './plan-dropdown';
@@ -227,8 +227,8 @@ export function createViewerPaint(container: HTMLElement, host: PaintHost) {
       surface?.setScanPaintPanels(panels);
       if (state) surface?.apply(state.assignments);
     },
-    attach(groups: Record<string, unknown>, stockTextures: Record<string, string>) {
-      surface = createPaintSurface(groups, paintTarget, host.redraw, stockTextures);
+    attach(groups: Record<string, unknown>, stockTextures: Record<string, string>, duvet: PaintFace) {
+      surface = createPaintSurface(groups, paintTarget, host.redraw, stockTextures, duvet);
       surface.setScanPaintPanels(paintPanels);
       if (state) surface.apply(state.assignments);
       if (!isStaticSite) container.querySelector('.tcv_cad_toolbar')?.append(picker.element);

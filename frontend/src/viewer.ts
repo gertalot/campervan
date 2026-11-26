@@ -2,11 +2,14 @@
 /** Our host for the installed OCP renderer. No second viewer or playback timeline. */
 import { createViewerCamera, type CameraState, type CameraViewer } from './viewer-camera';
 import { loadMannequin, seatedPose, lyingPose, secondLyingPose, type MannequinPose } from './mannequin';
+import { createDuvet } from './duvet';
+import { categories } from './visibility';
 import { createPillows } from './pillows';
 import { createCushionFoam } from './cushion-foam';
+import { defaultFloorPattern, type FloorPatternSettings } from './floor-pattern';
 import { applyFloorFinish } from './floor-finish';
 import { createVehicleFade } from './vehicle-fade';
-import type { ScanDisplay } from './scan-panels';
+import { paintHitDistance, type ScanDisplay } from './scan-panels';
 import { createViewerPieces, hasActiveTool, type PieceViewer } from './viewer-pieces';
 import { createViewerDrag, type DragSnapshot } from './viewer-drag';
 import { createViewerHuman, type HumanViewer } from './viewer-human';
@@ -71,8 +74,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   let seatCushion: ReturnType<typeof createCushionFoam> | undefined;
   const vehicleFade = createVehicleFade();
   const layoutMirror = createLayoutMirror();
-  let floorDegrees = 0;
-  let rotateFloor: ReturnType<typeof applyFloorFinish>;
+  let floorSettings = defaultFloorPattern;
+  let updateFloorFinish: ReturnType<typeof applyFloorFinish>;
   let scanDisplay: ScanDisplay | undefined;
   let scanVehicleOpacity: number | null = null;
   let crossSections: Object3D | undefined;
@@ -93,13 +96,24 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
   });
   const paint = createViewerPaint(container, {
     pick(event, sample = false) {
-      if (!scanDisplay?.root.visible) {
+      const scan = scanDisplay?.root.visible ? scanDisplay : undefined;
+      const cloth = duvet?.mesh;
+      if (!scan && !cloth?.visible) {
         if (sample) return pieces.pickPoint(event);
         const path = pieces.pickPath(event);
         return path ? { path } : null;
       }
-      const scan = scanDisplay;
-      return pieces.pickPoint(event, (ray, cad) => scan.pickPaint(ray, cad, scanVehicleOpacity ?? 1, sample));
+      const opacity = scan ? scanVehicleOpacity ?? 1 : 1;
+      return pieces.pickPoint(event, (ray, cad) => {
+        let nearest = cad;
+        if (cloth?.visible) {
+          const hit = ray.intersectObject(cloth, false)[0];
+          if (hit && hit.distance < paintHitDistance(ray, cad, opacity)) {
+            nearest = { path: cloth.name, point: hit.point, hit };
+          }
+        }
+        return scan ? scan.pickPaint(ray, nearest, opacity, sample) : nearest;
+      });
     },
     modeChanged(active) {
       if (active) { cancelCameraAnimation(); human.cancel(); }
@@ -123,6 +137,16 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     }
     await motionController?.savePositions(normalised);
   }
+  let duvet: ReturnType<typeof createDuvet> | undefined;
+  let duvetFitted = false;
+  function updateDuvetVisibility() {
+    if (!duvet) return;
+    const visible = duvetFitted && categories.cushions.every(path =>
+      !Object.entries(visibilityRules).some(([root, shown]) => !shown && (path === root || path.startsWith(`${root}/`))));
+    if (duvet.mesh.visible && !visible) paint.clearPointer();
+    duvet.mesh.visible = visible;
+  }
+
   let pillows = createPillows();
   if (import.meta.hot) import.meta.hot.accept('./pillows', module => {
     if (!module || !viewer?.ready) return;
@@ -150,7 +174,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       const lid = positions.bed_lid_open_percent ?? motions.bed_lid_open_percent?.position ?? 0;
       const bed = positions.bed_extension_percent ?? motions.bed_extension_percent?.position ?? 0;
       pillows.pose(bed, lid);
+      duvetFitted = false;
       fitMannequin();
+      updateDuvetVisibility();
       pillows.squash(bed);
       for (const model of Object.values(mannequins)) layoutMirror.add(model.root);
     });
@@ -180,17 +206,13 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
       onMannequinStatus('Close the storage lid to show the seated preview.');
       return;
     }
-    const mode = bed === 100 ? 'lying' : 'seated';
-    const mannequin = mannequins[mode];
-    const mannequinPose = mannequinPoses[mode];
-    if (!mannequin) { seatCushion.deform(null); return; }
     pillows.supportHead(null);
     pillows.supportHead(null, false);
-    if (mannequinPose.mode === 'lying') {
+    if (bed === 100) {
       seatCushion.deform(null);
-      const cross = groups['/Campervan/Cross bench/Cushions/Cross seat/Foam'] as unknown as Object3D;
-      if (!cross) return;
-      const mattress = seatCushion.bounds().union(new Box3().setFromObject(cross));
+      const mattress = seatCushion.mattressBounds();
+      const sleepers: Object3D[] = [];
+      let pillowEdge = mattress.max.y;
       let feetOutside = false;
       for (const id of ['lying', 'lying-second'] as const) {
         const model = mannequins[id];
@@ -199,18 +221,23 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
         const path = first ? '/Campervan/Cross bench/Cushions/Front pillow/Pillow'
           : '/Campervan/Long bench/Cushions/Rear pillow/Pillow';
         const pillow = groups[path] as unknown as Object3D;
-        if (!model || !pillow) continue;
-        const fitted = model.lie({ ...pose, visible: pose.visible && bed === 100 },
-          mattress, new Box3().setFromObject(pillow));
+        if (!pillow) continue;
+        const bounds = new Box3().setFromObject(pillow);
+        pillowEdge = Math.min(pillowEdge, bounds.min.y);
+        if (!model || !pose.visible) continue;
+        const fitted = model.lie(pose, mattress, bounds);
         model.attach(viewer.rendered.scene);
-        if (model.root.visible) {
-          pillows.supportHead(fitted.head, first);
-          feetOutside ||= fitted.feet.min.y < mattress.min.y;
-        }
+        sleepers.push(model.root);
+        pillows.supportHead(fitted.head, first);
+        feetOutside ||= fitted.feet.min.y < mattress.min.y;
       }
+      duvetFitted = duvet?.fit(mattress, pillowEdge, sleepers) ?? false;
       onMannequinStatus(feetOutside ? 'Feet extend beyond the mattress.' : '');
       return;
     }
+    const mannequin = mannequins.seated;
+    if (!mannequin) { seatCushion.deform(null); return; }
+    const mannequinPose = mannequinPoses.seated;
     const visible = mannequinPose.visible && bed === 0;
     const floor = groups['/Campervan/Finished floor plywood'] as unknown as Object3D;
     if (!floor) return;
@@ -425,6 +452,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             paint.detach();
             vehicleFade.clear();
             layoutMirror.clear();
+            duvet?.dispose();
+            duvet = undefined;
+            duvetFitted = false;
             Object.values(mannequins).forEach(model => model.root.removeFromParent());
             seatCushion?.dispose();
             seatCushion = undefined;
@@ -432,8 +462,8 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
           try { page.handleMessage(message); }
           finally { rendering = false; }
           if (message.type === 'data') {
-            rotateFloor = applyFloorFinish(viewer!.rendered.nestedGroup.groups);
-            rotateFloor?.(floorDegrees);
+            updateFloorFinish = applyFloorFinish(viewer!.rendered.nestedGroup.groups);
+            updateFloorFinish?.(floorSettings);
             vehicleFade.attach(viewer!.rendered.nestedGroup.groups);
             const picker = (viewer as unknown as PieceViewer).idPicker;
             if (picker) {
@@ -449,6 +479,12 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             }
             pillows.attach(viewer!.rendered.nestedGroup.groups);
             pillows.pose(positions.bed_extension_percent ?? 0);
+            const frame = viewer!.rendered.nestedGroup.groups['/Campervan/Cabinet/Lower module/Frames'];
+            const cabinetBounds = new Box3();
+            if (frame) cabinetBounds.setFromObject(frame as unknown as Object3D);
+            duvet = createDuvet(cabinetBounds);
+            viewer!.rendered.scene.add(duvet.mesh);
+            layoutMirror.add(duvet.mesh);
             layoutMirror.attach(viewer!.rendered.nestedGroup.groups);
             if (scanDisplay) viewer!.rendered.scene.add(scanDisplay.root);
             if (crossSections) viewer!.rendered.scene.add(crossSections);
@@ -476,7 +512,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
             }
             showTables();
             showMannequin();
-            paint.attach(viewer!.rendered.nestedGroup.groups, message.stockTextures ?? {});
+            paint.attach(viewer!.rendered.nestedGroup.groups, message.stockTextures ?? {}, duvet.mesh);
             viewer!.update(true, false);
           }
         }
@@ -525,9 +561,9 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     setMotionController(controller: MotionController) { motionController = controller; },
     getFieldOfView: cameraNavigation.getFieldOfView,
-    setFloorRotation(degrees: number) {
-      floorDegrees = degrees;
-      rotateFloor?.(degrees);
+    setFloorPattern(settings: FloorPatternSettings) {
+      floorSettings = settings;
+      updateFloorFinish?.(settings);
       viewer?.update(true, false);
     },
     setFieldOfView(degrees: number) {
@@ -603,6 +639,7 @@ export function createCadViewer(container: HTMLElement, onModel: () => void, onE
     },
     setVisibility(rules: Record<string, boolean>) {
       visibilityRules = { ...rules };
+      updateDuvetVisibility();
       updateScanVisibility();
       if (!viewer?.ready) return;
       const states: Record<string, number[]> = {};

@@ -156,6 +156,7 @@ HSV starts with hue on the slider, saturation across the square and value up the
 Each channel also has a horizontal slider and a numeric field. Both tabs accept a **Hex code** beside the colour preview.
 Use the checkerboard slider to adjust opacity. Use **Tab** to reach each control. Use the arrow keys to adjust a slider.
 Choose a surface finish from **Textures**.
+Choose **Marlo Charcoal** for the brushed fabric in [Spotlight’s swatch photo](https://www.spotlightstores.com/en-nz/p/marlo-upholstery-fabric/80458316).
 Pine timber and bed slats show wood grain by default. Choose **Dressed pine** for the grain and its natural pine colour.
 To tint the pine, choose a colour in **RGB** or **HSV** after you select the texture.
 **Favourites** stores swatches for later. **Currently used** shows finishes on the visible, paintable parts.
@@ -193,6 +194,10 @@ Reset centres the rotation pivot on the van and fits it to the viewport, preserv
 Expand **Mannequin** to adjust seated and lying poses. The eye under **Bed/couch → Mannequin** controls all three poses.
 Each pose also has its own eye. The lying mannequins follow the bed conversion. Pose, body shape and foam compression
 are visual fit references.
+
+At 100% bed extension, the duvet covers the mattress up to the pillows. It follows each visible sleeper.
+Use the paint bucket on the duvet to set its colour, texture and opacity independently of the cushions.
+Hide the mannequins to see the empty bed. Retract the bed or hide **Bed/couch** to hide the duvet.
 
 The local app saves all three poses and their visibility choices in `data/project.json` without regenerating CAD.
 Static exports include that configuration. Visitors can adjust the mannequins in their browser; a newly published
@@ -313,6 +318,21 @@ This preserves visible cut locations and part outlines, following the distinguis
 (consulted 22 November 2026); this is a layout decision, not a claim of overall accessibility compliance.
 
 Use **Save drawing** for sheet SVGs, **Export cut list** for CSV and **Print** for the current view.
+
+## Floor pattern
+
+Use **Floor pattern** after you cut the plywood. Put both sheets and the hatch lid in their fitted positions.
+Adjust **Stripe width**, **Chevron tip angle** and **Floor pattern rotation**. The drawing and CAD floor share these settings.
+The tip angle is the inside angle at the point of the V. It starts at 90°. A larger angle opens the V.
+The stripe width is measured along the pattern axis. The repeat drawing also gives the width square across the tape edges.
+
+Draw the two fore–aft guides 500 mm either side of the floor centre. Draw the two transverse guides
+500 mm ahead of and behind the centre. Read the mark spacing below the drawing for each pair of guides.
+Use the table to locate the first pair of tape edges. The thin magenta lines connect marks on the guides.
+Follow the thick magenta lines along the brown stripe. Place the tape on the cream side of each edge.
+
+The controls use the app’s labelled range slider with keyboard adjustment and a value in degrees or millimetres.
+[W3C slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/)
 
 ## AprilTags
 

@@ -1157,14 +1157,11 @@ threshold and 75mm towards the cab. Both panels have separate cut outlines. Thei
 driven by the shared `floor_surface_z_mm` parameter.
 
 The cream and brown chevrons continue across the sheet joint and the pump lid.
-The CAD finish and the **Floor pattern** drawing use one stripe dimension from the [pattern artwork](research/red-room-floor-proof.svg).
-The drawing shows both sheets together on a rectangular blank with 50 mm extra at each edge.
-Measure the tape positions from the left and rear edges of the blank. The blue lines show the cuts.
-Use **Floor pattern rotation** with the other live sliders in the CAD sidebar or on the Floor pattern tab. Positive angles turn clockwise
-about the centre of the blank, with the cab at the top. Both views use the same angle.
-The table gives the positions of the six tape marks for that angle. The browser saves the angle locally.
-The native slider supports arrow keys for one-degree steps and Home for zero. Its label and degree readout
-follow the [W3C slider guidance](https://www.w3.org/WAI/ARIA/apg/patterns/slider/).
+The CAD finish and **Floor pattern** drawing share the [pattern artwork](research/red-room-floor-proof.svg) and its transform.
+The reference artwork has a 90° tip and an 80 mm stripe along the pattern axis. The tip angle sets the horizontal
+run of each leg. Rotation turns the whole pattern clockwise about the centre of the cut floor, with the cab at the top.
+Both views use the same three sliders. The browser saves each value locally.
+The drawing gives the tape marks for two pairs of guides on the cut floor, with 1,000 mm between guides in each pair.
 
 One shared frame of 45 × 20mm Red Stag pine battens (Bunnings I/N 0605227, 5.4m lengths) sits beneath
 both panels. The front and rear rails each span the full 1200mm floor width.

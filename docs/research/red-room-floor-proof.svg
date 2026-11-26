@@ -2,13 +2,13 @@
   <title>Red Room floor colour and scale proof for the van</title>
   <desc>
     The rectangular paint blank includes 50 mm outside each edge of the finished floor.
-    The cab is at the top. The colours are estimates from Dave Robinson's set photograph.
+    The cab is at the top. The cream comes from Dave Robinson's set photograph. The van uses a slightly darker brown.
   </desc>
   <defs>
     <!-- One artwork unit is one stripe measured along the van, in millimetres. -->
     <pattern id="chevron" patternUnits="userSpaceOnUse" width="4" height="2" patternTransform="scale(80)">
       <rect width="4" height="2" fill="#EDDBB6"/>
-      <path fill="#523430"
+      <path fill="#4B302C"
             d="M0 0 L2 2 L4 0 V1 L2 3 L0 1 Z M0 -2 L2 0 L4 -2 V-1 L2 1 L0 -1 Z"/>
     </pattern>
   </defs>

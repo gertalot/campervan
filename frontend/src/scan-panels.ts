@@ -18,6 +18,12 @@ export interface ScanDisplay {
   pickPaint(ray: Raycaster, cad: PiecePoint | null, vehicleOpacity: number, sample?: boolean): PiecePoint | null;
 }
 
+/** A translucent comparison body allows paint hits on surfaces behind it. */
+export function paintHitDistance(ray: Raycaster, hit: PiecePoint | null, vehicleOpacity: number) {
+  if (!hit || (vehicleOpacity < 0.5 && hit.path.startsWith('/Campervan/Vehicle references/'))) return Infinity;
+  return ray.ray.origin.distanceTo(hit.point);
+}
+
 /** Give the registered scan display panels. Keep the source mesh for section measurements. */
 export function createScanPanels(source: Object3D, referenceKey: string) {
   const root = new Group();
@@ -117,9 +123,7 @@ export function createScanPanels(source: Object3D, referenceKey: string) {
       if (!root.visible) return cad;
       let nearest = cad;
       let pickedFace: Mesh | undefined;
-      // The comparison body can be transparent in front of the photographed trim.
-      const transparentBody = cad?.path.startsWith('/Campervan/Vehicle references/') && vehicleOpacity < 0.5;
-      let distance = cad && !transparentBody ? ray.ray.origin.distanceTo(cad.point) : Infinity;
+      let distance = paintHitDistance(ray, cad, vehicleOpacity);
       for (const panel of paintPanels) {
         if (!panel.face.visible || !panel.pickable || (sample && !panel.face.material.colorWrite)) continue;
         hits.length = 0;

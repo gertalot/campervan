@@ -1,6 +1,7 @@
 import wood from './assets/wood-table.webp';
 import pine from './assets/pine-grain.webp';
 import shiraz from './assets/landry-shiraz.webp';
+import marlo from './assets/marlo-charcoal.webp';
 import { floorPattern, floorPatternTile } from './floor-pattern';
 
 export interface PaintSwatch { colour: string; opacity: number; texture: string }
@@ -26,5 +27,6 @@ export const paintTextures: readonly PaintTexture[] = [
   // One board from Poly Haven's Coated Pine scan. The greyscale grain takes its colour from the selected stock.
   { id: 'pine', label: 'Dressed pine', image: pine, width: 740, height: 202, defaultColour: '#efd4b7' },
   shirazVelvet,
+  { id: 'marlo-charcoal', label: 'Marlo Charcoal', image: marlo, width: 312, height: 312, defaultColour: '#ffffff' },
   { id: 'chevron', label: 'Floor chevron', image: 'data:image/svg+xml,' + encodeURIComponent(chevron), width, height },
 ];

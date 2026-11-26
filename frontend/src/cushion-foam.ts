@@ -1,4 +1,5 @@
-import { Box3, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3, type Object3D, type SkinnedMesh } from 'three';
+import { Box3, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3, type Object3D } from 'three';
+import { forEachSkinVertex } from './mannequin';
 import { createFoamSkin } from './foam-surface';
 import { shirazVelvet } from './paint-swatch';
 
@@ -8,26 +9,19 @@ function seatedDent(human: Object3D | null, seat: Box3) {
   const step = 25, height = seat.max.z - seat.min.z;
   const columns = Math.ceil((seat.max.x - seat.min.x) / step) + 1;
   const rows = Math.ceil((seat.max.y - seat.min.y) / step) + 1;
-  const dents = new Float32Array(columns * rows), point = new Vector3();
-  human.updateWorldMatrix(true, true);
-  human.traverse(object => {
-    const skin = object as SkinnedMesh;
-    if (!skin.isSkinnedMesh) return;
-    const positions = skin.geometry.getAttribute('position');
-    for (let i = 0; i < positions.count; i++) {
-      skin.getVertexPosition(i, point).applyMatrix4(skin.matrixWorld);
-      if (point.x < seat.min.x || point.x > seat.max.x || point.y < seat.min.y || point.y > seat.max.y
-        || point.z >= seat.max.z || point.z < seat.max.z - height * 0.55) continue;
-      const depth = seat.max.z - point.z + 2;
-      const x = (point.x - seat.min.x) / step, y = (point.y - seat.min.y) / step;
-      for (let row = Math.max(0, Math.floor(y) - 3); row <= Math.min(rows - 1, Math.ceil(y) + 3); row++) {
-        for (let column = Math.max(0, Math.floor(x) - 3);
-          column <= Math.min(columns - 1, Math.ceil(x) + 3); column++) {
-          const distance = Math.hypot(column - x, row - y) * step;
-          const falloff = Math.max(0, Math.min(1, (75 - distance) / 40));
-          const index = row * columns + column;
-          dents[index] = Math.max(dents[index], Math.min(height * 0.55, depth * falloff));
-        }
+  const dents = new Float32Array(columns * rows);
+  forEachSkinVertex(human, point => {
+    if (point.x < seat.min.x || point.x > seat.max.x || point.y < seat.min.y || point.y > seat.max.y
+      || point.z >= seat.max.z || point.z < seat.max.z - height * 0.55) return;
+    const depth = seat.max.z - point.z + 2;
+    const x = (point.x - seat.min.x) / step, y = (point.y - seat.min.y) / step;
+    for (let row = Math.max(0, Math.floor(y) - 3); row <= Math.min(rows - 1, Math.ceil(y) + 3); row++) {
+      for (let column = Math.max(0, Math.floor(x) - 3);
+        column <= Math.min(columns - 1, Math.ceil(x) + 3); column++) {
+        const distance = Math.hypot(column - x, row - y) * step;
+        const falloff = Math.max(0, Math.min(1, (75 - distance) / 40));
+        const index = row * columns + column;
+        dents[index] = Math.max(dents[index], Math.min(height * 0.55, depth * falloff));
       }
     }
   });
@@ -101,6 +95,7 @@ export function createCushionFoam(seat: Object3D, back: Object3D, crossSeat: Obj
 
   return {
     bounds: () => blue.bounds(),
+    mattressBounds: () => blue.bounds().union(orange.bounds()).union(cross.bounds()),
     deform(human: Object3D | null, lidPercent = 0) { inCoordinates(() => update(human, lidPercent)); },
     dispose() { blue.dispose(); orange.dispose(); cross.dispose(); velvet.dispose(); },
   };

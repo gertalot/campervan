@@ -7,10 +7,10 @@ import { floorFinishTint } from './floor-finish';
 import { paintTextures, samePaint, type PaintSwatch } from './paint-swatch';
 
 type FaceMaterial = MeshStandardMaterial | MeshBasicMaterial;
-type Face = Mesh<BufferGeometry, FaceMaterial>;
+export type PaintFace = Mesh<BufferGeometry, FaceMaterial>;
 interface CadSolid extends Object3D {
-  front: Face;
-  back?: Face;
+  front: PaintFace;
+  back?: PaintFace;
   originalColor: Color;
   originalBackColor?: Color;
   alpha: number;
@@ -52,7 +52,7 @@ function projectedMap(material: FaceMaterial, nativeCompile: FaceMaterial['onBef
   };
 }
 
-function faceFinish(face: Face, original?: Color) {
+function faceFinish(face: PaintFace, original?: Color, sewnCloth = false) {
   const material = face.material;
   const colour = (original ?? material.color).clone();
   const { map, vertexColors, customProgramCacheKey, onBeforeCompile } = material;
@@ -66,9 +66,9 @@ function faceFinish(face: Face, original?: Color) {
       else material.color.copy(colour);
       original?.copy(material.color); // OCP restores this colour after hover or selection.
       material.map = texture ?? (swatch ? null : map);
-      material.vertexColors = swatch || texture ? false : vertexColors;
+      material.vertexColors = (swatch || texture) && !sewnCloth ? false : vertexColors;
       // Sewn surfaces already have texture coordinates in millimetres.
-      const project = texture && !nativeTexture;
+      const project = texture && !nativeTexture && !sewnCloth;
       const axes = textureId === 'pine' ? grainAxes(face.geometry) : 'xyz';
       material.onBeforeCompile = project ? projectedMap(material, onBeforeCompile, axes) : onBeforeCompile;
       material.customProgramCacheKey = project ? () => nativeKey + '/paint-map/' + axes : customProgramCacheKey;
@@ -82,7 +82,7 @@ function faceFinish(face: Face, original?: Color) {
   };
 }
 
-function visibleFace(face: Face) {
+function visibleFace(face: PaintFace) {
   if (!face.material.visible) return false;
   for (let object: Object3D | null = face; object; object = object.parent) {
     if (!object.visible) return false;
@@ -91,7 +91,7 @@ function visibleFace(face: Face) {
 }
 
 export function createPaintSurface(groups: Record<string, unknown>, groupFor: (path: string) => string | null,
-  redraw: () => void, stockTextures: Record<string, string>) {
+  redraw: () => void, stockTextures: Record<string, string>, duvet: PaintFace) {
   const textures = new Map<string, Texture>();
   const loader = new TextureLoader();
   function textureFor(id: string) {
@@ -110,12 +110,11 @@ export function createPaintSurface(groups: Record<string, unknown>, groupFor: (p
   }
 
   type Entry = {
-    path: string; target: string; object: Object3D; front: Face; alpha: number; faces: ReturnType<typeof faceFinish>[];
+    path: string; target: string; object: Object3D; front: PaintFace; alpha: number; faces: ReturnType<typeof faceFinish>[];
     setFinish(swatch?: PaintSwatch): void;
     stockTexture?: string; swatch?: PaintSwatch;
   };
-  const cad: Entry[] = [];
-  let entries = cad;
+  const model: Entry[] = [];
   for (const [path, object] of Object.entries(groups)) {
     const solid = object as CadSolid;
     if (!solid.front?.material?.color) continue;
@@ -139,8 +138,21 @@ export function createPaintSurface(groups: Record<string, unknown>, groupFor: (p
       }
     } };
     if (stockTexture) finish(entry, undefined, stockTexture);
-    cad.push(entry);
+    model.push(entry);
   }
+
+  const cloth = duvet.material;
+  const { opacity, transparent, depthWrite } = cloth;
+  model.push({
+    path: duvet.name, target: duvet.name, object: duvet, front: duvet, alpha: opacity,
+    faces: [faceFinish(duvet, undefined, true)],
+    setFinish(swatch) {
+      cloth.opacity = swatch?.opacity ?? opacity;
+      cloth.transparent = cloth.opacity < 1 || transparent;
+      cloth.depthWrite = depthWrite && cloth.opacity === 1;
+    },
+  });
+  let entries = model;
 
   function finish(entry: Entry, swatch?: PaintSwatch, textureId?: string) {
     entry.swatch = swatch;
@@ -188,8 +200,8 @@ export function createPaintSurface(groups: Record<string, unknown>, groupFor: (p
     },
     targetFor: (path: string) => groupFor(path) ?? (entries.some(entry => entry.target === path) ? path : null),
     setScanPaintPanels(panels: ScanPaintPanel[]) {
-      for (const entry of entries.slice(cad.length)) if (entry.swatch) finish(entry);
-      entries = cad.concat(panels.map(panel => {
+      for (const entry of entries.slice(model.length)) if (entry.swatch) finish(entry);
+      entries = model.concat(panels.map(panel => {
         const showBase = panel.face.material.colorWrite;
         return {
           path: panel.target, target: panel.target, object: panel.face, front: panel.face, faces: [faceFinish(panel.face)], alpha: 1,

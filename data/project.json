@@ -38097,9 +38097,9 @@
         "texture": "pine"
       },
       "Cushions": {
-        "colour": "#40474f",
+        "colour": "#ffffff",
         "opacity": 1.0,
-        "texture": "solid"
+        "texture": "marlo-charcoal"
       },
       "Bench frame": {
         "colour": "#910000",
@@ -38115,6 +38115,11 @@
         "colour": "#910000",
         "opacity": 1.0,
         "texture": "pine"
+      },
+      "Duvet": {
+        "colour": "#7a6c5f",
+        "opacity": 1.0,
+        "texture": "solid"
       }
     },
     "favourites": [
@@ -38325,6 +38330,18 @@
           "colour": "#f7cb9c",
           "opacity": 1.0,
           "texture": "pine"
+        }
+      },
+      {
+        "target": "Duvet",
+        "swatch": null
+      },
+      {
+        "target": "Cushions",
+        "swatch": {
+          "colour": "#40474f",
+          "opacity": 1.0,
+          "texture": "solid"
         }
       }
     ],

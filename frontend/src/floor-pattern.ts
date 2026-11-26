@@ -13,14 +13,25 @@ export const floorPattern = {
   bandPath: band.getAttribute('d')!,
 };
 
-// Floor coordinates increase to the right and towards the cab. Positive control angles turn clockwise.
-export function floorRotation(degrees: number, width: number, length: number) {
-  return new DOMMatrix().translate(width / 2, length / 2).rotate(-degrees).translate(-width / 2, -length / 2);
+export interface FloorPatternSettings { rotation: number; stripe: number; angle: number }
+export const defaultFloorPattern: FloorPatternSettings = { rotation: 0, stripe, angle: 90 };
+
+// Half the tip angle sets the horizontal run for one unit of rise.
+export function chevronAspect(angle: number) {
+  return angle === 90 ? 1 : Math.tan(angle * Math.PI / 360);
 }
 
-export function floorPatternTile(id: string) {
+// Transform artwork units (one stripe each) to millimetres on the cut floor.
+// Floor coordinates increase to the right and towards the cab. Positive control angles turn clockwise.
+export function floorPatternTransform(settings: FloorPatternSettings, width: number, length: number) {
+  return new DOMMatrix().translate(width / 2, length / 2).rotate(-settings.rotation)
+    .translate(-width / 2, -length / 2).scale(settings.stripe * chevronAspect(settings.angle), settings.stripe);
+}
+
+export function floorPatternTile(id: string, aspect = 1) {
   const copy = tile.cloneNode(true) as SVGPatternElement;
   copy.id = id;
+  copy.setAttribute('patternTransform', `scale(${stripe * aspect} ${stripe})`);
   return new XMLSerializer().serializeToString(copy);
 }
 

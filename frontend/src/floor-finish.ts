@@ -1,5 +1,5 @@
 import { Box3, Matrix4, RepeatWrapping, SRGBColorSpace, Texture, Vector2, Vector4, type Mesh, type Material } from 'three';
-import { floorPattern, floorPieces, floorRoot, floorRotation } from './floor-pattern';
+import { floorPattern, floorPieces, floorRoot, floorPatternTransform, type FloorPatternSettings } from './floor-pattern';
 
 function makePaintTile() {
   const { width, height, stripe, cream, brown, bandPath } = floorPattern;
@@ -31,7 +31,7 @@ export function applyFloorFinish(groups: Record<string, unknown>) {
   // Bounds of the two sheets establish a single datum, including the door wings.
   const bounds = new Box3().setFromObject(bench, true).expandByObject(aisle, true);
   const origin = new Vector2(bounds.min.x, bounds.min.y);
-  const repeat = new Vector2(floorPattern.width, floorPattern.height);
+  const repeat = new Vector2(floorPattern.width / floorPattern.stripe, floorPattern.height / floorPattern.stripe);
   const lookup = new Matrix4();
   paint ??= makePaintTile();
   for (const mesh of [bench, aisle, front(floorPieces.lid)]) {
@@ -65,8 +65,8 @@ export function applyFloorFinish(groups: Record<string, unknown>) {
     };
     material.needsUpdate = true;
   }
-  return (degrees: number) => {
-    const rotation = floorRotation(degrees, bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y);
-    lookup.fromArray(rotation.inverse().toFloat32Array());
+  return (settings: FloorPatternSettings) => {
+    const transform = floorPatternTransform(settings, bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y);
+    lookup.fromArray(transform.inverse().toFloat32Array());
   };
 }

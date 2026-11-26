@@ -8,6 +8,7 @@ import { setupMaterials } from './materials';
 import { PlanningClient } from './planning-api';
 import { setupTabs, showTab, onTab } from './tabs';
 import { setupCutting } from './cutting';
+import { defaultFloorPattern, type FloorPatternSettings } from './floor-pattern';
 import { setupFloorDrawing } from './floor-drawing';
 import { setupAprilTags } from './apriltags';
 import { setupCadScanReference } from './cad-scan-reference';
@@ -109,36 +110,50 @@ if (!isStaticSite) {
 }
 const materials = setupMaterials(planning);
 const floorDrawing = setupFloorDrawing(element('floor-pattern-panel'));
-const rotationKey = 'campervan.floor-pattern-rotation';
-const cadFloorRotation = element('cad-floor-rotation');
-const rotationControls = [cadFloorRotation, element('drawing-floor-rotation')].map(row => {
-  const label = document.createElement('label');
-  label.textContent = 'Floor pattern rotation';
-  label.title = 'Clockwise, with the cab at the top.';
-  const input = document.createElement('input');
-  input.id = `${row.id}-angle`;
-  input.type = 'range';
-  input.min = '0';
-  input.max = '360';
-  input.step = '1';
-  const output = mountPositionSlider(row, label, input);
-  input.oninput = () => {
-    setFloorRotation(input.valueAsNumber);
-    localStorage.setItem(rotationKey, input.value);
-  };
-  return { input, output };
-});
-function setFloorRotation(degrees: number) {
-  for (const { input, output } of rotationControls) {
-    input.value = String(degrees);
-    output.value = `${degrees}°`;
-    input.setAttribute('aria-valuetext', `${degrees} degrees clockwise`);
+const floorSettings = { ...defaultFloorPattern };
+const cadFloorControls = [element('cad-floor-rotation'), element('cad-floor-stripe'), element('cad-floor-angle')];
+function mountFloorControl(key: keyof FloorPatternSettings, title: string, min: number, max: number,
+                          unit: string, spokenUnit: string, step = 1) {
+  const storageKey = `campervan.floor-pattern-${key}`;
+  const stored = localStorage.getItem(storageKey);
+  const value = Number(stored);
+  if (stored !== null && Number.isInteger((value - min) / step) && value >= min && value <= max) floorSettings[key] = value;
+  const controls = ['cad', 'drawing'].map(prefix => {
+    const row = element(`${prefix}-floor-${key}`);
+    const label = document.createElement('label');
+    label.textContent = title;
+    const input = document.createElement('input');
+    input.id = `${row.id}-input`;
+    input.type = 'range';
+    input.min = String(min);
+    input.max = String(max);
+    input.step = String(step);
+    const output = mountPositionSlider(row, label, input);
+    input.oninput = () => {
+      floorSettings[key] = input.valueAsNumber;
+      localStorage.setItem(storageKey, input.value);
+      syncControls();
+      applyFloorPattern();
+    };
+    return { input, output };
+  });
+  function syncControls() {
+    for (const { input, output } of controls) {
+      input.value = String(floorSettings[key]);
+      output.value = input.value + unit;
+      input.setAttribute('aria-valuetext', `${input.value} ${spokenUnit}`);
+    }
   }
-  viewer.setFloorRotation(degrees);
-  floorDrawing.setRotation(degrees);
+  syncControls();
 }
-const savedRotation = Number(localStorage.getItem(rotationKey));
-setFloorRotation(Number.isInteger(savedRotation) && savedRotation >= 0 && savedRotation <= 360 ? savedRotation : 0);
+function applyFloorPattern() {
+  viewer.setFloorPattern(floorSettings);
+  floorDrawing.setPattern(floorSettings);
+}
+mountFloorControl('rotation', 'Floor pattern rotation', 0, 360, '°', 'degrees clockwise');
+mountFloorControl('stripe', 'Stripe width', 20, 200, ' mm', 'millimetres');
+mountFloorControl('angle', 'Chevron tip angle', 45, 135, '°', 'degrees', 0.5);
+applyFloorPattern();
 const cutting = setupCutting(element('cuts-panel'), path => {
   showTab('cad');
   if (path.startsWith('Laptop table / ')) {
@@ -300,7 +315,7 @@ const controller = createController(api, {
       parent.append(row);
       inputs.set(name, input);
     }
-    liveControls.append(cadFloorRotation);
+    liveControls.append(...cadFloorControls);
     const stored = groupFor(['Laptop table', 'Stowed'], fields);
     const hint = document.createElement('p');
     hint.id = 'table-stowed-summary';

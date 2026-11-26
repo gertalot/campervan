@@ -1,5 +1,6 @@
 import {
   Bone, Box3, BufferGeometry, DoubleSide, Group, Mesh, MeshStandardMaterial, Quaternion, Scene, SkinnedMesh, Vector3,
+  type Object3D,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createSpine } from './spine-rig';
@@ -42,6 +43,20 @@ interface RigPose {
 }
 const radians = (degrees: number) => degrees * Math.PI / 180;
 const direction = (angle: number) => new Vector3(0, -Math.cos(radians(angle)), Math.sin(radians(angle)));
+
+/** Visit the posed skin in CAD coordinates for bedding contact. */
+export function forEachSkinVertex(root: Object3D, visit: (point: Vector3) => void) {
+  const point = new Vector3();
+  root.updateWorldMatrix(true, true);
+  root.traverse(object => {
+    const skin = object as SkinnedMesh;
+    if (!skin.isSkinnedMesh) return;
+    const count = skin.geometry.getAttribute('position').count;
+    for (let i = 0; i < count; i++) {
+      visit(skin.getVertexPosition(i, point).applyMatrix4(skin.matrixWorld));
+    }
+  });
+}
 
 /** GLB rest space is metres, Y-up, facing +Z. CAD space is millimetres, Z-up. */
 export function createMannequin(body: Group) {
